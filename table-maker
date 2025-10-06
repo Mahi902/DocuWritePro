@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Maker Pro</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --danger-color: #ea4335;
+            --warning-color: #fbbc05;
+            --light-bg: #f8f9fa;
+            --dark-text: #202124;
+            --border-color: #dadce0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark-text);
+        }
+
+        .app-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .app-header {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo h1 {
+            font-weight: 500;
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .logo-icon {
+            font-size: 32px;
+            color: var(--primary-color);
+        }
+
+        .main-content {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 160px);
+        }
+
+        .controls-panel {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            overflow-y: auto;
+        }
+
+        .preview-panel {
+            flex: 1.5;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-title i {
+            font-size: 22px;
+        }
+
+        .section {
+            background: var(--light-bg);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .form-group {
+            margin-bottom: 18px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 15px;
+            background: white;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(66, 133, 244, 0.2);
+        }
+
+        button.secondary {
+            background: #f1f3f4;
+            color: var(--dark-text);
+        }
+
+        button.secondary:hover {
+            background: #e8eaed;
+        }
+
+        button.danger {
+            background: var(--danger-color);
+        }
+
+        button.danger:hover {
+            background: #d23a2e;
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 10px;
+        }
+
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .color-option.active {
+            border-color: white;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        .formatting-tools {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .format-btn {
+            padding: 10px;
+            border-radius: 6px;
+            background: #f1f3f4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .format-btn:hover {
+            background: #e8eaed;
+            transform: scale(1.05);
+        }
+
+        .format-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 5px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .tool-btn {
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #f1f3f4;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .tool-btn:hover {
+            background: #e8eaed;
+        }
+
+        .preview-container {
+            flex: 1;
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .a4-page {
+            background: white;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            position: relative;
+        }
+
+        .page-portrait {
+            width: 595px;
+            height: 842px;
+        }
+
+        .page-landscape {
+            width: 842px;
+            height: 595px;
+        }
+
+        .page-margin {
+            position: absolute;
+            border: 1px dashed #e0e0e0;
+        }
+
+        .table-container {
+            padding: 40px;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+
+        .chart-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 30px;
+            padding: 10px;
+            border-bottom: 2px solid #eee;
+            outline: none;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 400px;
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            min-width: 80px;
+            height: 45px;
+            position: relative;
+        }
+
+        th {
+            background: #f1f3f4;
+            font-weight: 500;
+        }
+
+        .selected-cell {
+            box-shadow: 0 0 0 2px var(--primary-color);
+            z-index: 10;
+        }
+
+        .preview-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .action-buttons button {
+            flex: 1;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .image-upload {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .image-upload input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .status-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .cell-info {
+            display: flex;
+            gap: 20px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .highlight {
+            background-color: rgba(255, 255, 0, 0.3);
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .italic {
+            font-style: italic;
+        }
+
+        .underline {
+            text-decoration: underline;
+        }
+
+        .strikethrough {
+            text-decoration: line-through;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .a4-page {
+                transform: scale(0.8);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="app-header">
+            <div class="logo">
+                <i class="material-icons logo-icon">table_chart</i>
+                <h1>Table Maker</h1>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="controls-panel">
+                <div class="section">
+                    <h2 class="panel-title"><i class="material-icons">tune</i> Chart Settings</h2>
+                    <div class="form-group">
+                        <label>Rows</label>
+                        <input type="number" id="rows" min="1" max="20" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Columns</label>
+                        <input type="number" id="columns" min="1" max="15" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label>Orientation</label>
+                        <select id="orientation">
+                            <option value="portrait">Portrait</option>
+                            <option value="landscape">Landscape</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Page Margin (mm)</label>
+                        <input type="number" id="margin" min="5" max="50" value="20">
+                    </div>
+                    <button id="apply-settings">
+                        <i class="material-icons">check</i> Apply Settings
+                    </button>
+                </div>
+
+                <div class="section">
+                    <h2 class="panel-title"><i class="material-icons">format_color_text</i> Text Formatting</h2>
+                    <div class="formatting-tools">
+                        <div class="format-btn" data-format="bold" title="Bold">
+                            <i class="material-icons">format_bold</i>
+                        </div>
+                        <div class="format-btn" data-format="italic" title="Italic">
+                            <i class="material-icons">format_italic</i>
+                        </div>
+                        <div class="format-btn" data-format="underline" title="Underline">
+                            <i class="material-icons">format_underlined</i>
+                        </div>
+                        <div class="format-btn" data-format="strikethrough" title="Strikethrough">
+                            <i class="material-icons">strikethrough_s</i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Font Size</label>
+                        <select id="font-size">
+                            <option value="12">12px</option>
+                            <option value="14" selected>14px</option>
+                            <option value="16">16px</option>
+                            <option value="18">18px</option>
+                            <option value="20">20px</option>
+                            <option value="24">24px</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Font Family</label>
+                        <select id="font-family">
+                            <option value="Arial, sans-serif">Arial</option>
+                            <option value="'Times New Roman', serif" selected>Times New Roman</option>
+                            <option value="'Courier New', monospace">Courier New</option>
+                            <option value="'Georgia', serif">Georgia</option>
+                            <option value="'Verdana', sans-serif">Verdana</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Text Color</label>
+                        <div class="color-grid">
+                            <div class="color-option active" style="background-color: #000000;" data-color="#000000"></div>
+                            <div class="color-option" style="background-color: #ffffff; border: 1px solid #ccc;" data-color="#ffffff"></div>
+                            <div class="color-option" style="background-color: #ff0000;" data-color="#ff0000"></div>
+                            <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
+                            <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+                            <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
+                            <div class="color-option" style="background-color: #ff00ff;" data-color="#ff00ff"></div>
+                            <div class="color-option" style="background-color: #00ffff;" data-color="#00ffff"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Highlight Color</label>
+                        <div class="color-grid">
+                            <div class="color-option" style="background-color: #ffffff; border: 1px solid #ccc;" data-highlight="transparent"></div>
+                            <div class="color-option" style="background-color: #ffff00;" data-highlight="#ffff00"></div>
+                            <div class="color-option" style="background-color: #ffeb3b;" data-highlight="#ffeb3b"></div>
+                            <div class="color-option" style="background-color: #a5d6a7;" data-highlight="#a5d6a7"></div>
+                            <div class="color-option" style="background-color: #81d4fa;" data-highlight="#81d4fa"></div>
+                            <div class="color-option" style="background-color: #ffcc80;" data-highlight="#ffcc80"></div>
+                            <div class="color-option" style="background-color: #f48fb1;" data-highlight="#f48fb1"></div>
+                            <div class="color-option" style="background-color: #ce93d8;" data-highlight="#ce93d8"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="panel-title"><i class="material-icons">format_paint</i> Cell Formatting</h2>
+                    <div class="form-group">
+                        <label>Background Color</label>
+                        <div class="color-grid">
+                            <div class="color-option" style="background-color: #ffffff; border: 1px solid #ccc;" data-bgcolor="#ffffff"></div>
+                            <div class="color-option" style="background-color: #f5f5f5;" data-bgcolor="#f5f5f5"></div>
+                            <div class="color-option" style="background-color: #e3f2fd;" data-bgcolor="#e3f2fd"></div>
+                            <div class="color-option" style="background-color: #e8f5e9;" data-bgcolor="#e8f5e9"></div>
+                            <div class="color-option" style="background-color: #fff8e1;" data-bgcolor="#fff8e1"></div>
+                            <div class="color-option" style="background-color: #fbe9e7;" data-bgcolor="#fbe9e7"></div>
+                            <div class="color-option" style="background-color: #f3e5f5;" data-bgcolor="#f3e5f5"></div>
+                            <div class="color-option" style="background-color: #e0f7fa;" data-bgcolor="#e0f7fa"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Border Color</label>
+                        <div class="color-grid">
+                            <div class="color-option active" style="background-color: #000000;" data-bordercolor="#000000"></div>
+                            <div class="color-option" style="background-color: #cccccc;" data-bordercolor="#cccccc"></div>
+                            <div class="color-option" style="background-color: #e53935;" data-bordercolor="#e53935"></div>
+                            <div class="color-option" style="background-color: #1e88e5;" data-bordercolor="#1e88e5"></div>
+                            <div class="color-option" style="background-color: #43a047;" data-bordercolor="#43a047"></div>
+                            <div class="color-option" style="background-color: #fdd835;" data-bordercolor="#fdd835"></div>
+                            <div class="color-option" style="background-color: #8e24aa;" data-bordercolor="#8e24aa"></div>
+                            <div class="color-option" style="background-color: #f4511e;" data-bordercolor="#f4511e"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="image-upload">
+                        <button class="secondary" id="upload-btn">
+                            <i class="material-icons">image</i> Upload Cell Background Image
+                        </button>
+                        <input type="file" id="bg-image" accept="image/*">
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="panel-title"><i class="material-icons">edit</i> Cell Operations</h2>
+                    <div class="toolbar">
+                        <div class="tool-btn" id="add-row-top">
+                            <i class="material-icons">arrow_upward</i> Add Row Top
+                        </div>
+                        <div class="tool-btn" id="add-row-bottom">
+                            <i class="material-icons">arrow_downward</i> Add Row Bottom
+                        </div>
+                        <div class="tool-btn" id="add-col-left">
+                            <i class="material-icons">arrow_back</i> Add Column Left
+                        </div>
+                        <div class="tool-btn" id="add-col-right">
+                            <i class="material-icons">arrow_forward</i> Add Column Right
+                        </div>
+                        <div class="tool-btn" id="delete-row">
+                            <i class="material-icons">delete</i> Delete Row
+                        </div>
+                        <div class="tool-btn" id="delete-col">
+                            <i class="material-icons">delete</i> Delete Column
+                        </div>
+                        <div class="tool-btn" id="copy-cell">
+                            <i class="material-icons">content_copy</i> Copy
+                        </div>
+                        <div class="tool-btn" id="paste-cell">
+                            <i class="material-icons">content_paste</i> Paste
+                        </div>
+                    </div>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="reset-table" class="secondary">
+                        <i class="material-icons">refresh</i> Reset Chart
+                    </button>
+                    <button id="download-table">
+                        <i class="material-icons">download</i> Download as Image
+                    </button>
+                </div>
+            </div>
+
+            <div class="preview-panel">
+                <div class="preview-controls">
+                    <h2 class="panel-title"><i class="material-icons">preview</i> Preview</h2>
+                    <div class="controls-row">
+                        <button class="secondary" id="add-title">
+                            <i class="material-icons">title</i> Add Chart Title
+                        </button>
+                        <button class="secondary" id="clear-title">
+                            <i class="material-icons">clear</i> Clear Title
+                        </button>
+                    </div>
+                </div>
+                <div class="preview-container">
+                    <div class="a4-page page-portrait" id="a4-page">
+                        <div class="page-margin" id="page-margin"></div>
+                        <div class="table-container">
+                            <div class="chart-title" contenteditable="true" id="chart-title">Sales Report Q1 2023</div>
+                            <table id="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Jan</th>
+                                        <th>Feb</th>
+                                        <th>Mar</th>
+                                        <th>Q1 Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Laptops</td>
+                                        <td>$12,450</td>
+                                        <td>$14,200</td>
+                                        <td>$15,800</td>
+                                        <td>$42,450</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Monitors</td>
+                                        <td>$8,200</td>
+                                        <td>$9,100</td>
+                                        <td>$9,500</td>
+                                        <td>$26,800</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Phones</td>
+                                        <td>$18,300</td>
+                                        <td>$19,500</td>
+                                        <td>$21,200</td>
+                                        <td>$59,000</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Tablets</td>
+                                        <td>$10,500</td>
+                                        <td>$11,200</td>
+                                        <td>$12,800</td>
+                                        <td>$34,500</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Total</td>
+                                        <td>$49,450</td>
+                                        <td>$54,000</td>
+                                        <td>$59,300</td>
+                                        <td>$162,750</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bar">
+            <div class="cell-info">
+                <div class="info-item">
+                    <i class="material-icons">border_all</i>
+                    <span>Selected: <span id="selected-cell">A1</span></span>
+                </div>
+                <div class="info-item">
+                    <i class="material-icons">font_download</i>
+                    <span>Font: <span id="current-font">14px Times New Roman</span></span>
+                </div>
+                <div class="info-item">
+                    <i class="material-icons">format_color_fill</i>
+                    <span>Background: <span id="current-bg">None</span></span>
+                </div>
+            </div>
+            <div class="document-info">
+                <div class="info-item">
+                    <i class="material-icons">description</i>
+                    <span>Ready to Download</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Table settings
+            const rowsInput = document.getElementById('rows');
+            const columnsInput = document.getElementById('columns');
+            const orientationSelect = document.getElementById('orientation');
+            const marginInput = document.getElementById('margin');
+            const applySettingsBtn = document.getElementById('apply-settings');
+            
+            // Text formatting
+            const fontSizeSelect = document.getElementById('font-size');
+            const fontFamilySelect = document.getElementById('font-family');
+            const formatButtons = document.querySelectorAll('.format-btn');
+            const colorOptions = document.querySelectorAll('.color-option[data-color]');
+            const highlightOptions = document.querySelectorAll('.color-option[data-highlight]');
+            
+            // Cell formatting
+            const bgColorOptions = document.querySelectorAll('.color-option[data-bgcolor]');
+            const borderColorOptions = document.querySelectorAll('.color-option[data-bordercolor]');
+            const bgImageInput = document.getElementById('bg-image');
+            const uploadBtn = document.getElementById('upload-btn');
+            
+            // Cell operations
+            const addRowTopBtn = document.getElementById('add-row-top');
+            const addRowBottomBtn = document.getElementById('add-row-bottom');
+            const addColLeftBtn = document.getElementById('add-col-left');
+            const addColRightBtn = document.getElementById('add-col-right');
+            const deleteRowBtn = document.getElementById('delete-row');
+            const deleteColBtn = document.getElementById('delete-col');
+            const copyCellBtn = document.getElementById('copy-cell');
+            const pasteCellBtn = document.getElementById('paste-cell');
+            const resetTableBtn = document.getElementById('reset-table');
+            const downloadTableBtn = document.getElementById('download-table');
+            
+            // Preview
+            const addTitleBtn = document.getElementById('add-title');
+            const clearTitleBtn = document.getElementById('clear-title');
+            const chartTitle = document.getElementById('chart-title');
+            const dataTable = document.getElementById('data-table');
+            const a4Page = document.getElementById('a4-page');
+            const pageMargin = document.getElementById('page-margin');
+            
+            // Status bar
+            const selectedCellSpan = document.getElementById('selected-cell');
+            const currentFontSpan = document.getElementById('current-font');
+            const currentBgSpan = document.getElementById('current-bg');
+            
+            // State variables
+            let selectedCell = null;
+            let copiedCell = null;
+            let currentTextColor = '#000000';
+            let currentBgColor = 'transparent';
+            let currentBorderColor = '#000000';
+            
+            // Initialize
+            updateMargin();
+            initTableInteraction();
+            
+            // Event listeners
+            applySettingsBtn.addEventListener('click', applySettings);
+            marginInput.addEventListener('change', updateMargin);
+            orientationSelect.addEventListener('change', updateOrientation);
+            
+            fontSizeSelect.addEventListener('change', applyTextFormatting);
+            fontFamilySelect.addEventListener('change', applyTextFormatting);
+            
+            formatButtons.forEach(btn => {
+                btn.addEventListener('click', toggleTextFormat);
+            });
+            
+            colorOptions.forEach(option => {
+                option.addEventListener('click', setTextColor);
+            });
+            
+            highlightOptions.forEach(option => {
+                option.addEventListener('click', setHighlightColor);
+            });
+            
+            bgColorOptions.forEach(option => {
+                option.addEventListener('click', setBgColor);
+            });
+            
+            borderColorOptions.forEach(option => {
+                option.addEventListener('click', setBorderColor);
+            });
+            
+            // Image upload handling
+            uploadBtn.addEventListener('click', () => {
+                bgImageInput.click();
+            });
+            
+            bgImageInput.addEventListener('change', setBgImage);
+            
+            // Cell operations
+            addRowTopBtn.addEventListener('click', () => addRow('top'));
+            addRowBottomBtn.addEventListener('click', () => addRow('bottom'));
+            addColLeftBtn.addEventListener('click', () => addColumn('left'));
+            addColRightBtn.addEventListener('click', () => addColumn('right'));
+            deleteRowBtn.addEventListener('click', deleteRow);
+            deleteColBtn.addEventListener('click', deleteColumn);
+            copyCellBtn.addEventListener('click', copyCell);
+            pasteCellBtn.addEventListener('click', pasteCell);
+            
+            resetTableBtn.addEventListener('click', resetTable);
+            downloadTableBtn.addEventListener('click', downloadAsImage);
+            
+            addTitleBtn.addEventListener('click', () => {
+                chartTitle.textContent = 'Chart Title';
+                chartTitle.style.display = 'block';
+            });
+            
+            clearTitleBtn.addEventListener('click', () => {
+                chartTitle.style.display = 'none';
+            });
+            
+            // Chart title editing
+            chartTitle.addEventListener('input', () => {
+                if (chartTitle.textContent.trim() === '') {
+                    chartTitle.textContent = 'Chart Title';
+                }
+            });
+            
+            // Functions
+            function applySettings() {
+                const rows = parseInt(rowsInput.value);
+                const columns = parseInt(columnsInput.value);
+                updateTableSize(rows, columns);
+            }
+            
+            function updateTableSize(rows, columns) {
+                const tbody = dataTable.querySelector('tbody');
+                const thead = dataTable.querySelector('thead');
+                
+                // Update rows
+                const currentRows = tbody.querySelectorAll('tr').length;
+                if (rows > currentRows) {
+                    // Add rows
+                    for (let i = currentRows; i < rows; i++) {
+                        const newRow = document.createElement('tr');
+                        for (let j = 0; j < columns; j++) {
+                            const cell = document.createElement(i === 0 && j === 0 ? 'th' : 'td');
+                            cell.textContent = 'New Data';
+                            cell.contentEditable = true;
+                            newRow.appendChild(cell);
+                        }
+                        tbody.appendChild(newRow);
+                    }
+                } else if (rows < currentRows) {
+                    // Remove rows
+                    const rowsToRemove = currentRows - rows;
+                    for (let i = 0; i < rowsToRemove; i++) {
+                        tbody.removeChild(tbody.lastChild);
+                    }
+                }
+                
+                // Update columns
+                const currentColumns = thead.querySelector('tr').children.length;
+                if (columns > currentColumns) {
+                    // Add columns
+                    const headerRow = thead.querySelector('tr');
+                    const bodyRows = tbody.querySelectorAll('tr');
+                    
+                    for (let i = currentColumns; i < columns; i++) {
+                        // Add header cell
+                        const headerCell = document.createElement('th');
+                        headerCell.textContent = `Col ${i+1}`;
+                        headerRow.appendChild(headerCell);
+                        
+                        // Add body cells
+                        bodyRows.forEach(row => {
+                            const cell = document.createElement('td');
+                            cell.textContent = 'New Data';
+                            cell.contentEditable = true;
+                            row.appendChild(cell);
+                        });
+                    }
+                } else if (columns < currentColumns) {
+                    // Remove columns
+                    const colsToRemove = currentColumns - columns;
+                    const headerRow = thead.querySelector('tr');
+                    const bodyRows = tbody.querySelectorAll('tr');
+                    
+                    for (let i = 0; i < colsToRemove; i++) {
+                        // Remove header cell
+                        headerRow.removeChild(headerRow.lastChild);
+                        
+                        // Remove body cells
+                        bodyRows.forEach(row => {
+                            row.removeChild(row.lastChild);
+                        });
+                    }
+                }
+                
+                initTableInteraction();
+            }
+            
+            function updateMargin() {
+                const margin = parseInt(marginInput.value);
+                pageMargin.style.top = `${margin}px`;
+                pageMargin.style.right = `${margin}px`;
+                pageMargin.style.bottom = `${margin}px`;
+                pageMargin.style.left = `${margin}px`;
+            }
+            
+            function updateOrientation() {
+                if (orientationSelect.value === 'landscape') {
+                    a4Page.classList.remove('page-portrait');
+                    a4Page.classList.add('page-landscape');
+                } else {
+                    a4Page.classList.remove('page-landscape');
+                    a4Page.classList.add('page-portrait');
+                }
+            }
+            
+            function initTableInteraction() {
+                const cells = dataTable.querySelectorAll('th, td');
+                cells.forEach(cell => {
+                    cell.contentEditable = true;
+                    cell.addEventListener('click', () => {
+                        if (selectedCell) {
+                            selectedCell.classList.remove('selected-cell');
+                        }
+                        selectedCell = cell;
+                        selectedCell.classList.add('selected-cell');
+                        
+                        // Update status bar
+                        const row = cell.parentElement.rowIndex;
+                        const col = cell.cellIndex;
+                        selectedCellSpan.textContent = `${String.fromCharCode(65 + col)}${row + 1}`;
+                        
+                        // Update formatting display
+                        currentFontSpan.textContent = `${fontSizeSelect.value}px ${fontFamilySelect.selectedOptions[0].text}`;
+                        currentBgSpan.textContent = cell.style.backgroundColor || 'None';
+                    });
+                });
+                
+                // Select first cell by default
+                if (cells.length > 0) {
+                    cells[0].classList.add('selected-cell');
+                    selectedCell = cells[0];
+                    selectedCellSpan.textContent = 'A1';
+                }
+            }
+            
+            function applyTextFormatting() {
+                if (!selectedCell) return;
+                
+                selectedCell.style.fontSize = `${fontSizeSelect.value}px`;
+                selectedCell.style.fontFamily = fontFamilySelect.value;
+                currentFontSpan.textContent = `${fontSizeSelect.value}px ${fontFamilySelect.selectedOptions[0].text}`;
+            }
+            
+            function toggleTextFormat(e) {
+                if (!selectedCell) return;
+                
+                const format = e.currentTarget.dataset.format;
+                selectedCell.classList.toggle(format);
+                
+                // Update button state
+                e.currentTarget.classList.toggle('active');
+            }
+            
+            function setTextColor(e) {
+                if (!selectedCell) return;
+                
+                const color = e.currentTarget.dataset.color;
+                selectedCell.style.color = color;
+                currentTextColor = color;
+                
+                // Update active state
+                colorOptions.forEach(option => {
+                    option.classList.remove('active');
+                });
+                e.currentTarget.classList.add('active');
+            }
+            
+            function setHighlightColor(e) {
+                if (!selectedCell) return;
+                
+                const color = e.currentTarget.dataset.highlight;
+                if (color === 'transparent') {
+                    selectedCell.classList.remove('highlight');
+                    selectedCell.style.backgroundColor = '';
+                } else {
+                    selectedCell.classList.add('highlight');
+                    selectedCell.style.backgroundColor = color;
+                }
+                
+                currentBgSpan.textContent = color === 'transparent' ? 'None' : color;
+            }
+            
+            function setBgColor(e) {
+                if (!selectedCell) return;
+                
+                const color = e.currentTarget.dataset.bgcolor;
+                selectedCell.style.backgroundColor = color;
+                selectedCell.classList.remove('highlight');
+                currentBgSpan.textContent = color;
+            }
+            
+            function setBorderColor(e) {
+                if (!selectedCell) return;
+                
+                const color = e.currentTarget.dataset.bordercolor;
+                selectedCell.style.borderColor = color;
+                currentBorderColor = color;
+                
+                // Update active state
+                borderColorOptions.forEach(option => {
+                    option.classList.remove('active');
+                });
+                e.currentTarget.classList.add('active');
+            }
+            
+            function setBgImage(e) {
+                if (!selectedCell) return;
+                
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    selectedCell.style.backgroundImage = `url(${event.target.result})`;
+                    selectedCell.style.backgroundSize = 'cover';
+                    selectedCell.style.backgroundPosition = 'center';
+                    currentBgSpan.textContent = 'Image';
+                };
+                reader.readAsDataURL(file);
+            }
+            
+            function addRow(position) {
+                if (!selectedCell) return;
+                
+                const row = selectedCell.parentElement;
+                const table = row.parentElement;
+                const isHeader = table.tagName === 'THEAD';
+                const newRow = document.createElement('tr');
+                const colCount = row.children.length;
+                
+                for (let i = 0; i < colCount; i++) {
+                    const cell = document.createElement(isHeader ? 'th' : 'td');
+                    cell.textContent = 'New';
+                    cell.contentEditable = true;
+                    newRow.appendChild(cell);
+                }
+                
+                if (position === 'top') {
+                    table.insertBefore(newRow, row);
+                } else {
+                    table.insertBefore(newRow, row.nextSibling);
+                }
+                
+                initTableInteraction();
+            }
+            
+            function addColumn(position) {
+                if (!selectedCell) return;
+                
+                const row = selectedCell.parentElement;
+                const colIndex = selectedCell.cellIndex;
+                const rows = dataTable.querySelectorAll('tr');
+                
+                rows.forEach((row, index) => {
+                    const cell = document.createElement(index === 0 ? 'th' : 'td');
+                    cell.textContent = 'New';
+                    cell.contentEditable = true;
+                    
+                    if (position === 'left') {
+                        row.insertBefore(cell, row.children[colIndex]);
+                    } else {
+                        if (colIndex === row.children.length - 1) {
+                            row.appendChild(cell);
+                        } else {
+                            row.insertBefore(cell, row.children[colIndex + 1]);
+                        }
+                    }
+                });
+                
+                initTableInteraction();
+            }
+            
+            function deleteRow() {
+                if (!selectedCell) return;
+                
+                const row = selectedCell.parentElement;
+                if (dataTable.querySelectorAll('tr').length <= 1) return;
+                
+                row.parentElement.removeChild(row);
+                selectedCell = null;
+                
+                initTableInteraction();
+            }
+            
+            function deleteColumn() {
+                if (!selectedCell) return;
+                
+                const colIndex = selectedCell.cellIndex;
+                const rows = dataTable.querySelectorAll('tr');
+                
+                if (rows[0].children.length <= 1) return;
+                
+                rows.forEach(row => {
+                    row.removeChild(row.children[colIndex]);
+                });
+                
+                selectedCell = null;
+                initTableInteraction();
+            }
+            
+            function copyCell() {
+                if (!selectedCell) return;
+                copiedCell = selectedCell.cloneNode(true);
+            }
+            
+            function pasteCell() {
+                if (!selectedCell || !copiedCell) return;
+                
+                selectedCell.innerHTML = copiedCell.innerHTML;
+                selectedCell.className = copiedCell.className;
+                selectedCell.style.cssText = copiedCell.style.cssText;
+            }
+            
+            function resetTable() {
+                if (confirm('Are you sure you want to reset the chart? All data will be lost.')) {
+                    const tbody = dataTable.querySelector('tbody');
+                    tbody.innerHTML = '';
+                    
+                    // Create default table
+                    const defaultRows = 5;
+                    const defaultCols = 5;
+                    
+                    // Create header
+                    const headerRow = document.createElement('tr');
+                    headerRow.innerHTML = `
+                        <th>Product</th>
+                        <th>Jan</th>
+                        <th>Feb</th>
+                        <th>Mar</th>
+                        <th>Q1 Total</th>
+                    `;
+                    dataTable.querySelector('thead').innerHTML = '';
+                    dataTable.querySelector('thead').appendChild(headerRow);
+                    
+                    // Create body
+                    const bodyData = [
+                        ['Laptops', '$12,450', '$14,200', '$15,800', '$42,450'],
+                        ['Monitors', '$8,200', '$9,100', '$9,500', '$26,800'],
+                        ['Phones', '$18,300', '$19,500', '$21,200', '$59,000'],
+                        ['Tablets', '$10,500', '$11,200', '$12,800', '$34,500'],
+                        ['Total', '$49,450', '$54,000', '$59,300', '$162,750']
+                    ];
+                    
+                    bodyData.forEach(rowData => {
+                        const row = document.createElement('tr');
+                        rowData.forEach(cellData => {
+                            const cell = document.createElement('td');
+                            cell.textContent = cellData;
+                            cell.contentEditable = true;
+                            row.appendChild(cell);
+                        });
+                        tbody.appendChild(row);
+                    });
+                    
+                    // Reset title
+                    chartTitle.textContent = 'Sales Report Q1 2023';
+                    chartTitle.style.display = 'block';
+                    
+                    // Reset settings
+                    rowsInput.value = defaultRows;
+                    columnsInput.value = defaultCols;
+                    orientationSelect.value = 'portrait';
+                    marginInput.value = 20;
+                    updateMargin();
+                    updateOrientation();
+                    
+                    initTableInteraction();
+                }
+            }
+            
+            function downloadAsImage() {
+                html2canvas(a4Page).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'chart-maker-export.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

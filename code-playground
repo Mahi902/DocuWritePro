@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top Banner</title>
+  <style>
+    .top-banner {
+      background: #d7f1ff; /* light blue */
+      color: #004c6d;
+      text-align: center;
+      padding: 10px 40px 10px 10px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+      max-height: 60px;
+      opacity: 1;
+    }
+    .top-banner.hide {
+      max-height: 0;
+      padding: 0 40px 0 10px;
+      opacity: 0;
+    }
+    .close-btn {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      font-size: 16px;
+      font-weight: bold;
+      color: #004c6d;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 8px; /* Larger hit area */
+    }
+    .close-btn:hover {
+      color: #ff3b3b;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-banner" id="banner">
+    <span id="banner-text">Try with AI Assist &gt;</span>
+    <button class="close-btn" id="close-btn">✕</button>
+  </div>
+
+  <script>
+    const banner = document.getElementById('banner');
+    const closeBtn = document.getElementById('close-btn');
+    const bannerText = document.getElementById('banner-text');
+
+    bannerText.addEventListener('click', () => {
+      window.open("https://sites.google.com/view/docuwritepro/html", "_blank");
+    });
+
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      banner.classList.add('hide');
+      setTimeout(() => banner.remove(), 400);
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Playground</title>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+    /* CSS Variables for theming - LIGHT THEME */
+    :root {
+      --primary-bg: #f8f9fa; /* Very light gray */
+      --secondary-bg: #e9ecef; /* Slightly darker light gray */
+      --editor-bg: #ffffff; /* White for editor */
+      --text-color: #212529; /* Dark gray for text */
+      --accent-color: #1a73e8; /* Google Blue */
+      --hover-color: rgba(0, 0, 0, 0.05); /* Light hover effect */
+      --control-bg: rgba(0, 0, 0, 0.03); /* Very light control background */
+      --border-radius: 8px;
+      --transition: all 0.3s ease;
+      --line-number-width: 45px; /* Enough space for 3 digits + padding */
+      --header-bg: #ffffff; /* White header */
+      --header-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Light shadow */
+      --line-number-bg: #e0e0e0; /* Light gray for line numbers */
+      --line-number-color: #888; /* Darker gray for line number text */
+      --console-bg: #f1f3f4; /* Light background for console */
+      --console-output-bg: #ffffff; /* White for console output */
+      --console-text-color: #343a40; /* Dark text for console */
+      --console-border: 1px solid #dee2e6; /* Light border */
+    }
+
+    /* Reset basic styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Body styling for full height and light gradient background */
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, var(--primary-bg), var(--secondary-bg));
+      color: var(--text-color);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden; /* Prevent scrolling on the main body */
+    }
+
+    /* Header styling */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: var(--header-bg);
+      box-shadow: var(--header-shadow);
+      z-index: 10; /* Ensure header stays on top */
+      border-bottom: 1px solid #e0e0e0; /* Subtle border */
+    }
+
+    /* Logo styling */
+    .logo {
+      font-weight: 500;
+      font-size: 1.2rem;
+      color: var(--accent-color); /* Google Blue for logo */
+    }
+
+    /* Tabs container */
+    .tabs {
+      display: flex;
+      gap: 20px;
+    }
+
+    /* Individual tab styling */
+    .tab {
+      cursor: pointer;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: var(--border-radius);
+      transition: var(--transition);
+      color: var(--text-color); /* Default tab text color */
+    }
+
+    .tab:hover {
+      background: var(--hover-color);
+    }
+
+    .tab.active {
+      background: var(--accent-color); /* Highlight active tab */
+      color: #ffffff; /* White text for active tab */
+    }
+
+    /* Controls container (undo, redo, save, clear) */
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Icon button styling */
+    .icon-btn {
+      cursor: pointer;
+      padding: 8px;
+      border-radius: var(--border-radius);
+      background: var(--control-bg);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-color); /* Icon color */
+      border: 1px solid #e0e0e0; /* Light border for buttons */
+    }
+
+    .icon-btn:hover {
+      background: var(--hover-color);
+    }
+
+    .icon-btn:active {
+      transform: scale(0.95); /* Click feedback */
+    }
+
+    /* Main content area wrapper for editor/preview and console */
+    .main-content-area {
+        flex: 1; /* Takes remaining vertical space */
+        display: flex;
+        overflow: hidden; /* Contains children */
+    }
+
+    /* Editor and preview container */
+    .editor-container {
+      flex: 1; /* Takes available width */
+      display: flex; /* For line numbers and textarea */
+      position: relative; /* For absolute positioning of run button */
+      background: var(--editor-bg);
+      overflow: hidden; /* Ensures content within is clipped */
+      border-right: var(--console-border); /* Border between editor and console */
+    }
+
+    /* Line numbers sidebar */
+    .line-numbers {
+      width: var(--line-number-width);
+      padding: 20px 0; /* Vertical padding to match textarea */
+      background: var(--line-number-bg); /* Light gray for numbers */
+      color: var(--line-number-color); /* Darker gray for number text */
+      font-family: 'Roboto Mono', monospace;
+      font-size: 14px;
+      line-height: 1.5; /* Match textarea line height */
+      text-align: right;
+      overflow: hidden; /* Hide scrollbar */
+      user-select: none; /* Prevent selection of numbers */
+      flex-shrink: 0; /* Prevent shrinking */
+      border-right: 1px solid #d0d0d0; /* Subtle border */
+      box-shadow: inset -1px 0 3px rgba(0, 0, 0, 0.05); /* Inner shadow */
+    }
+
+    /* Style for individual line number spans */
+    .line-numbers .line-number-item {
+        display: block; /* Ensure each number is on its own line */
+        padding-right: 8px; /* Padding for spacing from editor */
+    }
+
+    /* Editor textarea styling */
+    #editor {
+      position: relative; /* Make it a positioned element for z-index */
+      z-index: 1; /* Ensure it's above line numbers in terms of interaction if needed */
+      display: block;
+      border: none;
+      resize: none; /* Disable manual resize */
+      background: var(--editor-bg);
+      color: var(--text-color);
+      font-family: 'Roboto Mono', monospace; /* Monospaced font for code */
+      font-size: 14px;
+      padding: 20px; /* Standard padding */
+      padding-left: 10px; /* Adjust padding to make space for line numbers */
+      outline: none;
+      line-height: 1.5;
+      tab-size: 2; /* Tab width */
+      white-space: pre-wrap; /* Preserve whitespace and wrap text */
+      overflow-y: scroll; /* Enable vertical scrolling */
+      flex: 1; /* Takes remaining width in editor-container */
+    }
+
+    /* Custom scrollbar for editor */
+    #editor::-webkit-scrollbar {
+        width: 8px;
+    }
+    #editor::-webkit-scrollbar-track {
+        background: #f0f0f0; /* Light track */
+        border-radius: 10px;
+    }
+    #editor::-webkit-scrollbar-thumb {
+        background: #ccc; /* Light thumb */
+        border-radius: 10px;
+    }
+    #editor::-webkit-scrollbar-thumb:hover {
+        background: #bbb;
+    }
+
+    /* Preview iframe styling */
+    #preview {
+      display: none; /* Hidden by default */
+      border: none;
+      background: white; /* Default background for preview content */
+      position: absolute; /* To overlay editor when active */
+      z-index: 2; /* Ensure preview is above editor when active */
+/* Add these four lines to make it fill the container */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+    }
+
+    /* Active state for editor/preview */
+    #preview.active {
+      display: block;
+    }
+    /* Editor is always display: flex container for line numbers, but its textarea child is hidden */
+    #editor.active {
+      /* The textarea itself is shown/hidden, not the container */
+    }
+    #editor-wrapper.active #editor {
+        display: block;
+    }
+    #editor-wrapper.active .line-numbers {
+        display: block;
+    }
+
+
+    /* Run Code button styling */
+    .run-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 20;
+      background: var(--accent-color);
+      color: white;
+      padding: 10px 16px;
+      border-radius: var(--border-radius);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Lighter shadow */
+    }
+
+    .run-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+    }
+
+    .run-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Console Sidebar Styling */
+    .console-sidebar {
+        width: 350px; /* Fixed width for the sidebar */
+        background: var(--console-bg); /* Light background for console */
+        border-left: var(--console-border);
+        display: flex;
+        flex-direction: column;
+        padding: 15px;
+        overflow: hidden;
+        flex-shrink: 0; /* Prevent shrinking */
+        display: none; /* Hidden by default */
+        box-shadow: inset 1px 0 3px rgba(0, 0, 0, 0.05); /* Inner shadow */
+    }
+
+    .console-sidebar.active {
+        display: flex;
+    }
+
+    .console-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        color: var(--accent-color); /* Google Blue for console header */
+    }
+
+    .console-header h2 {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-left: 8px;
+        flex-grow: 1;
+    }
+
+    .console-output {
+        flex: 1;
+        background: var(--console-output-bg); /* White for console output */
+        border-radius: var(--border-radius);
+        padding: 10px;
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.85rem;
+        color: var(--console-text-color); /* Dark text for logs */
+        overflow-y: auto; /* Enable scrolling for logs */
+        white-space: pre-wrap; /* Preserve whitespace and wrap text */
+        word-break: break-all; /* Break long words */
+        border: var(--console-border); /* Light border for log area */
+    }
+
+    /* Console log message types */
+    .log-info { color: var(--console-text-color); } /* Dark gray */
+    .log-warn { color: #ff9800; } /* Orange */
+    .log-error { color: #f44336; } /* Red */
+
+    /* Custom scrollbar for console output */
+    .console-output::-webkit-scrollbar {
+        width: 8px;
+    }
+    .console-output::-webkit-scrollbar-track {
+        background: #f0f0f0; /* Light track */
+        border-radius: 10px;
+    }
+    .console-output::-webkit-scrollbar-thumb {
+        background: #ccc; /* Light thumb */
+        border-radius: 10px;
+    }
+    .console-output::-webkit-scrollbar-thumb:hover {
+        background: #bbb;
+    }
+
+    /* Bottom bar styling */
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: var(--header-bg); /* White background */
+      box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.08); /* Light shadow */
+      border-top: 1px solid #e0e0e0; /* Subtle border */
+      z-index: 10;
+    }
+
+    /* Utility controls (copy, paste, download, upload) */
+    .utility-controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Status text styling */
+    .status {
+      font-size: 0.9rem;
+      opacity: 0.7;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-color); /* Dark text color */
+    }
+
+    /* Hidden file input */
+    #uploadInput {
+      display: none;
+    }
+
+    /* Toast notification styling */
+    .toast {
+      position: fixed;
+      bottom: 70px; /* Above the bottom bar */
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.7); /* Dark background for toast */
+      color: white;
+      padding: 10px 20px;
+      border-radius: var(--border-radius);
+      z-index: 100;
+      opacity: 0;
+      transition: var(--transition);
+      pointer-events: none; /* Allow clicks to pass through */
+    }
+
+    .toast.show {
+      opacity: 1;
+      bottom: 80px; /* Moves up slightly when shown */
+    }
+</style>
+</head>
+<body>
+<header>
+    <div class="logo">Code Playground</div>
+    <div class="tabs">
+      <div class="tab active" id="editor-tab">Editor</div>
+      <div class="tab" id="preview-tab">Preview</div>
+      <div class="tab" id="console-tab">Console</div>
+    </div>
+    <div class="controls">
+      <div class="icon-btn" id="undo-btn" title="Undo (Ctrl+Z)">
+        <span class="material-symbols-outlined">undo</span>
+      </div>
+      <div class="icon-btn" id="redo-btn" title="Redo (Ctrl+Y)">
+        <span class="material-symbols-outlined">redo</span>
+      </div>
+      <div class="icon-btn" id="save-btn" title="Save (Ctrl+S)">
+        <span class="material-symbols-outlined">save</span>
+      </div>
+      <div class="icon-btn" id="clear-btn" title="Clear">
+        <span class="material-symbols-outlined">delete</span>
+      </div>
+    </div>
+</header>
+
+<div class="main-content-area">
+    <div class="editor-container" id="editor-wrapper">
+      <div class="line-numbers" id="line-numbers"></div> <textarea id="editor" class="active" spellcheck="false"></textarea>
+      <iframe id="preview"></iframe>
+      <div class="run-btn" id="run-btn">
+        <span class="material-symbols-outlined">play_arrow</span>
+        Run Code
+      </div>
+    </div>
+
+    <div id="console-sidebar" class="console-sidebar">
+        <div class="console-header">
+            <span class="material-symbols-outlined">terminal</span>
+            <h2>Console Logs</h2>
+            <div class="icon-btn" id="clear-console-btn" title="Clear Console">
+                <span class="material-symbols-outlined">clear_all</span>
+            </div>
+        </div>
+        <div id="console-output" class="console-output"></div>
+    </div>
+</div>
+
+<div class="bottom-bar">
+    <div class="status">
+      <span class="material-symbols-outlined" style="font-size: 16px">info</span>
+      <span id="statusText">Ready</span>
+    </div>
+    <div class="utility-controls">
+      <div class="icon-btn" id="copy-btn" title="Copy Code">
+        <span class="material-symbols-outlined">content_copy</span>
+      </div>
+      <div class="icon-btn" id="paste-btn" title="Paste Code">
+        <span class="material-symbols-outlined">content_paste</span>
+      </div>
+      <div class="icon-btn" id="download-btn" title="Download">
+        <span class="material-symbols-outlined">download</span>
+      </div>
+      <div class="icon-btn" id="upload-btn" title="Upload">
+        <span class="material-symbols-outlined">upload</span>
+      </div>
+    </div>
+</div>
+
+<input type="file" id="uploadInput" accept=".html,.txt,.js" />
+
+<div class="toast" id="toast"></div>
+
+<script>
+    // JavaScript will go here
+// DOM Elements
+const editor = document.getElementById('editor');
+const preview = document.getElementById('preview');
+const statusText = document.getElementById('statusText');
+const toast = document.getElementById('toast');
+const tabs = document.querySelectorAll('.tab');
+const uploadInput = document.getElementById('uploadInput');
+const lineNumbersDiv = document.getElementById('line-numbers');
+const consoleSidebar = document.getElementById('console-sidebar');
+const consoleOutput = document.getElementById('console-output');
+const editorWrapper = document.getElementById('editor-wrapper');
+
+// Control Buttons
+const runBtn = document.getElementById('run-btn');
+const undoBtn = document.getElementById('undo-btn');
+const redoBtn = document.getElementById('redo-btn');
+const saveBtn = document.getElementById('save-btn');
+const clearBtn = document.getElementById('clear-btn');
+const copyBtn = document.getElementById('copy-btn');
+const pasteBtn = document.getElementById('paste-btn');
+const downloadBtn = document.getElementById('download-btn');
+const uploadBtn = document.getElementById('upload-btn');
+const clearConsoleBtn = document.getElementById('clear-console-btn');
+
+// State variables for history management
+let historyStack = [];
+let redoStack = [];
+let currentState = '';
+
+// Initialize the application on window load
+window.onload = () => {
+    const savedCode = localStorage.getItem('savedCode');
+    if (savedCode) {
+    editor.value = savedCode;
+    showToast('Previous code loaded');
+    }
+
+    currentState = editor.value;
+    historyStack.push(currentState);
+
+    setupKeyboardShortcuts();
+    updateLineNumbers(); // Initial update of line numbers
+    attachEventListeners(); // Attach all event listeners
+};
+
+// Function to attach all event listeners
+function attachEventListeners() {
+    // Tab Event Listeners
+    document.getElementById('editor-tab').addEventListener('click', () => showTab('editor'));
+    document.getElementById('preview-tab').addEventListener('click', () => showTab('preview'));
+    document.getElementById('console-tab').addEventListener('click', () => showTab('console'));
+
+    // Control Button Event Listeners
+    runBtn.addEventListener('click', runCode);
+    undoBtn.addEventListener('click', undoEdit);
+    redoBtn.addEventListener('click', redoEdit);
+    saveBtn.addEventListener('click', saveCode);
+    clearBtn.addEventListener('click', clearEditor);
+    copyBtn.addEventListener('click', copyCode);
+    pasteBtn.addEventListener('click', pasteCode);
+    downloadBtn.addEventListener('click', downloadCode);
+    uploadBtn.addEventListener('click', uploadCode);
+    uploadInput.addEventListener('change', handleFileUpload); // For the hidden file input
+    clearConsoleBtn.addEventListener('click', clearConsole);
+}
+
+// Event Listener for editor input: manages history and updates line numbers
+editor.addEventListener('input', () => {
+    clearTimeout(editor.saveTimer);
+    editor.saveTimer = setTimeout(() => {
+    if (editor.value !== currentState) {
+        historyStack.push(currentState);
+        redoStack = [];
+        currentState = editor.value;
+        updateStatus('Editing...');
+    }
+    }, 300);
+    updateLineNumbers(); // Update line numbers on input
+});
+
+// Event Listener for editor scroll: synchronizes line numbers scrolling
+editor.addEventListener('scroll', () => {
+    lineNumbersDiv.scrollTop = editor.scrollTop;
+});
+
+/**
+ * Toggles visibility between the editor, preview, and console tabs.
+ * @param {string} tabName - The name of the tab to show ('editor', 'preview', or 'console').
+ */
+function showTab(tabName) {
+    // Remove 'active' class from all tab content sections
+    editorWrapper.classList.remove('active'); // Editor wrapper
+    preview.classList.remove('active');
+    consoleSidebar.classList.remove('active');
+
+    // Update 'active' class on tab buttons
+    tabs.forEach(tab => {
+    if (tab.textContent.toLowerCase() === tabName) {
+        tab.classList.add('active');
+    } else {
+        tab.classList.remove('active');
+    }
+    });
+
+    // Show the selected tab content and adjust layout
+    if (tabName === 'editor') {
+    editorWrapper.classList.add('active');
+    editor.style.display = 'block'; // Ensure textarea is visible
+    lineNumbersDiv.style.display = 'block'; // Ensure line numbers are visible
+    editorWrapper.style.flex = '1'; // Ensure editor-container takes full width
+    consoleSidebar.style.display = 'none'; // Hide console
+    } else if (tabName === 'preview') {
+    preview.classList.add('active');
+    editor.style.display = 'none'; // Hide textarea
+    lineNumbersDiv.style.display = 'none'; // Hide line numbers
+    editorWrapper.style.flex = '1'; // Ensure editor-container takes full width
+    consoleSidebar.style.display = 'none'; // Hide console
+    // Removed the recursive call to runCode() here.
+    // The user should explicitly click "Run Code" to populate the preview.
+    } else if (tabName === 'console') {
+    consoleSidebar.classList.add('active');
+    editorWrapper.classList.remove('active'); // Hide editor/preview
+    editor.style.display = 'none'; // Hide textarea
+    lineNumbersDiv.style.display = 'none'; // Hide line numbers
+    preview.classList.remove('active'); // Hide preview
+    editorWrapper.style.flex = '0'; // Collapse editor area
+    consoleSidebar.style.display = 'flex'; // Show console sidebar
+    }
+}
+
+/**
+ * Executes the code in the editor and displays it in the preview iframe.
+ * Also injects console logging capabilities into the iframe.
+ */
+function runCode() {
+    try {
+    consoleOutput.innerHTML = ''; // Clear previous console logs
+
+    // Set the iframe's content directly from the editor's value
+    preview.srcdoc = editor.value;
+
+    // After the iframe content loads, inject the console capture script
+    preview.onload = () => {
+        const iframeDoc = preview.contentDocument || preview.contentWindow.document;
+        const script = iframeDoc.createElement('script');
+        script.textContent = `
+            const originalConsoleLog = console.log;
+            const originalConsoleError = console.error;
+            const originalConsoleWarn = console.warn;
+
+            console.log = function(...args) {
+                originalConsoleLog(...args);
+                window.parent.postMessage({ type: 'log', args: args.map(arg => String(arg)) }, '*');
+            };
+            console.error = function(...args) {
+                originalConsoleError(...args);
+                window.parent.postMessage({ type: 'error', args: args.map(arg => String(arg)) }, '*');
+            };
+            console.warn = function(...args) {
+                originalConsoleWarn(...args);
+                window.parent.postMessage({ type: 'warn', args: args.map(arg => String(arg)) }, '*');
+            };
+            // Global error handler for unhandled errors in the iframe
+            window.onerror = function(message, source, lineno, colno, error) {
+                window.parent.postMessage({ type: 'error', args: ['Uncaught Error:', message, 'at ' + source + ':' + lineno + ':' + colno] }, '*');
+                return true; // Prevent default error logging to the iframe's console
+            };
+        `;
+        iframeDoc.body.appendChild(script);
+
+        // Remove the onload listener to prevent multiple injections on subsequent loads
+        preview.onload = null;
+    };
+
+    showTab('preview'); // Switch to preview tab
+    showToast('Code executed successfully');
+    updateStatus('Code executed');
+    } catch (error) {
+    showToast('Error preparing code for execution.', true);
+    updateStatus('Error: ' + error.message);
+    console.error('Code preparation error:', error);
+    }
+}
+
+// Listen for messages from the iframe (console logs)
+window.addEventListener('message', (event) => {
+    if (event.source === preview.contentWindow && event.data && event.data.type && (event.data.type === 'log' || event.data.type === 'error' || event.data.type === 'warn')) {
+        addConsoleLog(event.data.type, event.data.args.join(' '));
+    }
+});
+
+/**
+ * Adds a log message to the console sidebar.
+ * @param {string} type - The type of log ('log', 'warn', 'error').
+ * @param {string} message - The message to log.
+ */
+function addConsoleLog(type, message) {
+    const logElement = document.createElement('div');
+    logElement.classList.add('log-entry');
+    if (type === 'log') {
+        logElement.classList.add('log-info');
+    } else if (type === 'warn') {
+        logElement.classList.add('log-warn');
+    } else if (type === 'error') {
+        logElement.classList.add('log-error');
+    }
+    logElement.textContent = message;
+    consoleOutput.appendChild(logElement);
+    consoleOutput.scrollTop = consoleOutput.scrollHeight; // Scroll to bottom
+}
+
+/**
+ * Clears all messages from the console sidebar.
+ */
+function clearConsole() {
+    consoleOutput.innerHTML = '';
+    showToast('Console cleared');
+    updateStatus('Console cleared');
+}
+
+/**
+ * Undoes the last change in the editor.
+ */
+function undoEdit() {
+    if (historyStack.length > 0) {
+    redoStack.push(currentState);
+    currentState = historyStack.pop();
+    editor.value = currentState;
+    updateLineNumbers(); // Update line numbers after undo
+    showToast('Undo successful');
+    updateStatus('Undo');
+    } else {
+    showToast('Nothing to undo', true);
+    }
+}
+
+/**
+ * Redoes the last undone change in the editor.
+ */
+function redoEdit() {
+    if (redoStack.length > 0) {
+    historyStack.push(currentState);
+    currentState = redoStack.pop();
+    editor.value = currentState;
+    updateLineNumbers(); // Update line numbers after redo
+    showToast('Redo successful');
+    updateStatus('Redo');
+    } else {
+    showToast('Nothing to redo', true);
+    }
+}
+
+/**
+ * Clears all content from the editor.
+ */
+function clearEditor() {
+    if (editor.value.trim() !== '') {
+    historyStack.push(currentState);
+    redoStack = [];
+    currentState = '';
+    editor.value = '';
+    preview.srcdoc = '';
+    updateLineNumbers(); // Update line numbers after clear
+    showToast('Editor cleared');
+    updateStatus('Editor cleared');
+    } else {
+    showToast('Editor is already empty', true);
+    }
+}
+
+/**
+ * Saves the current code to the browser's local storage.
+ */
+function saveCode() {
+    localStorage.setItem('savedCode', editor.value);
+    showToast('Code saved locally');
+    updateStatus('Saved');
+}
+
+/**
+ * Copies the current code from the editor to the clipboard.
+ */
+async function copyCode() {
+    try {
+    await navigator.clipboard.writeText(editor.value);
+    showToast('Code copied to clipboard');
+    updateStatus('Copied');
+    } catch (error) {
+    showToast('Failed to copy. Please copy manually.', true);
+    updateStatus('Copy failed');
+    console.error('Failed to copy:', error);
+    }
+}
+
+/**
+ * Pastes content from the clipboard into the editor.
+ */
+async function pasteCode() {
+    try {
+    const text = await navigator.clipboard.readText();
+    historyStack.push(currentState);
+    redoStack = [];
+    currentState = editor.value + text;
+    editor.value = currentState;
+    updateLineNumbers(); // Update line numbers after paste
+    showToast('Pasted from clipboard');
+    updateStatus('Pasted');
+    } catch (error) {
+    showToast('Failed to paste. Please paste manually.', true);
+    updateStatus('Paste failed');
+    console.error('Failed to paste:', error);
+    }
+}
+
+/**
+ * Downloads the current code as an HTML file.
+ */
+function downloadCode() {
+    const blob = new Blob([editor.value], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'code-playground.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('Download started');
+    updateStatus('Downloaded');
+}
+
+/**
+ * Triggers the hidden file input to allow the user to select a file for upload.
+ */
+function uploadCode() {
+    uploadInput.click();
+}
+
+/**
+ * Handles the file selected by the user for upload.
+ * Reads the file content and puts it into the editor.
+ * @param {Event} event - The change event from the file input.
+ */
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) {
+    showToast('No file selected', true);
+    return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+    historyStack.push(currentState);
+    redoStack = [];
+    currentState = e.target.result;
+    editor.value = currentState;
+    updateLineNumbers(); // Update line numbers after upload
+    showToast('File uploaded successfully');
+    updateStatus('Uploaded: ' + file.name);
+    };
+    reader.onerror = () => {
+    showToast('Error reading file', true);
+    updateStatus('Upload failed');
+    console.error('File reading error:', reader.error);
+    };
+    reader.readAsText(file);
+}
+
+/**
+ * Displays a temporary toast notification.
+ * @param {string} message - The message to display.
+ * @param {boolean} [isError=false] - If true, displays as an error toast.
+ */
+function showToast(message, isError = false) {
+    toast.textContent = message;
+    toast.style.backgroundColor = isError ? 'rgba(255, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.7)';
+    toast.classList.add('show');
+    setTimeout(() => {
+    toast.classList.remove('show');
+    }, 3000);
+}
+
+/**
+ * Updates the status text displayed in the bottom bar.
+ * @param {string} text - The status message.
+ */
+function updateStatus(text) {
+    statusText.textContent = text;
+}
+
+/**
+ * Updates the line numbers displayed next to the editor.
+ */
+function updateLineNumbers() {
+    const lines = editor.value.split('\n');
+    let numbersHtml = '';
+    for (let i = 1; i <= lines.length; i++) {
+        // Use a div for each line number to ensure it's on its own line
+        numbersHtml += `<div class="line-number-item">${String(i).padStart(3, ' ')}</div>`;
+    }
+    lineNumbersDiv.innerHTML = numbersHtml;
+}
+
+/**
+ * Sets up global keyboard shortcuts for common actions.
+ */
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey) {
+        switch (e.key.toLowerCase()) {
+        case 's':
+            e.preventDefault();
+            saveCode();
+            break;
+        case 'z':
+            e.preventDefault();
+            undoEdit();
+            break;
+        case 'y':
+            e.preventDefault();
+            redoEdit();
+            break;
+        case 'enter':
+            e.preventDefault();
+            runCode();
+            break;
+        }
+    }
+    });
+}
+</script>
+  </body>
+</html>
+
+
+

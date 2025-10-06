@@ -37,7 +37,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - **PDF Converter**: Converting files to or from PDF format
 
 ## Additional Tools
-- **Context Field**: Likely for defining or managing context/variables
+- **Context Field**: Analyzing text (e.g., word count, frequency)
 - **Gift Card Maker**: Creating custom gift cards
 - **Share File**: Uploading or sharing a file
 - **Text Extractor**: Extracting text from sources (e.g., images)

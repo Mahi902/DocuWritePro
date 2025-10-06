@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Maker - Google Docs Style</title>
+    <!-- Icons and Fonts -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+        /* General Body and Layout Styles */
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #202124;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header Styles */
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            background-color: white;
+            flex-shrink: 0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-right: 30px;
+        }
+
+        .logo-icon {
+            color: #4285F4;
+            font-size: 24px;
+            margin-right: 8px;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: #5f6368;
+        }
+
+        /* Toolbar for Chart Selection */
+        .toolbar {
+            display: flex;
+            padding: 8px 16px;
+            background-color: white;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        .toolbar-group {
+            display: flex;
+            margin-right: 16px;
+            border-right: 1px solid #e0e0e0;
+            padding-right: 16px;
+        }
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .tool-button {
+            background: none;
+            border: none;
+            border-radius: 4px;
+            padding: 8px;
+            margin: 0 2px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #5f6368;
+            font-size: 12px;
+            min-width: 60px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .tool-button:hover {
+            background-color: #f1f3f4;
+        }
+
+        .tool-button.active {
+            background-color: #e8f0fe;
+            color: #1967d2;
+            box-shadow: 0 1px 2px rgba(66, 133, 244, 0.2);
+        }
+
+        .tool-button .material-icons {
+            font-size: 20px;
+            margin-bottom: 2px;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar for Settings */
+        .sidebar {
+            width: 250px;
+            background-color: white;
+            border-right: 1px solid #e0e0e0;
+            padding: 16px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #5f6368;
+            margin-bottom: 12px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 12px;
+            color: #5f6368;
+            margin-bottom: 6px;
+        }
+
+        .form-input, .form-input[type="color"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-input[type="color"] {
+            padding: 4px;
+            height: 38px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4285F4;
+            box-shadow: 0 0 0 2px #e8f0fe;
+        }
+        .form-input:disabled {
+            background-color: #f1f3f4;
+            cursor: not-allowed;
+        }
+
+        /* Chart Display Area */
+        .chart-container {
+            flex: 1;
+            padding: 24px;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .chart-wrapper {
+            width: 95%; /* Increased width for better use of space */
+            max-width: 1000px; /* Increased max width */
+            background-color: white;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 3px 6px rgba(60,64,67,0.15); /* More pronounced shadow */
+            position: relative;
+        }
+        /* Enforce Aspect Ratio for Chart Canvas */
+        .chart-canvas-wrapper {
+            position: relative;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio (56.25% of width) */
+            margin-bottom: 24px;
+        }
+        #chartCanvas {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .chart-title {
+            font-size: 22px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        /* Data Table Styles */
+        .data-table-container {
+            margin-top: 24px;
+            max-height: 250px;
+            overflow: auto;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid #dadce0;
+            padding: 0; /* Padding handled by input */
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background-color: #f1f3f4;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 8px;
+        }
+
+        .data-table input {
+            width: 100%;
+            border: none;
+            text-align: center;
+            font-family: inherit;
+            background-color: transparent;
+            padding: 8px 4px;
+            box-sizing: border-box;
+        }
+
+        .data-table input:focus {
+            outline: none;
+            background-color: #e8f0fe;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            margin-top: 12px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .action-btn {
+            background-color: #f1f3f4;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color: #3c4043;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .action-btn:hover {
+            background-color: #e8eaed;
+        }
+
+        .download-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            z-index: 20;
+        }
+
+        .download-btn .material-icons {
+            font-size: 16px;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Section -->
+    <div class="header">
+        <div class="logo">
+            <span class="material-icons logo-icon">insert_chart</span>
+            <span class="logo-text">Chart Maker</span>
+        </div>
+    </div>
+
+    <!-- Toolbar for Selecting Chart Type -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <button class="tool-button active" data-chart-type="bar"><span class="material-icons">bar_chart</span>Bar</button>
+            <button class="tool-button" data-chart-type="line"><span class="material-icons">show_chart</span>Line</button>
+            <button class="tool-button" data-chart-type="pie"><span class="material-icons">pie_chart</span>Pie</button>
+            <button class="tool-button" data-chart-type="doughnut"><span class="material-icons">donut_large</span>Doughnut</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="tool-button" data-chart-type="radar"><span class="material-icons">radar</span>Radar</button>
+            <button class="tool-button" data-chart-type="polarArea"><span class="material-icons">track_changes</span>Polar</button>
+            <button class="tool-button" data-chart-type="scatter"><span class="material-icons">scatter_plot</span>Scatter</button>
+            <button class="tool-button" data-chart-type="bubble"><span class="material-icons">bubble_chart</span>Bubble</button>
+        </div>
+    </div>
+
+    <!-- Main Content: Sidebar + Chart Area -->
+    <div class="main-content">
+        <div class="sidebar">
+            <!-- Chart Settings -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Chart Settings</div>
+                <div class="form-group">
+                    <label class="form-label">Chart Title</label>
+                    <input type="text" class="form-input" id="chartTitle" value="Sales Data Analysis">
+                </div>
+            </div>
+
+            <!-- Data Structure Settings -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Data Structure</div>
+                <div class="form-group">
+                    <label class="form-label">Number of Data Series</label>
+                    <input type="number" class="form-input" id="seriesCount" min="1" max="10" value="3">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Number of Labels / Points</label>
+                    <input type="number" class="form-input" id="labelCount" min="1" max="20" value="4">
+                </div>
+                <button id="updateDataBtn" class="action-btn" style="width: 100%;">
+                    <span class="material-icons" style="font-size: 16px; margin-right: 4px;">refresh</span>
+                    Regenerate Table & Chart
+                </button>
+            </div>
+
+            <!-- Color Customization -->
+            <div class="sidebar-section">
+                <div class="sidebar-title">Series / Point Colors</div>
+                <div id="colorPalette">
+                    <!-- Color inputs will be dynamically inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-wrapper">
+                <button id="downloadBtn" class="action-btn download-btn">
+                    <span class="material-icons">download</span>
+                    Download PNG
+                </button>
+                <div class="chart-title" id="displayChartTitle">Sales Data Analysis</div>
+                
+                <div class="chart-canvas-wrapper">
+                    <canvas id="chartCanvas"></canvas>
+                </div>
+                
+                <div class="data-table-container">
+                    <table class="data-table" id="dataTable">
+                        <thead></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="action-buttons">
+                    <button id="addRowBtn" class="action-btn">+ Add Row</button>
+                    <!-- I've removed the redundant button from the original, as the table structure defines the data -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL VARIABLES & INITIAL STATE ---
+        const defaultColors = [
+            '#4285F4', '#34A853', '#FBBC05', '#EA4335', '#673AB7',
+            '#00BCD4', '#FF9800', '#795548', '#9E9E9E', '#607D8B'
+        ];
+        // The default colors for Pie/Doughnut labels
+        const pieDoughnutColors = ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#673AB7', '#00BCD4', '#FF9800', '#795548', '#9E9E9E', '#607D8B', '#FF5722', '#009688', '#FFEB3B'];
+
+        let chart = null;
+        let currentChartType = 'bar';
+        const seriesCountInput = document.getElementById('seriesCount');
+        const labelCountInput = document.getElementById('labelCount');
+
+        // Chart types that are "coordinate" based (require X/Y axes)
+        const coordinateCharts = ['bar', 'line', 'scatter', 'bubble'];
+        // Chart types that are "segment" based (Pie, Doughnut, Polar)
+        const segmentCharts = ['pie', 'doughnut', 'polarArea'];
+
+        // --- CHART CREATION AND DATA HANDLING ---
+
+        /**
+         * Parses the data from the HTML table and formats it for Chart.js
+         * based on the current chart type.
+         * @returns {object} The data object for Chart.js.
+         */
+        function getChartData() {
+            const table = document.getElementById('dataTable');
+            const rows = table.querySelectorAll('tbody tr');
+            const headers = table.querySelectorAll('thead th');
+            const isSegmentChart = segmentCharts.includes(currentChartType);
+            const isScatterBubble = ['scatter', 'bubble'].includes(currentChartType);
+            
+            const datasets = [];
+
+            // 1. Handle Segment Charts (Pie, Doughnut, PolarArea)
+            if (isSegmentChart) {
+                // Segment charts use the first data column for values, and rows for labels
+                const labels = Array.from(rows).map(row => row.cells[0]?.querySelector('input').value || 'N/A');
+                const dataValues = Array.from(rows).map(row => parseFloat(row.cells[1]?.querySelector('input').value) || 0);
+
+                datasets.push({
+                    label: document.getElementById('chartTitle').value || 'Data',
+                    data: dataValues,
+                    backgroundColor: dataValues.map((_, i) => getDatasetColor(0, i)),
+                    // Border is important for segment charts
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                });
+                return { labels, datasets };
+            }
+
+            // 2. Handle Scatter and Bubble Charts
+            if (isScatterBubble) {
+                // Scatter/Bubble data structure is {x: v1, y: v2, r?: v3}
+                // Table structure: Label | X | Y | R (optional) | Y2 (optional) ...
+                
+                const tableColCount = headers.length;
+                let xColIndex = 1; // X is always the second column after Label
+                let rColIndex = 3; // R is the fourth column for bubble
+                
+                if (currentChartType === 'bubble' && tableColCount >= 4) {
+                    // Bubble is a single dataset: uses X(1), Y(2), R(3) columns
+                    const data = Array.from(rows).map(row => ({
+                        x: parseFloat(row.cells[xColIndex]?.querySelector('input').value) || 0,
+                        y: parseFloat(row.cells[xColIndex + 1]?.querySelector('input').value) || 0,
+                        r: parseFloat(row.cells[rColIndex]?.querySelector('input').value) || 5 
+                    }));
+                    datasets.push({
+                        label: 'Bubble Data',
+                        data: data,
+                        backgroundColor: getDatasetColor(0),
+                    });
+                    return { datasets }; // Scatter/Bubble charts don't use 'labels' for the x-axis typically
+                } 
+                
+                if (currentChartType === 'scatter' && tableColCount >= 3) {
+                    // Scatter: X is column 1, subsequent columns are Y datasets
+                    for (let i = 2; i < tableColCount; i++) { // Start at index 2 (third column) for Y values
+                        const data = Array.from(rows).map(row => ({
+                            x: parseFloat(row.cells[xColIndex]?.querySelector('input').value) || 0,
+                            y: parseFloat(row.cells[i]?.querySelector('input').value) || 0
+                        }));
+                        datasets.push({
+                            label: headers[i].textContent,
+                            data: data,
+                            backgroundColor: getDatasetColor(i - 2), // Index relative to datasets
+                            borderColor: getDatasetColor(i - 2),
+                        });
+                    }
+                    return { datasets };
+                }
+            }
+
+
+            // 3. Handle Standard Charts (Bar, Line, Radar)
+            const labels = Array.from(rows).map(row => row.cells[0]?.querySelector('input').value || 'N/A');
+            
+            for (let i = 1; i < headers.length; i++) { // Start loop from 1 to skip the label column
+                const data = Array.from(rows).map(row => parseFloat(row.cells[i]?.querySelector('input').value) || 0);
+                const color = getDatasetColor(i - 1); // i-1 converts table column index to dataset index
+
+                datasets.push({
+                    label: headers[i].textContent,
+                    data: data,
+                    backgroundColor: color,
+                    borderColor: currentChartType === 'line' ? color : 'rgba(0,0,0,0.1)',
+                    borderWidth: currentChartType === 'line' ? 3 : 1,
+                    fill: currentChartType === 'radar', // Fill radar charts by default
+                    tension: currentChartType === 'line' ? 0.3 : 0, // Slight curve for line charts
+                });
+            }
+            
+            return { labels, datasets };
+        }
+
+        /**
+         * Retrieves the stored color for a dataset/point index, or uses the default color.
+         * @param {number} datasetIndex - The index of the dataset.
+         * @param {number} pointIndex - The index of the point (for segment charts).
+         * @returns {string} The color hex code.
+         */
+        function getDatasetColor(datasetIndex, pointIndex = null) {
+            const index = pointIndex !== null ? pointIndex : datasetIndex;
+            const colors = segmentCharts.includes(currentChartType) ? pieDoughnutColors : defaultColors;
+            
+            const colorInput = document.querySelector(`.series-color[data-index="${index}"]`);
+            if (colorInput) {
+                return colorInput.value;
+            }
+            return colors[index % colors.length];
+        }
+
+        /**
+         * Initializes or re-initializes the chart with current settings.
+         */
+        function initChart() {
+            if (chart) {
+                chart.destroy();
+            }
+
+            const ctx = document.getElementById('chartCanvas').getContext('2d');
+            const data = getChartData();
+            
+            // Define chart options, handling scales for different types
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' },
+                    title: { display: false }
+                }
+            };
+            
+            // Only add scales for chart types that use them
+            if (coordinateCharts.includes(currentChartType) && currentChartType !== 'scatter') {
+                 options.scales = {
+                    y: { beginAtZero: true },
+                    x: {
+                        // Ensure X-axis works correctly for Bar/Line
+                        type: 'category',
+                        beginAtZero: true
+                    }
+                };
+            }
+            
+            // Special scale handling for Scatter/Bubble (numeric X axis)
+            if (currentChartType === 'scatter' || currentChartType === 'bubble') {
+                 options.scales = {
+                    y: { beginAtZero: true, title: { display: true, text: 'Y Axis Value' } },
+                    x: { type: 'linear', position: 'bottom', title: { display: true, text: 'X Axis Value' } }
+                };
+            }
+
+            chart = new Chart(ctx, {
+                type: currentChartType,
+                data: data,
+                options: options
+            });
+            updateChartTitle();
+            updateColorPalette();
+        }
+
+        /**
+         * Updates the chart with fresh data from the table.
+         */
+        function updateChart() {
+            if (!chart) {
+                initChart(); // Re-initialize if the chart was destroyed/not created
+                return;
+            }
+            chart.data = getChartData();
+            updateChartTitle();
+            chart.update();
+        }
+
+        function updateChartTitle() {
+            document.getElementById('displayChartTitle').textContent = document.getElementById('chartTitle').value;
+        }
+
+        // --- UI & TABLE MANAGEMENT ---
+
+        /**
+         * Updates the data table structure (headers and rows) based on user input.
+         */
+        function updateDataStructure() {
+            const seriesCount = parseInt(seriesCountInput.value);
+            const labelCount = parseInt(labelCountInput.value);
+
+            // Update Headers and get the actual resulting number of columns
+            const headerCount = updateTableHeaders(seriesCount);
+
+            // Update Body
+            const table = document.getElementById('dataTable');
+            const tbody = table.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            for (let i = 1; i <= labelCount; i++) {
+                const row = document.createElement('tr');
+                let rowHTML = `<td><input type="text" value="Label ${i}"></td>`;
+                
+                // Start populating data columns (from index 1 up to headerCount-1)
+                for (let j = 1; j < headerCount; j++) {
+                    const randomValue = Math.floor(Math.random() * 50) + 10;
+                    rowHTML += `<td><input type="number" value="${randomValue}"></td>`;
+                }
+                row.innerHTML = rowHTML;
+                tbody.appendChild(row);
+            }
+            
+            initChart(); // Re-initializes and draws the new chart.
+        }
+
+        /**
+         * Updates the table headers to be intuitive for the selected chart type.
+         * @param {number} seriesCount - The number of data series requested by the user.
+         * @returns {number} The actual number of columns (headers) generated.
+         */
+        function updateTableHeaders(seriesCount) {
+            const thead = document.querySelector('#dataTable thead');
+            let headers = ['Label'];
+            let actualSeriesCount = seriesCount;
+
+            if (currentChartType === 'scatter') {
+                // Scatter requires at least 1 X column and 1 Y column, so 2 data columns minimum
+                if (seriesCount < 1) actualSeriesCount = 1; // Enforce minimum 1 Y series
+                headers.push('X Axis (Series 1)');
+                for (let i = 1; i <= actualSeriesCount; i++) headers.push(`Y Axis (Series ${i + 1})`);
+            } else if (currentChartType === 'bubble') {
+                // Bubble requires X, Y, and Radius (R), so 3 data columns
+                actualSeriesCount = 3;
+                headers.push('X Axis (Value)', 'Y Axis (Value)', 'Radius (Size)');
+                seriesCountInput.value = 3;
+                seriesCountInput.disabled = true; // Disabled for Bubble
+            } else if (segmentCharts.includes(currentChartType)) {
+                // Pie/Doughnut/PolarArea usually represent one dataset broken into segments
+                headers.push('Value'); // Only one value column is truly relevant
+                actualSeriesCount = 1;
+                seriesCountInput.value = 1;
+                seriesCountInput.disabled = true; // Disabled for segment charts
+            } else {
+                // Standard Charts (Bar, Line, Radar)
+                seriesCountInput.disabled = false;
+                for (let i = 1; i <= seriesCount; i++) headers.push(`Series ${i}`);
+            }
+            
+            thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+            return headers.length;
+        }
+        
+        /**
+         * Adds a new row to the data table.
+         */
+        function addRow() {
+            const table = document.getElementById('dataTable');
+            const tbody = table.querySelector('tbody');
+            const newRow = document.createElement('tr');
+            const colCount = table.querySelector('thead tr').cells.length;
+
+            let newRowHTML = `<td><input type="text" value="Label ${tbody.rows.length + 1}"></td>`;
+            for (let i = 1; i < colCount; i++) {
+                newRowHTML += `<td><input type="number" value="${Math.floor(Math.random() * 50) + 10}"></td>`;
+            }
+            newRow.innerHTML = newRowHTML;
+            tbody.appendChild(newRow);
+
+            // Update the label count input to reflect the new number of rows
+            labelCountInput.value = tbody.rows.length;
+            updateChart();
+            updateColorPalette(); // Refresh palette if we added a new segment for pie/doughnut
+        }
+
+        /**
+         * Generates color picker inputs for each data series or data point (for segment charts).
+         */
+        function updateColorPalette() {
+            const container = document.getElementById('colorPalette');
+            container.innerHTML = '';
+
+            const isSegmentChart = segmentCharts.includes(currentChartType);
+            
+            let elementsToColor = [];
+            
+            if (!chart || chart.data.datasets.length === 0) {
+                 // Fallback if chart isn't initialized yet
+                container.innerHTML = '<p class="form-label" style="font-style: italic; margin-top: 10px;">Click "Regenerate Table & Chart" to load color options.</p>';
+                return;
+            }
+
+            if (isSegmentChart) {
+                // For segment charts (Pie/Doughnut/Polar), colors apply to each label/point
+                const labels = chart.data.labels;
+                const currentColors = chart.data.datasets[0].backgroundColor;
+                
+                labels.forEach((label, i) => {
+                    elementsToColor.push({ 
+                        label: `Segment: ${label}`, 
+                        color: currentColors[i] || pieDoughnutColors[i % pieDoughnutColors.length], 
+                        index: i,
+                        isPoint: true // Marker for point coloring
+                    });
+                });
+            } else {
+                // For coordinate charts, colors apply to each dataset/series
+                chart.data.datasets.forEach((dataset, i) => {
+                    elementsToColor.push({
+                        label: dataset.label,
+                        color: dataset.backgroundColor, 
+                        index: i,
+                        isPoint: false // Marker for series coloring
+                    });
+                });
+            }
+
+            elementsToColor.forEach(el => {
+                const colorDiv = document.createElement('div');
+                colorDiv.className = 'form-group';
+                colorDiv.innerHTML = `
+                    <label class="form-label">${el.label} Color</label>
+                    <input type="color" class="form-input series-color" value="${el.color}" 
+                           data-index="${el.index}" data-is-point="${el.isPoint}">
+                `;
+                container.appendChild(colorDiv);
+            });
+        }
+
+        /**
+         * Downloads the current chart canvas as a PNG image.
+         */
+        function downloadChart() {
+            if (!chart) return;
+            const link = document.createElement('a');
+            const title = document.getElementById('chartTitle').value.replace(/ /g, '_');
+            // Use chart.toBase64Image directly, as it handles the scale factor correctly.
+            link.download = `${title}.png`;
+            link.href = chart.toBase64Image('image/png', 1.0); 
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- EVENT LISTENERS ---
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial setup (must be called after DOM is ready)
+            updateDataStructure(); 
+
+            // Toolbar: Chart type selection
+            document.querySelectorAll('.tool-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    currentChartType = this.dataset.chartType;
+                    
+                    // Reset disabled state
+                    seriesCountInput.disabled = false;
+                    labelCountInput.disabled = false;
+                    
+                    document.querySelectorAll('.tool-button').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Force a full structure update, which handles disabling inputs and re-initializing the chart
+                    updateDataStructure();
+                });
+            });
+            
+            // Sidebar controls (Regenerate button)
+            document.getElementById('updateDataBtn').addEventListener('click', updateDataStructure);
+            
+            // Chart Title live update
+            document.getElementById('chartTitle').addEventListener('input', updateChartTitle);
+            
+            // Add row button
+            document.getElementById('addRowBtn').addEventListener('click', addRow);
+            
+            // Live updates from data table
+            document.getElementById('dataTable').addEventListener('input', (e) => {
+                if (e.target.tagName === 'INPUT') {
+                    // We only need to update the chart data, not the structure
+                    updateChart();
+                    
+                    // If it's a segment chart, the label might have changed, so update the palette too.
+                    if (segmentCharts.includes(currentChartType)) {
+                        updateColorPalette();
+                    }
+                }
+            });
+
+            // Live updates from color pickers
+            document.getElementById('colorPalette').addEventListener('change', (e) => {
+                if (e.target.classList.contains('series-color')) {
+                    const index = parseInt(e.target.dataset.index);
+                    const isPoint = e.target.dataset.isPoint === 'true';
+                    const newColor = e.target.value;
+
+                    if (isPoint) {
+                        // Segment charts (Pie/Doughnut/Polar): Color applies to data points in the FIRST dataset
+                        if (chart.data.datasets[0].backgroundColor) {
+                             // Ensure backgroundColor is an array before setting the value
+                            if (!Array.isArray(chart.data.datasets[0].backgroundColor)) {
+                                chart.data.datasets[0].backgroundColor = Array(chart.data.labels.length).fill(chart.data.datasets[0].backgroundColor);
+                            }
+                            chart.data.datasets[0].backgroundColor[index] = newColor;
+                        }
+                    } else {
+                        // Coordinate charts (Bar/Line/Radar/Scatter/Bubble): Color applies to the whole dataset
+                        if (chart.data.datasets[index]) {
+                            chart.data.datasets[index].backgroundColor = newColor;
+                            chart.data.datasets[index].borderColor = newColor;
+                        }
+                    }
+                    chart.update();
+                }
+            });
+            
+            // Download button
+            document.getElementById('downloadBtn').addEventListener('click', downloadChart);
+        });
+    </script>
+</body>
+</html>

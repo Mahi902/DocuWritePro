@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer - Google Docs Theme</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --primary-hover: #3367d6;
+            --toolbar-bg: #f1f3f4;
+            --page-bg: #ffffff;
+            --border-color: #dadce0;
+            --text-color: #202124;
+            --text-secondary: #5f6368;
+            --toolbar-height: 56px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+        }
+
+        body {
+            background: #f8f9fa;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            background: var(--primary-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 500;
+        }
+
+        /* Main container */
+        .container {
+            display: flex;
+            flex: 1;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: white;
+            border-right: 1px solid var(--border-color);
+            padding: 16px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-item {
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-item:hover {
+            background: var(--toolbar-bg);
+        }
+
+        .sidebar-item.active {
+            background: #e8f0fe;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .sidebar-item i {
+            width: 24px;
+            text-align: center;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 8px 0;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: var(--toolbar-bg);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 12px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            height: 40px;
+        }
+
+        .toolbar-btn {
+            background: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toolbar-btn:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .toolbar-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .toolbar-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .page-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-input {
+            width: 60px;
+            height: 32px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .zoom-control {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .zoom-value {
+            min-width: 40px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .slider {
+            width: 100px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            position: relative;
+        }
+
+        .slider-fill {
+            position: absolute;
+            height: 100%;
+            width: 70%;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .slider-handle {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 50%;
+            top: 50%;
+            left: 70%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+        }
+
+        /* PDF Viewer */
+        .pdf-viewer-container {
+            flex: 1;
+            background: var(--page-bg);
+            overflow: auto;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .pdf-canvas-container {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: white;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* Upload area */
+        .upload-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 40px;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .upload-icon {
+            width: 120px;
+            height: 120px;
+            background: #e8f0fe;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-size: 48px;
+        }
+
+        .upload-title {
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .upload-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .upload-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .upload-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* Color inversion */
+        .invert-colors {
+            filter: invert(100%) hue-rotate(180deg);
+        }
+
+        /* Footer */
+        .footer {
+            background: white;
+            padding: 16px 24px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .footer-link:hover {
+            color: var(--primary-color);
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 72px;
+            }
+            
+            .sidebar-item span {
+                display: none;
+            }
+            
+            .toolbar {
+                gap: 8px;
+                padding: 8px;
+            }
+            
+            .toolbar-group {
+                padding: 4px;
+            }
+            
+            .toolbar-label {
+                display: none;
+            }
+            
+            .footer {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="far fa-file-pdf"></i>
+            </div>
+            <div class="logo-text">PDF Viewer</div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Sidebar -->
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="prev-page" title="Previous Page">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="page-control">
+                        <input type="number" class="page-input" id="current-page" value="1" min="1">
+                        <span class="toolbar-label">of</span>
+                        <span class="toolbar-label" id="total-pages">1</span>
+                    </div>
+                    <button class="toolbar-btn" id="next-page" title="Next Page">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="zoom-out" title="Zoom Out">
+                        <i class="fas fa-search-minus"></i>
+                    </button>
+                    <div class="zoom-control">
+                        <div class="slider">
+                            <div class="slider-fill"></div>
+                            <div class="slider-handle"></div>
+                        </div>
+                    </div>
+                    <span class="zoom-value" id="zoom-value">100%</span>
+                    <button class="toolbar-btn" id="zoom-in" title="Zoom In">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="fit-width" title="Fit to Width">
+                        <i class="fas fa-arrows-alt-h"></i>
+                    </button>
+                    <button class="toolbar-btn" id="fit-page" title="Fit to Page">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="rotate" title="Rotate">
+                        <i class="fas fa-redo"></i>
+                    </button>
+                    <button class="toolbar-btn" id="invert-colors" title="Invert Colors">
+                        <i class="fas fa-adjust"></i>
+                    </button>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="print" title="Print">
+                        <i class="fas fa-print"></i>
+                    </button>
+                    <button class="toolbar-btn" id="download" title="Download">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- PDF Viewer -->
+            <div class="pdf-viewer-container" id="viewer-container">
+                <div class="upload-container" id="upload-area">
+                    <div class="upload-icon">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    <h2 class="upload-title">Upload a PDF Document</h2>
+                    <p class="upload-text">Drag and drop your PDF file here, or click the button below to browse files</p>
+                    <button class="upload-btn" id="upload-btn">
+                        <i class="fas fa-cloud-upload-alt"></i> Select PDF File
+                    </button>
+                    <input type="file" class="file-input" id="file-input" accept=".pdf">
+                </div>
+                <div class="pdf-canvas-container" id="pdf-canvas"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    
+
+    <script>
+        // Initialize PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
+        // DOM elements
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const uploadArea = document.getElementById('upload-area');
+        const pdfCanvas = document.getElementById('pdf-canvas');
+        const currentPageInput = document.getElementById('current-page');
+        const totalPagesSpan = document.getElementById('total-pages');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const zoomValueSpan = document.getElementById('zoom-value');
+        const fitWidthBtn = document.getElementById('fit-width');
+        const fitPageBtn = document.getElementById('fit-page');
+        const rotateBtn = document.getElementById('rotate');
+        const invertColorsBtn = document.getElementById('invert-colors');
+        const printBtn = document.getElementById('print');
+        const downloadBtn = document.getElementById('download');
+
+        // PDF state
+        let pdfDoc = null;
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentZoom = 1.0;
+        let rotation = 0;
+        let colorsInverted = false;
+
+        // Event listeners
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileSelect);
+        prevPageBtn.addEventListener('click', () => changePage(-1));
+        nextPageBtn.addEventListener('click', () => changePage(1));
+        currentPageInput.addEventListener('change', goToPage);
+        zoomInBtn.addEventListener('click', () => changeZoom(0.1));
+        zoomOutBtn.addEventListener('click', () => changeZoom(-0.1));
+        fitWidthBtn.addEventListener('click', () => fitToWidth());
+        fitPageBtn.addEventListener('click', () => fitToPage());
+        rotateBtn.addEventListener('click', rotateDocument);
+        invertColorsBtn.addEventListener('click', toggleInvertColors);
+        printBtn.addEventListener('click', printDocument);
+        downloadBtn.addEventListener('click', downloadDocument);
+
+        // Handle file selection
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                const fileReader = new FileReader();
+                
+                fileReader.onload = function() {
+                    const typedarray = new Uint8Array(this.result);
+                    
+                    // Load PDF document
+                    pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+                        pdfDoc = pdf;
+                        totalPages = pdf.numPages;
+                        currentPage = 1;
+                        
+                        totalPagesSpan.textContent = totalPages;
+                        currentPageInput.value = currentPage;
+                        
+                        uploadArea.style.display = 'none';
+                        renderPage();
+                    }).catch(error => {
+                        console.error('Error loading PDF:', error);
+                        alert('Error loading PDF. Please try another file.');
+                    });
+                };
+                
+                fileReader.readAsArrayBuffer(file);
+            } else {
+                alert('Please select a valid PDF file.');
+            }
+        }
+
+        // Render current page
+        function renderPage() {
+            pdfDoc.getPage(currentPage).then(page => {
+                const viewport = page.getViewport({ scale: currentZoom, rotation: rotation });
+                
+                // Prepare canvas with high DPI support
+const outputScale = window.devicePixelRatio || 1;
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = viewport.width * outputScale;
+canvas.height = viewport.height * outputScale;
+canvas.style.width = `${viewport.width}px`;
+canvas.style.height = `${viewport.height}px`;
+
+// Clear container and add new canvas
+pdfCanvas.innerHTML = '';
+pdfCanvas.appendChild(canvas);
+
+// Apply color inversion if needed
+if (colorsInverted) {
+    canvas.classList.add('invert-colors');
+}
+
+// Render PDF page with scaling
+const renderContext = {
+    canvasContext: ctx,
+    viewport: viewport,
+    transform: [outputScale, 0, 0, outputScale, 0, 0]
+};
+
+page.render(renderContext).promise.then(() => {
+    console.log(`Page ${currentPage} rendered in high resolution`);
+});
+
+            });
+        }
+
+        // Change page
+        function changePage(offset) {
+            const newPage = currentPage + offset;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                currentPageInput.value = currentPage;
+                renderPage();
+            }
+        }
+
+        // Go to specific page
+        function goToPage() {
+            const pageNum = parseInt(currentPageInput.value);
+            if (pageNum >= 1 && pageNum <= totalPages) {
+                currentPage = pageNum;
+                renderPage();
+            } else {
+                currentPageInput.value = currentPage;
+            }
+        }
+
+        // Change zoom level
+        function changeZoom(amount) {
+            currentZoom += amount;
+            currentZoom = Math.max(0.5, Math.min(currentZoom, 3.0));
+            zoomValueSpan.textContent = `${Math.round(currentZoom * 100)}%`;
+            renderPage();
+        }
+
+        // Fit to width
+        function fitToWidth() {
+            currentZoom = pdfCanvas.clientWidth / 612; // Standard PDF width is 612 points
+            zoomValueSpan.textContent = `${Math.round(currentZoom * 100)}%`;
+            renderPage();
+        }
+
+        // Fit to page
+        function fitToPage() {
+            currentZoom = Math.min(
+                pdfCanvas.parentElement.clientHeight / 792, // Standard PDF height is 792 points
+                pdfCanvas.parentElement.clientWidth / 612
+            );
+            zoomValueSpan.textContent = `${Math.round(currentZoom * 100)}%`;
+            renderPage();
+        }
+
+        // Rotate document
+        function rotateDocument() {
+            rotation = (rotation + 90) % 360;
+            renderPage();
+        }
+
+        // Toggle color inversion
+        function toggleInvertColors() {
+            colorsInverted = !colorsInverted;
+            invertColorsBtn.classList.toggle('active', colorsInverted);
+            
+            const canvas = pdfCanvas.querySelector('canvas');
+            if (canvas) {
+                canvas.classList.toggle('invert-colors', colorsInverted);
+            }
+        }
+
+        // Print document
+        function printDocument() {
+            if (!pdfDoc) {
+                alert('Please upload a PDF first.');
+                return;
+            }
+            window.print();
+        }
+
+        // Download document
+        function downloadDocument() {
+            if (!fileInput.files[0]) {
+                alert('Please upload a PDF first.');
+                return;
+            }
+            
+            const url = URL.createObjectURL(fileInput.files[0]);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileInput.files[0].name || 'document.pdf';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize the viewer
+        function initViewer() {
+            zoomValueSpan.textContent = '100%';
+            totalPagesSpan.textContent = '1';
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', initViewer);
+    </script>
+</body>
+</html>
+        
+
+

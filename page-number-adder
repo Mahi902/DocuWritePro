@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Number Adder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Apply Inter font to the body */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Styling for each page preview container */
+        .page-container {
+            position: relative;
+            border: 1px solid #e5e7eb; /* Tailwind gray-200 */
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out; /* Smooth transition for hover/selection effects */
+        }
+        /* Styling for selected page containers */
+        .page-container.selected {
+            border-color: #ef4444; /* Tailwind red-500 */
+            box-shadow: 0 0 0 2px #ef4444; /* Red outline for selected pages */
+        }
+        /* Styling for the red circle page number overlay */
+        .page-number-overlay {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #ef4444; /* Tailwind red-500 */
+            color: white;
+            border-radius: 9999px; /* Tailwind rounded-full */
+            width: 2rem; /* Fixed width for the circle */
+            height: 2rem; /* Fixed height for the circle */
+            display: flex; /* Use flexbox for centering content */
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.875rem; /* Tailwind text-sm */
+            z-index: 10; /* Ensure it's above the canvas */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <header class="bg-white shadow-sm py-4 px-6 flex items-center justify-between">
+        <h1 class="text-2xl font-semibold text-gray-800">Page Number Adder</h1>
+        <div class="flex items-center space-x-4">
+            <button id="processButton" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" disabled>
+                Process & Download
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-6 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6">
+        <div class="lg:w-1/4 bg-white p-6 rounded-lg shadow-md flex flex-col space-y-4 h-fit">
+            <h2 class="text-xl font-medium text-gray-700 mb-2">Instructions</h2>
+            <p class="text-gray-600 text-sm">
+                1. Upload your PDF or image files.
+            </p>
+            <p class="text-gray-600 text-sm">
+                2. Click on the pages you want to number. The first clicked will be '1', the second '2', and so on.
+            </p>
+            <p class="text-gray-600 text-sm">
+                3. Choose the position, color, and size for the page numbers.
+            </p>
+            <p class="text-gray-600 text-sm">
+                4. Click "Process & Download" to get your numbered pages.
+            </p>
+
+            <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-2">Upload Files</label>
+            <input type="file" id="fileInput" accept="application/pdf,image/*" multiple class="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-lg file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-50 file:text-blue-700
+                hover:file:bg-blue-100
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+
+            <div id="optionsSelector" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
+                <h3 class="text-lg font-medium text-gray-700 mb-3">Page Number Options:</h3>
+                
+                <div class="mb-4">
+                    <h4 class="text-md font-medium text-gray-600 mb-2">Position:</h4>
+                    <div class="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="pagePosition" value="bottom-center" class="form-radio text-blue-600" checked>
+                            <span>Bottom Center</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="pagePosition" value="bottom-left" class="form-radio text-blue-600">
+                            <span>Bottom Left</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="pagePosition" value="bottom-right" class="form-radio text-blue-600">
+                            <span>Bottom Right</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="pagePosition" value="top-left" class="form-radio text-blue-600">
+                            <span>Top Left</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="pagePosition" value="top-center" class="form-radio text-blue-600">
+                            <span>Top Center</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="pagePosition" value="top-right" class="form-radio text-blue-600">
+                            <span>Top Right</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="pageNumberColor" class="block text-md font-medium text-gray-600 mb-2">Color:</label>
+                    <input type="color" id="pageNumberColor" value="#FF0000" class="w-full h-10 rounded-md border border-gray-300 cursor-pointer">
+                </div>
+
+                <div>
+                    <label for="pageNumberSize" class="block text-md font-medium text-gray-600 mb-2">Size (px):</label>
+                    <input type="number" id="pageNumberSize" value="48" min="16" max="128" step="4" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+        </div>
+<div class="lg:w-3/4 bg-white p-6 rounded-lg shadow-md flex-grow overflow-y-auto">
+            <div id="loadingIndicator" class="text-center text-gray-600 text-lg hidden">
+                Loading pages...
+            </div>
+            <div id="pagePreviews" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                </div>
+            <div id="noFilesMessage" class="text-center text-gray-500 mt-8">
+                Upload PDF or image files to get started.
+            </div>
+        </div>
+    </main>
+
+    <div id="processingModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
+        <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center space-y-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+            <p class="text-gray-700 text-lg font-medium">Processing pages...</p>
+            <p id="processingStatus" class="text-gray-500 text-sm"></p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script>
+        // Set the worker source for PDF.js, crucial for PDF rendering
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+        // Get references to DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const pagePreviews = document.getElementById('pagePreviews');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const noFilesMessage = document.getElementById('noFilesMessage');
+        const processButton = document.getElementById('processButton');
+        const optionsSelector = document.getElementById('optionsSelector'); // Renamed from positionSelector
+        const processingModal = document.getElementById('processingModal');
+        const processingStatus = document.getElementById('processingStatus');
+        const pageNumberColorInput = document.getElementById('pageNumberColor'); // New color input
+        const pageNumberSizeInput = document.getElementById('pageNumberSize');   // New size input
+
+        // Global arrays/sets to manage page data and selection
+        let allPages = []; // Stores { type: 'pdf'/'image', file: File, pageIndex: number, originalCanvas: HTMLCanvasElement }
+        let selectedPageOrder = []; // Stores globalIndex of selected pages in the order they were clicked
+
+        /**
+         * Shows the loading indicator and clears previous previews.
+         * @param {string} message - The message to display in the loading indicator.
+         */
+        function showLoading(message = 'Loading pages...') {
+            loadingIndicator.textContent = message;
+            loadingIndicator.classList.remove('hidden');
+            noFilesMessage.classList.add('hidden');
+            pagePreviews.innerHTML = ''; // Clear previous previews
+            processButton.disabled = true; // Disable process button during loading
+            optionsSelector.classList.add('hidden'); // Hide options selector
+        }
+
+        /**
+         * Hides the loading indicator and updates UI state.
+         */
+        function hideLoading() {
+            loadingIndicator.classList.add('hidden');
+            if (allPages.length === 0) {
+                noFilesMessage.classList.remove('hidden'); // Show message if no files
+            } else {
+                noFilesMessage.classList.add('hidden');
+                // Enable process button if any pages are selected
+                processButton.disabled = selectedPageOrder.length === 0;
+                optionsSelector.classList.remove('hidden'); // Show options selector
+            }
+        }
+
+        /**
+         * Renders a specific page of a PDF document onto a given canvas.
+         * @param {object} pdf - The PDF document object from PDF.js.
+         * @param {number} pageNum - The 1-based page number to render.
+         * @param {HTMLCanvasElement} canvas - The canvas element to draw on.
+         * @returns {Promise<HTMLCanvasElement>} A promise that resolves with the rendered canvas.
+         */
+        async function renderPdfPage(pdf, pageNum, canvas) {
+            const page = await pdf.getPage(pageNum);
+            // Adjust scale for better preview quality, balance performance and detail
+            const viewport = page.getViewport({ scale: 1.5 });
+            const context = canvas.getContext('2d');
+
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport,
+            };
+            await page.render(renderContext).promise;
+            return canvas;
+        }
+
+        /**
+         * Renders an image file onto a given canvas.
+         * @param {File} file - The image file to render.
+         * @param {HTMLCanvasElement} canvas - The canvas element to draw on.
+         * @returns {Promise<HTMLCanvasElement>} A promise that resolves with the rendered canvas.
+         */
+        async function renderImageToCanvas(file, canvas) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    const context = canvas.getContext('2d');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    context.drawImage(img, 0, 0);
+                    URL.revokeObjectURL(img.src); // Clean up the object URL
+                    resolve(canvas);
+                };
+                img.onerror = () => {
+                    console.error("Failed to load image:", file.name);
+                    resolve(canvas); // Resolve even on error to not block other files
+                };
+                img.src = URL.createObjectURL(file);
+            });
+        }
+
+        /**
+         * Creates a DOM element for a page preview, including canvas, label, and number overlay.
+         * @param {HTMLCanvasElement} canvas - The canvas containing the page render.
+         * @param {number} globalPageIndex - The overall index of the page across all uploaded files.
+         * @returns {HTMLElement} The created page preview container element.
+         */
+        function createPagePreview(canvas, globalPageIndex) {
+            const pageContainer = document.createElement('div');
+            pageContainer.className = 'page-container p-2 bg-gray-50 rounded-lg shadow-sm hover:shadow-md';
+            pageContainer.dataset.globalIndex = globalPageIndex; // Store global index for easy lookup
+
+            const canvasWrapper = document.createElement('div');
+            canvasWrapper.className = 'w-full h-auto flex justify-center items-center overflow-hidden rounded-md bg-white';
+            canvasWrapper.appendChild(canvas);
+
+            const pageLabel = document.createElement('div');
+            pageLabel.className = 'text-center text-xs text-gray-500 mt-1';
+            pageLabel.textContent = `Page ${globalPageIndex + 1}`; // Display 1-based index to user
+
+            const pageNumberOverlay = document.createElement('div');
+            pageNumberOverlay.className = 'page-number-overlay hidden'; // Hidden by default
+
+            pageContainer.appendChild(canvasWrapper);
+            pageContainer.appendChild(pageLabel);
+            pageContainer.appendChild(pageNumberOverlay);
+
+            // Add click listener to toggle selection
+            pageContainer.addEventListener('click', () => togglePageSelection(pageContainer, globalPageIndex));
+
+            return pageContainer;
+        }
+
+        /**
+         * Updates the visible page number overlay on a page preview element.
+         * @param {HTMLElement} pageContainer - The DOM element of the page preview.
+         * @param {number|null} number - The page number to display, or null to hide the overlay.
+         */
+        function updatePageNumberOverlay(pageContainer, number) {
+            const overlay = pageContainer.querySelector('.page-number-overlay');
+            if (number !== null) {
+                overlay.textContent = number;
+                overlay.classList.remove('hidden');
+                pageContainer.classList.add('selected');
+            } else {
+                overlay.classList.add('hidden');
+                pageContainer.classList.remove('selected');
+            }
+        }
+
+        /**
+         * Handles the selection/deselection of a page preview.
+         * Updates the `selectedPageOrder` array and re-renders all page numbers.
+         * @param {HTMLElement} pageContainer - The DOM element of the page preview.
+         * @param {number} globalPageIndex - The global index of the page.
+         */
+        function togglePageSelection(pageContainer, globalPageIndex) {
+            const existingIndexInOrder = selectedPageOrder.indexOf(globalPageIndex);
+
+            if (existingIndexInOrder !== -1) {
+                // Deselect: remove the page's globalIndex from the ordered array
+                selectedPageOrder.splice(existingIndexInOrder, 1);
+            } else {
+                // Select: add the page's globalIndex to the end of the ordered array
+                selectedPageOrder.push(globalPageIndex);
+            }
+            updateAllPageNumbers(); // Re-evaluate and update all numbers based on new order
+            processButton.disabled = selectedPageOrder.length === 0; // Update button state
+        }
+
+        /**
+         * Re-evaluates and updates the displayed page numbers for all page previews
+         * based on the current `selectedPageOrder`.
+         */
+        function updateAllPageNumbers() {
+            const pageElements = pagePreviews.querySelectorAll('.page-container');
+
+            pageElements.forEach((element) => {
+                const globalIndex = parseInt(element.dataset.globalIndex);
+                // Find the assigned number (1-based) if the page is selected
+                const assignedNumber = selectedPageOrder.indexOf(globalIndex);
+
+                if (assignedNumber !== -1) {
+                    updatePageNumberOverlay(element, assignedNumber + 1); // Display 1-based number
+                } else {
+                    updatePageNumberOverlay(element, null); // Hide number if not selected
+                }
+            });
+        }
+
+        // Event listener for when files are selected in the input
+        fileInput.addEventListener('change', async (event) => {
+            const files = event.target.files;
+            if (files.length === 0) {
+                allPages = [];
+                selectedPageOrder = []; // Clear selection
+                hideLoading();
+                return;
+            }
+
+            showLoading(); // Show loading indicator
+            allPages = []; // Reset all pages array
+            selectedPageOrder = []; // Reset selected pages array
+            pagePreviews.innerHTML = ''; // Clear existing previews
+
+            let globalPageIndex = 0; // Keep track of the overall page index
+
+            for (const file of files) {
+                if (file.type === 'application/pdf') {
+                    // Handle PDF files
+                    try {
+                        const pdfData = await file.arrayBuffer();
+                        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const canvas = document.createElement('canvas');
+                            await renderPdfPage(pdf, i, canvas);
+                            allPages.push({ type: 'pdf', file: file, pageIndex: i - 1, originalCanvas: canvas });
+                            pagePreviews.appendChild(createPagePreview(canvas, globalPageIndex));
+                            globalPageIndex++;
+                        }
+                    } catch (error) {
+                        console.error('Error loading PDF:', file.name, error);
+                        processingStatus.textContent = `Error loading PDF: ${file.name}`;
+                        // Optionally, display a user-friendly error message on the UI
+                    }
+                } else if (file.type.startsWith('image/')) {
+                    // Handle image files
+                    try {
+                        const canvas = document.createElement('canvas');
+                        await renderImageToCanvas(file, canvas);
+                        // For images, pageIndex is 0 as each image is a single "page"
+                        allPages.push({ type: 'image', file: file, pageIndex: 0, originalCanvas: canvas });
+                        pagePreviews.appendChild(createPagePreview(canvas, globalPageIndex));
+                        globalPageIndex++;
+                    } catch (error) {
+                        console.error('Error loading image:', file.name, error);
+                        processingStatus.textContent = `Error loading image: ${file.name}`;
+                    }
+                }
+            }
+            hideLoading(); // Hide loading indicator once all files are processed
+        });
+
+        /**
+         * Draws text (with a red circle background) onto a canvas context.
+         * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas.
+         * @param {string} text - The text to draw (e.g., the page number).
+         * @param {number} x - The x-coordinate for the text/circle center.
+         * @param {number} y - The y-coordinate for the text/circle center.
+         * @param {object} options - Drawing options (font, textColor, textAlign, textBaseline, circleColor).
+         */
+        function drawTextOnCanvas(ctx, text, x, y, options) {
+            const fontSize = options.fontSize || 48; // Use dynamic font size
+            ctx.font = `${options.fontWeight || 'bold'} ${fontSize}px Inter`; // Use dynamic font size
+            ctx.textAlign = options.textAlign || 'center';
+            ctx.textBaseline = options.textBaseline || 'middle';
+
+            // Measure text to determine circle size
+            const textMetrics = ctx.measureText(text);
+            // Calculate radius: based on width of text or a standard digit '8', plus padding
+            // Adjusted calculation for better scaling with font size
+            const circleRadius = Math.max(textMetrics.width, ctx.measureText('8').width) / 2 + (fontSize * 0.5); // Padding scales with font size
+            const circleX = x;
+            const circleY = y;
+
+            // Draw circle background
+            ctx.beginPath();
+            ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
+            ctx.fillStyle = options.circleColor || 'red'; // Use dynamic circle color
+            ctx.fill();
+
+            // Draw text on top of the circle
+            ctx.fillStyle = options.textColor || 'white'; // Use dynamic text color
+            ctx.fillText(text, x, y);
+        }
+
+        // Event listener for the "Process & Download" button click
+        processButton.addEventListener('click', async () => {
+            if (selectedPageOrder.length === 0) {
+                // This case should be prevented by disabling the button, but as a fallback
+                console.warn('No pages selected for numbering. Please select at least one page.');
+                return;
+            }
+
+            processingModal.classList.remove('hidden'); // Show processing modal
+            processingStatus.textContent = 'Preparing files...';
+
+            // Get the selected page number position
+            const positionRadios = document.querySelectorAll('input[name="pagePosition"]');
+            let selectedPosition = 'bottom-center'; // Default position
+            for (const radio of positionRadios) {
+                if (radio.checked) {
+                    selectedPosition = radio.value;
+                    break;
+                }
+            }
+
+            // Get selected color and size
+            const selectedColor = pageNumberColorInput.value;
+            const selectedSize = parseInt(pageNumberSizeInput.value);
+
+            const zip = new JSZip(); // Initialize JSZip for creating a zip file
+
+            // Iterate through all pages to process them
+            for (let i = 0; i < allPages.length; i++) {
+                const pageInfo = allPages[i];
+                const originalCanvas = pageInfo.originalCanvas;
+
+                // Create a new canvas to draw the numbered page
+                const newCanvas = document.createElement('canvas');
+                const ctx = newCanvas.getContext('2d');
+
+                // Set new canvas dimensions to match original
+                newCanvas.width = originalCanvas.width;
+                newCanvas.height = originalCanvas.height;
+
+                // Draw the original page content onto the new canvas
+                ctx.drawImage(originalCanvas, 0, 0);
+
+                // Check if the current page was selected for numbering
+                const pageNumberIndex = selectedPageOrder.indexOf(i); // Get its index in the ordered selection array
+                if (pageNumberIndex !== -1) {
+                    const pageNumber = pageNumberIndex + 1; // 1-based page number
+                    const text = String(pageNumber);
+
+                    let x, y;
+                    // Padding from edges, scaled by font size for better responsiveness
+                    const padding = selectedSize * 1.5;
+
+                    // Calculate the position of the page number based on user selection
+                    switch (selectedPosition) {
+                        case 'bottom-center':
+                            x = newCanvas.width / 2;
+                            y = newCanvas.height - padding;
+                            ctx.textAlign = 'center';
+                            break;
+                        case 'bottom-left':
+                            x = padding;
+                            y = newCanvas.height - padding;
+                            ctx.textAlign = 'left';
+                            break;
+                        case 'bottom-right':
+                            x = newCanvas.width - padding;
+                            y = newCanvas.height - padding;
+                            ctx.textAlign = 'right';
+                            break;
+                        case 'top-left':
+                            x = padding;
+                            y = padding;
+                            ctx.textAlign = 'left';
+                            break;
+                        case 'top-center':
+                            x = newCanvas.width / 2;
+                            y = padding;
+                            ctx.textAlign = 'center';
+                            break;
+                        case 'top-right':
+                            x = newCanvas.width - padding;
+                            y = padding;
+                            ctx.textAlign = 'right';
+                            break;
+                        default:
+                            // Fallback to bottom-center if no valid position is selected
+                            x = newCanvas.width / 2;
+                            y = newCanvas.height - padding;
+                            ctx.textAlign = 'center';
+                    }
+                    processingStatus.textContent = `Adding number ${pageNumber} to page ${i + 1}...`;
+                    drawTextOnCanvas(ctx, text, x, y, {
+                        fontSize: selectedSize,
+                        textColor: 'white', // Text color inside the circle is always white for contrast
+                        circleColor: selectedColor, // Use the user-selected color for the circle
+                        textAlign: ctx.textAlign,
+                        textBaseline: 'middle'
+                    });
+                }
+
+                // Convert the new canvas content to a Blob (PNG image)
+                const fileName = `page_${i + 1}.png`;
+                await new Promise(resolve => {
+                    newCanvas.toBlob(blob => {
+                        zip.file(fileName, blob); // Add the image blob to the zip file
+                        resolve();
+                    }, 'image/png'); // Output as PNG
+                });
+            }
+
+            processingStatus.textContent = 'Generating zip file...';
+            // Generate the zip file asynchronously
+            zip.generateAsync({ type: 'blob' })
+                .then(function (content) {
+                    saveAs(content, 'numbered_pages.zip'); // Trigger download of the zip file
+                    processingModal.classList.add('hidden'); // Hide modal on success
+                    processingStatus.textContent = ''; // Clear status message
+                })
+                .catch(error => {
+                    console.error('Error generating zip:', error);
+                    processingModal.classList.add('hidden'); // Hide modal on error
+                    processingStatus.textContent = 'Error processing files. Please try again.';
+                    // In a real application, you might show a more prominent error message to the user
+                });
+        });
+
+        // Initialize the UI state when the script loads
+        hideLoading();
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern File Zipper</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #1a73e8;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .upload-area {
+            border: 3px dashed #dadce0;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 25px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-area.highlight {
+            border-color: #4285F4;
+            background-color: #e8f0fe;
+        }
+
+        .upload-area p {
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #5f6368;
+        }
+
+        .upload-area label {
+            color: #1a73e8;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .google-docs-icon {
+            width: 48px;
+            height: 48px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .file-list-container {
+            text-align: left;
+            margin-bottom: 25px;
+        }
+
+        .file-list-container h3 {
+            color: #5f6368;
+            margin-bottom: 15px;
+            font-weight: 400;
+            font-size: 1em;
+        }
+
+        #fileList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+
+        #fileList li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.95em;
+            color: #3c4043;
+        }
+
+        #fileList li:last-child {
+            border-bottom: none;
+        }
+
+        #fileList li .remove-file {
+            color: #ea4335;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.2em;
+            padding-left: 10px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            margin: 5px;
+        }
+
+        .primary-btn {
+            background-color: #1a73e8;
+            color: #ffffff;
+        }
+
+        .primary-btn:hover {
+            background-color: #1565c0;
+            transform: translateY(-2px);
+        }
+
+        .primary-btn:disabled {
+            background-color: #aab8c2;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .secondary-btn {
+            background-color: #e8f0fe;
+            color: #1a73e8;
+            border: 1px solid #1a73e8;
+        }
+
+        .secondary-btn:hover {
+            background-color: #d2e3fc;
+            transform: translateY(-2px);
+        }
+
+        /* Zipper Animation */
+        .zipper-animation-container {
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .zipper {
+            width: 150px;
+            height: 100px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .zipper-teeth {
+            position: absolute;
+            top: 0;
+            width: 45%;
+            height: 100%;
+            background-color: #ccc;
+            border-radius: 5px;
+        }
+
+        .zipper-teeth.left {
+            left: 0;
+            transform-origin: top right;
+            animation: zipperCloseLeft 2s forwards; /* Animation for closing */
+        }
+
+        .zipper-teeth.right {
+            right: 0;
+            transform-origin: top left;
+            animation: zipperCloseRight 2s forwards; /* Animation for closing */
+        }
+
+        .zipper-slider {
+            width: 25px;
+            height: 35px;
+            background-color: #333;
+            border-radius: 5px;
+            position: absolute;
+            left: 50%;
+            top: 0; /* Start at the top */
+            transform: translateX(-50%);
+            animation: slideDown 2s forwards; /* Animation for sliding down */
+            z-index: 10;
+        }
+
+        @keyframes slideDown {
+            0% { top: 0; }
+            100% { top: calc(100% - 35px); } /* End at the bottom, accounting for slider height */
+        }
+
+        @keyframes zipperCloseLeft {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(15deg); } /* Adjust angle for desired close effect */
+        }
+
+        @keyframes zipperCloseRight {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-15deg); } /* Adjust angle for desired close effect */
+        }
+
+
+        #zipperStatus {
+            font-size: 1.1em;
+            color: #5f6368;
+        }
+
+        /* Download Section */
+        .download-section {
+            display: none; /* Hidden by default */
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+        }
+
+        .download-section h3 {
+            color: #1a73e8;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #5f6368;
+            font-weight: 600;
+        }
+
+        .input-group input[type="text"] {
+            width: calc(100% - 20px);
+            padding: 12px 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>File Zipper</h1>
+
+        <div class="upload-area" id="uploadArea">
+            <div class="google-docs-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="5" y="3" width="14" height="18" rx="2" fill="#FFFFFF"/>
+                    <path d="M19 7L14.5 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V9.5L19 7Z" fill="#F0F0F0"/>
+                    <path d="M19 7L14.5 3V7H19Z" fill="#D0D0D0"/>
+                    <rect x="7" y="7" width="10" height="1.5" rx="0.75" fill="#4285F4"/>
+                    <rect x="7" y="10" width="8" height="1.5" rx="0.75" fill="#BBDEFB"/>
+                    <rect x="7" y="13" width="10" height="1.5" rx="0.75" fill="#BBDEFB"/>
+                    <rect x="7" y="16" width="7" height="1.5" rx="0.75" fill="#BBDEFB"/>
+                </svg>
+            </div>
+            <p>Drag & Drop files here or <label for="fileInput">Browse Files</label></p>
+            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">
+        </div>
+
+        <div class="file-list-container">
+            <h3>Files to Zip:</h3>
+            <ul id="fileList">
+                </ul>
+        </div>
+
+        <button id="zipButton" class="btn primary-btn" disabled>Zip Files</button>
+
+        <div class="zipper-animation-container" id="zipperAnimationContainer">
+            <div class="zipper">
+                <div class="zipper-teeth left"></div>
+                <div class="zipper-slider"></div>
+                <div class="zipper-teeth right"></div>
+            </div>
+            <p id="zipperStatus">Zipping in progress...</p>
+        </div>
+
+        <div class="download-section" id="downloadSection">
+            <h3>Zip Complete!</h3>
+            <div class="input-group">
+                <label for="zipFileName">File Name:</label>
+                <input type="text" id="zipFileName" value="my_files.zip">
+            </div>
+            <button id="downloadButton" class="btn primary-btn">Download Zip</button>
+            <button id="resetButton" class="btn secondary-btn">Zip More Files</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const fileList = document.getElementById('fileList');
+            const zipButton = document.getElementById('zipButton');
+            const zipperAnimationContainer = document.getElementById('zipperAnimationContainer');
+            const zipperStatus = document.getElementById('zipperStatus');
+            const downloadSection = document.getElementById('downloadSection');
+            const zipFileNameInput = document.getElementById('zipFileName');
+            const downloadButton = document.getElementById('downloadButton');
+            const resetButton = document.getElementById('resetButton');
+
+            let uploadedFiles = [];
+            let zippedBlob = null;
+
+            // Highlight drag area on drag enter/leave
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('highlight');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('highlight');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('highlight');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            // Handle file input change
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            // Handle browse files click
+            uploadArea.querySelector('label[for="fileInput"]').addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            function handleFiles(files) {
+                for (const file of files) {
+                    if (!uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
+                        uploadedFiles.push(file);
+                    }
+                }
+                renderFileList();
+                updateZipButtonState();
+            }
+
+            function renderFileList() {
+                fileList.innerHTML = ''; // Clear existing list
+                if (uploadedFiles.length === 0) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.textContent = 'No files selected.';
+                    fileList.appendChild(emptyItem);
+                } else {
+                    uploadedFiles.forEach((file, index) => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <span>${file.name} (${formatBytes(file.size)})</span>
+                            <span class="remove-file" data-index="${index}">&times;</span>
+                        `;
+                        fileList.appendChild(listItem);
+                    });
+                }
+            }
+
+            // Remove file from list
+            fileList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-file')) {
+                    const indexToRemove = parseInt(e.target.dataset.index);
+                    uploadedFiles.splice(indexToRemove, 1);
+                    renderFileList();
+                    updateZipButtonState();
+                }
+            });
+
+            function formatBytes(bytes, decimals = 2) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            }
+
+            function updateZipButtonState() {
+                zipButton.disabled = uploadedFiles.length === 0;
+            }
+
+            // Actual Zipping using JSZip
+            zipButton.addEventListener('click', async () => {
+                if (uploadedFiles.length === 0) {
+                    alert('Please select files to zip.');
+                    return;
+                }
+
+                // Hide upload and file list, show animation
+                uploadArea.style.display = 'none';
+                fileList.closest('.file-list-container').style.display = 'none';
+                zipButton.style.display = 'none';
+                downloadSection.style.display = 'none';
+
+                zipperAnimationContainer.style.display = 'flex';
+                zipperStatus.textContent = 'Initializing zip...';
+
+                const zip = new JSZip();
+
+                // Add files to the zip object
+                for (const file of uploadedFiles) {
+                    zip.file(file.name, file);
+                }
+
+                try {
+                    zipperStatus.textContent = 'Compressing files...';
+                    zippedBlob = await zip.generateAsync({ type: "blob" }, function updateCallback(metadata) {
+                        const percent = metadata.percent.toFixed(2);
+                        zipperStatus.textContent = `Zipping: ${percent}%`;
+                    });
+
+                    zipperAnimationContainer.style.display = 'none';
+                    downloadSection.style.display = 'block';
+                    zipFileNameInput.value = `my_zipped_files_${new Date().getTime()}.zip`;
+
+                } catch (error) {
+                    console.error("Error zipping files:", error);
+                    alert("An error occurred while zipping the files. Please try again.");
+                    resetApp();
+                }
+            });
+
+            // Download the generated zip file
+            downloadButton.addEventListener('click', () => {
+                const fileName = zipFileNameInput.value.trim();
+                if (!fileName) {
+                    alert('Please enter a file name.');
+                    return;
+                }
+
+                if (zippedBlob) {
+                    saveAs(zippedBlob, fileName);
+                    resetApp();
+                } else {
+                    alert('No zip file generated yet. Please zip files first.');
+                }
+            });
+
+            resetButton.addEventListener('click', () => {
+                resetApp();
+            });
+
+            function resetApp() {
+                uploadedFiles = [];
+                zippedBlob = null;
+                renderFileList();
+                updateZipButtonState();
+
+                uploadArea.style.display = 'flex';
+                fileList.closest('.file-list-container').style.display = 'block';
+                zipButton.style.display = 'block';
+                zipperAnimationContainer.style.display = 'none';
+                downloadSection.style.display = 'none';
+                zipperStatus.textContent = 'Zipping in progress...';
+            }
+
+            // Initial render
+            renderFileList();
+            updateZipButtonState();
+        });
+    </script>
+</body>
+</html>

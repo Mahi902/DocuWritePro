@@ -5,7 +5,7 @@
 
 
 
-### 🔹GitHub.io/DocuWritePro
+### 🔹mahi902.GitHub.io/DocuWritePro
 _Last updated: October 6, 2025_
 
 ## Intruduction

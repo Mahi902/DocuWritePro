@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go-To Code</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --secondary: #8ab4f8;
+            --accent: #bb86fc;
+            --accent-light: #d1a8ff;
+            --bg-dark: #0e1621;
+            --bg-darker: #000000;
+            --text: #e8eaed;
+            --text-dim: #9aa0a6;
+            --highlight-bg: rgba(187, 134, 252, 0.15);
+            --char-highlight: rgba(187, 134, 252, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--bg-darker);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 500;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo .material-icons {
+            font-size: 1.8rem;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .clear-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .clear-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-dim);
+            width: 36px;
+            height: 36px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #html-editor {
+            flex: 1;
+            background-color: var(--bg-darker);
+            color: var(--text);
+            padding: 20px;
+            border: none;
+            resize: none;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            tab-size: 2;
+            outline: none;
+            overflow-y: auto;
+            white-space: pre;
+        }
+
+        #html-editor:focus {
+            outline: none;
+        }
+
+        .highlight-line {
+            background: var(--highlight-bg);
+            position: relative;
+        }
+
+        .highlight-line::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-light);
+        }
+
+        .highlight-char {
+            background: var(--char-highlight);
+            color: white;
+            border-radius: 2px;
+            padding: 0 1px;
+        }
+
+        .go-to-container {
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(26, 115, 232, 0.1), rgba(187, 134, 252, 0.1));
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .go-to-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            opacity: 0.5;
+        }
+
+        .go-to-form {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-label {
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .go-to-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 80px;
+            transition: all 0.3s;
+        }
+
+        .go-to-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: auto;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(138, 180, 248, 0.3);
+        }
+
+        .result-message {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .loading-animation {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background-color: white;
+            border-radius: 50%;
+            animation: dotBounce 1s infinite ease-in-out;
+        }
+
+        .dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dotBounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .gradient-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease-out;
+            z-index: -1;
+        }
+
+        .active .gradient-fill {
+            transform: scaleX(1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span class="material-icons">code</span>
+            <span>Go-To Code</span>
+        </div>
+        <div class="header-controls">
+            <button class="clear-button" id="clear-button">
+                <span class="material-icons">clear_all</span>
+                Clear
+            </button>
+            <div class="nav-buttons">
+                <button class="nav-button" id="back-button" disabled>
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <button class="nav-button" id="next-button" disabled>
+                    <span class="material-icons">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="editor-container">
+        <textarea id="html-editor" placeholder="Enter your HTML code here..."></textarea>
+    </div>
+
+    <div class="go-to-container" id="go-to-container">
+        <div class="gradient-fill"></div>
+        <form class="go-to-form" id="go-to-form">
+            <div class="input-group">
+                <span class="input-label">Go to line</span>
+                <input type="number" class="go-to-input" id="line-input" min="1">
+            </div>
+            <div class="input-group">
+                <span class="input-label">Character</span>
+                <input type="number" class="go-to-input" id="char-input" min="1">
+            </div>
+            <button type="submit" class="submit-button" id="submit-button">
+                <span class="material-icons">arrow_forward</span>
+            </button>
+        </form>
+        <div class="result-message" id="result-message"></div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('html-editor');
+        const lineInput = document.getElementById('line-input');
+        const charInput = document.getElementById('char-input');
+        const goToForm = document.getElementById('go-to-form');
+        const resultMessage = document.getElementById('result-message');
+        const goToContainer = document.getElementById('go-to-container');
+        const backButton = document.getElementById('back-button');
+        const nextButton = document.getElementById('next-button');
+        const clearButton = document.getElementById('clear-button');
+
+        let history = [];
+        let historyIndex = -1;
+        let currentMarkers = [];
+
+        function clearHighlights() {
+            // Remove all highlight markers
+            currentMarkers.forEach(marker => marker());
+            currentMarkers = [];
+            
+            // Clear history
+            history = [];
+            historyIndex = -1;
+            updateNavButtons();
+        }
+
+        function highlightPosition(lineNumber, charNumber) {
+            // First clear any existing highlights
+            clearHighlights();
+            
+            const lines = editor.value.split('\n');
+            
+            // Validate inputs
+            if (lineNumber < 1 || lineNumber > lines.length) {
+                return false;
+            }
+            
+            const line = lines[lineNumber - 1];
+            if (charNumber < 1 || charNumber > line.length) {
+                return false;
+            }
+            
+            // Calculate positions for highlighting
+            let pos = 0;
+            for (let i = 0; i < lineNumber - 1; i++) {
+                pos += lines[i].length + 1; // +1 for newline character
+            }
+            pos += charNumber - 1;
+            
+            // Set selection range to highlight the character
+            editor.focus();
+            editor.setSelectionRange(pos, pos + 1);
+            
+            // Scroll to the position
+            scrollToPosition(lineNumber, charNumber);
+            
+            // Add line highlight by adding a class to the textarea
+            // (This is a simplified approach - for better highlighting you'd need a more complex solution)
+            editor.classList.add('highlight-line');
+            const removeLineHighlight = () => editor.classList.remove('highlight-line');
+            currentMarkers.push(removeLineHighlight);
+            
+            return true;
+        }
+
+        function scrollToPosition(lineNumber, charNumber) {
+            // Create a temporary span to measure position
+            const tempSpan = document.createElement('span');
+            tempSpan.textContent = 'x';
+            tempSpan.style.visibility = 'hidden';
+            tempSpan.style.position = 'absolute';
+            document.body.appendChild(tempSpan);
+            
+            // Get character dimensions
+            const charWidth = tempSpan.offsetWidth;
+            const charHeight = tempSpan.offsetHeight;
+            document.body.removeChild(tempSpan);
+            
+            // Calculate scroll position
+            const lines = editor.value.split('\n');
+            const lineHeight = charHeight;
+            const charPos = charNumber * charWidth;
+            
+            // Calculate scroll values
+            const scrollTop = (lineNumber - 1) * lineHeight - editor.offsetHeight / 2 + lineHeight;
+            const scrollLeft = charPos - editor.offsetWidth / 2;
+            
+            // Smooth scroll
+            editor.scrollTo({
+                top: scrollTop,
+                left: scrollLeft,
+                behavior: 'smooth'
+            });
+        }
+
+        function showResultMessage(lineNumber, charNumber) {
+            resultMessage.innerHTML = `
+                <div class="loading-animation">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            `;
+            
+            goToContainer.classList.add('active');
+            resultMessage.style.opacity = '1';
+            
+            setTimeout(() => {
+                resultMessage.innerHTML = `I've highlighted line ${lineNumber}'s ${charNumber} character above.`;
+                
+                setTimeout(() => {
+                    resultMessage.style.opacity = '0';
+                    goToContainer.classList.remove('active');
+                    
+                    setTimeout(() => {
+                        resultMessage.innerHTML = '';
+                    }, 300);
+                }, 2000);
+            }, 1000);
+        }
+
+        goToForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const lineNumber = parseInt(lineInput.value);
+            const charNumber = parseInt(charInput.value);
+            
+            if (isNaN(lineNumber) || isNaN(charNumber)) {
+                return;
+            }
+            
+            const success = highlightPosition(lineNumber, charNumber);
+            
+            if (success) {
+                // Add to history
+                if (historyIndex < history.length - 1) {
+                    history = history.slice(0, historyIndex + 1);
+                }
+                
+                history.push({ line: lineNumber, char: charNumber });
+                historyIndex = history.length - 1;
+                
+                updateNavButtons();
+                
+                showResultMessage(lineNumber, charNumber);
+            }
+        });
+
+        function updateNavButtons() {
+            backButton.disabled = historyIndex <= 0;
+            nextButton.disabled = historyIndex >= history.length - 1;
+        }
+
+        backButton.addEventListener('click', () => {
+            if (historyIndex > 0) {
+                historyIndex--;
+                const position = history[historyIndex];
+                highlightPosition(position.line, position.char);
+                updateNavButtons();
+            }
+        });
+
+        nextButton.addEventListener('click', () => {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                const position = history[historyIndex];
+                highlightPosition(position.line, position.char);
+                updateNavButtons();
+            }
+        });
+
+        clearButton.addEventListener('click', () => {
+            clearHighlights();
+        });
+
+        // Initialize with empty editor
+        editor.value = '';
+    </script>
+</body>
+</html>
+
+
+
+
+
+<script>document.documentElement.style.filter="invert(1)"</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Homepage Button</title>
+  <style>
+    @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+    .homepage-button {
+      position: fixed;
+      top: 160px;       /* 80px from the top */
+      right: 20px;     /* aligned to the right */
+      z-index: 9999;
+      background-color: transparent;
+      color: #000;
+      border: 2px solid #000;
+      padding: 8px 14px;
+      font-size: 16px;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .homepage-button:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      color: #333;
+      border-color: #333;
+    }
+
+    .material-icons {
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="homepage-button" onclick="window.open('https://sites.google.com/view/docuwritepro/home', '_blank')">
+    <span class="material-icons">home</span>
+    Homepage
+  </button>
+
+</body>
+</html>

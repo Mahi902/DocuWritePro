@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Snipper</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --secondary: #8ab4f8;
+            --accent: #bb86fc;
+            --accent-light: #d1a8ff;
+            --bg-dark: #0e1621;
+            --bg-darker: #000000;
+            --text: #e8eaed;
+            --text-dim: #9aa0a6;
+            --highlight-bg: rgba(187, 134, 252, 0.15);
+            --char-highlight: rgba(187, 134, 252, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Google Sans', Roboto, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--bg-darker);
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 500;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo .material-icons {
+            font-size: 1.8rem;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .clear-button {
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-dim);
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .clear-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #code-editor {
+            flex: 1;
+            background-color: var(--bg-darker);
+            color: var(--text);
+            padding: 20px;
+            border: none;
+            resize: none;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            tab-size: 2;
+            outline: none;
+            overflow-y: auto;
+            white-space: pre;
+        }
+
+        #code-editor:focus {
+            outline: none;
+        }
+
+        .highlight-line {
+            background: var(--highlight-bg);
+            position: relative;
+        }
+
+        .highlight-line::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--accent-light);
+        }
+
+        .snipper-container {
+            padding: 16px;
+            background: linear-gradient(135deg, rgba(26, 115, 232, 0.1), rgba(187, 134, 252, 0.1));
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .snipper-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            opacity: 0.5;
+        }
+
+        .snipper-form {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-label {
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        .snipper-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 80px;
+            transition: all 0.3s;
+        }
+
+        .snipper-input:focus {
+            outline: none;
+            border-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
+        }
+
+        .submit-button {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: auto;
+        }
+
+        .submit-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(138, 180, 248, 0.3);
+        }
+
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .dialog-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .dialog {
+            background: var(--bg-darker);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+
+        .dialog-overlay.active .dialog {
+            transform: translateY(0);
+        }
+
+        .dialog-title {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dialog-content {
+            margin-bottom: 24px;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        .dialog-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .dialog-button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .dialog-button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        .dialog-button.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .dialog-button.primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .dialog-button.primary:hover {
+            background: var(--accent-light);
+        }
+
+        .gradient-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease-out;
+            z-index: -1;
+        }
+
+        .active .gradient-fill {
+            transform: scaleX(1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span class="material-icons">content_cut</span>
+            <span>Code Snipper</span>
+        </div>
+        <div class="header-controls">
+            <button class="clear-button" id="clear-button">
+                <span class="material-icons">clear_all</span>
+                Clear
+            </button>
+        </div>
+    </header>
+
+    <div class="editor-container">
+        <textarea id="code-editor" placeholder="Enter your code here..."></textarea>
+    </div>
+
+    <div class="snipper-container" id="snipper-container">
+        <div class="gradient-fill"></div>
+        <form class="snipper-form" id="snipper-form">
+            <div class="input-group">
+                <span class="input-label">Snip from line</span>
+                <input type="number" class="snipper-input" id="from-line" min="1">
+            </div>
+            <div class="input-group">
+                <span class="input-label">to line</span>
+                <input type="number" class="snipper-input" id="to-line" min="1">
+            </div>
+            <button type="submit" class="submit-button" id="submit-button">
+                <span class="material-icons">arrow_forward</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Confirmation Dialog -->
+    <div class="dialog-overlay" id="confirm-dialog">
+        <div class="dialog">
+            <div class="dialog-title">
+                <span class="material-icons">help_outline</span>
+                <span>Confirm Snippet</span>
+            </div>
+            <div class="dialog-content" id="confirm-content">
+                Do you want to snip from line X to line Y?
+            </div>
+            <div class="dialog-actions">
+                <button class="dialog-button secondary" id="cancel-snip">Cancel</button>
+                <button class="dialog-button primary" id="confirm-snip">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Dialog -->
+    <div class="dialog-overlay" id="action-dialog">
+        <div class="dialog">
+            <div class="dialog-title">
+                <span class="material-icons">content_cut</span>
+                <span>Snippet Action</span>
+            </div>
+            <div class="dialog-content">
+                What would you like to do with the snipped part?
+            </div>
+            <div class="dialog-actions">
+                <button class="dialog-button secondary" id="keep-snippet">Keep Only Snippet</button>
+                <button class="dialog-button primary" id="delete-snippet">Delete Snippet</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const editor = document.getElementById('code-editor');
+        const fromLineInput = document.getElementById('from-line');
+        const toLineInput = document.getElementById('to-line');
+        const snipperForm = document.getElementById('snipper-form');
+        const clearButton = document.getElementById('clear-button');
+        
+        const confirmDialog = document.getElementById('confirm-dialog');
+        const confirmContent = document.getElementById('confirm-content');
+        const confirmSnipBtn = document.getElementById('confirm-snip');
+        const cancelSnipBtn = document.getElementById('cancel-snip');
+        
+        const actionDialog = document.getElementById('action-dialog');
+        const keepSnippetBtn = document.getElementById('keep-snippet');
+        const deleteSnippetBtn = document.getElementById('delete-snippet');
+        
+        let currentFromLine = 0;
+        let currentToLine = 0;
+
+        function clearEditor() {
+            editor.value = '';
+            fromLineInput.value = '';
+            toLineInput.value = '';
+        }
+
+        function getFirstThreeWords(line) {
+            return line.trim().split(/\s+/).slice(0, 3).join(' ');
+        }
+
+        function getLastThreeWords(line) {
+            const words = line.trim().split(/\s+/);
+            return words.slice(Math.max(words.length - 3, 0)).join(' ');
+        }
+
+        function showConfirmDialog(fromLine, toLine, lines) {
+            currentFromLine = fromLine;
+            currentToLine = toLine;
+            
+            const firstLineText = lines[fromLine - 1].trim() || '(empty line)';
+            const lastLineText = lines[toLine - 1].trim() || '(empty line)';
+            
+            const firstPreview = getFirstThreeWords(firstLineText);
+            const lastPreview = getLastThreeWords(lastLineText);
+            
+            confirmContent.innerHTML = `
+                <p>Do you want to snip from line ${fromLine} to line ${toLine}?</p>
+                <p style="margin-top: 12px;">
+                    <strong>Preview:</strong><br>
+                    From: <em>"${firstPreview}${firstLineText.length > firstPreview.length ? '...' : ''}"</em><br>
+                    To: <em>"${lastPreview !== firstPreview ? (lastLineText.length > lastPreview.length ? '...' : '') + lastPreview : '(same line)'}"</em>
+                </p>
+            `;
+            
+            confirmDialog.classList.add('active');
+        }
+
+        function showActionDialog() {
+            confirmDialog.classList.remove('active');
+            actionDialog.classList.add('active');
+        }
+
+        function hideDialogs() {
+            confirmDialog.classList.remove('active');
+            actionDialog.classList.remove('active');
+        }
+
+        function performSnip(action) {
+            const lines = editor.value.split('\n');
+            
+            if (currentFromLine < 1 || currentToLine < 1 || 
+                currentFromLine > lines.length || currentToLine > lines.length || 
+                currentFromLine > currentToLine) {
+                hideDialogs();
+                return;
+            }
+            
+            const snippet = lines.slice(currentFromLine - 1, currentToLine).join('\n');
+            
+            if (action === 'keep') {
+                // Keep only the snippet
+                editor.value = snippet;
+            } else {
+                // Delete the snippet
+                const before = lines.slice(0, currentFromLine - 1).join('\n');
+                const after = lines.slice(currentToLine).join('\n');
+                editor.value = before + (before && after ? '\n' : '') + after;
+            }
+            
+            hideDialogs();
+            
+            // Highlight the first line of the result
+            setTimeout(() => {
+                const resultLines = editor.value.split('\n');
+                if (resultLines.length > 0) {
+                    editor.focus();
+                    editor.setSelectionRange(0, 0);
+                    editor.scrollTo(0, 0);
+                }
+            }, 100);
+        }
+
+        snipperForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const fromLine = parseInt(fromLineInput.value);
+            const toLine = parseInt(toLineInput.value);
+            const lines = editor.value.split('\n');
+            
+            if (isNaN(fromLine)) {
+                fromLineInput.focus();
+                return;
+            }
+            
+            if (isNaN(toLine)) {
+                toLineInput.focus();
+                return;
+            }
+            
+            if (fromLine < 1 || fromLine > lines.length) {
+                alert(`Line ${fromLine} is out of range. The document has ${lines.length} lines.`);
+                return;
+            }
+            
+            if (toLine < 1 || toLine > lines.length) {
+                alert(`Line ${toLine} is out of range. The document has ${lines.length} lines.`);
+                return;
+            }
+            
+            if (fromLine > toLine) {
+                alert("End line must be greater than or equal to start line.");
+                return;
+            }
+            
+            showConfirmDialog(fromLine, toLine, lines);
+        });
+
+        confirmSnipBtn.addEventListener('click', () => {
+            showActionDialog();
+        });
+
+        cancelSnipBtn.addEventListener('click', () => {
+            hideDialogs();
+        });
+
+        keepSnippetBtn.addEventListener('click', () => {
+            performSnip('keep');
+        });
+
+        deleteSnippetBtn.addEventListener('click', () => {
+            performSnip('delete');
+        });
+
+        clearButton.addEventListener('click', () => {
+            clearEditor();
+        });
+
+        // Initialize with empty editor
+        editor.value = '';
+    </script>
+</body>
+</html>
+
+
+
+<script>document.documentElement.style.filter="invert(1)"</script>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Homepage Button</title>
+  <style>
+    @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+    .homepage-button {
+      position: fixed;
+      top: 160px;       /* 80px from the top */
+      right: 20px;     /* aligned to the right */
+      z-index: 9999;
+      background-color: transparent;
+      color: #000;
+      border: 2px solid #000;
+      padding: 8px 14px;
+      font-size: 16px;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
+    }
+
+    .homepage-button:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+      color: #333;
+      border-color: #333;
+    }
+
+    .material-icons {
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <button class="homepage-button" onclick="window.open('https://sites.google.com/view/docuwritepro/home', '_blank')">
+    <span class="material-icons">home</span>
+    Homepage
+  </button>
+
+</body>
+</html>

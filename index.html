@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuWrite Pro</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <style>
+    /* Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    /* Splash screen overlay */
+    #docuwrite-splash {
+      position: fixed;
+      inset: 0;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      z-index: 99999;
+    }
+
+    /* Splash content */
+    #docuwrite-splash .splash-content {
+      text-align: center;
+    }
+
+    #docuwrite-splash .material-icons {
+      font-size: 90px;
+      color: #4285F4; /* Google Blue */
+      margin-bottom: 20px;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.5s ease;
+    }
+
+    #docuwrite-splash p {
+      font-size: 34px;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      color: #333;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s ease;
+    }
+
+    /* Fade out animation */
+    .fade-out {
+      animation: fadeOut 0.6s forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    /* Fullscreen iframe */
+    #docuwrite-app {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      z-index: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Splash Screen -->
+  <div id="docuwrite-splash">
+    <div class="splash-content">
+      <span class="material-icons">description</span>
+      <p>DocuWrite Pro</p>
+    </div>
+  </div>
+
+  <!-- Dashboard iframe (preloaded behind splash) -->
+  <iframe id="docuwrite-app" src="https://mahi902.github.io/DocuWritePro/Dashboard.html" frameborder="0" allowfullscreen></iframe>
+
+  <script>
+    window.addEventListener("load", () => {
+      const splash = document.getElementById("docuwrite-splash");
+      const icon = splash.querySelector(".material-icons");
+      const text = splash.querySelector("p");
+
+      // Animate splash-in
+      setTimeout(() => {
+        icon.style.opacity = "1";
+        icon.style.transform = "scale(1)";
+      }, 100);
+
+      setTimeout(() => {
+        text.style.opacity = "1";
+        text.style.transform = "translateY(0)";
+      }, 400);
+
+      // Fade out splash
+      setTimeout(() => {
+        splash.classList.add("fade-out");
+      }, 1500);
+
+      // Remove splash after fade
+      setTimeout(() => {
+        splash.remove();
+      }, 2100);
+    });
+  </script>
+</body>
+</html>

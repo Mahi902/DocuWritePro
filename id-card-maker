@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate ID Card Maker - Enhanced Layout</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+/* Custom Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Styling the ID card for a realistic credit-card look at high resolution */
+        .id-card {
+            width: 33.7in; /* Standard ID card width scaled up 10x for resolution (3.37in * 10) */
+            height: 21.25in; /* Standard ID card height scaled up 10x (2.125in * 10) */
+            transform: scale(0.12); /* Scale down for preview in the UI */
+            transform-origin: top left;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border-radius: 1.5in;
+            position: relative;
+            overflow: hidden;
+            background-color: white;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .preview-container {
+            width: 3.37in;
+            height: 2.125in;
+            margin: 1rem;
+        }
+        
+        input[type="file"] { display: none; }
+
+        .custom-file-upload {
+            border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border-radius: 0.5rem; padding: 1.5rem; text-align: center;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .custom-file-upload:hover { background-color: #f8fafc; }
+
+        /* Wave SVG style */
+        .wave-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        .wave { position: absolute; bottom: 0; left: -50%; width: 200%; height: 65%; }
+
+        /* Theming classes for the wave SVG */
+        .theme-white .wave-path { fill: #f1f5e9; }
+        .theme-blue .wave-path { fill: #dbeafe; }
+        .theme-yellow .wave-path { fill: #fef9c3; }
+        .theme-pink .wave-path { fill: #fce7f3; }
+        .theme-green .wave-path { fill: #dcfce7; }
+        
+        /* New watermark text style */
+        .watermark-text {
+            font-family: 'Oswald', sans-serif;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Removed the rotation */
+            color: #dbeafe; /* Faded blue */
+            font-size: 5in;
+            opacity: 0.8;
+            z-index: 1;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+        
+        /* Profile image style */
+        #profile-img-preview {
+            width: 8in; height: 8in; object-fit: cover;
+            border-radius: 9999px; /* Make it a perfect circle */
+            border: 0.4in solid white;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        #logo-preview {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* Icon styling for input fields */
+        .input-group { position: relative; }
+        .input-group .material-icons { position: absolute; top: 50%; left: 0.75rem; transform: translateY(-50%); color: #94a3b8; }
+        .input-group input, .input-group select, .input-group textarea { padding-left: 2.75rem; }
+    </style>
+</head>
+<body>
+<div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight">ID Card Maker</h1>
+            <p class="text-slate-500 mt-2 text-lg">Create a professional, high-quality safety ID in moments.</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            <div class="bg-white p-8 rounded-2xl shadow-lg">
+                <h2 class="text-2xl font-bold mb-6 text-slate-700">1. Your Information</h2>
+                <div class="space-y-5">
+                    <label for="image-upload" class="custom-file-upload group">
+                        <div class="text-center">
+                            <span class="material-icons text-5xl text-slate-400 group-hover:text-indigo-500 transition-colors">add_a_photo</span>
+                            <p class="mt-2 font-semibold text-slate-600">Upload Your Photo</p>
+                            <span id="file-name-display" class="text-indigo-600 text-sm font-medium"></span>
+                        </div>
+                    </label>
+                    <input id="image-upload" type="file" accept="image/*">
+                    
+                    <label for="logo-upload" class="custom-file-upload group">
+                        <div class="text-center">
+                            <span class="material-icons text-5xl text-slate-400 group-hover:text-indigo-500 transition-colors">photo_library</span>
+                            <p class="mt-2 font-semibold text-slate-600">Upload Company Logo (Replaces "Identity Card")</p>
+                            <span id="logo-file-name" class="text-indigo-600 text-sm font-medium"></span>
+                        </div>
+                    </label>
+                    <input id="logo-upload" type="file" accept="image/*">
+
+                    <div class="input-group"><span class="material-icons">person</span><input id="name" type="text" placeholder="Full Name" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" value=""></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="input-group"><span class="material-icons">cake</span><input id="dob" type="text" onfocus="(this.type='date')" onblur="(this.type='text')" placeholder="Date of Birth" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" value=""></div>
+                        <div class="input-group"><span class="material-icons">today</span><input id="issue-date-input" type="text" onfocus="(this.type='date')" onblur="(this.type='text')" placeholder="Issued Date" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" value=""></div>
+                    </div>
+                    <div class="input-group"><span class="material-icons">phone</span><input id="phone" type="tel" placeholder="Phone Number" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" value=""></div>
+                    <div class="input-group"><span class="material-icons">email</span><input id="email" type="email" placeholder="Email Address" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" value=""></div>
+                    <div class="input-group"><span class="material-icons">home</span><textarea id="address" placeholder="Full Address" rows="2" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"></textarea></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="input-group"><span class="material-icons">bloodtype</span><select id="blood-group" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white"><option value="">Blood Group</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option selected>O+</option><option>O-</option></select></div>
+                        <div class="input-group"><span class="material-icons">chat</span><input id="whatsapp" type="tel" placeholder="WhatsApp Number" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition" value=""></div>
+                    </div>
+                    <div class="input-group"><span class="material-icons">event_busy</span><input id="expiry-date-input" type="text" onfocus="(this.type='date')" onblur="(this.type='text')" placeholder="Expiry Date" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"></div>
+                    <label for="signature-upload" class="custom-file-upload group mt-4">
+                        <div class="text-center">
+                            <span class="material-icons text-5xl text-slate-400 group-hover:text-indigo-500 transition-colors">draw</span>
+                            <p class="mt-2 font-semibold text-slate-600">Upload Authority Signature</p>
+                            <span id="signature-file-name" class="text-indigo-600 text-sm font-medium"></span>
+                        </div>
+                    </label>
+                    <input id="signature-upload" type="file" accept="image/*">
+                </div>
+
+                <h2 class="text-2xl font-bold mt-8 mb-4 text-slate-700">2. Select Theme</h2>
+                <div id="theme-selector" class="flex flex-wrap gap-3">
+                    <button data-theme="white" class="theme-btn ring-2 ring-indigo-500 w-10 h-10 bg-slate-200 border-2 border-slate-300 rounded-full focus:outline-none"></button>
+                    <button data-theme="blue" class="theme-btn w-10 h-10 bg-blue-200 rounded-full focus:outline-none ring-2 ring-transparent hover:ring-blue-500"></button>
+                    <button data-theme="yellow" class="theme-btn w-10 h-10 bg-yellow-200 rounded-full focus:outline-none ring-2 ring-transparent hover:ring-yellow-500"></button>
+                    <button data-theme="pink" class="theme-btn w-10 h-10 bg-pink-200 rounded-full focus:outline-none ring-2 ring-transparent hover:ring-pink-500"></button>
+                    <button data-theme="green" class="theme-btn w-10 h-10 bg-green-200 rounded-full focus:outline-none ring-2 ring-transparent hover:ring-green-500"></button>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center">
+                <h2 class="text-2xl font-bold mb-6 text-slate-700 text-center">3. Live Preview & Download</h2>
+                <div class="flex flex-col md:flex-row gap-8 items-center justify-center">
+                    <div class="preview-container">
+                        <div id="id-front" class="id-card font-sans theme-white">
+                            <div class="wave-container"><svg class="wave" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg"><path class="wave-path transition-colors duration-300" fill-opacity="1" d="M0,224L80,213.3C160,203,320,181,480,186.7C640,192,800,224,960,229.3C1120,235,1280,213,1360,202.7L1440,192L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path></svg></div>
+                            <div class="relative w-full h-full p-[1.5in] flex flex-col">
+                                <header class="flex justify-between items-center w-full">
+                                    <h2 id="card-title" class="text-5xl font-extrabold text-slate-700">Identity Card</h2>
+                                    <img id="logo-preview" class="w-auto max-h-[1.5in] hidden" alt="Company Logo">
+                                    <span class="material-icons text-6xl text-slate-400">fingerprint</span>
+                                </header>
+                                <main class="flex-grow flex items-center w-full mt-[-1in]">
+                                    <div class="w-1/3 flex flex-col items-center text-center">
+                                        <img id="profile-img-preview" src="https://placehold.co/400x400/E2E8F0/475569?text=Photo" alt="Profile Picture">
+                                        <div id="qr-code-placeholder" class="w-[5in] h-[5in] mt-[1in] bg-slate-200 flex items-center justify-center text-slate-500 text-center text-xl rounded-lg p-2">QR Code</div>
+                                        <div id="qr-code" class="mt-[1in]"></div>
+                                    </div>
+                                    <div class="w-2/3 pl-[1.5in] flex flex-col justify-center text-slate-700 space-y-[0.8in]">
+                                        <div>
+                                            <p class="text-2xl text-slate-500">Full Name</p>
+                                            <h3 id="name-preview" class="text-7xl font-bold break-words"></h3>
+                                        </div>
+                                        <div>
+                                            <p class="text-2xl text-slate-500">Date of Birth</p>
+                                            <p id="dob-preview" class="text-4xl font-medium"></p>
+                                        </div>
+                                         <div>
+                                            <p class="text-2xl text-slate-500">Contact</p>
+                                            <p id="phone-preview" class="text-4xl font-medium flex items-center"><span class="material-icons mr-3 text-3xl">phone</span></p>
+                                            <p id="email-preview" class="text-4xl font-medium flex items-center mt-2"><span class="material-icons mr-3 text-3xl">email</span></p>
+                                        </div>
+                                        <div>
+                                            <p class="text-2xl text-slate-500">Address</p>
+                                            <p id="address-preview" class="text-4xl font-medium break-words"></p>
+                                        </div>
+                                        <div>
+                                            <p class="text-2xl text-slate-500">Blood Group</p>
+                                            <p id="blood-group-preview" class="text-6xl font-black text-red-600"></p>
+                                        </div>
+                                    </div>
+                                </main>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="preview-container">
+                        <div id="id-back" class="id-card font-sans theme-white relative">
+                            <div class="watermark-text">DocuWrite Pro</div>
+                             <div class="w-full h-full flex flex-col p-[1.5in] z-20 relative">
+                                <div class="w-full flex justify-center mt-[1in]">
+                                    <svg id="barcode" class="w-[90%]"></svg>
+                                </div>
+                                <div class="flex-grow flex items-center justify-between px-[1in] mt-[1.5in] space-x-8">
+                                    <div class="w-2/3 h-full flex flex-col">
+                                        <p class="text-lg text-slate-400 leading-tight">This card is the property of the authorized holder. If found, please contact the number on the reverse or return to the nearest authorities.</p>
+                                        <div class="mt-auto pt-[0.5in]">
+                                            <div id="signature-placeholder" class="border-t-4 border-slate-300 pt-2">
+                                                <p class="text-2xl font-semibold text-slate-500 tracking-widest">HOLDER SIGNATURE</p>
+                                            </div>
+                                            <img id="signature-preview" class="max-h-[3in] max-w-full border-t-4 border-slate-300 pt-2 hidden" alt="Signature">
+                                        </div>
+                                    </div>
+                                    <div class="w-1/3 h-full flex flex-col items-center justify-between">
+                                        <div class="text-center">
+                                            <p class="text-2xl font-semibold text-slate-600">Issued: <span id="issue-date"></span></p>
+                                            <p class="text-2xl font-semibold text-slate-600">Expires: <span id="expiry-date"></span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-full flex justify-between items-center text-4xl font-bold text-slate-400 px-[1in] pb-[0.5in] mt-auto border-t-2 border-slate-200 pt-[0.5in]">
+                                    <span>DocuWrite Pro</span>
+                                    <div class="text-left">
+  <span class="text-gray-500">With the help of</span>
+  <span class="text-green-500">WhatsApp</span>
+</div>
+
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-10 w-full max-w-lg mx-auto">
+                    <button id="download-front-btn" class="w-full bg-indigo-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-indigo-700 transition-all shadow-md flex items-center justify-center text-lg">
+                        <span class="material-icons mr-2">download</span> Download Front (.jpg)
+                    </button>
+                    <button id="download-back-btn" class="mt-4 w-full bg-slate-700 text-white font-bold py-4 px-6 rounded-lg hover:bg-slate-800 transition-all shadow-md flex items-center justify-center text-lg">
+                        <span class="material-icons mr-2">download</span> Download Back (.jpg)
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+<script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- DOM Elements ---
+            const inputs = {
+                name: document.getElementById('name'), dob: document.getElementById('dob'), phone: document.getElementById('phone'),
+                email: document.getElementById('email'), address: document.getElementById('address'), bloodGroup: document.getElementById('blood-group'),
+                whatsapp: document.getElementById('whatsapp'), imageUpload: document.getElementById('image-upload'),
+                logoUpload: document.getElementById('logo-upload'), signatureUpload: document.getElementById('signature-upload'),
+                issueDate: document.getElementById('issue-date-input'),
+                expiryDate: document.getElementById('expiry-date-input'),
+            };
+
+            const previews = {
+                name: document.getElementById('name-preview'), dob: document.getElementById('dob-preview'), email: document.getElementById('email-preview'),
+                phone: document.getElementById('phone-preview'), address: document.getElementById('address-preview'), bloodGroup: document.getElementById('blood-group-preview'),
+                profileImg: document.getElementById('profile-img-preview'),
+                logo: document.getElementById('logo-preview'), signature: document.getElementById('signature-preview'),
+            };
+
+            const cardTitle = document.getElementById('card-title');
+            const qrCodeContainer = document.getElementById('qr-code');
+            const qrCodePlaceholder = document.getElementById('qr-code-placeholder');
+            const signaturePlaceholder = document.getElementById('signature-placeholder');
+            const idFront = document.getElementById('id-front');
+            const idBack = document.getElementById('id-back');
+            const themeSelector = document.getElementById('theme-selector');
+            const downloadFrontBtn = document.getElementById('download-front-btn');
+            const downloadBackBtn = document.getElementById('download-back-btn');
+            const issueDateDisplay = document.getElementById('issue-date');
+            const expiryDateDisplay = document.getElementById('expiry-date');
+            const barcodeSvg = document.getElementById('barcode');
+            const fileNameDisplay = document.getElementById('file-name-display');
+            const logoFileNameDisplay = document.getElementById('logo-file-name');
+            const signatureFileNameDisplay = document.getElementById('signature-file-name');
+
+            // --- State and Constants ---
+            let currentTheme = 'white';
+            let qrcode = null;
+
+            // --- Helper Functions ---
+            const formatDate = (dateString) => {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            };
+
+            const updatePreviews = () => {
+                previews.name.textContent = inputs.name.value || 'Full Name';
+                previews.dob.textContent = formatDate(inputs.dob.value) || 'Date of Birth';
+                previews.phone.textContent = inputs.phone.value || 'Phone Number';
+                previews.email.textContent = inputs.email.value || 'Email Address';
+                previews.address.textContent = inputs.address.value || 'Full Address';
+                previews.bloodGroup.textContent = inputs.bloodGroup.value || 'Blood Group';
+
+                // Update dates on the back of the card
+                issueDateDisplay.textContent = formatDate(inputs.issueDate.value) || 'Issued Date';
+                expiryDateDisplay.textContent = formatDate(inputs.expiryDate.value) || 'Expiry Date';
+
+                updateQRCode();
+                updateBarcode();
+            };
+
+            const updateQRCode = () => {
+                if (qrcode) {
+                    qrcode.clear();
+                }
+                
+                const qrData = inputs.whatsapp.value || inputs.phone.value;
+                if (qrData) {
+                    qrCodePlaceholder.classList.add('hidden');
+                    qrCodeContainer.innerHTML = '';
+                    new QRCode(qrCodeContainer, {
+                        text: `https://wa.me/${qrData}`,
+                        width: 500,
+                        height: 500,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } else {
+                    qrCodeContainer.innerHTML = '';
+                    qrCodePlaceholder.classList.remove('hidden');
+                }
+            };
+            
+            const updateBarcode = () => {
+                const barcodeValue = [
+                    inputs.name.value,
+                    formatDate(inputs.dob.value),
+                    inputs.address.value,
+                    inputs.bloodGroup.value,
+                    inputs.email.value,
+                    inputs.phone.value
+                ].filter(Boolean).join('|');
+
+                JsBarcode(barcodeSvg, barcodeValue || 'NO DATA', {
+                    format: "CODE128",
+                    displayValue: true,
+                    fontSize: 24,
+                    height: 120,
+                    margin: 0,
+                    width: 3,
+                    lineColor: "#475569",
+                    background: "transparent"
+                });
+            };
+
+            const handleImageUpload = (file, previewElement, fileNameDisplay) => {
+                if (file) {
+                    fileNameDisplay.textContent = file.name;
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        previewElement.src = e.target.result;
+                        previewElement.classList.remove('hidden');
+                        if (previewElement.id === 'signature-preview') {
+                            signaturePlaceholder.classList.add('hidden');
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            const downloadCard = async (elementId, filename) => {
+                const element = document.getElementById(elementId);
+                // Temporarily increase scale for high-res capture
+                const originalScale = element.style.transform;
+                element.style.transform = 'scale(1)'; 
+                
+                try {
+                    const canvas = await html2canvas(element, { 
+                        scale: 3, // Increased scale for higher quality image
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: null
+                    });
+                    
+                    const image = canvas.toDataURL("image/jpeg", 1.0);
+                    const link = document.createElement('a');
+                    link.download = filename;
+                    link.href = image;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                } catch (error) {
+                    console.error('Error during download:', error);
+                } finally {
+                    // Revert scale back for UI preview
+                    element.style.transform = originalScale;
+                }
+            };
+
+            // --- Event Listeners ---
+            Object.values(inputs).forEach(input => {
+                input.addEventListener('input', updatePreviews);
+            });
+
+            inputs.imageUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                handleImageUpload(file, previews.profileImg, fileNameDisplay);
+            });
+
+            inputs.logoUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    cardTitle.classList.add('hidden');
+                    previews.logo.classList.remove('hidden');
+                } else {
+                    cardTitle.classList.remove('hidden');
+                    previews.logo.classList.add('hidden');
+                }
+                handleImageUpload(file, previews.logo, logoFileNameDisplay);
+            });
+
+            inputs.signatureUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                handleImageUpload(file, previews.signature, signatureFileNameDisplay);
+            });
+
+            themeSelector.addEventListener('click', (e) => {
+                const btn = e.target.closest('.theme-btn');
+                if (btn) {
+                    // Remove ring from all buttons
+                    document.querySelectorAll('.theme-btn').forEach(b => {
+                        b.classList.remove('ring-2', `ring-${currentTheme}-500`);
+                        b.classList.add('ring-2', 'ring-transparent');
+                    });
+                    
+                    // Add ring to the clicked button
+                    currentTheme = btn.dataset.theme;
+                    btn.classList.add('ring-2', `ring-${currentTheme}-500`);
+                    
+                    // Update the card theme
+                    idFront.className = 'id-card font-sans ' + 'theme-' + currentTheme;
+                    idBack.className = 'id-card font-sans ' + 'theme-' + currentTheme + ' relative';
+                }
+            });
+
+            downloadFrontBtn.addEventListener('click', () => {
+                downloadCard('id-front', 'ID_Card_Front.jpg');
+            });
+            
+            downloadBackBtn.addEventListener('click', () => {
+                downloadCard('id-back', 'ID_Card_Back.jpg');
+            });
+
+            // --- Initial Setup ---
+            updatePreviews();
+            // Call updateQRCode and updateBarcode on page load to generate initial previews
+            updateQRCode();
+            updateBarcode();
+        });
+    </script>
+</body>
+</html>

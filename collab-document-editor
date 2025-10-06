@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuWrite Collab</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #f1f3f4;
+            --border-color: #dadce0;
+            --text-color: #202124;
+            --light-text: #5f6368;
+            --white: #ffffff;
+            --admin-color: #fbbc04;
+            --read-only-color: #ea4335;
+            --success-color: #34a853;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--white);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .logo .material-icons {
+            color: var(--primary-color);
+            font-size: 28px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 5px rgba(66, 133, 244, 0.3);
+        }
+
+        .btn:hover {
+            background-color: #3367d6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(66, 133, 244, 0.4);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            box-shadow: none;
+        }
+
+        .btn-outline:hover {
+            background-color: var(--secondary-color);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            box-shadow: 0 2px 5px rgba(52, 168, 83, 0.3);
+        }
+
+        .btn-success:hover {
+            background-color: #2e8b47;
+            box-shadow: 0 4px 8px rgba(52, 168, 83, 0.4);
+        }
+
+        .btn-icon {
+            padding: 8px;
+            min-width: 40px;
+            min-height: 40px;
+            border-radius: 50%;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 320px;
+            background-color: var(--white);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .team-code-container {
+            background-color: var(--secondary-color);
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .team-code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .team-code-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--light-text);
+        }
+
+        .team-code {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            background: var(--white);
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px dashed var(--border-color);
+        }
+
+        .user-list-container {
+            flex: 1;
+            overflow-y: auto;
+            margin: 15px 0;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--white);
+        }
+
+        .user-list-title {
+            padding: 12px 15px;
+            font-weight: 500;
+            background-color: var(--secondary-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .user-count {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+
+        .user-list {
+            padding: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            transition: background-color 0.2s;
+            position: relative;
+        }
+
+        .user-item:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 15px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-status {
+            font-size: 13px;
+            color: var(--light-text);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success-color);
+        }
+
+        .admin-badge {
+            background-color: var(--admin-color);
+            color: var(--text-color);
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .read-only-badge {
+            background-color: var(--read-only-color);
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            font-size: 14px;
+            color: var(--light-text);
+            border-top: 1px solid var(--border-color);
+            background-color: var(--secondary-color);
+            border-radius: 0 0 8px 8px;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #db4437;
+        }
+
+        .status-indicator.connected {
+            background-color: var(--success-color);
+        }
+
+        .document-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: #f8f9fa;
+        }
+
+        .toolbar {
+            display: flex;
+            padding: 12px 24px;
+            background-color: var(--white);
+            border-bottom: 1px solid var(--border-color);
+            gap: 12px;
+            flex-wrap: wrap;
+            z-index: 5;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0 8px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            color: var(--light-text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .toolbar-btn:hover {
+            background-color: var(--secondary-color);
+            color: var(--primary-color);
+        }
+
+        .toolbar-btn.active {
+            color: var(--primary-color);
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+
+        .document-container {
+            flex: 1;
+            padding: 30px;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            background-color: #e9ecef;
+            background-image: linear-gradient(#f1f3f4 1px, transparent 1px), 
+                              linear-gradient(90deg, #f1f3f4 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .document-paper {
+            width: 210mm;
+            min-height: 297mm;
+            background-color: var(--white);
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            padding: 25mm;
+            outline: none;
+            border-radius: 2px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .document-paper:focus {
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--white);
+            border-radius: 12px;
+            padding: 30px;
+            width: 450px;
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transform: translateY(-20px);
+            transition: transform 0.3s;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 500;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--light-text);
+            font-size: 24px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s;
+        }
+
+        .modal-close:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 15px;
+            color: var(--light-text);
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.2);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .user-actions-modal .modal-content {
+            width: 350px;
+        }
+
+        .user-actions-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .target-user {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background-color: var(--secondary-color);
+            border-radius: 8px;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 14px;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #e8eaed;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.kick {
+            color: var(--read-only-color);
+        }
+
+        .action-btn i {
+            font-size: 20px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background-color: #323232;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--light-text);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: var(--border-color);
+        }
+
+        .admin-actions {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            gap: 8px;
+        }
+
+        .admin-action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background-color: var(--secondary-color);
+            color: var(--light-text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .admin-action-btn:hover {
+            background-color: #e8eaed;
+            color: var(--primary-color);
+        }
+
+        .leave-btn {
+            width: 100%;
+            margin-top: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid var(--border-color);
+            color: var(--read-only-color);
+        }
+
+        .leave-btn:hover {
+            background-color: #fef0f0;
+            color: var(--read-only-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <span class="material-icons">groups</span>
+            <span>DocuWrite Collab</span>
+        </div>
+        <div class="header-actions">
+            <button id="downloadBtn" class="btn btn-success">
+                <span class="material-icons">download</span>
+                Download as JPG
+            </button>
+            <button id="leaveTeamBtn" class="btn btn-outline">
+                <span class="material-icons">logout</span>
+                Leave Team
+            </button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <span class="material-icons">group</span>
+                    Team Management
+                </div>
+            </div>
+            
+            <div class="team-code-container">
+                <div class="team-code-header">
+                    <div class="team-code-label">Team Code</div>
+                    <button id="copyTeamCodeBtn" class="btn-icon">
+                        <span class="material-icons">content_copy</span>
+                    </button>
+                </div>
+                <div id="teamCodeDisplay" class="team-code">Generating...</div>
+                <div class="team-status">
+                    <div class="status-indicator"></div>
+                    <span id="statusText">Connecting to team network...</span>
+                </div>
+            </div>
+            
+            <div class="user-list-container">
+                <div class="user-list-title">
+                    <span>Team Members</span>
+                    <span id="userCount" class="user-count">0</span>
+                </div>
+                <div id="userList" class="user-list">
+                    <div class="empty-state">
+                        <span class="material-icons">person_add_disabled</span>
+                        <p>No team members yet</p>
+                    </div>
+                </div>
+                <div class="connection-status">
+                    <div id="statusIndicator" class="status-indicator"></div>
+                    <span id="connectionStatusText">Connecting to team network...</span>
+                </div>
+            </div>
+            
+            <button id="leaveTeamBtn2" class="btn leave-btn">
+                <span class="material-icons">logout</span>
+                Leave Team
+            </button>
+        </div>
+
+        <div class="document-area">
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" data-command="bold" title="Bold">
+                        <span class="material-icons">format_bold</span>
+                    </button>
+                    <button class="toolbar-btn" data-command="italic" title="Italic">
+                        <span class="material-icons">format_italic</span>
+                    </button>
+                    <button class="toolbar-btn" data-command="underline" title="Underline">
+                        <span class="material-icons">format_underlined</span>
+                    </button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" data-command="insertUnorderedList" title="Bullet List">
+                        <span class="material-icons">format_list_bulleted</span>
+                    </button>
+                    <button class="toolbar-btn" data-command="insertOrderedList" title="Numbered List">
+                        <span class="material-icons">format_list_numbered</span>
+                    </button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" data-command="justifyLeft" title="Align Left">
+                        <span class="material-icons">format_align_left</span>
+                    </button>
+                    <button class="toolbar-btn" data-command="justifyCenter" title="Align Center">
+                        <span class="material-icons">format_align_center</span>
+                    </button>
+                    <button class="toolbar-btn" data-command="justifyRight" title="Align Right">
+                        <span class="material-icons">format_align_right</span>
+                    </button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" data-command="undo" title="Undo">
+                        <span class="material-icons">undo</span>
+                    </button>
+                    <button class="toolbar-btn" data-command="redo" title="Redo">
+                        <span class="material-icons">redo</span>
+                    </button>
+                </div>
+            </div>
+            <div class="document-container">
+                <div id="documentPaper" class="document-paper" contenteditable="true"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Set Name Modal -->
+    <div id="setNameModal" class="modal active">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Set Your Name</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="userNameInput">Your Name</label>
+                <input type="text" id="userNameInput" class="form-input" placeholder="Enter your name">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="teamCodeInput">Team Code</label>
+                <input type="text" id="teamCodeInput" class="form-input" placeholder="Enter team code (leave blank to create)">
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="saveNameBtn">Join Team</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Actions Modal -->
+    <div id="userActionsModal" class="modal user-actions-modal">
+        <div class="modal-content">
+            <div class="user-actions-title">Manage Team Member</div>
+            <div class="target-user">
+                <div id="targetUserAvatar" class="user-avatar">U</div>
+                <div>
+                    <div id="targetUserName" class="user-name">User Name</div>
+                    <div id="targetUserStatus" class="user-status">Online</div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button id="toggleEditBtn" class="action-btn">
+                    <span class="material-icons">edit</span>
+                    Toggle Editing Permission
+                </button>
+                <button id="kickUserBtn" class="action-btn kick">
+                    <span class="material-icons">person_remove</span>
+                    Remove from Team
+                </button>
+                <button id="closeUserActions" class="action-btn">
+                    <span class="material-icons">close</span>
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const setNameModal = document.getElementById('setNameModal');
+            const userNameInput = document.getElementById('userNameInput');
+            const teamCodeInput = document.getElementById('teamCodeInput');
+            const saveNameBtn = document.getElementById('saveNameBtn');
+            const teamCodeDisplay = document.getElementById('teamCodeDisplay');
+            const copyTeamCodeBtn = document.getElementById('copyTeamCodeBtn');
+            const userList = document.getElementById('userList');
+            const documentPaper = document.getElementById('documentPaper');
+            const statusIndicator = document.getElementById('statusIndicator');
+            const connectionStatusText = document.getElementById('connectionStatusText');
+            const statusText = document.getElementById('statusText');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const leaveTeamBtn = document.getElementById('leaveTeamBtn');
+            const leaveTeamBtn2 = document.getElementById('leaveTeamBtn2');
+            const toast = document.getElementById('toast');
+            const userCount = document.getElementById('userCount');
+            const userActionsModal = document.getElementById('userActionsModal');
+            const targetUserAvatar = document.getElementById('targetUserAvatar');
+            const targetUserName = document.getElementById('targetUserName');
+            const targetUserStatus = document.getElementById('targetUserStatus');
+            const toggleEditBtn = document.getElementById('toggleEditBtn');
+            const kickUserBtn = document.getElementById('kickUserBtn');
+            const closeUserActions = document.getElementById('closeUserActions');
+            
+            // Toolbar buttons
+            const toolbarBtns = document.querySelectorAll('.toolbar-btn[data-command]');
+
+            // App State
+            let peer = null;
+            let peerId = null;
+            let userName = null;
+            let connections = {};
+            let teamMembers = {};
+            let isAdmin = false;
+            let teamCode = null;
+            let docState = { content: '' };
+            let canEdit = true;
+            let selectedUserId = null;
+            let localChange = false;
+
+            // Initialize the app
+            init();
+
+            function init() {
+                // Set up event listeners
+                setupEventListeners();
+            }
+
+            function setupEventListeners() {
+                // Set name and join/create team
+                saveNameBtn.addEventListener('click', joinOrCreateTeam);
+                
+                // Copy team code
+                copyTeamCodeBtn.addEventListener('click', copyTeamCode);
+                
+                // Document changes
+                documentPaper.addEventListener('input', handleDocumentChange);
+                documentPaper.addEventListener('paste', handlePaste);
+                
+                // Toolbar buttons
+                toolbarBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (!canEdit) {
+                            showToast("You don't have permission to edit");
+                            return;
+                        }
+                        const command = btn.dataset.command;
+                        document.execCommand(command, false, null);
+                        documentPaper.focus();
+                    });
+                });
+                
+                // Download button
+                downloadBtn.addEventListener('click', downloadAsJPG);
+                
+                // Leave team buttons
+                leaveTeamBtn.addEventListener('click', leaveTeam);
+                leaveTeamBtn2.addEventListener('click', leaveTeam);
+                
+                // User actions modal
+                toggleEditBtn.addEventListener('click', toggleUserEditPermission);
+                kickUserBtn.addEventListener('click', kickUser);
+                closeUserActions.addEventListener('click', () => {
+                    userActionsModal.classList.remove('active');
+                });
+            }
+
+            function joinOrCreateTeam() {
+                userName = userNameInput.value.trim();
+                const inputTeamCode = teamCodeInput.value.trim();
+                
+                if (!userName) {
+                    showToast('Please enter your name');
+                    return;
+                }
+                
+                if (inputTeamCode) {
+                    // Joining existing team
+                    teamCode = inputTeamCode;
+                    joinTeam();
+                } else {
+                    // Creating new team
+                    createTeam();
+                }
+            }
+            
+            function createTeam() {
+                isAdmin = true;
+                initializePeer();
+                setNameModal.classList.remove('active');
+            }
+            
+            function joinTeam() {
+                isAdmin = false;
+                initializePeer();
+                setNameModal.classList.remove('active');
+            }
+            
+            function initializePeer() {
+                peer = new Peer({
+                    host: '0.peerjs.com',
+                    port: 443,
+                    secure: true,
+                    debug: 3
+                });
+
+                peer.on('open', id => {
+                    peerId = id;
+                    updateStatus(true);
+                    
+                    if (isAdmin) {
+                        teamCode = peerId;
+                        teamCodeDisplay.textContent = teamCode;
+                        // Add self to team
+                        addTeamMember(peerId, userName, true, true);
+                        showToast('Team created successfully!');
+                    } else {
+                        teamCodeDisplay.textContent = teamCode;
+                        connectToTeamAdmin();
+                    }
+                });
+
+                peer.on('connection', conn => {
+                    setupConnection(conn);
+                });
+
+                peer.on('error', err => {
+                    console.error('Peer error:', err);
+                    updateStatus(false);
+                    showToast('Connection error: ' + err.message);
+                });
+
+                peer.on('disconnected', () => {
+                    updateStatus(false);
+                    showToast('Disconnected from team network');
+                    setTimeout(() => peer.reconnect(), 1000);
+                });
+            }
+            
+            function connectToTeamAdmin() {
+                if (!teamCode) return;
+                
+                const conn = peer.connect(teamCode, {
+                    metadata: { 
+                        userName: userName,
+                        isAdmin: false,
+                        canEdit: true
+                    },
+                    reliable: true
+                });
+
+                setupConnection(conn);
+            }
+            
+            function setupConnection(conn) {
+                const connectionId = conn.peer;
+                
+                conn.on('open', () => {
+                    connections[connectionId] = conn;
+                    
+                    // If this is the admin receiving a new connection
+                    if (isAdmin) {
+                        const userData = conn.metadata;
+                        addTeamMember(connectionId, userData.userName, false, userData.canEdit);
+                        // Send the current team state to the new member
+                        sendMessage(conn, {
+                            type: 'team-state',
+                            members: teamMembers,
+                            content: docState.content
+                        });
+                        // Notify other team members about the new member
+                        broadcast({
+                            type: 'member-join',
+                            member: {
+                                id: connectionId,
+                                name: userData.userName,
+                                isAdmin: false,
+                                canEdit: userData.canEdit
+                            }
+                        }, connectionId);
+                    }
+                    
+                    showToast(`${conn.metadata.userName} connected`);
+                });
+
+                conn.on('data', data => {
+                    handleData(connectionId, data);
+                });
+
+                conn.on('close', () => {
+                    removeTeamMember(connectionId);
+                    delete connections[connectionId];
+                    showToast(`${teamMembers[connectionId]?.name || 'User'} disconnected`);
+                });
+
+                conn.on('error', err => {
+                    console.error('Connection error:', err);
+                    removeTeamMember(connectionId);
+                    delete connections[connectionId];
+                });
+            }
+            
+            function handleData(peerId, data) {
+                if (typeof data !== 'object') return;
+
+                switch (data.type) {
+                    case 'doc-update':
+                        if (!localChange) {
+                            applyRemoteUpdate(data);
+                        }
+                        break;
+                    case 'doc-state':
+                        docState.content = data.content;
+                        documentPaper.innerHTML = docState.content;
+                        break;
+                    case 'team-state':
+                        // Set the team state
+                        teamMembers = data.members;
+                        updateTeamMembersList();
+                        // Set document content
+                        docState.content = data.content;
+                        documentPaper.innerHTML = data.content;
+                        break;
+                    case 'member-join':
+                        // Add new member to the team
+                        addTeamMember(data.member.id, data.member.name, data.member.isAdmin, data.member.canEdit);
+                        break;
+                    case 'member-leave':
+                        // Remove member from the team
+                        removeTeamMember(data.peerId);
+                        break;
+                    case 'toggle-edit':
+                        // Update edit permission
+                        canEdit = data.canEdit;
+                        documentPaper.contentEditable = data.canEdit;
+                        if (!data.canEdit) {
+                            showToast("You can now only view the document");
+                        }
+                        break;
+                    case 'kick':
+                        // Handle kick
+                        showToast("You have been removed from the team");
+                        setTimeout(() => {
+                            leaveTeam();
+                        }, 2000);
+                        break;
+                }
+            }
+            
+            function addTeamMember(id, name, isAdminMember, canEditMember) {
+                teamMembers[id] = {
+                    id: id,
+                    name: name,
+                    isAdmin: isAdminMember,
+                    canEdit: canEditMember,
+                    isSelf: id === peerId
+                };
+                updateTeamMembersList();
+            }
+            
+            function removeTeamMember(id) {
+                if (teamMembers[id]) {
+                    delete teamMembers[id];
+                    updateTeamMembersList();
+                }
+            }
+            
+            function updateTeamMembersList() {
+                userList.innerHTML = '';
+                userCount.textContent = Object.keys(teamMembers).length;
+                
+                if (Object.keys(teamMembers).length === 0) {
+                    userList.innerHTML = `
+                        <div class="empty-state">
+                            <span class="material-icons">person_add_disabled</span>
+                            <p>No team members yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                Object.values(teamMembers).forEach(member => {
+                    const userItem = document.createElement('div');
+                    userItem.className = 'user-item';
+                    userItem.dataset.userId = member.id;
+                    
+                    // First letter of name for avatar
+                    const avatarLetter = member.name.charAt(0).toUpperCase();
+                    
+                    userItem.innerHTML = `
+                        <div class="user-avatar">${avatarLetter}</div>
+                        <div class="user-info">
+                            <div class="user-name">
+                                ${member.name}
+                                ${member.isAdmin ? '<span class="admin-badge">Admin</span>' : ''}
+                                ${!member.canEdit ? '<span class="read-only-badge">View Only</span>' : ''}
+                                ${member.isSelf ? '<span></span>' : ''}
+                            </div>
+                            <div class="user-status">
+                                <span class="status-indicator connected"></span>
+                                Online
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add admin actions for non-self, non-admin members
+                    if (isAdmin && !member.isAdmin && !member.isSelf) {
+                        const adminActions = document.createElement('div');
+                        adminActions.className = 'admin-actions';
+                        adminActions.innerHTML = `
+                            <button class="admin-action-btn edit-btn">
+                                <span class="material-icons">edit</span>
+                            </button>
+                            <button class="admin-action-btn kick-btn">
+                                <span class="material-icons">person_remove</span>
+                            </button>
+                        `;
+                        userItem.appendChild(adminActions);
+                        
+                        // Add event listeners to action buttons
+                        userItem.querySelector('.edit-btn').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openUserActions(member.id);
+                        });
+                        
+                        userItem.querySelector('.kick-btn').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openUserActions(member.id);
+                        });
+                    }
+                    
+                    userList.appendChild(userItem);
+                });
+            }
+            
+            function openUserActions(userId) {
+                const member = teamMembers[userId];
+                if (!member) return;
+                
+                selectedUserId = userId;
+                targetUserAvatar.textContent = member.name.charAt(0).toUpperCase();
+                targetUserName.textContent = member.name;
+                targetUserStatus.textContent = 'Online';
+                
+                // Update toggle button text based on current state
+                toggleEditBtn.innerHTML = `
+                    <span class="material-icons">${member.canEdit ? 'visibility_off' : 'edit'}</span>
+                    ${member.canEdit ? 'Set to View Only' : 'Allow Editing'}
+                `;
+                
+                userActionsModal.classList.add('active');
+            }
+            
+            function toggleUserEditPermission() {
+                if (!selectedUserId) return;
+                
+                const member = teamMembers[selectedUserId];
+                if (!member) return;
+                
+                const newEditStatus = !member.canEdit;
+                
+                // Update locally
+                member.canEdit = newEditStatus;
+                updateTeamMembersList();
+                
+                // Send update to the target user
+                if (connections[selectedUserId]) {
+                    sendMessage(connections[selectedUserId], {
+                        type: 'toggle-edit',
+                        canEdit: newEditStatus
+                    });
+                }
+                
+                // Notify other team members
+                broadcast({
+                    type: 'member-update',
+                    userId: selectedUserId,
+                    canEdit: newEditStatus
+                });
+                
+                showToast(`${member.name} can now ${newEditStatus ? 'edit' : 'only view'} the document`);
+                userActionsModal.classList.remove('active');
+            }
+            
+            function kickUser() {
+                if (!selectedUserId) return;
+                
+                const member = teamMembers[selectedUserId];
+                if (!member) return;
+                
+                // Send kick notification to the user
+                if (connections[selectedUserId]) {
+                    sendMessage(connections[selectedUserId], {
+                        type: 'kick'
+                    });
+                }
+                
+                // Remove the user from the team
+                removeTeamMember(selectedUserId);
+                
+                // Close the connection
+                if (connections[selectedUserId]) {
+                    connections[selectedUserId].close();
+                    delete connections[selectedUserId];
+                }
+                
+                // Notify other team members
+                broadcast({
+                    type: 'member-leave',
+                    peerId: selectedUserId
+                });
+                
+                showToast(`${member.name} has been removed from the team`);
+                userActionsModal.classList.remove('active');
+            }
+            
+            function leaveTeam() {
+                // Notify all team members
+                broadcast({
+                    type: 'member-leave',
+                    peerId: peerId
+                });
+                
+                // Close all connections
+                Object.values(connections).forEach(conn => {
+                    conn.close();
+                });
+                
+                // Destroy peer
+                if (peer && !peer.destroyed) {
+                    peer.destroy();
+                }
+                
+                // Reset state
+                connections = {};
+                teamMembers = {};
+                peer = null;
+                peerId = null;
+                teamCode = null;
+                isAdmin = false;
+                
+                // Show setup modal again
+                setNameModal.classList.add('active');
+                documentPaper.innerHTML = '';
+                userList.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-icons">person_add_disabled</span>
+                        <p>No team members yet</p>
+                    </div>
+                `;
+                userCount.textContent = '0';
+                
+                showToast('You have left the team');
+            }
+            
+            function sendMessage(conn, msg) {
+                if (conn.open) conn.send(msg);
+            }
+            
+            function broadcast(msg, excludeId = null) {
+                Object.entries(connections).forEach(([id, conn]) => {
+                    if (id !== excludeId && conn.open) {
+                        conn.send(msg);
+                    }
+                });
+            }
+            
+            function handleDocumentChange() {
+                if (!canEdit) return;
+                
+                localChange = true;
+                const content = documentPaper.innerHTML;
+                
+                // Update local state
+                docState.content = content;
+                
+                // Broadcast changes to all team members
+                broadcast({
+                    type: 'doc-update',
+                    content: content
+                });
+
+                clearTimeout(this._localChangeTimeout);
+                this._localChangeTimeout = setTimeout(() => {
+                    localChange = false;
+                }, 500);
+            }
+            
+            function applyRemoteUpdate(update) {
+                // Save current selection
+                const selection = window.getSelection();
+                const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+                
+                // Apply remote content
+                documentPaper.innerHTML = update.content;
+                docState.content = update.content;
+                
+                // Restore selection if possible
+                if (range) {
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+            }
+            
+            function copyTeamCode() {
+                if (!teamCode) {
+                    showToast('Team code not available yet');
+                    return;
+                }
+                
+                navigator.clipboard.writeText(teamCode).then(() => {
+                    showToast('Team code copied to clipboard');
+                    copyTeamCodeBtn.innerHTML = '<span class="material-icons">done</span>';
+                    setTimeout(() => {
+                        copyTeamCodeBtn.innerHTML = '<span class="material-icons">content_copy</span>';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    showToast('Failed to copy team code');
+                });
+            }
+            
+            function updateStatus(connected) {
+                statusIndicator.classList.toggle('connected', connected);
+                const status = connected ? 'Connected to team' : 'Disconnected';
+                statusText.textContent = status;
+                connectionStatusText.textContent = status;
+            }
+            
+            function showToast(message) {
+                toast.textContent = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+            
+            function handlePaste(e) {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                document.execCommand('insertText', false, text);
+            }
+            
+            async function downloadAsJPG() {
+                try {
+                    // Create a clone of the document paper
+                    const clone = documentPaper.cloneNode(true);
+                    clone.style.width = '210mm';
+                    clone.style.height = '297mm';
+                    clone.style.padding = '25mm';
+                    clone.style.boxSizing = 'border-box';
+                    clone.style.position = 'fixed';
+                    clone.style.left = '-10000px';
+                    document.body.appendChild(clone);
+                    
+                    // Use html2canvas to render the content
+                    const html2canvasScript = document.createElement('script');
+                    html2canvasScript.src = 'https://html2canvas.hertzen.com/dist/html2canvas.min.js';
+                    document.head.appendChild(html2canvasScript);
+                    
+                    html2canvasScript.onload = async function() {
+                        try {
+                            const canvas = await html2canvas(clone, {
+                                scale: 2,
+                                logging: false,
+                                useCORS: true,
+                                allowTaint: true,
+                                width: 794,
+                                height: 1123
+                            });
+                            
+                            // Create download link
+                            const link = document.createElement('a');
+                            link.download = `DocuWrite_${new Date().toISOString().slice(0,10)}.jpg`;
+                            link.href = canvas.toDataURL('image/jpeg', 0.9);
+                            link.click();
+                            
+                            // Clean up
+                            document.body.removeChild(clone);
+                            document.head.removeChild(html2canvasScript);
+                        } catch (err) {
+                            console.error('Error generating image:', err);
+                            showToast('Error generating image');
+                            document.body.removeChild(clone);
+                            document.head.removeChild(html2canvasScript);
+                        }
+                    };
+                } catch (err) {
+                    console.error('Error preparing for download:', err);
+                    showToast('Error preparing document for download');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Collab BETA Full Screen</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'Roboto', sans-serif;
+    background: #fff;
+    color: #202124;
+  }
+
+  /* Fullscreen overlay */
+  .fullscreen {
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  /* Version label top right */
+  .version {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #5f6368;
+  }
+
+  .content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    font-size: 18px;
+    text-align: center;
+    padding: 20px;
+  }
+
+  .note {
+    font-size: 14px;
+    color: #5f6368;
+    margin-top: 12px;
+  }
+
+  .ok {
+    cursor: pointer;
+    font-size: 16px;
+    color: #1a73e8;
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: 1px solid rgba(26,115,232,0.2);
+    background: #fff;
+    margin-bottom: 20px;
+    transition: background 0.2s ease;
+    align-self: center;
+  }
+
+  .ok:hover {
+    background: #f1f3f4;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="fullscreen" id="overlay">
+  <div class="version">Version 0.4</div>
+
+  <div class="content">
+    <div><strong>Welcome to DocuWrite Collab</strong></div>
+    <div class="note">This feature is in Beta and under construction.</div>
+    <div class="note">Make sure everyone uses the same version!</div>
+  </div>
+
+  <div class="ok" id="okBtn">OK</div>
+</div>
+
+<script>
+  const overlay = document.getElementById('overlay');
+  const okBtn = document.getElementById('okBtn');
+
+  function dismiss() {
+    overlay.style.display = 'none';
+  }
+
+  okBtn.addEventListener('click', dismiss);
+  window.addEventListener('keydown', e => { if (e.key === "Escape") dismiss(); });
+</script>
+
+</body>
+</html>
+<body><div id="lock" style="position:fixed;inset:0;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;font-family:sans-serif;font-size:20px;z-index:99999;">Turn to landscape mode and use desktop site to continue</div><script>function check(){if(window.innerWidth>768&&window.innerWidth>window.innerHeight){document.getElementById("lock").style.display="none"}else{document.getElementById("lock").style.display="flex"}}check();window.addEventListener("resize",check);</script></body>

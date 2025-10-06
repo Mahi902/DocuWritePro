@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Image Editor</title>
+    
+    <!-- CSS and Fonts are linked here -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS will go here -->
+    <style>
+        /* CSS styles from the next section go here */
+/* Custom styles for a clean, Google Photos-like theme */
+body {
+    font-family: 'Inter', sans-serif;
+    overscroll-behavior: none; /* Prevents pull-to-refresh on mobile */
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24
+}
+
+/* Custom styles for sliders */
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: #d1d5db; /* gray-300 */
+    border-radius: 2px;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity .2s;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #3b82f6; /* blue-500 */
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #3b82f6;
+    cursor: pointer;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+.sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.sidebar-scroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* slate-300 */
+    border-radius: 2px;
+}
+
+/* Hide default file input */
+#imageLoader, #watermarkLoader {
+    display: none;
+}
+
+/* Canvas container to stack canvases */
+#canvas-wrapper {
+    position: relative;
+    line-height: 0; /* remove extra space below canvas */
+}
+
+#canvas, #interaction-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 0.5rem; /* rounded-lg */
+}
+
+#canvas {
+     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+#interaction-canvas {
+    z-index: 10;
+    cursor: default;
+}
+    </style>
+</head>
+<body class="bg-gray-100 h-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-sm border-b border-gray-200 p-2 flex items-center justify-between shadow-sm z-20">
+        <div class="flex items-center gap-2">
+            <button id="revertBtn" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="undoBtn" class="p-2 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <span class="material-symbols-outlined">undo</span>
+            </button>
+            <button id="redoBtn" class="p-2 rounded-full hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <span class="material-symbols-outlined">redo</span>
+            </button>
+            <button id="previewBtn" class="p-2 rounded-full hover:bg-gray-200 transition-colors">
+                <span class="material-symbols-outlined">visibility</span>
+            </button>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="saveBtn" class="bg-blue-500 text-white px-4 py-2 rounded-full font-medium hover:bg-blue-600 transition-colors disabled:bg-blue-300" disabled>Save</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex overflow-hidden relative">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="bg-white border-r border-gray-200 w-64 p-4 flex-col gap-4 transform -translate-x-full transition-transform duration-300 ease-in-out z-10 hidden">
+            <!-- Sidebar content will be injected here by JS -->
+        </aside>
+
+        <!-- Image Canvas Area -->
+        <div id="canvas-container" class="flex-grow flex items-center justify-center bg-gray-100 p-4 transition-all duration-300 ease-in-out">
+            <div id="upload-placeholder" class="text-center cursor-pointer text-gray-500">
+                <label for="imageLoader" class="flex flex-col items-center justify-center p-8 border-2 border-dashed border-gray-300 rounded-2xl hover:bg-gray-200 transition-colors">
+                    <span class="material-symbols-outlined text-6xl">add_photo_alternate</span>
+                    <p class="mt-2 font-medium">Click to upload an image</p>
+                </label>
+            </div>
+            <div id="canvas-wrapper" class="hidden">
+                <canvas id="canvas"></canvas>
+                <canvas id="interaction-canvas"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <!-- Bottom Bars -->
+    <footer class="bg-white/80 backdrop-blur-sm border-t border-gray-200 z-20 shadow-t-sm">
+        <!-- Secondary Bottom Bar (for sliders, etc.) -->
+        <div id="secondary-bottom-bar" class="h-16 px-6 flex items-center justify-center transition-all duration-300 ease-in-out hidden">
+            <!-- Secondary controls will be injected here -->
+        </div>
+        
+        <!-- Primary Bottom Bar (Main Tools) -->
+        <div id="primary-bottom-bar" class="h-20 flex items-center justify-center gap-8">
+            <button data-tool="adjust" class="tool-btn flex flex-col items-center text-gray-600 hover:text-blue-500 transition-colors">
+                <span class="material-symbols-outlined text-3xl">tune</span>
+                <span class="text-xs font-medium">Adjust</span>
+            </button>
+            <button data-tool="crop" class="tool-btn flex flex-col items-center text-gray-600 hover:text-blue-500 transition-colors">
+                <span class="material-symbols-outlined text-3xl">crop</span>
+                <span class="text-xs font-medium">Crop</span>
+            </button>
+            <button data-tool="watermark" class="tool-btn flex flex-col items-center text-gray-600 hover:text-blue-500 transition-colors">
+                <span class="material-symbols-outlined text-3xl">water_drop</span>
+                <span class="text-xs font-medium">Watermark</span>
+            </button>
+            <button data-tool="doodle" class="tool-btn flex flex-col items-center text-gray-600 hover:text-blue-500 transition-colors">
+                <span class="material-symbols-outlined text-3xl">draw</span>
+                <span class="text-xs font-medium">Doodle</span>
+            </button>
+        </div>
+    </footer>
+    
+    <!-- File Inputs -->
+    <input type="file" id="imageLoader" accept="image/*">
+    <input type="file" id="watermarkLoader" accept="image/png, image/svg+xml">
+
+    <!-- Confirmation Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 shadow-xl w-full max-w-sm">
+            <h3 id="modal-title" class="text-lg font-medium text-gray-900">Confirm Action</h3>
+            <p id="modal-text" class="mt-2 text-sm text-gray-600">Are you sure?</p>
+            <div class="mt-4 flex justify-end gap-3">
+                <button id="modal-cancel" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                <button id="modal-confirm" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript will go here -->
+    <script>
+        // JavaScript code from the next section goes here
+// --- DOM ELEMENTS ---
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const interactionCanvas = document.getElementById('interaction-canvas');
+const iCtx = interactionCanvas.getContext('2d');
+
+const imageLoader = document.getElementById('imageLoader');
+const uploadPlaceholder = document.getElementById('upload-placeholder');
+const canvasWrapper = document.getElementById('canvas-wrapper');
+const saveBtn = document.getElementById('saveBtn');
+const undoBtn = document.getElementById('undoBtn');
+const redoBtn = document.getElementById('redoBtn');
+const revertBtn = document.getElementById('revertBtn');
+const previewBtn = document.getElementById('previewBtn');
+const sidebar = document.getElementById('sidebar');
+const canvasContainer = document.getElementById('canvas-container');
+const secondaryBottomBar = document.getElementById('secondary-bottom-bar');
+const toolBtns = document.querySelectorAll('.tool-btn');
+const modal = document.getElementById('modal');
+const modalTitle = document.getElementById('modal-title');
+const modalText = document.getElementById('modal-text');
+const modalConfirm = document.getElementById('modal-confirm');
+const modalCancel = document.getElementById('modal-cancel');
+
+// --- STATE MANAGEMENT ---
+let originalImage = null;
+let currentImage = new Image();
+let activeTool = null;
+let activeSubTool = null;
+let history = [];
+let historyIndex = -1;
+
+// Interaction states
+let isDrawing = false;
+let isCropping = false;
+let isDraggingText = false;
+let isResizingText = false;
+let activeTextIndex = -1;
+let longPressTimer = null;
+let touchStartDistance = 0;
+let cropStartPoint = {};
+let cropRect = {};
+
+const state = {
+    filters: { brightness: 100, contrast: 100, saturate: 100, invert: 0 },
+    doodles: [],
+    watermark: { image: null, text: '', x: 10, y: 10, opacity: 0.5, isDragging: false, offsetX: 0, offsetY: 0 },
+    crop: { x: 0, y: 0, width: 0, height: 0, rotation: 0, scaleX: 1, scaleY: 1, borderRadius: 0 },
+    texts: []
+};
+
+const initialState = JSON.parse(JSON.stringify(state));
+
+// --- INITIALIZATION ---
+document.addEventListener('DOMContentLoaded', () => {
+    uploadPlaceholder.addEventListener('click', () => imageLoader.click());
+    imageLoader.addEventListener('change', handleImageUpload);
+    saveBtn.addEventListener('click', handleSave);
+    undoBtn.addEventListener('click', undo);
+    redoBtn.addEventListener('click', redo);
+    revertBtn.addEventListener('click', () => showModal('Revert to Original', 'All your edits will be lost. Are you sure?', revertToOriginal));
+    
+    previewBtn.addEventListener('mousedown', showOriginal);
+    previewBtn.addEventListener('mouseup', renderAll);
+    previewBtn.addEventListener('touchstart', showOriginal, { passive: true });
+    previewBtn.addEventListener('touchend', renderAll);
+
+    toolBtns.forEach(btn => btn.addEventListener('click', () => selectTool(btn.dataset.tool)));
+    modalCancel.addEventListener('click', hideModal);
+});
+
+// --- IMAGE HANDLING ---
+function handleImageUpload(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            originalImage = new Image();
+            originalImage.onload = () => {
+                currentImage.src = originalImage.src;
+                currentImage.onload = () => {
+                    resetState();
+                    state.crop.width = currentImage.width;
+                    state.crop.height = currentImage.height;
+                    resizeAndPositionCanvases();
+                    saveState();
+                    renderAll();
+                    uploadPlaceholder.classList.add('hidden');
+                    canvasWrapper.classList.remove('hidden');
+                    saveBtn.disabled = false;
+                }
+            };
+            originalImage.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function resizeAndPositionCanvases() {
+    if (!currentImage.src) return;
+    const container = canvasContainer.getBoundingClientRect();
+    const imageAspectRatio = state.crop.width / state.crop.height;
+    const containerAspectRatio = container.width / container.height;
+
+    let w, h;
+    if (imageAspectRatio > containerAspectRatio) {
+        w = container.width;
+        h = container.width / imageAspectRatio;
+    } else {
+        h = container.height;
+        w = container.height * imageAspectRatio;
+    }
+    
+    canvas.width = w;
+    canvas.height = h;
+    interactionCanvas.width = w;
+    interactionCanvas.height = h;
+
+    canvasWrapper.style.width = `${w}px`;
+    canvasWrapper.style.height = `${h}px`;
+    
+    renderAll();
+}
+window.addEventListener('resize', resizeAndPositionCanvases);
+
+// --- MAIN RENDER PIPELINE ---
+function renderAll() {
+    if (!currentImage.src) return;
+    renderImageCanvas();
+    renderInteractionCanvas();
+}
+
+function renderImageCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const filterString = `brightness(${state.filters.brightness}%) contrast(${state.filters.contrast}%) saturate(${state.filters.saturate}%) invert(${state.filters.invert}%)`.trim();
+    ctx.filter = filterString;
+    ctx.save();
+    const canvasCenterX = canvas.width / 2;
+    const canvasCenterY = canvas.height / 2;
+    ctx.translate(canvasCenterX, canvasCenterY);
+    ctx.rotate(state.crop.rotation * Math.PI / 180);
+    ctx.scale(state.crop.scaleX, state.crop.scaleY);
+    ctx.translate(-canvasCenterX, -canvasCenterY);
+    if (state.crop.borderRadius > 0) {
+        // Apply rounded corners clipping path
+        ctx.beginPath();
+        ctx.moveTo(state.crop.borderRadius, 0);
+        ctx.lineTo(canvas.width - state.crop.borderRadius, 0);
+        ctx.quadraticCurveTo(canvas.width, 0, canvas.width, state.crop.borderRadius);
+        ctx.lineTo(canvas.width, canvas.height - state.crop.borderRadius);
+        ctx.quadraticCurveTo(canvas.width, canvas.height, canvas.width - state.crop.borderRadius, canvas.height);
+        ctx.lineTo(state.crop.borderRadius, canvas.height);
+        ctx.quadraticCurveTo(0, canvas.height, 0, canvas.height - state.crop.borderRadius);
+        ctx.lineTo(0, state.crop.borderRadius);
+        ctx.quadraticCurveTo(0, 0, state.crop.borderRadius, 0);
+        ctx.closePath();
+        ctx.clip();
+    }
+    ctx.drawImage(currentImage, 0, 0, canvas.width, canvas.height);
+    ctx.restore();
+    ctx.filter = 'none';
+}
+
+function renderInteractionCanvas() {
+    iCtx.clearRect(0, 0, interactionCanvas.width, interactionCanvas.height);
+    drawWatermark();
+    state.doodles.forEach(drawPath);
+    drawTexts();
+    if (isCropping) drawCropRectangle();
+}
+
+function showOriginal() {
+    if (!originalImage) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    iCtx.clearRect(0, 0, interactionCanvas.width, interactionCanvas.height);
+    ctx.filter = 'none';
+    ctx.drawImage(originalImage, 0, 0, canvas.width, canvas.height);
+}
+
+// --- TOOL SELECTION & UI ---
+function selectTool(tool) {
+    if (activeTool === tool) {
+        activeTool = null;
+        activeSubTool = null;
+        sidebar.classList.add('-translate-x-full', 'hidden');
+        canvasContainer.classList.remove('ml-64');
+        secondaryBottomBar.classList.add('hidden');
+        toolBtns.forEach(b => b.classList.remove('text-blue-500'));
+        removeCanvasListeners();
+    } else {
+        activeTool = tool;
+        activeSubTool = null;
+        toolBtns.forEach(b => b.classList.toggle('text-blue-500', b.dataset.tool === tool));
+        sidebar.classList.remove('hidden');
+        setTimeout(() => {
+            sidebar.classList.remove('-translate-x-full');
+            canvasContainer.classList.add('ml-64');
+        }, 10);
+        updateSidebar();
+        updateSecondaryBar();
+        addCanvasListeners();
+    }
+}
+
+function updateSidebar() {
+    let content = '';
+    switch (activeTool) {
+        case 'adjust': content = getAdjustSidebarHTML(); break;
+        case 'crop': content = getCropSidebarHTML(); break;
+        case 'doodle': content = getDoodleSidebarHTML(); break;
+        case 'watermark':
+            sidebar.classList.add('-translate-x-full', 'hidden');
+            canvasContainer.classList.remove('ml-64');
+            break;
+    }
+    sidebar.innerHTML = content;
+    addSidebarEventListeners();
+}
+
+function updateSecondaryBar(subtool = null, options = {}) {
+    let content = '';
+    if (activeTool === 'adjust' && subtool) content = getAdjustSliderHTML(subtool, options.label, options.min, options.max, options.value);
+    if (activeTool === 'crop' && subtool === 'portions') content = getCropPortionsHTML();
+    if (activeTool === 'watermark') content = getWatermarkOptionsHTML();
+    if (activeTool === 'doodle' && subtool === 'text') content = getDoodleTextHTML();
+
+    if (content) {
+        secondaryBottomBar.innerHTML = content;
+        secondaryBottomBar.classList.remove('hidden');
+        addSecondaryBarEventListeners();
+    } else {
+        secondaryBottomBar.classList.add('hidden');
+    }
+}
+
+// --- HTML GENERATORS FOR UI ---
+function getAdjustSidebarHTML() { 
+    const adjustments = [
+        { id: 'brightness', label: 'Brightness', icon: 'brightness_6' },
+        { id: 'contrast', label: 'Contrast', icon: 'contrast' },
+        { id: 'saturate', label: 'Saturation', icon: 'tonality' },
+        { id: 'invert', label: 'Invert', icon: 'invert_colors' },
+    ];
+    return `<h3 class="font-bold text-lg mb-4">Adjust</h3>
+            <div class="flex flex-col gap-2 sidebar-scroll overflow-y-auto">
+            ${adjustments.map(adj => `
+                <button data-subtool="${adj.id}" class="subtool-btn w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100">
+                    <span class="material-symbols-outlined text-gray-600">${adj.icon}</span>
+                    <span class="font-medium">${adj.label}</span>
+                </button>`).join('')}
+            </div>`;
+}
+function getAdjustSliderHTML(id, label, min, max, value) { 
+    return `<div class="w-full flex items-center gap-4">
+                <span class="font-medium text-sm w-24 text-right">${label}</span>
+                <input type="range" id="${id}-slider" min="${min}" max="${max}" value="${value}" class="flex-grow">
+                <span id="${id}-value" class="font-mono text-sm w-8">${value}</span>
+            </div>`;
+}
+function getCropSidebarHTML() {
+    const tools = [
+        { id: 'free-edit', label: 'Free Edit', icon: 'crop_free' },
+        { id: 'rotate', label: 'Rotate 90°', icon: 'rotate_right' },
+        { id: 'flip-v', label: 'Flip Vertical', icon: 'flip' },
+        { id: 'flip-h', label: 'Flip Horizontal', icon: 'swap_horiz' }, // Icon fixed
+        { id: 'portions', label: 'Portions', icon: 'aspect_ratio' },
+    ];
+    return `<h3 class="font-bold text-lg mb-4">Crop & Rotate</h3>
+            <div class="flex flex-col gap-2">
+            ${tools.map(tool => `
+                <button data-subtool="${tool.id}" class="subtool-btn w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100">
+                    <span class="material-symbols-outlined text-gray-600">${tool.icon}</span>
+                    <span class="font-medium">${tool.label}</span>
+                </button>`).join('')}
+            </div>`;
+}
+function getCropPortionsHTML() { 
+     return `<div class="w-full flex items-center justify-center gap-6">
+                <div class="flex items-center gap-2">
+                    <label for="corner-slider" class="font-medium text-sm">Corners:</label>
+                    <input type="range" id="corner-slider" min="0" max="50" value="${state.crop.borderRadius}" class="w-32">
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="font-medium text-sm">Ratio:</label>
+                    <input type="number" id="ratio-w" class="w-16 border rounded p-1 text-center" placeholder="W">
+                    <span class="text-gray-400">:</span>
+                    <input type="number" id="ratio-h" class="w-16 border rounded p-1 text-center" placeholder="H">
+                    <button id="apply-ratio" class="ml-2 px-3 py-1 bg-blue-500 text-white rounded-md text-sm">Apply</button>
+                </div>
+            </div>`;
+}
+function getWatermarkOptionsHTML() { 
+    return `<div class="flex items-center justify-center gap-4">
+                <button id="upload-watermark-btn" class="px-4 py-2 bg-gray-200 rounded-md font-medium hover:bg-gray-300">Upload Watermark</button>
+                <span class="text-gray-400">|</span>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="custom-watermark-text" placeholder="Enter Custom Text" class="border rounded p-2">
+                    <button id="apply-custom-watermark" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Apply</button>
+                </div>
+                <div id="watermark-controls" class="flex items-center gap-2 ${!state.watermark.image && !state.watermark.text ? 'hidden' : ''}">
+                    <label for="watermark-opacity" class="text-sm">Opacity:</label>
+                    <input type="range" id="watermark-opacity" min="0" max="1" step="0.05" value="${state.watermark.opacity}" class="w-32">
+                </div>
+            </div>`;
+}
+function getDoodleSidebarHTML() { 
+    const tools = [
+        { id: 'pen', label: 'Pen', icon: 'edit' },
+        { id: 'eraser', label: 'Eraser', icon: 'ink_eraser' },
+        { id: 'text', label: 'Add Text', icon: 'title' },
+        { id: 'undo-doodle', label: 'Undo Stroke', icon: 'undo' },
+    ];
+    return `<h3 class="font-bold text-lg mb-4">Doodle</h3>
+            <div class="flex flex-col gap-2">
+            ${tools.map(tool => `
+                <button data-subtool="${tool.id}" class="subtool-btn w-full text-left flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100">
+                    <span class="material-symbols-outlined text-gray-600">${tool.icon}</span>
+                    <span class="font-medium">${tool.label}</span>
+                </button>`).join('')}
+            </div>
+            <div class="mt-4">
+                <label for="doodle-color" class="font-medium">Color</label>
+                <input type="color" id="doodle-color" value="#ff0000" class="w-full h-8 mt-1 border rounded">
+            </div>
+            <div class="mt-4">
+                <label for="doodle-width" class="font-medium">Width</label>
+                <input type="range" id="doodle-width" min="1" max="50" value="5" class="w-full mt-1">
+            </div>`;
+}
+function getDoodleTextHTML() { 
+     return `<div class="flex items-center gap-4">
+                <input type="text" id="doodle-text-input" placeholder="Enter text..." class="border rounded p-2 flex-grow">
+                <input type="color" id="doodle-text-color" value="#000000" class="h-10">
+                <button id="add-doodle-text-btn" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Add</button>
+            </div>`;
+}
+
+// --- EVENT LISTENERS FOR DYNAMIC UI ---
+function addSidebarEventListeners() {
+    document.querySelectorAll('.subtool-btn').forEach(btn => btn.addEventListener('click', () => handleSubToolClick(btn.dataset.subtool)));
+}
+function addSecondaryBarEventListeners() {
+    const slider = secondaryBottomBar.querySelector('input[type="range"]');
+    if (slider) {
+        const valueSpan = document.getElementById(`${activeSubTool}-value`);
+        slider.addEventListener('input', (e) => {
+            state.filters[activeSubTool] = e.target.value;
+            if(valueSpan) valueSpan.textContent = e.target.value;
+            renderImageCanvas(); // Only render image canvas for filters
+        });
+        slider.addEventListener('change', saveState);
+    }
+    const cornerSlider = document.getElementById('corner-slider');
+    if (cornerSlider) {
+        cornerSlider.addEventListener('input', e => { state.crop.borderRadius = e.target.value; renderImageCanvas(); });
+        cornerSlider.addEventListener('change', saveState);
+    }
+    const applyRatioBtn = document.getElementById('apply-ratio');
+    if (applyRatioBtn) applyRatioBtn.addEventListener('click', applyCropRatio);
+    const uploadWatermarkBtn = document.getElementById('upload-watermark-btn');
+    if(uploadWatermarkBtn) {
+        uploadWatermarkBtn.addEventListener('click', () => document.getElementById('watermarkLoader').click());
+        document.getElementById('watermarkLoader').onchange = handleWatermarkUpload;
+    }
+    const applyCustomWatermarkBtn = document.getElementById('apply-custom-watermark');
+    if(applyCustomWatermarkBtn) applyCustomWatermarkBtn.addEventListener('click', applyCustomWatermark);
+    const watermarkOpacitySlider = document.getElementById('watermark-opacity');
+    if(watermarkOpacitySlider) {
+        watermarkOpacitySlider.addEventListener('input', e => { state.watermark.opacity = e.target.value; renderInteractionCanvas(); });
+        watermarkOpacitySlider.addEventListener('change', saveState);
+    }
+    const addDoodleTextBtn = document.getElementById('add-doodle-text-btn');
+    if (addDoodleTextBtn) addDoodleTextBtn.addEventListener('click', addTextToCanvas);
+}
+
+// --- TOOL LOGIC ---
+function handleSubToolClick(subtool) {
+    document.querySelectorAll('.subtool-btn').forEach(b => b.classList.toggle('bg-blue-100', b.dataset.subtool === subtool));
+    activeSubTool = subtool;
+    addCanvasListeners();
+
+    if (activeTool === 'adjust') {
+        const options = {
+            brightness: { label: 'Brightness', min: 0, max: 200, value: state.filters.brightness },
+            contrast: { label: 'Contrast', min: 0, max: 200, value: state.filters.contrast },
+            saturate: { label: 'Saturation', min: 0, max: 200, value: state.filters.saturate },
+            invert: { label: 'Invert', min: 0, max: 100, value: state.filters.invert },
+        };
+        if (options[subtool]) updateSecondaryBar(subtool, options[subtool]);
+    } else if (activeTool === 'crop') {
+        if (subtool === 'rotate') { state.crop.rotation = (state.crop.rotation + 90) % 360; renderImageCanvas(); saveState(); } 
+        else if (subtool === 'flip-v') { state.crop.scaleY *= -1; renderImageCanvas(); saveState(); } 
+        else if (subtool === 'flip-h') { state.crop.scaleX *= -1; renderImageCanvas(); saveState(); } 
+        else if (subtool === 'portions') { updateSecondaryBar(subtool); }
+    } else if (activeTool === 'doodle') {
+        if (subtool === 'undo-doodle') {
+            if (state.doodles.length > 0) { state.doodles.pop(); renderInteractionCanvas(); saveState(); }
+        } else if (subtool === 'text') { updateSecondaryBar(subtool); }
+    }
+}
+
+// --- CROP LOGIC ---
+function startCrop(e) {
+    isCropping = true;
+    cropStartPoint = getCanvasCoords(e);
+}
+function moveCrop(e) {
+    if (!isCropping) return;
+    const currentPoint = getCanvasCoords(e);
+    cropRect = {
+        x: Math.min(cropStartPoint.x, currentPoint.x),
+        y: Math.min(cropStartPoint.y, currentPoint.y),
+        w: Math.abs(cropStartPoint.x - currentPoint.x),
+        h: Math.abs(cropStartPoint.y - currentPoint.y),
+    };
+    renderInteractionCanvas();
+}
+function endCrop() {
+    if (!isCropping || !cropRect.w || !cropRect.h) {
+        isCropping = false;
+        cropRect = {};
+        renderInteractionCanvas();
+        return;
+    }
+    isCropping = false;
+    
+    const scaleX = currentImage.naturalWidth / canvas.width;
+    const scaleY = currentImage.naturalHeight / canvas.height;
+
+    const sourceX = cropRect.x * scaleX;
+    const sourceY = cropRect.y * scaleY;
+    const sourceWidth = cropRect.w * scaleX;
+    const sourceHeight = cropRect.h * scaleY;
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = sourceWidth;
+    tempCanvas.height = sourceHeight;
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCtx.drawImage(currentImage, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+
+    currentImage.src = tempCanvas.toDataURL();
+    currentImage.onload = () => {
+        state.crop.width = currentImage.width;
+        state.crop.height = currentImage.height;
+        resizeAndPositionCanvases();
+        saveState();
+    }
+    cropRect = {};
+}
+function drawCropRectangle() {
+    iCtx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    iCtx.fillRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+    iCtx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+    iCtx.lineWidth = 1;
+    iCtx.strokeRect(cropRect.x, cropRect.y, cropRect.w, cropRect.h);
+}
+function applyCropRatio() { 
+    const w = document.getElementById('ratio-w').value;
+    const h = document.getElementById('ratio-h').value;
+    if (!w || !h || w <= 0 || h <= 0) return;
+
+    const originalAspectRatio = currentImage.width / currentImage.height;
+    const targetAspectRatio = w / h;
+    
+    let newWidth, newHeight;
+
+    if (targetAspectRatio > originalAspectRatio) {
+        newWidth = currentImage.width;
+        newHeight = currentImage.width / targetAspectRatio;
+    } else {
+        newHeight = currentImage.height;
+        newWidth = currentImage.height * targetAspectRatio;
+    }
+    
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    tempCanvas.width = newWidth;
+    tempCanvas.height = newHeight;
+    
+    const dx = (currentImage.width - newWidth) / 2;
+    const dy = (currentImage.height - newHeight) / 2;
+
+    tempCtx.drawImage(currentImage, dx, dy, newWidth, newHeight, 0, 0, newWidth, newHeight);
+
+    currentImage.src = tempCanvas.toDataURL();
+    currentImage.onload = () => {
+        state.crop.width = newWidth;
+        state.crop.height = newHeight;
+        resizeAndPositionCanvases();
+        saveState();
+    }
+}
+
+// --- WATERMARK LOGIC ---
+function handleWatermarkUpload(e) { 
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                state.watermark.image = img;
+                state.watermark.text = '';
+                renderInteractionCanvas();
+                saveState();
+                document.getElementById('watermark-controls').classList.remove('hidden');
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+function applyCustomWatermark() { 
+    const text = document.getElementById('custom-watermark-text').value;
+    if (text) {
+        state.watermark.text = text;
+        state.watermark.image = null;
+        renderInteractionCanvas();
+        saveState();
+        document.getElementById('watermark-controls').classList.remove('hidden');
+    }
+}
+function drawWatermark() {
+    iCtx.globalAlpha = state.watermark.opacity;
+    if (state.watermark.image) {
+        iCtx.drawImage(state.watermark.image, state.watermark.x, state.watermark.y);
+    } else if (state.watermark.text) {
+        iCtx.font = '20px Arial';
+        iCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        iCtx.save();
+        iCtx.translate(interactionCanvas.width / 2, interactionCanvas.height / 2);
+        iCtx.rotate(-0.5); // 30 degrees
+        for (let y = -interactionCanvas.height; y < interactionCanvas.height * 2; y += 100) {
+            for (let x = -interactionCanvas.width; x < interactionCanvas.width * 2; x += 200) {
+                iCtx.fillText(state.watermark.text, x, y);
+            }
+        }
+        iCtx.restore();
+    }
+    iCtx.globalAlpha = 1.0;
+}
+
+// --- DOODLE LOGIC ---
+let currentPath = [];
+function startDrawing(e) {
+    isDrawing = true;
+    const { x, y } = getCanvasCoords(e);
+    currentPath = [{ x, y }];
+    iCtx.beginPath();
+    iCtx.moveTo(x, y);
+}
+function draw(e) {
+    if (!isDrawing) return;
+    const { x, y } = getCanvasCoords(e);
+    iCtx.lineWidth = document.getElementById('doodle-width').value;
+    iCtx.lineCap = 'round';
+    iCtx.strokeStyle = document.getElementById('doodle-color').value;
+    iCtx.globalCompositeOperation = activeSubTool === 'eraser' ? 'destination-out' : 'source-over';
+    iCtx.lineTo(x, y);
+    iCtx.stroke();
+    currentPath.push({ x, y });
+}
+function stopDrawing() {
+    if (!isDrawing) return;
+    isDrawing = false;
+    state.doodles.push({
+        path: currentPath,
+        color: document.getElementById('doodle-color').value,
+        width: document.getElementById('doodle-width').value,
+        mode: activeSubTool === 'eraser' ? 'destination-out' : 'source-over'
+    });
+    currentPath = [];
+    iCtx.globalCompositeOperation = 'source-over';
+    saveState();
+}
+function drawPath(doodle) {
+    if (doodle.path.length < 2) return;
+    iCtx.save();
+    iCtx.lineWidth = doodle.width;
+    iCtx.lineCap = 'round';
+    iCtx.strokeStyle = doodle.color;
+    iCtx.globalCompositeOperation = doodle.mode;
+    iCtx.beginPath();
+    iCtx.moveTo(doodle.path[0].x, doodle.path[0].y);
+    for (let i = 1; i < doodle.path.length; i++) {
+        iCtx.lineTo(doodle.path[i].x, doodle.path[i].y);
+    }
+    iCtx.stroke();
+    iCtx.restore();
+}
+
+// --- TEXT LOGIC ---
+function addTextToCanvas() {
+    const input = document.getElementById('doodle-text-input');
+    if (!input.value) return;
+    state.texts.push({
+        text: input.value,
+        color: document.getElementById('doodle-text-color').value,
+        x: interactionCanvas.width / 2,
+        y: interactionCanvas.height / 2,
+        size: 40,
+        isDragging: false,
+        offsetX: 0,
+        offsetY: 0,
+    });
+    input.value = '';
+    renderInteractionCanvas();
+    saveState();
+}
+function drawTexts() {
+    state.texts.forEach((t, index) => {
+        iCtx.font = `${t.size}px Arial`;
+        iCtx.fillStyle = t.color;
+        iCtx.textAlign = 'center';
+        iCtx.textBaseline = 'middle';
+        iCtx.fillText(t.text, t.x, t.y);
+        // Add a visual indicator if the text is being interacted with
+        if(index === activeTextIndex) {
+            iCtx.strokeStyle = 'rgba(0, 123, 255, 0.7)';
+            iCtx.lineWidth = 2;
+            const textWidth = iCtx.measureText(t.text).width;
+            iCtx.strokeRect(t.x - textWidth/2 - 5, t.y - t.size/2 - 5, textWidth + 10, t.size + 10);
+        }
+    });
+}
+function findTextAt(x, y) {
+    let foundIndex = -1;
+    state.texts.forEach((t, index) => {
+        const textWidth = iCtx.measureText(t.text).width;
+        if (x > t.x - textWidth / 2 && x < t.x + textWidth / 2 && y > t.y - t.size / 2 && y < t.y + t.size / 2) {
+            foundIndex = index;
+        }
+    });
+    return foundIndex;
+}
+function deleteText(index) {
+    state.texts.splice(index, 1);
+    activeTextIndex = -1;
+    renderInteractionCanvas();
+    saveState();
+}
+
+// --- EVENT LISTENER MANAGEMENT ---
+function addCanvasListeners() {
+    removeCanvasListeners();
+    interactionCanvas.addEventListener('mousedown', handleMouseDown);
+    interactionCanvas.addEventListener('mousemove', handleMouseMove);
+    interactionCanvas.addEventListener('mouseup', handleMouseUp);
+    interactionCanvas.addEventListener('mouseout', handleMouseUp);
+    interactionCanvas.addEventListener('touchstart', handleMouseDown, { passive: false });
+    interactionCanvas.addEventListener('touchmove', handleMouseMove, { passive: false });
+    interactionCanvas.addEventListener('touchend', handleMouseUp);
+}
+function removeCanvasListeners() {
+    interactionCanvas.removeEventListener('mousedown', handleMouseDown);
+    interactionCanvas.removeEventListener('mousemove', handleMouseMove);
+    interactionCanvas.removeEventListener('mouseup', handleMouseUp);
+    interactionCanvas.removeEventListener('mouseout', handleMouseUp);
+    interactionCanvas.removeEventListener('touchstart', handleMouseDown);
+    interactionCanvas.removeEventListener('touchmove', handleMouseMove);
+    interactionCanvas.removeEventListener('touchend', handleMouseUp);
+}
+
+// --- UNIFIED EVENT HANDLERS ---
+function handleMouseDown(e) {
+    e.preventDefault();
+    const { x, y } = getCanvasCoords(e);
+    
+    if (activeTool === 'crop' && activeSubTool === 'free-edit') {
+        startCrop(e);
+        return;
+    }
+    
+    if (activeTool === 'doodle') {
+        activeTextIndex = findTextAt(x, y);
+        if (activeTextIndex !== -1) {
+            const text = state.texts[activeTextIndex];
+            isDraggingText = true;
+            text.offsetX = x - text.x;
+            text.offsetY = y - text.y;
+            
+            if (e.type === 'touchstart' && e.touches.length === 2) {
+                isResizingText = true;
+                touchStartDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            } else {
+                longPressTimer = setTimeout(() => {
+                    showModal('Delete Text', `Delete "${text.text}"?`, () => {
+                        deleteText(activeTextIndex);
+                        hideModal();
+                    });
+                }, 2000);
+            }
+            renderInteractionCanvas();
+        } else if (activeSubTool === 'pen' || activeSubTool === 'eraser') {
+            startDrawing(e);
+        }
+    }
+}
+
+function handleMouseMove(e) {
+    e.preventDefault();
+    const { x, y } = getCanvasCoords(e);
+
+    if (isCropping) {
+        moveCrop(e);
+        return;
+    }
+    
+    if (isDrawing) {
+        draw(e);
+        return;
+    }
+    
+    if (isDraggingText) {
+        clearTimeout(longPressTimer);
+        if (e.type === 'touchmove' && e.touches.length === 2 && isResizingText) {
+            const currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            const scale = currentDist / touchStartDistance;
+            state.texts[activeTextIndex].size *= scale;
+            touchStartDistance = currentDist;
+        } else {
+            state.texts[activeTextIndex].x = x - state.texts[activeTextIndex].offsetX;
+            state.texts[activeTextIndex].y = y - state.texts[activeTextIndex].offsetY;
+        }
+        renderInteractionCanvas();
+    }
+}
+
+function handleMouseUp() {
+    clearTimeout(longPressTimer);
+    if (isCropping) endCrop();
+    if (isDrawing) stopDrawing();
+    if (isDraggingText) saveState();
+    
+    isDrawing = false;
+    isCropping = false;
+    isDraggingText = false;
+    isResizingText = false;
+    // Don't reset activeTextIndex here, keep it for visual feedback until next click
+    renderInteractionCanvas();
+}
+
+// --- HISTORY (UNDO/REDO) ---
+function saveState() {
+    if (historyIndex < history.length - 1) history = history.slice(0, historyIndex + 1);
+    const newState = JSON.parse(JSON.stringify(state));
+    newState.imageData = currentImage.src;
+    history.push(newState);
+    historyIndex++;
+    updateHistoryButtons();
+}
+function undo() {
+    if (historyIndex > 0) {
+        historyIndex--;
+        loadState(history[historyIndex]);
+    }
+}
+function redo() {
+    if (historyIndex < history.length - 1) {
+        historyIndex++;
+        loadState(history[historyIndex]);
+    }
+}
+function loadState(savedState) {
+    const stateToLoad = JSON.parse(JSON.stringify(savedState));
+    Object.assign(state, stateToLoad);
+    currentImage.src = stateToLoad.imageData;
+    currentImage.onload = () => {
+        resizeAndPositionCanvases();
+        renderAll();
+        updateHistoryButtons();
+    }
+}
+function updateHistoryButtons() {
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = historyIndex >= history.length - 1;
+}
+
+// --- ACTIONS & UTILS ---
+function resetState() {
+    Object.assign(state, JSON.parse(JSON.stringify(initialState)));
+    history = [];
+    historyIndex = -1;
+}
+function revertToOriginal() {
+    if (!originalImage) return;
+    currentImage.src = originalImage.src;
+    currentImage.onload = () => {
+        resetState();
+        state.crop.width = currentImage.width;
+        state.crop.height = currentImage.height;
+        resizeAndPositionCanvases();
+        saveState();
+        renderAll();
+        hideModal();
+        if (activeTool) selectTool(activeTool);
+    }
+}
+
+function handleSave() {
+    showModal('Save Image', 'Do you want to save all edits?', () => {
+        const link = document.createElement('a');
+        
+        // Create an export canvas with the dimensions of the (potentially cropped) current image
+        const exportCanvas = document.createElement('canvas');
+        exportCanvas.width = currentImage.naturalWidth;
+        exportCanvas.height = currentImage.naturalHeight;
+        const exportCtx = exportCanvas.getContext('2d');
+
+        // --- Re-apply all effects at full resolution ---
+
+        // 1. Apply filters
+        const filterString = `brightness(${state.filters.brightness}%) contrast(${state.filters.contrast}%) saturate(${state.filters.saturate}%) invert(${state.filters.invert}%)`.trim();
+        exportCtx.filter = filterString;
+
+        // 2. Apply transformations (rotation, flip)
+        exportCtx.save();
+        const canvasCenterX = exportCanvas.width / 2;
+        const canvasCenterY = exportCanvas.height / 2;
+        exportCtx.translate(canvasCenterX, canvasCenterY);
+        exportCtx.rotate(state.crop.rotation * Math.PI / 180);
+        exportCtx.scale(state.crop.scaleX, state.crop.scaleY);
+        exportCtx.translate(-canvasCenterX, -canvasCenterY);
+
+        // 3. Apply rounded corners
+        if (state.crop.borderRadius > 0) {
+            const scaleFactor = exportCanvas.width / canvas.width;
+            const scaledRadius = state.crop.borderRadius * scaleFactor;
+            
+            exportCtx.beginPath();
+            exportCtx.moveTo(scaledRadius, 0);
+            exportCtx.lineTo(exportCanvas.width - scaledRadius, 0);
+            exportCtx.quadraticCurveTo(exportCanvas.width, 0, exportCanvas.width, scaledRadius);
+            exportCtx.lineTo(exportCanvas.width, exportCanvas.height - scaledRadius);
+            exportCtx.quadraticCurveTo(exportCanvas.width, exportCanvas.height, exportCanvas.width - scaledRadius, exportCanvas.height);
+            exportCtx.lineTo(scaledRadius, exportCanvas.height);
+            exportCtx.quadraticCurveTo(0, exportCanvas.height, 0, exportCanvas.height - scaledRadius);
+            exportCtx.lineTo(0, scaledRadius);
+            exportCtx.quadraticCurveTo(0, 0, scaledRadius, 0);
+            exportCtx.closePath();
+            exportCtx.clip();
+        }
+
+        // 4. Draw the base image
+        exportCtx.drawImage(currentImage, 0, 0, exportCanvas.width, exportCanvas.height);
+        exportCtx.restore(); // Restore from transforms
+        exportCtx.filter = 'none'; // Reset filter for overlays
+
+        // 5. Draw overlays (doodles, text, watermark) by scaling them
+        const scaleX = exportCanvas.width / interactionCanvas.width;
+        const scaleY = exportCanvas.height / interactionCanvas.height;
+
+        // Draw Watermark
+        exportCtx.globalAlpha = state.watermark.opacity;
+        if (state.watermark.image) {
+             exportCtx.drawImage(state.watermark.image, state.watermark.x * scaleX, state.watermark.y * scaleY, state.watermark.image.width * scaleX, state.watermark.image.height * scaleY);
+        } else if (state.watermark.text) {
+            exportCtx.font = `${20 * scaleX}px Arial`;
+            exportCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            exportCtx.save();
+            exportCtx.translate(exportCanvas.width / 2, exportCanvas.height / 2);
+            exportCtx.rotate(-0.5);
+            for (let y = -exportCanvas.height; y < exportCanvas.height * 2; y += (100 * scaleY)) {
+                for (let x = -exportCanvas.width; x < exportCanvas.width * 2; x += (200 * scaleX)) {
+                    exportCtx.fillText(state.watermark.text, x, y);
+                }
+            }
+            exportCtx.restore();
+        }
+        exportCtx.globalAlpha = 1.0;
+
+        // Draw Doodles
+        state.doodles.forEach(doodle => {
+            if (doodle.path.length < 2) return;
+            exportCtx.save();
+            exportCtx.lineWidth = doodle.width * scaleX;
+            exportCtx.lineCap = 'round';
+            exportCtx.strokeStyle = doodle.color;
+            exportCtx.globalCompositeOperation = doodle.mode;
+            exportCtx.beginPath();
+            exportCtx.moveTo(doodle.path[0].x * scaleX, doodle.path[0].y * scaleY);
+            for (let i = 1; i < doodle.path.length; i++) {
+                exportCtx.lineTo(doodle.path[i].x * scaleX, doodle.path[i].y * scaleY);
+            }
+            exportCtx.stroke();
+            exportCtx.restore();
+        });
+
+        // Draw Texts
+        state.texts.forEach(t => {
+            exportCtx.font = `${t.size * scaleX}px Arial`;
+            exportCtx.fillStyle = t.color;
+            exportCtx.textAlign = 'center';
+            exportCtx.textBaseline = 'middle';
+            exportCtx.fillText(t.text, t.x * scaleX, t.y * scaleY);
+        });
+
+        // --- Finalize and Download ---
+function finalizeAndDownload() {
+    // 1. Create a temporary anchor element
+    const link = document.createElement('a');
+    link.download = `edited-image-${Date.now()}.jpg`;
+    link.href = exportCanvas.toDataURL('image/jpeg', 0.9);
+    link.style.display = 'none'; // Hide the element
+
+    // 2. Append to the body
+    document.body.appendChild(link);
+
+    // 3. Trigger the click event
+    link.click();
+
+    // 4. Clean up the temporary element
+    document.body.removeChild(link);
+}
+
+// ... inside the showModal function's onConfirm callback
+showModal('Confirmation', 'Are you sure you want to download this image?', () => {
+    // The user has confirmed. Now, let's prepare the download.
+    // Instead of immediately downloading, we can show a new button
+    // or trigger a final download function here.
+
+    // A simpler approach is to call the download function directly.
+    finalizeAndDownload();
+    
+    // You can also add some UI feedback here, like a success message.
+    hideModal(); // Hide the modal after the action is confirmed
+});
+
+// The saveBtn logic can be simplified if you are handling it this way
+// Or you could have the modal confirm button lead to a state change where
+// the saveBtn becomes visible and triggers the finalizeAndDownload function.
+    });
+}
+
+function getCanvasCoords(e) {
+    const rect = interactionCanvas.getBoundingClientRect();
+    const event = e.touches ? e.touches[0] : e;
+    const scaleX = interactionCanvas.width / rect.width;
+    const scaleY = interactionCanvas.height / rect.height;
+    return {
+        x: (event.clientX - rect.left) * scaleX,
+        y: (event.clientY - rect.top) * scaleY
+    };
+}
+
+// --- MODAL ---
+let confirmCallback = null;
+function showModal(title, text, onConfirm) {
+    modalTitle.textContent = title;
+    modalText.textContent = text;
+    confirmCallback = onConfirm;
+    modal.classList.remove('hidden');
+    modalConfirm.onclick = () => { if (confirmCallback) confirmCallback(); };
+}
+function hideModal() {
+    modal.classList.add('hidden');
+    confirmCallback = null;
+}
+
+    </script>
+</body>
+</html>

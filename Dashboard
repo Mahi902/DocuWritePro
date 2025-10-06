@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuWriter Pro - Create and Edit Documents Online</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+
+<style>
+    /* Add this CSS to your stylesheet (e.g., style.css) or within a <style> tag in your HTML <head> */
+
+    .document-cards-container {
+        display: flex; /* Makes the container a flex container */
+        gap: 20px; /* Adds space between your cards (adjust as needed) */
+        /* You can add more properties here, like: */
+        /* justify-content: center; /* To center the cards horizontally */
+        /* align-items: flex-start; /* To align items at the top */
+        /* flex-wrap: wrap; /* If you want cards to wrap to the next line on smaller screens */
+    }
+
+    .document-card {
+        /* You might want to give your cards a specific width or max-width here */
+        /* flex-basis: 48%; /* Example: Makes cards take roughly half the container width */
+        /* flex-shrink: 0; /* Prevents cards from shrinking */
+        /* flex-grow: 1; /* Allows cards to grow if there's extra space */
+    }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            color: #202124;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-theme {
+            background-color: #202124;
+            color: #e8eaed;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            padding: 10px 24px;
+            border-bottom: 1px solid #dadce0;
+            background-color: #fff;
+            height: 60px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .dark-theme .header {
+            background-color: #303134;
+            border-bottom: 1px solid #5f6368;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-right: 30px;
+        }
+
+        .logo img {
+            height: 40px;
+            margin-right: 12px;
+        }
+
+        .logo h1 {
+            font-size: 22px;
+            font-weight: 500;
+            color: #5f6368;
+        }
+
+        .dark-theme .logo h1 {
+            color: #9aa0a6;
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 25px;
+            overflow-x: auto;
+            padding: 5px 0;
+        }
+
+        .nav-items::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-items span {
+            font-size: 14px;
+            color: #5f6368;
+            white-space: nowrap;
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-items span:hover {
+            background-color: #f1f3f4;
+        }
+
+        .dark-theme .nav-items span {
+            color: #9aa0a6;
+        }
+
+        .dark-theme .nav-items span:hover {
+            background-color: #3c4043;
+        }
+
+        .menu-btn, .grid-btn {
+            background: none;
+            border: none;
+            color: #5f6368;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            margin-right: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .dark-theme .menu-btn, .dark-theme .grid-btn {
+            color: #9aa0a6;
+        }
+
+        .menu-btn:hover, .grid-btn:hover {
+            background-color: #f1f3f4;
+        }
+
+        .dark-theme .menu-btn:hover, .dark-theme .grid-btn:hover {
+            background-color: #3c4043;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #202124;
+        }
+
+        .dark-theme .section-title {
+            color: #e8eaed;
+        }
+
+        .new-document {
+            margin-bottom: 40px;
+        }
+
+        .document-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 140px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .document-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .document-icon {
+            width: 120px;
+            height: 160px;
+            background-color: #fff;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 12px;
+        }
+
+        .dark-theme .document-icon {
+            background-color: #303134;
+            border: 1px solid #5f6368;
+        }
+
+        .plus-icon {
+            font-size: 40px;
+            color: #1a73e8;
+        }
+
+        .document-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #202124;
+            text-align: center;
+        }
+
+        .dark-theme .document-name {
+            color: #e8eaed;
+        }
+
+        .tools-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .tool-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .tool-icon {
+            width: 100px;
+            height: 130px;
+            background-color: #fff;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .dark-theme .tool-icon {
+            background-color: #303134;
+            border: 1px solid #5f6368;
+        }
+
+        .tool-icon::before {
+            content: "";
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            height: 20px;
+            background-color: #f1f3f4;
+            border-radius: 2px;
+        }
+
+        .dark-theme .tool-icon::before {
+            background-color: #3c4043;
+        }
+
+        .tool-icon i {
+            font-size: 30px;
+            color: #1a73e8;
+            margin-top: 40px;
+        }
+
+        .tool-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #202124;
+            text-align: center;
+        }
+
+        .dark-theme .tool-name {
+            color: #e8eaed;
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 280px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dark-theme .sidebar {
+            background-color: #303134;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .sidebar.active {
+            transform: translateX(0);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #dadce0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .dark-theme .sidebar-header {
+            border-bottom: 1px solid #5f6368;
+        }
+
+        .sidebar-header h2 {
+            font-size: 20px;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .dark-theme .sidebar-header h2 {
+            color: #e8eaed;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #5f6368;
+            cursor: pointer;
+            font-size: 24px;
+        }
+
+        .dark-theme .close-btn {
+            color: #9aa0a6;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+            flex-grow: 1;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 24px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .menu-item:hover {
+            background-color: #f1f3f4;
+        }
+
+        .dark-theme .menu-item:hover {
+            background-color: #3c4043;
+        }
+
+        .menu-item i {
+            margin-right: 20px;
+            color: #5f6368;
+            font-size: 20px;
+        }
+
+        .dark-theme .menu-item i {
+            color: #9aa0a6;
+        }
+
+        .menu-item span {
+            font-size: 16px;
+            color: #202124;
+        }
+
+        .dark-theme .menu-item span {
+            color: #e8eaed;
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid #dadce0;
+            text-align: center;
+            font-size: 14px;
+            color: #5f6368;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .dark-theme .sidebar-footer {
+            border-top: 1px solid #5f6368;
+            color: #9aa0a6;
+        }
+
+        .sidebar-footer:hover {
+            color: #1a73e8;
+        }
+
+        /* Projects sidebar */
+        .projects-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            height: 100%;
+            width: 400px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dark-theme .projects-sidebar {
+            background-color: #303134;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .projects-sidebar.active {
+            transform: translateX(0);
+        }
+
+        .projects-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        .projects-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 8px;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .logo h1 {
+                display: none;
+            }
+            
+            .nav-items {
+                gap: 15px;
+            }
+            
+            .tools-container {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 20px;
+            }
+            
+            .projects-sidebar {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with navigation -->
+    <header class="header">
+        <div class="left-section">
+            <button class="menu-btn" id="menuBtn">
+                <i class="material-icons">menu</i>
+            </button>
+            
+        </div>
+        
+        <div class="nav-items">
+            <span>DocuWrite Pro 3.1</span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        
+        <div class="right-section" style="margin-left: auto;">
+            <button class="grid-btn" id="gridBtn">
+                <i class="material-icons">apps</i>
+            </button>
+        </div>
+    </header>
+    
+ <main class="main-content">
+    <section class="new-document">
+
+
+
+
+
+
+<div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap;">
+  <h2 style="margin: 0;">Start a new document</h2>
+  <div style="display: flex; gap: 10px; align-items: center;">
+    
+    <span class="material-icons" onclick="setTheme('light')" title="Light">light_mode</span>
+    <span class="material-icons" onclick="setTheme('dark')" title="Dark">dark_mode</span>
+  </div>
+</div>
+
+<script>
+  const f = d => document.documentElement.style.filter = d ? 'invert(1) hue-rotate(180deg)' : 'none';
+  const m = matchMedia('(prefers-color-scheme: light)');
+  let auto = true;
+
+  function applyTheme(mode) {
+    if (mode === 'auto') {
+      auto = true;
+      f(m.matches);
+    } else {
+      auto = false;
+      f(mode === 'dark');
+    }
+  }
+
+  function setTheme(mode) {
+    localStorage.setItem('themeMode', mode);
+    applyTheme(mode);
+  }
+
+  m.addEventListener('change', e => auto && f(e.matches));
+
+  const saved = localStorage.getItem('themeMode') || 'auto';
+  applyTheme(saved);
+</script>
+
+
+        
+</br>
+        <div class="document-cards-container"> <div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/document-writer', '_blank')">
+                <div class="document-icon">
+                    <i class="material-icons plus-icon">add</i>
+                </div>
+                <div class="document-name">Blank Document</div>
+            </div>
+
+
+	<div class="document-cards-container"> <div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/collab-document-editor', '_blank')">
+                <div class="document-icon">
+                    <i class="material-icons plus-icon">group</i>
+                </div>
+                <div class="document-name">Collab</div>
+            </div>
+
+            
+	<div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/code-playground', '_blank')">
+                <div class="document-icon">
+                    <i class="material-icons plus-icon">code</i>
+                </div>
+                <div class="document-name">Code Editor</div>
+            </div>
+
+
+	<div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/image-editor', '_blank')">
+                <div class="document-icon">
+                    <i class="material-icons plus-icon">collections</i>
+                </div>
+                <div class="document-name">Image Editor</div>
+            </div>
+
+
+        </div>
+    </section>
+</main>
+
+
+
+
+<section class="popular-tools">
+    <div class="section-header">
+        <h3> Popular Tools </h3>
+        <div class="organize-menu">
+            <i class="material-icons organize-icon" onclick="toggleFilterOptions()">sort</i>
+            <div class="filter-options" id="filterOptions">
+                <span onclick="filterTools('All')">All</span>
+                <span onclick="filterTools('Document Editing')">Document Editing</span>
+                <span onclick="filterTools('Image Editing')">Image Editing</span>
+                <span onclick="filterTools('Code Editing')">Code Editing</span>
+		
+            </div>
+        </div>
+    </div>
+    <div class="tools-container" id="toolsContainer">
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/document-writer', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">edit</i>
+            </div>
+            <div class="tool-name">Editor</div>
+        </div>
+
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/viewer', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">visibility</i>
+            </div>
+            <div class="tool-name">Document Viewer</div>
+        </div>
+
+	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/word-description-finder', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">menu_book</i>
+            </div>
+            <div class="tool-name">Word Finder</div>
+        </div>
+
+	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/translator', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">language</i>
+            </div>
+            <div class="tool-name">Translator</div>
+        </div>
+
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/document-signer', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">draw</i>
+            </div>
+            <div class="tool-name">Document Signer</div>
+        </div>
+
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/page-number-adder', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">format_list_numbered</i>
+            </div>
+            <div class="tool-name">Page Number Adder</div>
+        </div>
+
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/chart-maker', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">bar_chart</i>
+            </div>
+            <div class="tool-name">Chart Maker</div>
+        </div>
+
+<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/table-maker', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">table_chart</i>
+            </div>
+            <div class="tool-name">Table Maker</div>
+        </div>
+
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/watermarker', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">filter</i>
+            </div>
+            <div class="tool-name">Watermark Adder</div>
+        </div>
+
+	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/email-writer', '_blank')">
+                <div class="tool-icon">
+                    <i class="material-icons plus-icon">email</i>
+                </div>
+                <div class="tool-name">Email Writer</div>
+            </div>
+
+
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/spell-checker', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">spellcheck</i>
+            </div>
+            <div class="tool-name">Spell Checker</div>
+        </div>
+
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/file-extractor', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">unarchive</i>
+            </div>
+            <div class="tool-name">File Extractor</div>
+        </div>
+
+	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/qr-code-maker', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">qr_code</i>
+            </div>
+            <div class="tool-name">QR Maker</div>
+        </div>
+
+	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/id-card-maker', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">badge</i>
+            </div>
+            <div class="tool-name">ID Card Maker</div>
+        </div>
+
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/file-zipper', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">archive</i>
+            </div>
+            <div class="tool-name">File Zipper</div>
+        </div>
+            
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/converters', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">picture_as_pdf</i>
+            </div>
+            <div class="tool-name">PDF Converter</div>
+        </div>
+        
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/context-field', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">summarize</i>
+            </div>
+            <div class="tool-name">Context Field</div>
+        </div>
+
+	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/gift-card-maker', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">card_giftcard</i>
+            </div>
+            <div class="tool-name">Gift Card Maker</div>
+        </div>
+
+	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/docudrop', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">file_upload</i>
+            </div>
+            <div class="tool-name">Share File</div>
+        </div>
+        
+        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/text-extractor', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">document_scanner</i>
+            </div>
+            <div class="tool-name">Text Extractor</div>
+        </div>
+
+	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/keyboard-click-test', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">keyboard</i>
+            </div>
+            <div class="tool-name">Keyboard Click Test</div>
+        </div>
+
+	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/frontend-ide', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">developer_mode</i>
+            </div>
+            <div class="tool-name">Frontend IDE</div>
+        </div>
+
+	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/code-playground', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">code</i>
+            </div>
+            <div class="tool-name">HTML Editor</div>
+        </div>
+
+	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/html', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">html</i>
+            </div>
+            <div class="tool-name">HTML Writer</div>
+        </div>
+
+
+	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/button-designer', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">smart_button</i>
+            </div>
+            <div class="tool-name">Button Designer</div>
+        </div>
+
+	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/html-splitter', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">integration_instructions</i>
+            </div>
+            <div class="tool-name">HTML Splitter</div>
+        </div>
+
+
+        <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/goto-code', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">merge</i>
+            </div>
+            <div class="tool-name">GoTo Code</div>
+        </div>
+
+        <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/code-snipper', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">content_cut</i>
+            </div>
+            <div class="tool-name">Code Snipper</div>
+        </div>
+
+	<div class="tool-card" data-category="Image Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/image-editor', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">collections</i>
+            </div>
+            <div class="tool-name">Image Editor</div>
+        </div>
+
+	<div class="tool-card" data-category="Image Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/image-generator', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">auto_awesome</i>
+            </div>
+            <div class="tool-name">Image Generator</div>
+        </div>
+
+	<div class="tool-card" data-category="Image Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/draw', '_blank')">
+            <div class="tool-icon">
+                <i class="material-icons">brush</i>
+            </div>
+            <div class="tool-name">Drawing Board</div>
+        </div>
+
+	
+    </div>
+</section>
+
+<style>
+    .popular-tools {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        margin: 0;
+        font-size: 2em;
+        color: #333;
+    }
+
+    .organize-menu {
+        position: relative;
+        display: inline-block;
+    }
+
+    .organize-icon {
+        cursor: pointer;
+        font-size: 28px; /* Slightly larger icon */
+        color: #555;
+        transition: color 0.2s ease-in-out;
+    }
+
+    .organize-icon:hover {
+        color: #007bff; /* Hover effect for icon */
+    }
+
+    .filter-options {
+        display: none; /* Hidden by default */
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 180px; /* Slightly wider dropdown */
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 10; /* Ensure it's above other content */
+        right: 0;
+        border-radius: 5px;
+        padding: 10px 0;
+        top: 100%; /* Position below the icon */
+        margin-top: 5px; /* Small gap between icon and dropdown */
+    }
+
+    .filter-options span {
+        color: #333;
+        padding: 12px 18px; /* More padding for better click area */
+        text-decoration: none;
+        display: block;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out;
+    }
+
+    .filter-options span:hover {
+        background-color: #e9e9e9;
+    }
+
+    .filter-options.show {
+        display: block;
+    }
+
+    .tools-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px; /* Space between tool cards */
+        justify-content: center; /* Center cards if they don't fill a row */
+    }
+
+    .tool-card {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        width: 150px; /* Fixed width for cards */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        cursor: pointer;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        display: flex; /* Use flex for icon and name alignment */
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .tool-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .tool-icon {
+        margin-bottom: 10px;
+        font-size: 48px; /* Larger icons */
+        color: #007bff; /* Icon color */
+    }
+
+    .tool-name {
+        font-size: 1.1em;
+        font-weight: bold;
+        color: #333;
+    }
+</style>
+
+<script>
+    function toggleFilterOptions() {
+        document.getElementById("filterOptions").classList.toggle("show");
+    }
+
+    function filterTools(category) {
+        const toolsContainer = document.getElementById("toolsContainer");
+        const toolCards = toolsContainer.getElementsByClassName("tool-card");
+
+        for (let i = 0; i < toolCards.length; i++) {
+            const toolCard = toolCards[i];
+            const toolCategory = toolCard.getAttribute("data-category");
+
+            if (category === "All" || toolCategory === category) {
+                toolCard.style.display = ""; // Show the tool card
+            } else {
+                toolCard.style.display = "none"; // Hide the tool card
+            }
+        }
+        document.getElementById("filterOptions").classList.remove("show"); // Hide dropdown after selection
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function(event) {
+        if (!event.target.matches('.organize-icon')) {
+            const dropdowns = document.getElementsByClassName("filter-options");
+            for (let i = 0; i < dropdowns.length; i++) {
+                const openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
+</script>
+
+
+
+    </main>
+    
+    <!-- Menu Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="close-btn" id="closeSidebar">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        
+        <div class="sidebar-menu">
+            <div class="menu-item"
+
+
+            </div>
+<div>
+            <div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/ci', '_blank')">
+                <i class="material-icons">attribution</i>
+                <span>Creator Info</span>
+            </div>
+
+	<div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/legal-documents', '_blank')">
+                <i class="material-icons">gavel</i>
+                <span>Legal</span>
+</div>
+
+            
+
+		<div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/docubots', '_blank')">
+                <i class="material-icons">chat</i>
+                <span>DocuBots</span>
+</div>
+
+		<div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/pricing', '_blank')">
+                <i class="material-icons">payments</i>
+                <span>Pricing</span>
+            </div>
+
+		<div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/contact', '_blank')">
+                <i class="material-icons">email</i>
+                <span>Contact Us</span>
+            </div>
+
+</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DocuWrite Pro Floating App Button</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #f3f4f8;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .floating-box {
+      position: fixed;
+      bottom: 120px; /* Updated from 20px */
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 0 12px rgba(106, 0, 255, 0.4), 0 0 24px rgba(0, 157, 255, 0.3);
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      text-decoration: none;
+      z-index: 9999;
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+    .floating-box:hover {
+      transform: translateX(-50%) scale(1.03);
+      box-shadow: 0 0 16px rgba(138, 43, 226, 0.5), 0 0 28px rgba(0, 191, 255, 0.4);
+    }
+
+    .icon svg {
+      width: 20px;
+      height: 20px;
+      stroke: #000;
+      stroke-width: 2;
+    }
+
+    .text {
+      font-size: 15px;
+      color: #000;
+      font-weight: 500;
+    }
+
+    .new-badge {
+      background: linear-gradient(to right, #6a00ff, #00bfff);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<a href="https://www.mediafire.com/file/bjld8teexg7yozf/DocuWritePro.apk" target="_blank" class="floating-box">
+  <div class="icon">
+    <!-- Mobile SVG icon -->
+    <svg viewBox="0 0 24 24" fill="none">
+      <rect x="7" y="2" width="10" height="20" rx="2" stroke="black"/>
+      <circle cx="12" cy="18" r="1" fill="black"/>
+    </svg>
+  </div>
+  <div class="text">DocuWrite Pro App</div>
+  <div class="new-badge">NEW</div>
+</a>
+
+</body>
+</html>
+
+        </div>
+        
+        <div class="sidebar-footer" onclick="window.open('https://662d1c5ead845.site123.me', '_blank')">
+            Made by EBMA
+        </div>
+    </aside>
+    
+    <!-- Projects Sidebar -->
+    <aside class="projects-sidebar" id="projectsSidebar">
+        <div class="sidebar-header">
+            <h2>Projects</h2>
+            <button class="close-btn" id="closeProjects">
+                <i class="material-icons">close</i>
+            </button>
+        </div>
+        
+        <div class="projects-content">
+            <iframe src="https://662d1c5ead845.site123.me/projects"></iframe>
+        </div>
+    </aside>
+    
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+    
+    <script>
+        // DOM Elements
+        const menuBtn = document.getElementById('menuBtn');
+        const gridBtn = document.getElementById('gridBtn');
+        const sidebar = document.getElementById('sidebar');
+        const projectsSidebar = document.getElementById('projectsSidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const closeProjects = document.getElementById('closeProjects');
+        const overlay = document.getElementById('overlay');
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+        
+        // Toggle menu sidebar
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.add('active');
+            overlay.classList.add('active');
+        });
+        
+        // Toggle projects sidebar
+        gridBtn.addEventListener('click', () => {
+            projectsSidebar.classList.add('active');
+            overlay.classList.add('active');
+        });
+        
+        // Close sidebar
+        closeSidebar.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        
+        // Close projects sidebar
+        closeProjects.addEventListener('click', () => {
+            projectsSidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        
+        // Close with overlay click
+        overlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            projectsSidebar.classList.remove('active');
+            overlay.classList.remove('active');
+        });
+        
+        // Theme toggle
+        themeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-theme');
+            
+            // Save theme preference to localStorage
+            if (body.classList.contains('dark-theme')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+        
+        // Check for saved theme preference
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            body.classList.add('dark-theme');
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Background</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+            overflow: auto;
+            z-index: -1;
+        }
+
+        /* Floating Bubbles */
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(156, 39, 176, 0.05);
+            z-index: 1;
+        }
+
+        .bubble:nth-child(1) {
+            width: 120px;
+            height: 120px;
+            top: 10%;
+            left: 5%;
+            animation: float 15s infinite ease-in-out;
+        }
+
+        .bubble:nth-child(2) {
+            width: 80px;
+            height: 80px;
+            bottom: 15%;
+            right: 8%;
+            animation: float 12s infinite ease-in-out;
+        }
+
+        .bubble:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            top: 40%;
+            right: 15%;
+            animation: float 18s infinite ease-in-out;
+        }
+
+        /* Ripple Pulses */
+        .pulse {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            overflow: auto;
+        }
+
+        .pulse span {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(66, 133, 244, 0.1);
+            animation: ripple 6s linear infinite;
+        }
+
+        .pulse span:nth-child(1) {
+            width: 800px;
+            height: 800px;
+            top: -300px;
+            left: -300px;
+            animation-delay: 0s;
+        }
+
+        .pulse span:nth-child(2) {
+            width: 700px;
+            height: 700px;
+            top: -250px;
+            right: -300px;
+            animation-delay: 1s;
+        }
+
+        .pulse span:nth-child(3) {
+            width: 600px;
+            height: 600px;
+            bottom: -300px;
+            left: -200px;
+            animation-delay: 2s;
+        }
+
+        /* Particles */
+        .particle {
+            position: absolute;
+            background: #4285F4;
+            border-radius: 50%;
+            opacity: 0.3;
+            z-index: 2;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-20px) translateX(15px); }
+            50% { transform: translateY(10px) translateX(-20px); }
+            75% { transform: translateY(-15px) translateX(-10px); }
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Paste this div where you want the animated background -->
+    <div class="animated-bg">
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="pulse">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    
+
+    <script>
+        // Generate random particles
+        document.addEventListener('DOMContentLoaded', function() {
+            const bg = document.querySelector('.animated-bg');
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.width = Math.random() * 8 + 2 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.background = i % 2 === 0 ? '#4285F4' : '#9C27B0';
+                particle.style.top = Math.random() * 100 + 'vh';
+                particle.style.left = Math.random() * 100 + 'vw';
+                bg.appendChild(particle);
+                
+                // Animate particles
+                animateParticle(particle);
+            }
+            
+            function animateParticle(el) {
+                const duration = Math.random() * 10 + 10;
+                const xDirection = Math.random() > 0.5 ? 1 : -1;
+                const yDirection = Math.random() > 0.5 ? 1 : -1;
+                
+                const keyframes = [
+                    { transform: `translate(0, 0)`, opacity: 0.3 },
+                    { transform: `translate(${Math.random() * 100 * xDirection}px, ${Math.random() * 50 * yDirection}px)`, opacity: 0 }
+                ];
+                
+                el.animate(keyframes, { duration: duration * 1000, iterations: Infinity });
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Drop Click Animation</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: auto;
+            background-color: transparent;
+        }
+        
+        .water-drop {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(173, 216, 230, 0.5);
+            transform: scale(0);
+            pointer-events: none;
+            animation: ripple 1s linear;
+        }
+        
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <script>
+        document.addEventListener('click', function(e) {
+            // Create water drop element
+            const drop = document.createElement('div');
+            drop.classList.add('water-drop');
+            
+            // Position it at click coordinates
+            drop.style.left = `${e.clientX}px`;
+            drop.style.top = `${e.clientY}px`;
+            drop.style.width = '50px';
+            drop.style.height = '50px';
+            
+            // Add to body
+            document.body.appendChild(drop);
+            
+            // Remove element after animation completes
+            setTimeout(() => {
+                drop.remove();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Top Greeting Bar</title>
+</head>
+<body>
+
+<greeting-bar></greeting-bar>
+
+<script>
+  class GreetingBar extends HTMLElement {
+    constructor() {
+      super();
+      this.attachShadow({ mode: 'open' });
+      this.shadowRoot.innerHTML = `
+        <style>
+          :host {
+            all: initial;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            z-index: 99999999;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+              Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            user-select: none;
+          }
+          .bar {
+            position: relative;
+            width: 320px;
+            max-width: 90vw;
+            margin-top: 1.2rem;
+            background: rgba(255 255 255 / 0.65);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 10px;
+            box-shadow:
+              0 0 8px rgba(255, 255, 255, 0.75),
+              0 0 15px rgba(0, 123, 255, 0.6);
+            color: #111;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 0.7rem 1.2rem;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            cursor: pointer;
+            transform: translateY(-120%);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+            user-select: none;
+          }
+          .bar.show {
+            transform: translateY(0);
+            opacity: 1;
+          }
+          .glow {
+            position: absolute;
+            top: 0;
+            left: -50%;
+            width: 50%;
+            height: 100%;
+            pointer-events: none;
+            background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.4), transparent);
+            filter: drop-shadow(0 0 6px #007bff);
+            animation: glowMove 1s forwards;
+            will-change: left, opacity;
+          }
+          @keyframes glowMove {
+            0% {
+              left: -50%;
+              opacity: 0;
+            }
+            10% {
+              opacity: 1;
+            }
+            90% {
+              left: 150%;
+              opacity: 1;
+            }
+            100% {
+              left: 150%;
+              opacity: 0;
+            }
+          }
+        </style>
+        <div class="bar" part="bar" role="alert" tabindex="0" aria-live="polite">
+          <div class="glow"></div>
+          <span class="text">Hello!</span>
+        </div>
+      `;
+
+      this.bar = this.shadowRoot.querySelector('.bar');
+      this.textSpan = this.shadowRoot.querySelector('.text');
+      this.glow = this.shadowRoot.querySelector('.glow');
+
+      // Swipe vars
+      this.startY = 0;
+      this.currentY = 0;
+      this.isSwiping = false;
+
+      // Bind methods
+      this.onTouchStart = this.onTouchStart.bind(this);
+      this.onTouchMove = this.onTouchMove.bind(this);
+      this.onTouchEnd = this.onTouchEnd.bind(this);
+      this.dismiss = this.dismiss.bind(this);
+    }
+
+    connectedCallback() {
+      this.setGreeting();
+      this.showBar();
+
+      // Auto dismiss after 1 second (matching glow duration)
+      setTimeout(() => {
+        this.dismiss();
+      }, 1000);
+
+      // Attach swipe listeners
+      this.bar.addEventListener('touchstart', this.onTouchStart, { passive: true });
+      this.bar.addEventListener('touchmove', this.onTouchMove, { passive: true });
+      this.bar.addEventListener('touchend', this.onTouchEnd);
+
+      // Click dismiss as well
+      this.bar.addEventListener('click', this.dismiss);
+    }
+
+    disconnectedCallback() {
+      this.bar.removeEventListener('touchstart', this.onTouchStart);
+      this.bar.removeEventListener('touchmove', this.onTouchMove);
+      this.bar.removeEventListener('touchend', this.onTouchEnd);
+      this.bar.removeEventListener('click', this.dismiss);
+    }
+
+    setGreeting() {
+      const now = new Date();
+      const h = now.getHours();
+
+      let greeting = "Connecting";
+
+      if (h >= 0 && h < 4) greeting = "☁︎ Connected";
+      else if (h >= 4 && h < 12) greeting = "☁︎ Connected";
+      else if (h >= 16 && h < 20) greeting = "☁︎ Connected";
+      else if (h >= 20 && h <= 23) greeting = "☁︎ Connected";
+
+      this.textSpan.textContent = greeting;
+    }
+
+    showBar() {
+      requestAnimationFrame(() => {
+        this.bar.classList.add('show');
+      });
+    }
+
+    dismiss() {
+      this.bar.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
+      this.bar.style.transform = 'translateY(-120%)';
+      this.bar.style.opacity = '0';
+      setTimeout(() => this.remove(), 400);
+    }
+
+    onTouchStart(e) {
+      this.startY = e.touches[0].clientY;
+      this.currentY = this.startY;
+      this.isSwiping = true;
+      this.bar.style.transition = 'none';
+    }
+
+    onTouchMove(e) {
+      if (!this.isSwiping) return;
+      this.currentY = e.touches[0].clientY;
+      let deltaY = this.currentY - this.startY;
+      if (deltaY < 0) { // swipe up only
+        this.bar.style.transform = `translateY(${deltaY}px)`;
+        this.bar.style.opacity = `${1 + deltaY / window.innerHeight}`;
+      }
+    }
+
+    onTouchEnd() {
+      if (!this.isSwiping) return;
+      let deltaY = this.currentY - this.startY;
+      this.isSwiping = false;
+
+      if (deltaY < -this.bar.offsetHeight / 3) {
+        this.dismiss();
+      } else {
+        this.bar.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+        this.bar.style.transform = 'translateY(0)';
+        this.bar.style.opacity = '1';
+      }
+    }
+  }
+
+  customElements.define('greeting-bar', GreetingBar);
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DocuWrite Pro Release + Counter</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
+<style>
+#docuGlassWrapper {
+    position: fixed;
+    top: 20px;
+    right: 0;
+    z-index: 99999;
+    font-family: 'Arial', sans-serif;
+}
+
+#glassButton {
+    background: rgba(240, 248, 255, 0.6);
+    backdrop-filter: blur(10px);
+    color: #555;
+    border: none;
+    border-radius: 20px 0 0 20px;
+    padding: 12px 18px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    transition: background 0.3s;
+}
+
+#glassButton:hover { background: rgba(230, 245, 255, 0.6); }
+#glassButton .material-icons-outlined { margin-left: 8px; font-size: 20px; color: #7bc8f6; }
+
+#glassPopup {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+    width: 340px;
+    max-width: 90vw;
+    max-height: 80vh; /* new: limits popup height */
+    overflow-y: auto;  /* new: adds vertical scroll if content exceeds max-height */
+    background: rgba(255,255,255,0.5);
+    backdrop-filter: blur(15px);
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+    padding: 22px;
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 100000;
+    color: #333;
+}
+
+
+@keyframes fadeInGlass {
+    from {opacity: 0; transform: translateY(-10px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+#glassPopup .closeBtn {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    font-size: 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #666;
+}
+
+#glassPopup h2 { margin: 0; font-size: 18px; }
+#glassPopup p { margin: 6px 0; font-size: 14px; line-height: 1.4; }
+#glassPopup hr { border: none; border-top: 1px solid rgba(200,200,200,0.5); margin: 10px 0; }
+#glassPopup ul { padding-left: 20px; margin: 0; font-size: 14px; }
+
+/* Visitor counter inside popup */
+#visitor-counter {
+    background: rgba(255,255,255,0.4);
+    backdrop-filter: blur(5px);
+    border-radius: 12px;
+    padding: 6px 10px;
+    text-align: center;
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+#visitor-counter .counter-text { display: block; margin-bottom: 4px; font-size: 11px; }
+#visitor-counter .counter-box { text-align: center; }
+</style>
+</head>
+<body>
+
+<div id="docuGlassWrapper">
+    <button id="glassButton">
+        Log <span class="material-icons-outlined">rocket_launch</span>
+    </button>
+
+    <div id="glassPopup">
+        <button class="closeBtn">&times;</button>
+        
+        <!-- Visitor Counter embedded at top -->
+        
+
+        <h2>Sep 7, 2025 | DocuWrite Pro 3.1 | Release</h2>
+        <p>After months of nonstop development, DocuWrite Pro is now officially released. All remaining bugs have been fixed, and the software is ready for global use. We hope you enjoy the best experience possible!</p>
+        <p>- Mohtadi Azad Mahi, The person behind the curtains</p>
+        <hr>
+        <h3>What's New in 3.1?</h3>
+        <ul>
+            <li>Added tons of features to Editor</li>
+            <li>Upgraded Collab Connection and Security</li>
+            <li>Added New Tools, HTML Writer, Share File, Smart Lookup (to Editor)</li>
+            <li>Bug fixes</li>
+        </ul>
+<hr>
+        <h3>Mini Drop 56-98 | Sep 23, 2025 | 3.1.0 --> 3.1.9</h3>
+        <ul>
+<li>Added new tool, Frontend IDE.</li>
+            <li>Fixed the bug in importing new fonts.</li>
+            <li>Added 300+ new preloaded fonts in Editor.</li>
+<li>Added Beta Extensions feature to Editor.</li>
+            <li>Updated the exported image resolution in File Extractor.</li>
+	<li>Made the default theme for the Menu Page to light. Removed Auto Theme.</li>
+<li>Removed visit counter from Menu Page.</li>
+            <li>New Legal Page: Google's Contribution In Development</li>
+        </ul>
+        <hr>
+        <p>For inquiries, reports or suggestions, contact: <a href="mailto:ebmaedu@gmail.com">ebmaedu@gmail.com</a></p>
+    </div>
+</div>
+
+<script>
+(function(){
+    const btn = document.getElementById('glassButton');
+    const popup = document.getElementById('glassPopup');
+    const closeBtn = popup.querySelector('.closeBtn');
+
+    btn.addEventListener('click', () => {
+        popup.style.display = 'flex';
+        popup.style.animation = 'fadeInGlass 0.3s ease forwards';
+    });
+
+    closeBtn.addEventListener('click', () => { popup.style.display = 'none'; });
+
+    window.addEventListener('click', (e) => {
+        if (popup.style.display === 'flex' && !popup.contains(e.target) && e.target !== btn) {
+            popup.style.display = 'none';
+        }
+    });
+})();
+
+
+
+
+const hideCounterError = () => {
+  document.querySelectorAll('body *').forEach(el => {
+    if (el.textContent.includes('Counter Error: Do not chnage the code. Click here to show the correct code.')) {
+      el.style.display = 'none';
+    }
+  });
+};
+
+// Run once immediately
+hideCounterError();
+
+// Observe the page for changes
+const observer = new MutationObserver(hideCounterError);
+observer.observe(document.body, { childList: true, subtree: true });
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button Maker - Google Docs Style</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --secondary-color: #34a853;
+            --background-color: #f8f9fa;
+            --surface-color: #ffffff;
+            --border-color: #dadce0;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        body {
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+        
+        .container {
+            display: flex;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            gap: 20px;
+            height: calc(100vh - 80px);
+        }
+        
+        header {
+            background-color: var(--surface-color);
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .logo-icon {
+            color: var(--primary-color);
+            font-size: 28px;
+        }
+        
+        .controls-panel {
+            flex: 1;
+            background: var(--surface-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            overflow-y: auto;
+            max-height: 100%;
+        }
+        
+        .preview-panel {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .preview {
+            background: var(--surface-color);
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            flex: 1;
+        }
+        
+        .code-output {
+            background: var(--surface-color);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        h2 {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .control-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .control-item {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            background-color: var(--surface-color);
+        }
+        
+        input[type="color"] {
+            height: 40px;
+            padding: 2px;
+        }
+        
+        input[type="range"] {
+            padding: 0;
+        }
+        
+        .range-value {
+            font-size: 12px;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .button-preview {
+            padding: 12px 24px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        code {
+            background-color: #f1f3f4;
+            padding: 15px;
+            border-radius: 4px;
+            display: block;
+            white-space: pre-wrap;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            flex: 1;
+        }
+        
+        .copy-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background-color: #3367d6;
+        }
+        
+        .icon-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .icon-option {
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon-option:hover {
+            background-color: #e8f0fe;
+        }
+        
+        .icon-option.selected {
+            border-color: var(--primary-color);
+            background-color: #e8f0fe;
+        }
+        
+        .tab-container {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .state-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .state-btn {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: var(--surface-color);
+            cursor: pointer;
+        }
+        
+        .state-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .color-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .color-input {
+            flex: 1;
+        }
+        
+        .color-value {
+            width: 60px;
+            font-size: 12px;
+        }
+        
+        .gradient-controls {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .controls-panel {
+                max-height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span class="material-icons logo-icon">smart_button</span>
+            <span>Button Designer</span>
+        </div>
+        <div class="header-actions">
+            <button class="copy-btn" id="save-preset">
+                <span class="material-icons">bookmark</span>
+                Save Preset
+            </button>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="controls-panel">
+            <div class="tab-container">
+                <div class="tab active" data-tab="basic">Basic</div>
+                <div class="tab" data-tab="border">Border</div>
+                <div class="tab" data-tab="effects">Effects</div>
+                <div class="tab" data-tab="interaction">Interaction</div>
+                <div class="tab" data-tab="advanced">Advanced</div>
+            </div>
+            
+            <div class="tab-content active" id="basic-tab">
+                <div class="control-group">
+                    <h3><span class="material-icons">text_fields</span> Text & Font</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="button-text">Button Text</label>
+                            <input type="text" id="button-text" value="Click Me" placeholder="Button text">
+                        </div>
+                        <div class="control-item">
+                            <label for="font-family">Font Family</label>
+                            <select id="font-family">
+                                <option value="Roboto, sans-serif">Roboto</option>
+                                <option value="Arial, sans-serif">Arial</option>
+                                <option value="Helvetica, sans-serif">Helvetica</option>
+                                <option value="Georgia, serif">Georgia</option>
+                                <option value="'Courier New', monospace">Monospace</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="font-size">Font Size (px)</label>
+                            <input type="range" id="font-size" min="10" max="40" value="14">
+                            <div class="range-value" id="font-size-value">14px</div>
+                        </div>
+                        <div class="control-item">
+                            <label for="font-weight">Font Weight</label>
+                            <select id="font-weight">
+                                <option value="400">Normal</option>
+                                <option value="700">Bold</option>
+                                <option value="300">Light</option>
+                                <option value="900">Black</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="text-color">Text Color</label>
+                            <div class="color-group">
+                                <input type="color" id="text-color" value="#ffffff" class="color-input">
+                                <span class="color-value" id="text-color-value">#ffffff</span>
+                            </div>
+                        </div>
+                        <div class="control-item">
+                            <label for="text-align">Text Alignment</label>
+                            <select id="text-align">
+                                <option value="center">Center</option>
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="text-shadow">Text Shadow</label>
+                            <input type="text" id="text-shadow" placeholder="e.g., 2px 2px 4px rgba(0,0,0,0.5)">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><span class="material-icons">aspect_ratio</span> Size & Shape</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="width">Width</label>
+                            <input type="text" id="width" value="120px" placeholder="e.g., 120px, 100%">
+                        </div>
+                        <div class="control-item">
+                            <label for="height">Height</label>
+                            <input type="text" id="height" value="40px" placeholder="e.g., 40px, auto">
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="padding">Padding</label>
+                            <input type="text" id="padding" value="12px 24px" placeholder="e.g., 10px, 5px 10px">
+                        </div>
+                        <div class="control-item">
+                            <label for="border-radius">Border Radius</label>
+                            <input type="text" id="border-radius" value="4px" placeholder="e.g., 4px, 50%">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><span class="material-icons">palette</span> Colors & Background</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="bg-type">Background Type</label>
+                            <select id="bg-type">
+                                <option value="solid">Solid Color</option>
+                                <option value="gradient">Gradient</option>
+                                <option value="image">Image</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-row" id="solid-color-control">
+                        <div class="control-item">
+                            <label for="bg-color">Background Color</label>
+                            <div class="color-group">
+                                <input type="color" id="bg-color" value="#4285f4" class="color-input">
+                                <span class="color-value" id="bg-color-value">#4285f4</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gradient-controls" id="gradient-controls">
+                        <div class="control-row">
+                            <div class="control-item">
+                                <label for="gradient-type">Gradient Type</label>
+                                <select id="gradient-type">
+                                    <option value="linear">Linear</option>
+                                    <option value="radial">Radial</option>
+                                    <option value="conic">Conic</option>
+                                </select>
+                            </div>
+                            <div class="control-item">
+                                <label for="gradient-direction">Direction</label>
+                                <input type="text" id="gradient-direction" value="to right" placeholder="e.g., to right, 45deg">
+                            </div>
+                        </div>
+                        <div class="control-row">
+                            <div class="control-item">
+                                <label for="gradient-color1">Color 1</label>
+                                <div class="color-group">
+                                    <input type="color" id="gradient-color1" value="#4285f4" class="color-input">
+                                    <span class="color-value" id="gradient-color1-value">#4285f4</span>
+                                </div>
+                            </div>
+                            <div class="control-item">
+                                <label for="gradient-color2">Color 2</label>
+                                <div class="color-group">
+                                    <input type="color" id="gradient-color2" value="#34a853" class="color-input">
+                                    <span class="color-value" id="gradient-color2-value">#34a853</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gradient-controls" id="image-controls">
+                        <div class="control-row">
+                            <div class="control-item">
+                                <label for="bg-image">Image URL</label>
+                                <input type="text" id="bg-image" placeholder="Enter image URL">
+                            </div>
+                        </div>
+                        <div class="control-row">
+                            <div class="control-item">
+                                <label for="bg-size">Background Size</label>
+                                <select id="bg-size">
+                                    <option value="cover">Cover</option>
+                                    <option value="contain">Contain</option>
+                                    <option value="auto">Auto</option>
+                                </select>
+                            </div>
+                            <div class="control-item">
+                                <label for="bg-position">Background Position</label>
+                                <input type="text" id="bg-position" value="center" placeholder="e.g., center, top left">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><span class="material-icons">insert_emoticon</span> Icons & Content</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label>Icon Library</label>
+                            <select id="icon-library">
+                                <option value="material">Material Icons</option>
+                                <option value="fontawesome">Font Awesome</option>
+                            </select>
+                        </div>
+                        <div class="control-item">
+                            <label>Icon Position</label>
+                            <select id="icon-position">
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                                <option value="top">Top</option>
+                                <option value="bottom">Bottom</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <label>Select Icon</label>
+                        <div class="icon-options">
+                            <div class="icon-option" data-icon=""><i class="fas fa-times"></i></div>
+                            <div class="icon-option" data-icon="★"><i class="fas fa-star"></i></div>
+                            <div class="icon-option" data-icon="❤"><i class="fas fa-heart"></i></div>
+                            <div class="icon-option" data-icon="➞"><i class="fas fa-arrow-right"></i></div>
+                            <div class="icon-option" data-icon="⬇"><i class="fas fa-download"></i></div>
+                            <div class="icon-option" data-icon="⚙"><i class="fas fa-cog"></i></div>
+                            <div class="icon-option" data-icon="🔍"><i class="fas fa-search"></i></div>
+                            <div class="icon-option" data-icon="📧"><i class="fas fa-envelope"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="border-tab">
+                <div class="control-group">
+                    <h3><span class="material-icons">border_outer</span> Border</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="border-width">Border Width</label>
+                            <input type="text" id="border-width" value="0px" placeholder="e.g., 1px, 2px 4px">
+                        </div>
+                        <div class="control-item">
+                            <label for="border-style">Border Style</label>
+                            <select id="border-style">
+                                <option value="solid">Solid</option>
+                                <option value="dashed">Dashed</option>
+                                <option value="dotted">Dotted</option>
+                                <option value="double">Double</option>
+                                <option value="groove">Groove</option>
+                                <option value="ridge">Ridge</option>
+                                <option value="inset">Inset</option>
+                                <option value="outset">Outset</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="border-color">Border Color</label>
+                            <div class="color-group">
+                                <input type="color" id="border-color" value="#cccccc" class="color-input">
+                                <span class="color-value" id="border-color-value">#cccccc</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><span class="material-icons">border_clear</span> Outline</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="outline-width">Outline Width</label>
+                            <input type="text" id="outline-width" value="0px" placeholder="e.g., 2px">
+                        </div>
+                        <div class="control-item">
+                            <label for="outline-style">Outline Style</label>
+                            <select id="outline-style">
+                                <option value="solid">Solid</option>
+                                <option value="dashed">Dashed</option>
+                                <option value="dotted">Dotted</option>
+                                <option value="double">Double</option>
+                                <option value="none">None</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="outline-color">Outline Color</label>
+                            <div class="color-group">
+                                <input type="color" id="outline-color" value="#4285f4" class="color-input">
+                                <span class="color-value" id="outline-color-value">#4285f4</span>
+                            </div>
+                        </div>
+                        <div class="control-item">
+                            <label for="outline-offset">Outline Offset</label>
+                            <input type="text" id="outline-offset" value="0px" placeholder="e.g., 2px">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="effects-tab">
+                <div class="control-group">
+                    <h3><span class="material-icons">blur_on</span> Shadow & Glow</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="box-shadow">Box Shadow</label>
+                            <input type="text" id="box-shadow" placeholder="e.g., 2px 2px 10px rgba(0,0,0,0.3)">
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="inner-shadow">Inner Shadow</label>
+                            <input type="text" id="inner-shadow" placeholder="e.g., inset 0 0 10px rgba(0,0,0,0.5)">
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="glow-effect">Glow Effect</label>
+                            <input type="text" id="glow-effect" placeholder="e.g., 0 0 10px #4285f4">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><span class="material-icons">filter_vintage</span> Advanced Effects</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="backdrop-filter">Backdrop Filter</label>
+                            <input type="text" id="backdrop-filter" placeholder="e.g., blur(5px)">
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="filter">Filter Effects</label>
+                            <input type="text" id="filter" placeholder="e.g., brightness(1.2) contrast(1.5)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="interaction-tab">
+                <div class="control-group">
+                    <h3><span class="material-icons">toggle_on</span> Button States</h3>
+                    <div class="state-controls">
+                        <div class="state-btn active" data-state="normal">Normal</div>
+                        <div class="state-btn" data-state="hover">Hover</div>
+                        <div class="state-btn" data-state="active">Active</div>
+                        <div class="state-btn" data-state="focus">Focus</div>
+                        <div class="state-btn" data-state="disabled">Disabled</div>
+                    </div>
+                    
+                    <div id="state-controls">
+                        <!-- State-specific controls will be loaded here -->
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><span class="material-icons">animation</span> Animations</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="hover-animation">Hover Animation</label>
+                            <select id="hover-animation">
+                                <option value="none">None</option>
+                                <option value="grow">Grow</option>
+                                <option value="shrink">Shrink</option>
+                                <option value="pulse">Pulse</option>
+                                <option value="color-change">Color Change</option>
+                            </select>
+                        </div>
+                        <div class="control-item">
+                            <label for="click-animation">Click Animation</label>
+                            <select id="click-animation">
+                                <option value="none">None</option>
+                                <option value="ripple">Ripple</option>
+                                <option value="press">Press Down</option>
+                                <option value="bounce">Bounce</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="transition">Transition</label>
+                            <input type="text" id="transition" value="all 0.3s ease" placeholder="e.g., all 0.3s ease">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><span class="material-icons">settings</span> Functionality</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label>Hide after click</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="hide-after-click">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="control-item">
+                            <label>Disabled state</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="disabled-state">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="button-type">Button Type</label>
+                            <select id="button-type">
+                                <option value="button">Button</option>
+                                <option value="submit">Submit</option>
+                                <option value="reset">Reset</option>
+                                <option value="link">Link (Anchor)</option>
+                            </select>
+                        </div>
+                        <div class="control-item" id="link-url-control">
+                            <label for="link-url">Link URL</label>
+                            <input type="text" id="link-url" placeholder="https://example.com">
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="button-id">Button ID</label>
+                            <input type="text" id="button-id" placeholder="my-button">
+                        </div>
+                        <div class="control-item">
+                            <label for="button-class">Button Class</label>
+                            <input type="text" id="button-class" placeholder="custom-btn primary">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="tab-content" id="advanced-tab">
+                <div class="control-group">
+                    <h3><span class="material-icons">accessibility</span> Accessibility</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="aria-label">ARIA Label</label>
+                            <input type="text" id="aria-label" placeholder="Descriptive text for screen readers">
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="tabindex">Tab Index</label>
+                            <input type="number" id="tabindex" value="0">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><span class="material-icons">code</span> Advanced CSS</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="custom-css">Custom CSS</label>
+                            <textarea id="custom-css" rows="4" placeholder="Add your custom CSS here"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3><span class="material-icons">save</span> Presets</h3>
+                    <div class="control-row">
+                        <div class="control-item">
+                            <label for="preset-name">Preset Name</label>
+                            <input type="text" id="preset-name" placeholder="My Button Style">
+                        </div>
+                    </div>
+                    <div class="control-row">
+                        <button class="copy-btn" id="save-preset-btn">
+                            <span class="material-icons">bookmark</span>
+                            Save Preset
+                        </button>
+                        <button class="copy-btn" id="load-preset-btn" style="background-color: var(--secondary-color);">
+                            <span class="material-icons">folder_open</span>
+                            Load Preset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="preview-panel">
+            <div class="preview">
+                <h2>Button Preview</h2>
+                <div id="button-container">
+                    <button class="button-preview" id="button-preview">Click Me</button>
+                </div>
+                
+            
+            
+            <div class="code-output">
+                <h2>Generated Code</h2>
+                <code id="generated-code">
+// Code will appear here as you customize the button
+                </code>
+                <button class="copy-btn" id="copy-code">
+                    <span class="material-icons">content_copy</span>
+                    Copy Code
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const controls = {
+            // Basic
+            text: document.getElementById('button-text'),
+            fontFamily: document.getElementById('font-family'),
+            fontSize: document.getElementById('font-size'),
+            fontSizeValue: document.getElementById('font-size-value'),
+            fontWeight: document.getElementById('font-weight'),
+            textColor: document.getElementById('text-color'),
+            textColorValue: document.getElementById('text-color-value'),
+            textAlign: document.getElementById('text-align'),
+            textShadow: document.getElementById('text-shadow'),
+            width: document.getElementById('width'),
+            height: document.getElementById('height'),
+            padding: document.getElementById('padding'),
+            borderRadius: document.getElementById('border-radius'),
+            bgType: document.getElementById('bg-type'),
+            bgColor: document.getElementById('bg-color'),
+            bgColorValue: document.getElementById('bg-color-value'),
+            gradientType: document.getElementById('gradient-type'),
+            gradientDirection: document.getElementById('gradient-direction'),
+            gradientColor1: document.getElementById('gradient-color1'),
+            gradientColor1Value: document.getElementById('gradient-color1-value'),
+            gradientColor2: document.getElementById('gradient-color2'),
+            gradientColor2Value: document.getElementById('gradient-color2-value'),
+            bgImage: document.getElementById('bg-image'),
+            bgSize: document.getElementById('bg-size'),
+            bgPosition: document.getElementById('bg-position'),
+            iconLibrary: document.getElementById('icon-library'),
+            iconPosition: document.getElementById('icon-position'),
+            
+            // Border
+            borderWidth: document.getElementById('border-width'),
+            borderStyle: document.getElementById('border-style'),
+            borderColor: document.getElementById('border-color'),
+            borderColorValue: document.getElementById('border-color-value'),
+            outlineWidth: document.getElementById('outline-width'),
+            outlineStyle: document.getElementById('outline-style'),
+            outlineColor: document.getElementById('outline-color'),
+            outlineColorValue: document.getElementById('outline-color-value'),
+            outlineOffset: document.getElementById('outline-offset'),
+            
+            // Effects
+            boxShadow: document.getElementById('box-shadow'),
+            innerShadow: document.getElementById('inner-shadow'),
+            glowEffect: document.getElementById('glow-effect'),
+            backdropFilter: document.getElementById('backdrop-filter'),
+            filter: document.getElementById('filter'),
+            
+            // Interaction
+            hoverAnimation: document.getElementById('hover-animation'),
+            clickAnimation: document.getElementById('click-animation'),
+            transition: document.getElementById('transition'),
+            hideAfterClick: document.getElementById('hide-after-click'),
+            disabledState: document.getElementById('disabled-state'),
+            buttonType: document.getElementById('button-type'),
+            linkUrl: document.getElementById('link-url'),
+            buttonId: document.getElementById('button-id'),
+            buttonClass: document.getElementById('button-class'),
+            
+            // Advanced
+            ariaLabel: document.getElementById('aria-label'),
+            tabindex: document.getElementById('tabindex'),
+            customCss: document.getElementById('custom-css'),
+            presetName: document.getElementById('preset-name')
+        };
+        
+        // Get preview and code elements
+        const buttonPreview = document.getElementById('button-preview');
+        const generatedCode = document.getElementById('generated-code');
+        const copyButton = document.getElementById('copy-code');
+        const savePresetBtn = document.getElementById('save-preset-btn');
+        const loadPresetBtn = document.getElementById('load-preset-btn');
+        const stateControls = document.getElementById('state-controls');
+        
+        // Current state for editing (normal, hover, active, etc.)
+        let currentState = 'normal';
+        let currentPreviewState = 'normal';
+        
+        // Store state-specific styles
+        const buttonStates = {
+            normal: {},
+            hover: {},
+            active: {},
+            focus: {},
+            disabled: {}
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupTabs();
+            setupStateControls();
+            setupIconSelection();
+            setupBackgroundType();
+            updateButton();
+            updateCode();
+        });
+        
+        // Set up tab navigation
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Hide all tab content
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Show the selected tab content
+                    const tabId = `${tab.dataset.tab}-tab`;
+                    document.getElementById(tabId).classList.add('active');
+                });
+            });
+        }
+        
+        // Set up state controls
+        function setupStateControls() {
+            // State editing buttons
+            const stateButtons = document.querySelectorAll('.state-btn');
+            stateButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    stateButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentState = btn.dataset.state;
+                    loadStateControls(currentState);
+                });
+            });
+            
+            // State preview buttons
+            const statePreviewButtons = document.querySelectorAll('.state-btn[data-state-preview]');
+            statePreviewButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    statePreviewButtons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentPreviewState = btn.dataset.statePreview;
+                    updateButtonPreview();
+                });
+            });
+            
+            // Load initial state controls
+            loadStateControls('normal');
+        }
+        
+        // Load controls for a specific state
+        function loadStateControls(state) {
+            // For simplicity, we'll just show a message
+            // In a full implementation, this would generate controls for each state
+            stateControls.innerHTML = `
+                <div class="control-row">
+                    <div class="control-item">
+                        <label for="${state}-bg-color">Background Color</label>
+                        <input type="color" id="${state}-bg-color" value="${state === 'normal' ? '#4285f4' : (state === 'hover' ? '#3367d6' : '#2a56b6')}">
+                    </div>
+                    <div class="control-item">
+                        <label for="${state}-text-color">Text Color</label>
+                        <input type="color" id="${state}-text-color" value="#ffffff">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-item">
+                        <label for="${state}-box-shadow">Box Shadow</label>
+                        <input type="text" id="${state}-box-shadow" placeholder="e.g., 2px 2px 10px rgba(0,0,0,0.3)">
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners to the state-specific controls
+            document.getElementById(`${state}-bg-color`).addEventListener('input', updateButton);
+            document.getElementById(`${state}-text-color`).addEventListener('input', updateButton);
+            document.getElementById(`${state}-box-shadow`).addEventListener('input', updateButton);
+        }
+        
+        // Set up icon selection
+        function setupIconSelection() {
+            const iconOptions = document.querySelectorAll('.icon-option');
+            iconOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    iconOptions.forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    updateButton();
+                });
+            });
+        }
+        
+        // Set up background type switching
+        function setupBackgroundType() {
+            controls.bgType.addEventListener('change', () => {
+                // Hide all gradient controls
+                document.getElementById('solid-color-control').style.display = 'none';
+                document.getElementById('gradient-controls').style.display = 'none';
+                document.getElementById('image-controls').style.display = 'none';
+                
+                // Show the selected controls
+                if (controls.bgType.value === 'solid') {
+                    document.getElementById('solid-color-control').style.display = 'block';
+                } else if (controls.bgType.value === 'gradient') {
+                    document.getElementById('gradient-controls').style.display = 'block';
+                } else if (controls.bgType.value === 'image') {
+                    document.getElementById('image-controls').style.display = 'block';
+                }
+                
+                updateButton();
+            });
+            
+            // Initially show solid color controls
+            document.getElementById('solid-color-control').style.display = 'block';
+        }
+        
+        // Update button preview based on controls
+        function updateButton() {
+            // Update text content
+            buttonPreview.textContent = controls.text.value;
+            
+            // Update text styles
+            buttonPreview.style.fontFamily = controls.fontFamily.value;
+            buttonPreview.style.fontSize = controls.fontSize.value + 'px';
+            buttonPreview.style.fontWeight = controls.fontWeight.value;
+            buttonPreview.style.color = controls.textColor.value;
+            buttonPreview.style.textAlign = controls.textAlign.value;
+            
+            // Update size and spacing
+            buttonPreview.style.width = controls.width.value;
+            buttonPreview.style.height = controls.height.value;
+            buttonPreview.style.padding = controls.padding.value;
+            buttonPreview.style.borderRadius = controls.borderRadius.value;
+            
+            // Update background
+            if (controls.bgType.value === 'solid') {
+                buttonPreview.style.background = controls.bgColor.value;
+            } else if (controls.bgType.value === 'gradient') {
+                const gradient = `${controls.gradientType.value}-gradient(${controls.gradientDirection.value}, ${controls.gradientColor1.value}, ${controls.gradientColor2.value})`;
+                buttonPreview.style.background = gradient;
+            } else if (controls.bgType.value === 'image') {
+                buttonPreview.style.backgroundImage = `url(${controls.bgImage.value})`;
+                buttonPreview.style.backgroundSize = controls.bgSize.value;
+                buttonPreview.style.backgroundPosition = controls.bgPosition.value;
+            }
+            
+            // Update border
+            buttonPreview.style.border = `${controls.borderWidth.value} ${controls.borderStyle.value} ${controls.borderColor.value}`;
+            
+            // Update outline
+            buttonPreview.style.outline = `${controls.outlineWidth.value} ${controls.outlineStyle.value} ${controls.outlineColor.value}`;
+            buttonPreview.style.outlineOffset = controls.outlineOffset.value;
+            
+            // Update effects
+            buttonPreview.style.boxShadow = controls.boxShadow.value;
+            buttonPreview.style.textShadow = controls.textShadow.value;
+            
+            // Update transition
+            buttonPreview.style.transition = controls.transition.value;
+            
+            // Update icon
+            const selectedIcon = document.querySelector('.icon-option.selected');
+            if (selectedIcon && selectedIcon.dataset.icon !== '') {
+                buttonPreview.innerHTML = controls.iconPosition.value === 'left' ? 
+                    `<i class="${selectedIcon.querySelector('i').className}"></i> ${controls.text.value}` :
+                    controls.iconPosition.value === 'right' ?
+                    `${controls.text.value} <i class="${selectedIcon.querySelector('i').className}"></i>` :
+                    controls.iconPosition.value === 'top' ?
+                    `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <i class="${selectedIcon.querySelector('i').className}"></i>
+                        ${controls.text.value}
+                     </div>` :
+                    `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        ${controls.text.value}
+                        <i class="${selectedIcon.querySelector('i').className}"></i>
+                     </div>`;
+            } else {
+                buttonPreview.textContent = controls.text.value;
+            }
+            
+            // Update code
+            updateCode();
+        }
+        
+        // Update button preview based on state
+        function updateButtonPreview() {
+            // Reset all state styles
+            buttonPreview.style.background = '';
+            buttonPreview.style.color = '';
+            buttonPreview.style.boxShadow = '';
+            buttonPreview.style.transform = '';
+            buttonPreview.style.opacity = '';
+            buttonPreview.style.pointerEvents = '';
+            buttonPreview.style.outline = '';
+            
+            // Apply state-specific styles
+            if (currentPreviewState === 'hover') {
+                buttonPreview.style.background = '#3367d6';
+                buttonPreview.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+                buttonPreview.style.transform = 'translateY(-1px)';
+            } else if (currentPreviewState === 'active') {
+                buttonPreview.style.background = '#2a56b6';
+                buttonPreview.style.transform = 'translateY(1px)';
+                buttonPreview.style.boxShadow = '0 1px 2px rgba(0,0,0,0.2)';
+            } else if (currentPreviewState === 'focus') {
+                buttonPreview.style.outline = '2px solid #4285f4';
+                buttonPreview.style.outlineOffset = '2px';
+            } else if (currentPreviewState === 'disabled') {
+                buttonPreview.style.opacity = '0.6';
+                buttonPreview.style.pointerEvents = 'none';
+            }
+        }
+        
+        // Update the generated code
+        function updateCode() {
+            let buttonTag = controls.buttonType.value === 'link' ? 'a' : 'button';
+            let hrefAttr = controls.buttonType.value === 'link' ? ` href="${controls.linkUrl.value}"` : '';
+            let typeAttr = controls.buttonType.value !== 'link' ? ` type="${controls.buttonType.value}"` : '';
+            let idAttr = controls.buttonId.value ? ` id="${controls.buttonId.value}"` : '';
+            let classAttr = controls.buttonClass.value ? ` class="${controls.buttonClass.value}"` : '';
+            let ariaAttr = controls.ariaLabel.value ? ` aria-label="${controls.ariaLabel.value}"` : '';
+            let tabindexAttr = controls.tabindex.value ? ` tabindex="${controls.tabindex.value}"` : '';
+            
+            const selectedIcon = document.querySelector('.icon-option.selected');
+            let buttonContent = controls.text.value;
+            
+            if (selectedIcon && selectedIcon.dataset.icon !== '') {
+                const iconClass = selectedIcon.querySelector('i').className;
+                if (controls.iconPosition.value === 'left') {
+                    buttonContent = `<i class="${iconClass}"></i> ${controls.text.value}`;
+                } else if (controls.iconPosition.value === 'right') {
+                    buttonContent = `${controls.text.value} <i class="${iconClass}"></i>`;
+                } else if (controls.iconPosition.value === 'top') {
+                    buttonContent = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        <i class="${iconClass}"></i>
+                        ${controls.text.value}
+                     </div>`;
+                } else {
+                    buttonContent = `<div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                        ${controls.text.value}
+                        <i class="${iconClass}"></i>
+                     </div>`;
+                }
+            }
+            
+            let backgroundValue = '';
+            if (controls.bgType.value === 'solid') {
+                backgroundValue = controls.bgColor.value;
+            } else if (controls.bgType.value === 'gradient') {
+                backgroundValue = `${controls.gradientType.value}-gradient(${controls.gradientDirection.value}, ${controls.gradientColor1.value}, ${controls.gradientColor2.value})`;
+            } else if (controls.bgType.value === 'image') {
+                backgroundValue = `url(${controls.bgImage.value})`;
+            }
+            
+            generatedCode.textContent = `<${buttonTag}${hrefAttr}${typeAttr}${idAttr}${classAttr}${ariaAttr}${tabindexAttr}>
+  ${buttonContent}
+</${buttonTag}>
+
+<style>
+${idAttr ? `#${controls.buttonId.value}` : classAttr ? `.${controls.buttonClass.value.split(' ')[0]}` : 'button'} {
+  font-family: ${controls.fontFamily.value};
+  font-size: ${controls.fontSize.value}px;
+  font-weight: ${controls.fontWeight.value};
+  color: ${controls.textColor.value};
+  text-align: ${controls.textAlign.value};
+  ${controls.textShadow.value ? `text-shadow: ${controls.textShadow.value};` : ''}
+  
+  width: ${controls.width.value};
+  height: ${controls.height.value};
+  padding: ${controls.padding.value};
+  border-radius: ${controls.borderRadius.value};
+  
+  background: ${backgroundValue};
+  ${controls.bgType.value === 'image' ? `
+  background-size: ${controls.bgSize.value};
+  background-position: ${controls.bgPosition.value};` : ''}
+  
+  border: ${controls.borderWidth.value} ${controls.borderStyle.value} ${controls.borderColor.value};
+  outline: ${controls.outlineWidth.value} ${controls.outlineStyle.value} ${controls.outlineColor.value};
+  outline-offset: ${controls.outlineOffset.value};
+  
+  ${controls.boxShadow.value ? `box-shadow: ${controls.boxShadow.value};` : ''}
+  ${controls.transition.value ? `transition: ${controls.transition.value};` : ''}
+  
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+${idAttr ? `#${controls.buttonId.value}` : classAttr ? `.${controls.buttonClass.value.split(' ')[0]}` : 'button'}:hover {
+  background: #3367d6;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  transform: translateY(-1px);
+}
+
+${idAttr ? `#${controls.buttonId.value}` : classAttr ? `.${controls.buttonClass.value.split(' ')[0]}` : 'button'}:active {
+  background: #2a56b6;
+  transform: translateY(1px);
+}
+
+${idAttr ? `#${controls.buttonId.value}` : classAttr ? `.${controls.buttonClass.value.split(' ')[0]}` : 'button'}:focus {
+  outline: 2px solid #4285f4;
+  outline-offset: 2px;
+}
+
+${idAttr ? `#${controls.buttonId.value}` : classAttr ? `.${controls.buttonClass.value.split(' ')[0]}` : 'button'}:disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+${controls.customCss.value}
+</style>
+
+<script>
+document.querySelector('${idAttr ? `#${controls.buttonId.value}` : classAttr ? `.${controls.buttonClass.value.split(' ')[0]}` : 'button'}').addEventListener('click', function() {
+  // Your click handling code here
+  console.log('Button clicked!');
+  ${controls.hideAfterClick.checked ? `
+  // Hide button after click
+  this.style.display = 'none';` : ''}
+});
+<\/script>`;
+        }
+        
+        // Copy code to clipboard
+        copyButton.addEventListener('click', () => {
+            const textArea = document.createElement('textarea');
+            textArea.value = generatedCode.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // Show confirmation
+            const originalText = copyButton.innerHTML;
+            copyButton.innerHTML = '<span class="material-icons">check</span> Copied!';
+            setTimeout(() => {
+                copyButton.innerHTML = originalText;
+            }, 2000);
+        });
+        
+        // Save preset
+        savePresetBtn.addEventListener('click', () => {
+            if (!controls.presetName.value) {
+                alert('Please enter a name for your preset');
+                return;
+            }
+            
+            // In a real implementation, this would save to localStorage or a database
+            alert(`Preset "${controls.presetName.value}" saved!`);
+        });
+        
+        // Load preset
+        loadPresetBtn.addEventListener('click', () => {
+            // In a real implementation, this would load from saved presets
+            alert('Preset loading dialog would appear here');
+        });
+        
+        // Add event listeners to all controls
+        Object.values(controls).forEach(control => {
+            if (control && control.addEventListener) {
+                control.addEventListener('input', updateButton);
+            }
+        });
+        
+        // Add event listeners to color inputs to update color values
+        document.querySelectorAll('input[type="color"]').forEach(colorInput => {
+            colorInput.addEventListener('input', () => {
+                const valueElement = document.getElementById(`${colorInput.id}-value`);
+                if (valueElement) {
+                    valueElement.textContent = colorInput.value;
+                }
+            });
+        });
+        
+        // Toggle link URL control based on button type
+        controls.buttonType.addEventListener('change', () => {
+            document.getElementById('link-url-control').style.display = 
+                controls.buttonType.value === 'link' ? 'block' : 'none';
+            updateCode();
+        });
+        
+        // Initialize
+        document.getElementById('link-url-control').style.display = 'none';
+    </script>
+<!-- button-patch.html -->
+<script>
+(function() {
+    document.addEventListener("DOMContentLoaded", () => {
+        // Make sure buttonStates exists
+        if (!window.buttonStates) {
+            window.buttonStates = { normal:{}, hover:{}, active:{}, focus:{}, disabled:{} };
+        }
+
+        // Override loadStateControls to actually save values into buttonStates
+        window.loadStateControls = function(state) {
+            const container = document.getElementById("state-controls");
+            container.innerHTML = `
+                <div class="control-row">
+                    <div class="control-item">
+                        <label for="${state}-bg-color">Background Color</label>
+                        <input type="color" id="${state}-bg-color" value="${buttonStates[state].background || '#4285f4'}">
+                    </div>
+                    <div class="control-item">
+                        <label for="${state}-text-color">Text Color</label>
+                        <input type="color" id="${state}-text-color" value="${buttonStates[state].color || '#ffffff'}">
+                    </div>
+                </div>
+                <div class="control-row">
+                    <div class="control-item">
+                        <label for="${state}-box-shadow">Box Shadow</label>
+                        <input type="text" id="${state}-box-shadow" value="${buttonStates[state].boxShadow || ''}" placeholder="e.g., 2px 2px 10px rgba(0,0,0,0.3)">
+                    </div>
+                </div>
+            `;
+
+            // Hook inputs
+            document.getElementById(`${state}-bg-color`).addEventListener("input", e => {
+                buttonStates[state].background = e.target.value;
+                updateButton();
+            });
+            document.getElementById(`${state}-text-color`).addEventListener("input", e => {
+                buttonStates[state].color = e.target.value;
+                updateButton();
+            });
+            document.getElementById(`${state}-box-shadow`).addEventListener("input", e => {
+                buttonStates[state].boxShadow = e.target.value;
+                updateButton();
+            });
+        };
+
+        // 🔹 Patch the live preview
+        window.updateButtonPreview = function() {
+            const btn = document.getElementById("button-preview");
+            // Reset
+            btn.style.background = '';
+            btn.style.color = '';
+            btn.style.boxShadow = '';
+            btn.style.transform = '';
+            btn.style.outline = '';
+            btn.style.opacity = '';
+            btn.style.pointerEvents = '';
+
+            const state = buttonStates[window.currentPreviewState];
+
+            if (state.background) btn.style.background = state.background;
+            if (state.color) btn.style.color = state.color;
+            if (state.boxShadow) btn.style.boxShadow = state.boxShadow;
+            if (state.transform) btn.style.transform = state.transform;
+            if (state.outline) btn.style.outline = state.outline;
+            if (state.outlineOffset) btn.style.outlineOffset = state.outlineOffset;
+
+            if (window.currentPreviewState === "disabled") {
+                btn.style.opacity = "0.6";
+                btn.style.pointerEvents = "none";
+            }
+        };
+
+        // 🔹 Patch updateCode so it uses buttonStates
+        const oldUpdateCode = window.updateCode;
+        window.updateCode = function() {
+            oldUpdateCode(); // run original
+
+            const generated = document.getElementById("generated-code");
+            let code = generated.textContent;
+
+            // Replace state blocks
+            function replaceBlock(pseudo, values) {
+                let css = `${pseudo} {\n`;
+                if (values.background) css += `  background: ${values.background};\n`;
+                if (values.color) css += `  color: ${values.color};\n`;
+                if (values.boxShadow) css += `  box-shadow: ${values.boxShadow};\n`;
+                if (values.transform) css += `  transform: ${values.transform};\n`;
+                if (values.outline) css += `  outline: ${values.outline};\n`;
+                if (values.outlineOffset) css += `  outline-offset: ${values.outlineOffset};\n`;
+                if (pseudo === ":disabled") {
+                    css += `  opacity: 0.6;\n  pointer-events: none;\n`;
+                }
+                css += "}";
+                const regex = new RegExp(`${pseudo}\\s*{[^}]*}`, "m");
+                return code.replace(regex, css);
+            }
+
+            code = replaceBlock(":hover", buttonStates.hover);
+            code = replaceBlock(":active", buttonStates.active);
+            code = replaceBlock(":focus", buttonStates.focus);
+            code = replaceBlock(":disabled", buttonStates.disabled);
+
+            generated.textContent = code;
+        };
+    });
+})();
+</script>
+
+</body>
+</html>

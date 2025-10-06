@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Description Finder</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f8f9fa;
+            color: #202124;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #dadce0;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo h1 {
+            font-weight: 500;
+            font-size: 28px;
+            color: #1a73e8;
+        }
+        
+        .logo-icon {
+            color: #1a73e8;
+            font-size: 32px;
+        }
+        
+        .search-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        .search-box {
+            flex: 1;
+            padding: 16px 20px;
+            font-size: 18px;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            outline: none;
+            transition: all 0.3s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        
+        .search-box:focus {
+            border-color: #1a73e8;
+            box-shadow: 0 1px 6px rgba(66,133,244,0.3);
+        }
+        
+        .search-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 30px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .search-btn:hover {
+            background: #1765cc;
+            box-shadow: 0 1px 3px rgba(66,133,244,0.3);
+        }
+        
+        .search-btn:active {
+            background: #1557b3;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(66,133,244,0.2);
+            border-top-color: #1a73e8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .result-container {
+            display: none;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .word-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #dadce0;
+        }
+        
+        .word-title {
+            font-size: 36px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #202124;
+        }
+        
+        .phonetic {
+            font-size: 18px;
+            color: #5f6368;
+            margin-bottom: 10px;
+        }
+        
+        .audio-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .audio-btn {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .audio-btn:hover {
+            background: #1765cc;
+        }
+        
+        .part-of-speech {
+            display: inline-block;
+            background: #e8f0fe;
+            color: #1a73e8;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+        
+        .meaning-container {
+            margin-bottom: 20px;
+        }
+        
+        .definition {
+            padding: 10px 20px;
+            font-size: 18px;
+            line-height: 1.6;
+            color: #202124;
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .definition:before {
+            content: "•";
+            position: absolute;
+            left: 15px;
+            color: #5f6368;
+        }
+        
+        .example {
+            padding: 5px 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #5f6368;
+            font-style: italic;
+            position: relative;
+            padding-left: 30px;
+        }
+        
+        .example:before {
+            content: "“";
+            position: absolute;
+            left: 15px;
+            color: #5f6368;
+        }
+        
+        .synonyms-antonyms {
+            display: flex;
+            gap: 20px;
+            padding: 10px 20px;
+            flex-wrap: wrap;
+        }
+        
+        .synonyms, .antonyms {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .synonyms h4, .antonyms h4 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #202124;
+        }
+        
+        .synonym, .antonym {
+            display: inline-block;
+            background: #f1f3f4;
+            color: #202124;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .section-title {
+            font-size: 22px;
+            font-weight: 500;
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dadce0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .images-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 20px;
+        }
+        
+        .image-card {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            height: 200px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .image-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        
+        .image-card img:hover {
+            transform: scale(1.05);
+        }
+        
+        .more-btn {
+            background: transparent;
+            border: none;
+            color: #1a73e8;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: color 0.2s;
+        }
+        
+        .more-btn:hover {
+            color: #1557b3;
+        }
+        
+        .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #5f6368;
+            padding: 50px 20px;
+            text-align: center;
+        }
+        
+        .placeholder-icon {
+            font-size: 64px;
+            color: #dadce0;
+            margin-bottom: 20px;
+        }
+        
+        .placeholder p {
+            font-size: 18px;
+            max-width: 600px;
+        }
+        
+        .error-message {
+            display: none;
+            background: #fce8e6;
+            color: #d93025;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-size: 16px;
+        }
+        
+        .image-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px;
+            font-size: 12px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .image-card:hover .image-overlay {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .images-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .logo h1 {
+                font-size: 24px;
+            }
+            
+            .word-title {
+                font-size: 28px;
+            }
+            
+            .synonyms-antonyms {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .search-container {
+                flex-direction: column;
+            }
+            
+            .search-btn {
+                padding: 12px;
+                justify-content: center;
+            }
+            
+            .images-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <span class="material-icons logo-icon">description</span>
+            <h1>Word Description Finder</h1>
+        </div>
+    </header>
+    
+    <div class="search-container">
+        <input type="text" class="search-box" id="word-input" placeholder="Enter a word (e.g., nature, book, ocean)">
+        <button class="search-btn" id="search-btn">
+            <span class="material-icons">search</span>
+            Search
+        </button>
+    </div>
+    
+    <div class="error-message" id="error-message"></div>
+    
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Searching for word information...</p>
+    </div>
+    
+    <div class="result-container" id="result-container">
+        <div class="word-header">
+            <h2 class="word-title" id="word-title">Dictionary</h2>
+            <div class="phonetic" id="phonetic">/ˈdɪkʃ(ə)n(ə)ri/</div>
+            <div class="audio-container">
+                <button class="audio-btn" id="audio-btn">
+                    <span class="material-icons">volume_up</span>
+                </button>
+                <span>Pronunciation</span>
+            </div>
+        </div>
+        
+        <div id="meanings-container">
+            <!-- Meanings will be inserted here -->
+        </div>
+        
+        <div id="synonyms-antonyms-container">
+            <!-- Synonyms and antonyms will be inserted here -->
+        </div>
+        
+        <div class="section-title">
+            <span>Images from Unsplash</span>
+            <button class="more-btn" id="more-unsplash">
+                More <span class="material-icons">chevron_right</span>
+            </button>
+        </div>
+        <div class="images-container" id="unsplash-images">
+            <!-- Unsplash images will be inserted here -->
+        </div>
+        
+        <div class="section-title">
+            <span>AI Generated Images</span>
+            <button class="more-btn" id="more-ai">
+                More <span class="material-icons">chevron_right</span>
+            </button>
+        </div>
+        <div class="images-container" id="ai-images">
+            <!-- AI images will be inserted here -->
+        </div>
+    </div>
+    
+    <div class="placeholder" id="placeholder">
+        <span class="material-icons placeholder-icon">menu_book</span>
+        <p>Enter a word in the search box to discover its meaning, pronunciation, and visual representations.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchBtn = document.getElementById('search-btn');
+            const wordInput = document.getElementById('word-input');
+            const loading = document.getElementById('loading');
+            const resultContainer = document.getElementById('result-container');
+            const placeholder = document.getElementById('placeholder');
+            const errorMessage = document.getElementById('error-message');
+            const moreUnsplashBtn = document.getElementById('more-unsplash');
+            const moreAiBtn = document.getElementById('more-ai');
+            const meaningsContainer = document.getElementById('meanings-container');
+            const synonymsAntonymsContainer = document.getElementById('synonyms-antonyms-container');
+            const unsplashImagesContainer = document.getElementById('unsplash-images');
+            const aiImagesContainer = document.getElementById('ai-images');
+            
+            const wordTitle = document.getElementById('word-title');
+            const phonetic = document.getElementById('phonetic');
+            const audioBtn = document.getElementById('audio-btn');
+            
+            // Unsplash API key
+            const UNSPLASH_API_KEY = 'zE9SiiMyCl5TxAqvpUIphoUSd72HIHrQFBmwUAm4hAg';
+            let currentWord = 'dictionary';
+            
+            // Search button click event
+            searchBtn.addEventListener('click', function() {
+                const word = wordInput.value.trim().toLowerCase();
+                if (!word) {
+                    showError('Please enter a word to search');
+                    return;
+                }
+                
+                currentWord = word;
+                searchWord(word);
+            });
+            
+            // Handle Enter key in input
+            wordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchBtn.click();
+                }
+            });
+            
+            // More buttons
+            moreUnsplashBtn.addEventListener('click', function() {
+                loadUnsplashImages(currentWord, true);
+            });
+            
+            moreAiBtn.addEventListener('click', function() {
+                loadAiImages(currentWord, true);
+            });
+            
+            // Search for a word
+            function searchWord(word) {
+                // Show loading animation
+                loading.style.display = 'block';
+                resultContainer.style.display = 'none';
+                placeholder.style.display = 'none';
+                errorMessage.style.display = 'none';
+                
+                // Clear previous results
+                meaningsContainer.innerHTML = '';
+                synonymsAntonymsContainer.innerHTML = '';
+                unsplashImagesContainer.innerHTML = '';
+                aiImagesContainer.innerHTML = '';
+                
+                // Start loading images immediately
+                loadUnsplashImages(word);
+                loadAiImages(word);
+                
+                // Fetch word data from dictionary API
+                fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Word not found in dictionary');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Hide loading
+                        loading.style.display = 'none';
+                        
+                        // Display word information
+                        displayWordInfo(data[0]);
+                        
+                        // Fetch synonyms and antonyms
+                        fetchSynonymsAndAntonyms(word);
+                        
+                        resultContainer.style.display = 'block';
+                    })
+                    .catch(error => {
+                        loading.style.display = 'none';
+                        showError(error.message);
+                        placeholder.style.display = 'flex';
+                    });
+            }
+            
+            // Display word information
+            function displayWordInfo(data) {
+                wordTitle.textContent = data.word;
+                
+                // Find the first phonetic with text
+                let phoneticText = '';
+                if (data.phonetics && data.phonetics.length > 0) {
+                    for (const ph of data.phonetics) {
+                        if (ph.text) {
+                            phoneticText = ph.text;
+                            break;
+                        }
+                    }
+                }
+                phonetic.textContent = phoneticText || 'Phonetic not available';
+                
+                // Find the first audio URL
+                let audioUrl = '';
+                if (data.phonetics && data.phonetics.length > 0) {
+                    for (const ph of data.phonetics) {
+                        if (ph.audio) {
+                            audioUrl = ph.audio;
+                            break;
+                        }
+                    }
+                }
+                
+                // Set up audio
+                if (audioUrl) {
+                    const audio = new Audio(audioUrl);
+                    audioBtn.onclick = function() {
+                        audio.play();
+                    };
+                    audioBtn.disabled = false;
+                    audioBtn.style.opacity = 1;
+                } else {
+                    audioBtn.disabled = true;
+                    audioBtn.style.opacity = 0.5;
+                }
+                
+                // Display all meanings
+                if (data.meanings && data.meanings.length > 0) {
+                    data.meanings.forEach(meaning => {
+                        const meaningDiv = document.createElement('div');
+                        meaningDiv.className = 'meaning-container';
+                        
+                        const posSpan = document.createElement('span');
+                        posSpan.className = 'part-of-speech';
+                        posSpan.textContent = meaning.partOfSpeech;
+                        meaningDiv.appendChild(posSpan);
+                        
+                        if (meaning.definitions && meaning.definitions.length > 0) {
+                            meaning.definitions.slice(0, 3).forEach(def => {
+                                const defP = document.createElement('p');
+                                defP.className = 'definition';
+                                defP.textContent = def.definition;
+                                meaningDiv.appendChild(defP);
+                                
+                                if (def.example) {
+                                    const exampleP = document.createElement('p');
+                                    exampleP.className = 'example';
+                                    exampleP.textContent = def.example;
+                                    meaningDiv.appendChild(exampleP);
+                                }
+                            });
+                        }
+                        
+                        meaningsContainer.appendChild(meaningDiv);
+                    });
+                }
+            }
+            
+            // Fetch synonyms and antonyms
+            function fetchSynonymsAndAntonyms(word) {
+                fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data[0] && data[0].meanings) {
+                            let allSynonyms = [];
+                            let allAntonyms = [];
+                            
+                            data[0].meanings.forEach(meaning => {
+                                if (meaning.synonyms && meaning.synonyms.length > 0) {
+                                    allSynonyms = [...new Set([...allSynonyms, ...meaning.synonyms])];
+                                }
+                                if (meaning.antonyms && meaning.antonyms.length > 0) {
+                                    allAntonyms = [...new Set([...allAntonyms, ...meaning.antonyms])];
+                                }
+                            });
+                            
+                            if (allSynonyms.length > 0 || allAntonyms.length > 0) {
+                                const container = document.createElement('div');
+                                container.className = 'synonyms-antonyms';
+                                
+                                if (allSynonyms.length > 0) {
+                                    const synDiv = document.createElement('div');
+                                    synDiv.className = 'synonyms';
+                                    synDiv.innerHTML = '<h4>Synonyms</h4>';
+                                    
+                                    allSynonyms.slice(0, 10).forEach(syn => {
+                                        const span = document.createElement('span');
+                                        span.className = 'synonym';
+                                        span.textContent = syn;
+                                        synDiv.appendChild(span);
+                                    });
+                                    
+                                    container.appendChild(synDiv);
+                                }
+                                
+                                if (allAntonyms.length > 0) {
+                                    const antDiv = document.createElement('div');
+                                    antDiv.className = 'antonyms';
+                                    antDiv.innerHTML = '<h4>Antonyms</h4>';
+                                    
+                                    allAntonyms.slice(0, 10).forEach(ant => {
+                                        const span = document.createElement('span');
+                                        span.className = 'antonym';
+                                        span.textContent = ant;
+                                        antDiv.appendChild(span);
+                                    });
+                                    
+                                    container.appendChild(antDiv);
+                                }
+                                
+                                synonymsAntonymsContainer.appendChild(container);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching synonyms/antonyms:', error);
+                    });
+            }
+            
+            // Load Unsplash images
+            function loadUnsplashImages(word, isMore = false) {
+                // Show loading indicator on images
+                if (!isMore) {
+                    unsplashImagesContainer.innerHTML = '';
+                    for (let i = 0; i < 4; i++) {
+                        const imageCard = document.createElement('div');
+                        imageCard.className = 'image-card';
+                        imageCard.innerHTML = `
+                            <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;">
+                                <span class="material-icons" style="font-size:40px;color:#dadce0;">image</span>
+                            </div>
+                        `;
+                        unsplashImagesContainer.appendChild(imageCard);
+                    }
+                }
+                
+                // Fetch images from Unsplash API
+                fetch(`https://api.unsplash.com/search/photos?page=1&per_page=4&query=${word}&client_id=${UNSPLASH_API_KEY}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (isMore) {
+                            // Clear existing images for "More" click
+                            unsplashImagesContainer.innerHTML = '';
+                        }
+                        
+                        if (data.results && data.results.length > 0) {
+                            data.results.forEach(photo => {
+                                const imageCard = document.createElement('div');
+                                imageCard.className = 'image-card';
+                                imageCard.innerHTML = `
+                                    <img src="${photo.urls.regular}" alt="${word}" loading="lazy">
+                                    <div class="image-overlay">Photo by ${photo.user.name} on Unsplash</div>
+                                `;
+                                unsplashImagesContainer.appendChild(imageCard);
+                            });
+                        } else {
+                            unsplashImagesContainer.innerHTML = `
+                                <div class="placeholder" style="grid-column: 1 / span 4; padding: 20px; text-align: center;">
+                                    <span class="material-icons" style="font-size:40px;color:#dadce0;margin-bottom:10px;">error_outline</span>
+                                    <p>No images found for "${word}"</p>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading Unsplash images:', error);
+                        unsplashImagesContainer.innerHTML = `
+                            <div class="placeholder" style="grid-column: 1 / span 4; padding: 20px; text-align: center;">
+                                <span class="material-icons" style="font-size:40px;color:#dadce0;margin-bottom:10px;">error_outline</span>
+                                <p>Error loading images</p>
+                            </div>
+                        `;
+                    });
+            }
+            
+            // Load AI images
+            function loadAiImages(word, isMore = false) {
+                // Clear existing images
+                if (isMore) {
+                    aiImagesContainer.innerHTML = '';
+                } else {
+                    // Show loading indicator
+                    aiImagesContainer.innerHTML = '';
+                    for (let i = 0; i < 4; i++) {
+                        const imageCard = document.createElement('div');
+                        imageCard.className = 'image-card';
+                        imageCard.innerHTML = `
+                            <div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;">
+                                <span class="material-icons" style="font-size:40px;color:#dadce0;">hourglass_top</span>
+                            </div>
+                        `;
+                        aiImagesContainer.appendChild(imageCard);
+                    }
+                }
+                
+                // Generate new AI images
+                const prompts = [
+                    `A beautiful ${word}`,
+                    `Digital art of ${word}`,
+                    `Modern interpretation of ${word}`,
+                    `Abstract representation of ${word}`
+                ];
+                
+                // Create image cards
+                prompts.forEach((prompt, index) => {
+                    const imageCard = document.createElement('div');
+                    imageCard.className = 'image-card';
+                    
+                    // Create image element
+                    const img = document.createElement('img');
+                    img.alt = prompt;
+                    
+                    // Create a unique URL for each image
+                    const timestamp = new Date().getTime();
+                    img.src = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?seed=${timestamp + index}`;
+                    
+                    // Add loading indicator
+                    img.onload = function() {
+                        if (aiImagesContainer.children[index]) {
+                            aiImagesContainer.children[index].innerHTML = '';
+                            aiImagesContainer.children[index].appendChild(img);
+                            const overlay = document.createElement('div');
+                            overlay.className = 'image-overlay';
+                            overlay.textContent = 'AI Generated Image';
+                            aiImagesContainer.children[index].appendChild(overlay);
+                        }
+                    };
+                    
+                    // Handle error
+                    img.onerror = function() {
+                        if (aiImagesContainer.children[index]) {
+                            aiImagesContainer.children[index].innerHTML = `
+                                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;color:#5f6368;">
+                                    <span class="material-icons" style="font-size:40px;margin-bottom:10px;">broken_image</span>
+                                    <span>Image failed to load</span>
+                                </div>
+                            `;
+                        }
+                    };
+                    
+                    // If this is a "More" click, append new cards
+                    if (isMore) {
+                        aiImagesContainer.appendChild(imageCard);
+                        imageCard.appendChild(img);
+                        const overlay = document.createElement('div');
+                        overlay.className = 'image-overlay';
+                        overlay.textContent = 'AI Generated Image';
+                        imageCard.appendChild(overlay);
+                    }
+                });
+            }
+            
+            // Show error message
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+            }
+            
+            // Initialize with sample word
+            wordInput.value = '';
+        });
+    </script>
+</body>
+</html>

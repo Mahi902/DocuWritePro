@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Signer</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --primary-light: #e8f0fe;
+            --background: #f8f9fa;
+            --surface: #ffffff;
+            --on-surface: #202124;
+            --on-surface-secondary: #5f6368;
+            --border: #dadce0;
+            --error: #d93025;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Roboto', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--on-surface);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--surface);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 2px 6px 2px rgba(60,64,67,0.15);
+            padding: 24px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h1 .material-icons {
+            color: var(--primary-color);
+        }
+
+        .upload-section {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary-color);
+            background-color: var(--primary-light);
+        }
+
+        .upload-section input {
+            display: none;
+        }
+
+        .upload-section .material-icons {
+            font-size: 48px;
+            color: var(--on-surface-secondary);
+            margin-bottom: 10px;
+        }
+
+        .upload-section p {
+            color: var(--on-surface-secondary);
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #3367d6;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--primary-light);
+        }
+
+        .btn .material-icons {
+            font-size: 18px;
+        }
+
+        .page-selector {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .page-thumbnails {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .page-thumbnail {
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .page-thumbnail img {
+            width: 100px;
+            height: auto;
+            display: block;
+        }
+
+        .page-thumbnail.selected {
+            border-color: var(--primary-color);
+        }
+
+        .page-thumbnail .page-number {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0,0,0,0.7);
+            color: white;
+            text-align: center;
+            padding: 2px 0;
+            font-size: 12px;
+        }
+
+        .sign-options {
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--on-surface-secondary);
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .sign-upload {
+            text-align: center;
+            padding: 20px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .sign-upload input {
+            display: none;
+        }
+
+        .sign-canvas-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #signCanvas {
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background-color: white;
+            cursor: crosshair;
+        }
+
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .color-option.selected {
+            border-color: var(--on-surface);
+        }
+
+        .editor-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .editor-wrapper {
+            display: flex;
+            gap: 20px;
+        }
+
+        .document-canvas-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #documentCanvas {
+            max-width: 100%;
+            max-height: 80vh;
+            border: 1px solid var(--border);
+            display: block;
+            margin: 0 auto;
+        }
+
+        .sign-properties {
+            width: 250px;
+            border-left: 1px solid var(--border);
+            padding-left: 20px;
+        }
+
+        .property-group {
+            margin-bottom: 20px;
+        }
+
+        .property-group h3 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            color: var(--on-surface);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .error-message {
+            color: var(--error);
+            margin-top: 10px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading .material-icons {
+            font-size: 48px;
+            color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="material-icons">edit_document</span> Document Signer</h1>
+        
+        <div class="upload-section" id="uploadSection">
+            <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg">
+            <div class="material-icons">cloud_upload</div>
+            <p>Upload a PDF or image file to sign</p>
+            <p>Supported formats: PDF, PNG, JPG</p>
+            <button class="btn" id="uploadBtn">
+                <span class="material-icons">upload</span>
+                Upload Document
+            </button>
+        </div>
+
+        <div class="loading" id="loadingIndicator">
+            <span class="material-icons">autorenew</span>
+            <p>Processing document...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="page-selector" id="pageSelector">
+            <h2>Select Page to Sign</h2>
+            <div class="page-thumbnails" id="pageThumbnails"></div>
+            <div class="action-buttons">
+                <button class="btn" id="confirmPageBtn">Continue</button>
+            </div>
+        </div>
+
+        <div class="sign-options" id="signOptions">
+            <h2>Add Your Signature</h2>
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="upload">Upload Signature</button>
+                <button class="tab-btn" data-tab="draw">Draw Signature</button>
+            </div>
+            <div class="tab-content active" id="uploadTab">
+                <div class="sign-upload" id="signUpload">
+                    <input type="file" id="signImageInput" accept=".png,.jpg,.jpeg">
+                    <div class="material-icons">image</div>
+                    <p>Click to upload your signature image</p>
+                    <p>Supported formats: PNG, JPG</p>
+                </div>
+            </div>
+            <div class="tab-content" id="drawTab">
+                <div class="sign-canvas-container">
+                    <canvas id="signCanvas" width="400" height="200"></canvas>
+                    <div class="color-picker">
+                        <div class="color-option selected" style="background-color: #000000;" data-color="#000000"></div>
+                        <div class="color-option" style="background-color: #4285f4;" data-color="#4285f4"></div>
+                        <div class="color-option" style="background-color: #ea4335;" data-color="#ea4335"></div>
+                        <div class="color-option" style="background-color: #34a853;" data-color="#34a853"></div>
+                        <div class="color-option" style="background-color: #fbbc05;" data-color="#fbbc05"></div>
+                    </div>
+                    <button class="btn-outline" id="clearSignBtn">
+                        <span class="material-icons">clear</span>
+                        Clear
+                    </button>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn" id="saveSignBtn">Save Signature</button>
+            </div>
+        </div>
+
+        <div class="editor-container" id="editorContainer">
+            <h2>Place Your Signature</h2>
+            <p>Click on the document where you want to place your signature</p>
+            <div class="editor-wrapper">
+                <div class="document-canvas-container">
+                    <canvas id="documentCanvas"></canvas>
+                </div>
+                <div class="sign-properties">
+                    <div class="property-group">
+                        <h3>Signature Properties</h3>
+                        <div class="slider-container">
+                            <label>Size:</label>
+                            <input type="range" id="signSize" min="20" max="200" value="100">
+                        </div>
+                        <div class="color-picker">
+                            <div class="color-option selected" style="background-color: #000000;" data-color="#000000"></div>
+                            <div class="color-option" style="background-color: #4285f4;" data-color="#4285f4"></div>
+                            <div class="color-option" style="background-color: #ea4335;" data-color="#ea4335"></div>
+                            <div class="color-option" style="background-color: #34a853;" data-color="#34a853"></div>
+                            <div class="color-option" style="background-color: #fbbc05;" data-color="#fbbc05"></div>
+                        </div>
+                    </div>
+                    <div class="property-group">
+                        <button class="btn-outline" id="placeAgainBtn">
+                            <span class="material-icons">edit_location</span>
+                            Place Signature Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="btn-outline" id="cancelBtn">
+                    <span class="material-icons">cancel</span>
+                    Cancel
+                </button>
+                <button class="btn" id="downloadBtn">
+                    <span class="material-icons">download</span>
+                    Download Signed Document
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+        // DOM elements
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const errorMessage = document.getElementById('errorMessage');
+        const pageSelector = document.getElementById('pageSelector');
+        const pageThumbnails = document.getElementById('pageThumbnails');
+        const confirmPageBtn = document.getElementById('confirmPageBtn');
+        const signOptions = document.getElementById('signOptions');
+        const signUpload = document.getElementById('signUpload');
+        const signImageInput = document.getElementById('signImageInput');
+        const signCanvas = document.getElementById('signCanvas');
+        const clearSignBtn = document.getElementById('clearSignBtn');
+        const saveSignBtn = document.getElementById('saveSignBtn');
+        const editorContainer = document.getElementById('editorContainer');
+        const documentCanvas = document.getElementById('documentCanvas');
+        const signSize = document.getElementById('signSize');
+        const placeAgainBtn = document.getElementById('placeAgainBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const colorOptions = document.querySelectorAll('.color-option');
+
+        // Application state
+        let state = {
+            documentFile: null,
+            documentType: null,
+            pdfDoc: null,
+            pages: [],
+            selectedPageIndex: 0,
+            signatureImage: null,
+            signatureColor: '#000000',
+            isDrawing: false,
+            lastX: 0,
+            lastY: 0,
+            currentSignX: 0,
+            currentSignY: 0,
+            currentSignSize: 100,
+            currentSignColor: '#000000',
+            isPlacingSign: false,
+            ctx: null,
+            docCtx: null,
+            signCtx: null,
+            originalDocImage: null
+        };
+
+        // Initialize canvases
+        function initCanvases() {
+            state.signCtx = signCanvas.getContext('2d');
+            state.docCtx = documentCanvas.getContext('2d');
+            
+            // Set up drawing on signature canvas
+            signCanvas.addEventListener('mousedown', startDrawing);
+            signCanvas.addEventListener('mousemove', draw);
+            signCanvas.addEventListener('mouseup', stopDrawing);
+            signCanvas.addEventListener('mouseout', stopDrawing);
+            
+            // Set up touch events for mobile
+            signCanvas.addEventListener('touchstart', handleTouchStart);
+            signCanvas.addEventListener('touchmove', handleTouchMove);
+            signCanvas.addEventListener('touchend', handleTouchEnd);
+            
+            // Set up document canvas for placing signature
+            documentCanvas.addEventListener('click', placeSignature);
+        }
+
+        // Tab switching
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabId = button.getAttribute('data-tab');
+                
+                // Update active tab button
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                // Update active tab content
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(`${tabId}Tab`).classList.add('active');
+            });
+        });
+
+        // Color picker
+        colorOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const color = option.getAttribute('data-color');
+                state.signatureColor = color;
+                
+                // Update selected state
+                colorOptions.forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                // Update drawing color if in draw mode
+                if (state.signCtx) {
+                    state.signCtx.strokeStyle = color;
+                }
+            });
+        });
+
+        // Upload button click
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        uploadSection.addEventListener('click', () => fileInput.click());
+
+        // File input change
+        fileInput.addEventListener('change', handleFileUpload);
+
+        // Sign upload click
+        signUpload.addEventListener('click', () => signImageInput.click());
+
+        // Sign image input change
+        signImageInput.addEventListener('change', handleSignUpload);
+
+        // Clear signature button
+        clearSignBtn.addEventListener('click', clearSignatureCanvas);
+
+        // Save signature button
+        saveSignBtn.addEventListener('click', saveSignature);
+
+        // Confirm page button
+        confirmPageBtn.addEventListener('click', () => {
+            pageSelector.style.display = 'none';
+            signOptions.style.display = 'block';
+        });
+
+        // Place again button
+        placeAgainBtn.addEventListener('click', () => {
+            state.isPlacingSign = true;
+            renderDocumentCanvas();
+        });
+
+        // Size slider change
+        signSize.addEventListener('input', () => {
+            state.currentSignSize = parseInt(signSize.value);
+            if (state.signatureImage) {
+                renderDocumentCanvas();
+                if (!state.isPlacingSign) {
+                    renderSignatureOnDocument();
+                }
+            }
+        });
+
+        // Color picker in properties
+        document.querySelectorAll('.sign-properties .color-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const color = option.getAttribute('data-color');
+state.currentSignColor = color;
+// Update selected state
+                document.querySelectorAll('.sign-properties .color-option').forEach(opt => opt.classList.remove('selected'));
+                option.classList.add('selected');
+                
+                if (state.signatureImage) {
+                    renderDocumentCanvas();
+                    if (!state.isPlacingSign) {
+                        renderSignatureOnDocument();
+                    }
+                }
+            });
+        });
+
+        // Download button
+        downloadBtn.addEventListener('click', downloadSignedDocument);
+
+        // Cancel button
+        cancelBtn.addEventListener('click', resetApplication);
+
+        // Initialize the app
+        initCanvases();
+
+        // Handle file upload
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            state.documentFile = file;
+            state.documentType = file.type === 'application/pdf' ? 'pdf' : 'image';
+            
+            showLoading(true);
+            errorMessage.style.display = 'none';
+
+            if (state.documentType === 'pdf') {
+                loadPDF(file);
+            } else {
+                loadImage(file);
+            }
+        }
+
+        // Load PDF document
+        function loadPDF(file) {
+            const fileReader = new FileReader();
+            
+            fileReader.onload = function() {
+                const typedArray = new Uint8Array(this.result);
+                
+                pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
+                    state.pdfDoc = pdf;
+                    state.pages = [];
+                    
+                    // Generate thumbnails for all pages
+                    const thumbnailsPromises = [];
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        thumbnailsPromises.push(generatePageThumbnail(pdf, i));
+                    }
+                    
+                    Promise.all(thumbnailsPromises).then(() => {
+                        showLoading(false);
+                        uploadSection.style.display = 'none';
+                        pageSelector.style.display = 'block';
+                    });
+                }).catch(function(error) {
+                    showError("Failed to load PDF: " + error.message);
+                    showLoading(false);
+                });
+            };
+            
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        // Generate thumbnail for a PDF page
+        function generatePageThumbnail(pdf, pageNumber) {
+            return pdf.getPage(pageNumber).then(function(page) {
+                const viewport = page.getViewport({ scale: 0.2 });
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                
+                return page.render({
+                    canvasContext: ctx,
+                    viewport: viewport
+                }).promise.then(function() {
+                    state.pages.push({
+                        number: pageNumber,
+                        thumbnail: canvas.toDataURL('image/png')
+                    });
+                    
+                    // Update thumbnails display
+                    renderPageThumbnails();
+                });
+            });
+        }
+
+        // Render page thumbnails
+        function renderPageThumbnails() {
+            pageThumbnails.innerHTML = '';
+            
+            state.pages.forEach((page, index) => {
+                const thumbnailDiv = document.createElement('div');
+                thumbnailDiv.className = 'page-thumbnail' + (index === state.selectedPageIndex ? ' selected' : '');
+                thumbnailDiv.innerHTML = `
+                    <img src="${page.thumbnail}" alt="Page ${page.number}">
+                    <div class="page-number">Page ${page.number}</div>
+                `;
+                
+                thumbnailDiv.addEventListener('click', () => {
+                    document.querySelectorAll('.page-thumbnail').forEach(el => el.classList.remove('selected'));
+                    thumbnailDiv.classList.add('selected');
+                    state.selectedPageIndex = index;
+                });
+                
+                pageThumbnails.appendChild(thumbnailDiv);
+            });
+        }
+
+        // Load image document
+        function loadImage(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    state.pages = [{
+                        number: 1,
+                        image: img,
+                        thumbnail: e.target.result
+                    }];
+                    
+                    showLoading(false);
+                    uploadSection.style.display = 'none';
+                    
+                    // For single image, skip page selection
+                    state.selectedPageIndex = 0;
+                    signOptions.style.display = 'block';
+                };
+                img.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // Handle signature upload
+        function handleSignUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // Clear the draw canvas
+                    clearSignatureCanvas();
+                    
+                    // Set the uploaded image as signature
+                    state.signatureImage = img;
+                    saveSignature();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Signature drawing functions
+        function startDrawing(e) {
+            state.isDrawing = true;
+            const pos = getMousePos(signCanvas, e);
+            [state.lastX, state.lastY] = [pos.x, pos.y];
+        }
+
+        function draw(e) {
+            if (!state.isDrawing) return;
+            
+            const pos = getMousePos(signCanvas, e);
+            state.signCtx.beginPath();
+            state.signCtx.moveTo(state.lastX, state.lastY);
+            state.signCtx.lineTo(pos.x, pos.y);
+            state.signCtx.strokeStyle = state.signatureColor;
+            state.signCtx.lineWidth = 2;
+            state.signCtx.lineCap = 'round';
+            state.signCtx.stroke();
+            [state.lastX, state.lastY] = [pos.x, pos.y];
+        }
+
+        function stopDrawing() {
+            state.isDrawing = false;
+        }
+
+        // Touch event handlers for mobile
+        function handleTouchStart(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            signCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            signCanvas.dispatchEvent(mouseEvent);
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            const mouseEvent = new MouseEvent('mouseup', {});
+            signCanvas.dispatchEvent(mouseEvent);
+        }
+
+        // Get mouse position relative to canvas
+        function getMousePos(canvas, evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (evt.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
+                y: (evt.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+            };
+        }
+
+        // Clear signature canvas
+        function clearSignatureCanvas() {
+            state.signCtx.clearRect(0, 0, signCanvas.width, signCanvas.height);
+        }
+
+        // Check if canvas is empty
+        function isCanvasEmpty(canvas) {
+            const ctx = canvas.getContext('2d');
+            const pixelBuffer = new Uint32Array(
+                ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+            );
+            return !pixelBuffer.some(color => color !== 0);
+        }
+
+        // Save signature (from canvas or uploaded image)
+        function saveSignature() {
+            // Check if we have an uploaded signature
+            if (state.signatureImage) {
+                proceedToDocumentEditor();
+                return;
+            }
+            
+            // Check if something was drawn on canvas
+            if (!isCanvasEmpty(signCanvas)) {
+                const dataUrl = signCanvas.toDataURL('image/png');
+                const img = new Image();
+                img.onload = function() {
+                    state.signatureImage = img;
+                    proceedToDocumentEditor();
+                };
+                img.src = dataUrl;
+                return;
+            }
+            
+            // If we get here, no signature exists
+            signCanvas.style.border = "2px solid var(--error)";
+            setTimeout(() => signCanvas.style.border = "1px solid var(--border)", 1000);
+            showError("Please create or upload a signature first.");
+        }
+
+        // Proceed to document editor
+        function proceedToDocumentEditor() {
+            signOptions.style.display = 'none';
+            editorContainer.style.display = 'block';
+            
+            // Load the selected page/image
+            loadDocumentForEditing();
+        }
+
+        // Load document for editing
+        function loadDocumentForEditing() {
+            const selectedPage = state.pages[state.selectedPageIndex];
+            
+            if (state.documentType === 'pdf') {
+                // For PDF, render the selected page
+                state.pdfDoc.getPage(selectedPage.number).then(function(page) {
+                    const viewport = page.getViewport({ scale: 1.5 });
+                    documentCanvas.height = viewport.height;
+                    documentCanvas.width = viewport.width;
+                    
+                    page.render({
+                        canvasContext: state.docCtx,
+                        viewport: viewport
+                    }).promise.then(function() {
+                        // Save the original document image
+                        state.originalDocImage = new Image();
+                        state.originalDocImage.src = documentCanvas.toDataURL('image/png');
+                        
+                        // Ready to place signature
+                        state.isPlacingSign = true;
+                    });
+                });
+            } else {
+                // For image, render it directly
+                const img = selectedPage.image;
+                const scale = Math.min(800 / img.width, 600 / img.height);
+                documentCanvas.width = img.width * scale;
+                documentCanvas.height = img.height * scale;
+                
+                state.docCtx.drawImage(img, 0, 0, img.width, img.height, 0, 0, documentCanvas.width, documentCanvas.height);
+                
+                // Save the original document image
+                state.originalDocImage = new Image();
+                state.originalDocImage.src = documentCanvas.toDataURL('image/png');
+                
+                // Ready to place signature
+                state.isPlacingSign = true;
+            }
+        }
+
+        // Render document canvas (with or without signature)
+        function renderDocumentCanvas() {
+            // Draw the original document
+            state.docCtx.drawImage(state.originalDocImage, 0, 0, documentCanvas.width, documentCanvas.height);
+            
+            // If we're not in placing mode and have a signature, render it
+            if (!state.isPlacingSign && state.signatureImage) {
+                renderSignatureOnDocument();
+            }
+        }
+
+        // Place signature on document
+        function placeSignature(e) {
+            if (!state.isPlacingSign || !state.signatureImage) return;
+            
+            const rect = documentCanvas.getBoundingClientRect();
+            state.currentSignX = (e.clientX - rect.left) / rect.width * documentCanvas.width;
+            state.currentSignY = (e.clientY - rect.top) / rect.height * documentCanvas.height;
+            
+            state.isPlacingSign = false;
+            renderDocumentCanvas();
+        }
+
+        // Render signature on document
+        function renderSignatureOnDocument() {
+            if (!state.signatureImage) return;
+            
+            const size = state.currentSignSize;
+            const x = state.currentSignX - size / 2;
+            const y = state.currentSignY - size / 2;
+            
+            // Create a temporary canvas to apply color to the signature
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = state.signatureImage.width;
+            tempCanvas.height = state.signatureImage.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Fill with the selected color
+            tempCtx.fillStyle = state.currentSignColor;
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // Use source-in to apply the color to the signature
+            tempCtx.globalCompositeOperation = 'source-in';
+            tempCtx.drawImage(state.signatureImage, 0, 0);
+            
+            // Draw the colored signature onto the document
+            state.docCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, x, y, size, size * (tempCanvas.height / tempCanvas.width));
+        }
+
+        // Download signed document
+        function downloadSignedDocument() {
+            let dataUrl, fileName;
+            
+            if (state.documentType === 'pdf') {
+                // For PDF, we just download the signed page as an image
+                dataUrl = documentCanvas.toDataURL('image/png');
+                fileName = 'signed_page.png';
+            } else {
+                // For image, download the signed image
+                dataUrl = documentCanvas.toDataURL('image/png');
+                fileName = 'signed_image.png';
+            }
+            
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = dataUrl;
+            link.click();
+        }
+
+        // Reset application
+        function resetApplication() {
+            // Reset UI
+            uploadSection.style.display = 'block';
+            pageSelector.style.display = 'none';
+            signOptions.style.display = 'none';
+            editorContainer.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            // Reset state
+            state = {
+                documentFile: null,
+                documentType: null,
+                pdfDoc: null,
+                pages: [],
+                selectedPageIndex: 0,
+                signatureImage: null,
+                signatureColor: '#000000',
+                isDrawing: false,
+                lastX: 0,
+                lastY: 0,
+                currentSignX: 0,
+                currentSignY: 0,
+                currentSignSize: 100,
+                currentSignColor: '#000000',
+                isPlacingSign: false,
+                originalDocImage: null
+            };
+            
+            // Clear canvases
+            if (state.signCtx) clearSignatureCanvas();
+            if (state.docCtx) state.docCtx.clearRect(0, 0, documentCanvas.width, documentCanvas.height);
+            
+            // Reset inputs
+            fileInput.value = '';
+            signImageInput.value = '';
+            signSize.value = 100;
+        }
+
+        // Show loading indicator
+        function showLoading(show) {
+            loadingIndicator.style.display = show ? 'block' : 'none';
+        }
+
+        // Show error message
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+                
+                
+                
+                

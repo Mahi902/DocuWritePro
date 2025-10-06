@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>HTML Splitter — Configurable Chunks</title>
+  <style>
+    :root{--bg:#f7f8fb;--card:#fff;--muted:#6b7280;--accent:#0ea5a4}
+    *{box-sizing:border-box}
+    body{font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:var(--bg);color:#0f172a}
+    .wrap{max-width:980px;margin:28px auto;padding:20px}
+    h1{font-size:18px;margin:0}
+    .card{background:var(--card);border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.06);padding:16px}
+
+    .controls{display:flex;gap:12px;flex-wrap:wrap}
+    input[type=file], input[type=number]{display:block}
+    textarea#paste{width:100%;min-height:90px;border:1px dashed #e6eef0;border-radius:8px;padding:12px;font-family:monospace}
+    .meta{display:flex;gap:12px;align-items:center;margin-top:8px;color:var(--muted);font-size:13px}
+    .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:default}
+
+    .chunks{margin-top:18px;display:grid;gap:10px}
+    .chunk{background:#fbfdff;border-radius:10px;padding:12px;border:1px solid rgba(2,6,23,0.04);overflow:hidden;transition:max-height .25s ease,opacity .25s}
+    .chunk.collapsed{max-height:44px;opacity:.7}
+    .chunk .header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .chunk h3{margin:0;font-size:14px}
+    pre, textarea.chunk-editable{white-space:pre-wrap;word-break:break-word;background:#0b1220;color:#e6eef0;padding:12px;border-radius:8px;overflow:auto;font-size:13px;width:100%;}
+    .small{font-size:12px;color:var(--muted)}
+
+    .actions{display:flex;gap:8px}
+    .copy-btn{background:#0f172a;color:white;border:0;padding:6px 10px;border-radius:8px;cursor:pointer}
+    .copy-btn.copied{background:linear-gradient(90deg,#10b981,#06b6d4)}
+
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+
+    .notice{background:#e0f2fe;border-left:4px solid #0ea5a4;padding:12px;margin-bottom:12px;border-radius:8px;cursor:pointer}
+    .notice-content{display:none;margin-top:8px;color:#0f172a}
+    .notice.open .notice-content{display:block}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="notice" id="notice">
+      <strong>What is this tool?</strong> — Click to expand/collapse.
+      <div class="notice-content">
+        This tool splits large HTML files into smaller chunks for easier copying, editing, or sharing. You can change chunk sizes, edit individual chunks, and copy them. Useful when handling very large files that exceed clipboard or editor limits.
+      </div>
+    </div>
+
+    <h1>HTML Splitter — Configurable Chunks</h1>
+
+    <div class="card">
+      <div class="controls">
+        <div>
+          <label class="small">Choose .html file</label><br>
+          <input id="file" type="file" accept=".html,text/html">
+        </div>
+        <div style="flex:1">
+          <label class="small">Or paste HTML here</label>
+          <textarea id="paste" placeholder="Paste your .html code here (optional)..."></textarea>
+        </div>
+        <div>
+          <label class="small">Chunk size</label>
+          <input id="chunkSize" type="number" value="20000" min="1000" step="1000">
+        </div>
+        <div style="display:flex;flex-direction:column;justify-content:flex-start">
+          <button id="process" class="btn">Process</button>
+          <button id="clear" class="btn" style="margin-top:8px;background:#ef4444">Clear</button>
+        </div>
+      </div>
+
+      <div class="meta">
+        <div id="stats">No file loaded</div>
+      </div>
+
+      <div id="chunks" class="chunks"></div>
+
+      <footer>
+        Tip: after a chunk is copied it will collapse. You can also toggle edit mode for manual copy.
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const notice = document.getElementById('notice');
+    notice.addEventListener('click', ()=>{
+      notice.classList.toggle('open');
+    });
+
+    const fileInput = document.getElementById('file');
+    const paste = document.getElementById('paste');
+    const processBtn = document.getElementById('process');
+    const clearBtn = document.getElementById('clear');
+    const stats = document.getElementById('stats');
+    const chunksContainer = document.getElementById('chunks');
+    const chunkSizeInput = document.getElementById('chunkSize');
+
+    fileInput.addEventListener('change', async (e)=>{
+      const f = e.target.files && e.target.files[0];
+      if(!f) return;
+      const text = await f.text();
+      paste.value = text;
+      processText(text);
+    });
+
+    processBtn.addEventListener('click', ()=>{
+      const txt = paste.value || '';
+      if(!txt.trim()){alert('Please choose a file or paste HTML.');return}
+      processText(txt);
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      paste.value = '';
+      chunksContainer.innerHTML = '';
+      stats.textContent = 'Cleared';
+      fileInput.value = '';
+    });
+
+    function processText(text){
+      chunksContainer.innerHTML = '';
+      const size = parseInt(chunkSizeInput.value) || 20000;
+      const total = text.length;
+      const count = Math.ceil(total/size) || 0;
+      stats.textContent = `Loaded ${total.toLocaleString()} characters — ${count} chunk(s)`;
+
+      for(let i=0;i<count;i++){
+        const start = i*size;
+        const chunkText = text.slice(start, start+size);
+        const end = start + chunkText.length - 1;
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'chunk';
+
+        const header = document.createElement('div');
+        header.className = 'header';
+
+        const title = document.createElement('h3');
+        title.textContent = `Part ${i+1} — chars ${start.toLocaleString()} to ${end.toLocaleString()}`;
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const editToggle = document.createElement('button');
+        editToggle.type = 'button';
+        editToggle.className = 'copy-btn';
+        editToggle.textContent = 'Edit';
+
+        const pre = document.createElement('pre');
+        pre.innerText = chunkText;
+        pre.contentEditable = 'false';
+
+        editToggle.addEventListener('click', ()=>{
+          const editable = pre.contentEditable === 'true';
+          pre.contentEditable = editable ? 'false' : 'true';
+          pre.style.background = editable ? '#0b1220' : '#1f2937';
+          editToggle.textContent = editable ? 'Edit' : 'Done';
+        });
+
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copy-btn';
+        copyBtn.textContent = 'Copy';
+        copyBtn.addEventListener('click', async ()=>{
+          if(pre.contentEditable === 'true'){ alert('Chunk is in edit mode, copy manually.'); return; }
+          try{
+            await navigator.clipboard.writeText(chunkText);
+            copyBtn.textContent = 'Copied ✓';
+            copyBtn.classList.add('copied');
+            copyBtn.disabled = true;
+            wrapper.classList.add('collapsed');
+          }catch(err){
+            alert('Copy failed, copy manually.');
+          }
+        });
+
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'copy-btn';
+        toggleBtn.style.background = '#374151';
+        toggleBtn.textContent = 'Toggle';
+        toggleBtn.addEventListener('click', ()=>{
+          wrapper.classList.toggle('collapsed');
+        });
+
+        actions.appendChild(toggleBtn);
+        actions.appendChild(editToggle);
+        actions.appendChild(copyBtn);
+
+        header.appendChild(title);
+        header.appendChild(actions);
+
+        wrapper.appendChild(header);
+        wrapper.appendChild(pre);
+        chunksContainer.appendChild(wrapper);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Extractor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --hover-color: #3367d6;
+            --background-color: #f8f9fa;
+            --card-color: #ffffff;
+            --text-color: #202124;
+            --secondary-text: #5f6368;
+            --border-color: #dadce0;
+        }
+
+        body {
+            font-family: 'Roboto', 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--text-color);
+            font-weight: 400;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--secondary-text);
+            font-size: 14px;
+        }
+
+        .drop-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            background-color: var(--card-color);
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+            cursor: pointer;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--primary-color);
+        }
+
+        .drop-zone.active {
+            border-color: var(--primary-color);
+            background-color: rgba(66, 133, 244, 0.05);
+        }
+
+        .drop-zone-icon {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .drop-zone-text {
+            font-size: 16px;
+            color: var(--secondary-text);
+            margin-bottom: 10px;
+        }
+
+        .drop-zone-hint {
+            font-size: 13px;
+            color: var(--secondary-text);
+        }
+
+        .file-list {
+            display: none;
+            background-color: var(--card-color);
+            border-radius: 8px;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .file-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .file-list-title {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .select-all {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        .select-all input {
+            margin-right: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-checkbox {
+            margin-right: 15px;
+        }
+
+        .file-icon {
+            margin-right: 15px;
+            color: var(--secondary-text);
+            font-size: 20px;
+        }
+
+        .file-info {
+            flex-grow: 1;
+        }
+
+        .file-name {
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .file-size {
+            font-size: 12px;
+            color: var(--secondary-text);
+        }
+
+        .file-download {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .file-download:hover {
+            background-color: rgba(66, 133, 244, 0.1);
+        }
+
+        .actions {
+            display: none;
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--hover-color);
+        }
+
+        .btn:disabled {
+            background-color: #f1f1f1;
+            color: #b8b8b8;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary-color);
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-preview {
+            max-width: 100px;
+            max-height: 100px;
+            margin-right: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+
+        /* PDF page preview styling */
+        .pdf-page {
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .pdf-page canvas {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>File Extractor</h1>
+            <p class="subtitle">Extract pages from PDFs or files from ZIP archives</p>
+        </header>
+
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📁</div>
+            <div class="drop-zone-text">Drag & drop a PDF or ZIP file here</div>
+            <div class="drop-zone-hint">or click to browse files</div>
+            <input type="file" id="fileInput" accept=".pdf,.zip" style="display: none;">
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Processing file...</div>
+        </div>
+
+        <div class="file-list" id="fileList">
+            <div class="file-list-header">
+                <div class="file-list-title">Extracted Files</div>
+                <div class="select-all">
+                    <input type="checkbox" id="selectAll">
+                    <label for="selectAll">Select all</label>
+                </div>
+            </div>
+            <div id="fileItems"></div>
+        </div>
+
+        <div class="actions" id="actions">
+            <button class="btn" id="downloadSelected" disabled>Download Selected</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.12.313/pdf.worker.min.js';
+
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileItems = document.getElementById('fileItems');
+        const loading = document.getElementById('loading');
+        const actions = document.getElementById('actions');
+        const selectAll = document.getElementById('selectAll');
+        const downloadSelected = document.getElementById('downloadSelected');
+
+        let extractedFiles = [];
+        let selectedFiles = new Set();
+
+        // Event listeners for drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight() {
+            dropZone.classList.add('active');
+        }
+
+        function unhighlight() {
+            dropZone.classList.remove('active');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', handleFiles);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                handleFiles({ target: { files } });
+            }
+        }
+
+        function handleFiles(e) {
+            const files = e.target.files;
+            if (files.length === 0) return;
+
+            const file = files[0];
+            if (!file.type.match(/pdf|zip/) && !file.name.match(/\.(pdf|zip)$/i)) {
+                alert('Please upload a PDF or ZIP file');
+                return;
+            }
+
+            processFile(file);
+        }
+
+        async function processFile(file) {
+            loading.style.display = 'block';
+            fileList.style.display = 'none';
+            actions.style.display = 'none';
+            fileItems.innerHTML = '';
+            extractedFiles = [];
+            selectedFiles.clear();
+            selectAll.checked = false;
+            downloadSelected.disabled = true;
+
+            try {
+                if (file.type === 'application/pdf' || file.name.match(/\.pdf$/i)) {
+                    await extractPdf(file);
+                } else if (file.type === 'application/zip' || file.name.match(/\.zip$/i)) {
+                    await extractZip(file);
+                } else {
+                    throw new Error('Unsupported file type');
+                }
+
+                fileList.style.display = 'block';
+                actions.style.display = 'block';
+            } catch (error) {
+                console.error('Error processing file:', error);
+                alert('Error processing file: ' + error.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        async function extractPdf(file) {
+            const fileReader = new FileReader();
+            
+            return new Promise((resolve, reject) => {
+                fileReader.onload = async function() {
+                    try {
+                        const typedArray = new Uint8Array(this.result);
+                        const pdf = await pdfjsLib.getDocument(typedArray).promise;
+                        
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const scale = 2.5; // or 3 for super high-res
+const viewport = page.getViewport({ scale });
+
+                            
+                            // Create canvas for thumbnail
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+                            
+                            await page.render({
+                                canvasContext: context,
+                                viewport: viewport
+                            }).promise;
+                            
+                            // Convert canvas to image data URL for preview
+                            const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.95);
+                            
+                            // Create a new canvas for the downloadable version
+                            const downloadCanvas = document.createElement('canvas');
+                            const downloadContext = downloadCanvas.getContext('2d');
+                            downloadCanvas.height = viewport.height;
+                            downloadCanvas.width = viewport.width;
+                            
+                            await page.render({
+                                canvasContext: downloadContext,
+                                viewport: viewport
+                            }).promise;
+                            
+                            // Create a blob for downloading
+                            downloadCanvas.toBlob(blob => {
+                                const fileName = `page_${i}.jpg`;
+                                extractedFiles.push({
+                                    name: fileName,
+                                    blob: blob,
+                                    preview: thumbnailUrl,
+                                    type: 'image/jpeg'
+                                });
+                                
+                                addFileItem(fileName, thumbnailUrl, blob.size, i-1);
+                                
+                                if (i === pdf.numPages) {
+                                    resolve();
+                                }
+                            }, 'image/jpeg', 0.95);
+                        }
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                fileReader.onerror = reject;
+                fileReader.readAsArrayBuffer(file);
+            });
+        }
+
+        async function extractZip(file) {
+            const zip = new JSZip();
+            
+            try {
+                const zipData = await zip.loadAsync(file);
+                
+                let index = 0;
+                for (const [relativePath, zipEntry] of Object.entries(zipData.files)) {
+                    if (zipEntry.dir) continue; // Skip directories
+                    
+                    const fileName = relativePath.split('/').pop();
+                    const blob = await zipEntry.async('blob');
+                    
+                    extractedFiles.push({
+                        name: fileName,
+                        blob: blob,
+                        type: blob.type
+                    });
+                    
+                    addFileItem(fileName, null, blob.size, index);
+                    index++;
+                }
+            } catch (error) {
+                throw error;
+            }
+        }
+
+        function addFileItem(name, previewUrl, size, index) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            
+            const fileCheckbox = document.createElement('input');
+            fileCheckbox.type = 'checkbox';
+            fileCheckbox.className = 'file-checkbox';
+            fileCheckbox.dataset.index = index;
+            fileCheckbox.addEventListener('change', toggleFileSelection);
+            
+            const fileIcon = document.createElement('div');
+            fileIcon.className = 'file-icon';
+            
+            // Determine icon based on file type
+            if (previewUrl) {
+                fileIcon.innerHTML = '🖼️';
+            } else if (name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                fileIcon.innerHTML = '🖼️';
+            } else if (name.match(/\.(pdf)$/i)) {
+                fileIcon.innerHTML = '📄';
+            } else if (name.match(/\.(zip|rar|7z|tar|gz)$/i)) {
+                fileIcon.innerHTML = '🗄️';
+            } else if (name.match(/\.(doc|docx)$/i)) {
+                fileIcon.innerHTML = '📝';
+            } else if (name.match(/\.(xls|xlsx)$/i)) {
+                fileIcon.innerHTML = '📊';
+            } else if (name.match(/\.(ppt|pptx)$/i)) {
+                fileIcon.innerHTML = '📑';
+            } else if (name.match(/\.(txt|rtf|md)$/i)) {
+                fileIcon.innerHTML = '📄';
+            } else {
+                fileIcon.innerHTML = '📁';
+            }
+            
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'file-info';
+            
+            const fileName = document.createElement('div');
+            fileName.className = 'file-name';
+            fileName.textContent = name;
+            
+            const fileSize = document.createElement('div');
+            fileSize.className = 'file-size';
+            fileSize.textContent = formatFileSize(size);
+            
+            fileInfo.appendChild(fileName);
+            fileInfo.appendChild(fileSize);
+            
+            const fileDownload = document.createElement('a');
+            fileDownload.className = 'file-download';
+            fileDownload.href = '#';
+            fileDownload.textContent = 'Download';
+            fileDownload.addEventListener('click', (e) => {
+                e.preventDefault();
+                downloadSingleFile(index);
+            });
+            
+            fileItem.appendChild(fileCheckbox);
+            fileItem.appendChild(fileIcon);
+            
+            if (previewUrl) {
+                const previewImg = document.createElement('img');
+                previewImg.src = previewUrl;
+                previewImg.className = 'file-preview';
+                previewImg.style.display = 'block';
+                fileItem.appendChild(previewImg);
+            }
+            
+            fileItem.appendChild(fileInfo);
+            fileItem.appendChild(fileDownload);
+            
+            fileItems.appendChild(fileItem);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function toggleFileSelection(e) {
+            const index = parseInt(e.target.dataset.index);
+            if (e.target.checked) {
+                selectedFiles.add(index);
+            } else {
+                selectedFiles.delete(index);
+            }
+            
+            // Update select all checkbox
+            selectAll.checked = selectedFiles.size === extractedFiles.length;
+            
+            // Enable/disable download button
+            downloadSelected.disabled = selectedFiles.size === 0;
+        }
+
+        selectAll.addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.file-checkbox');
+            checkboxes.forEach((checkbox, index) => {
+                checkbox.checked = this.checked;
+                if (this.checked) {
+                    selectedFiles.add(index);
+                } else {
+                    selectedFiles.delete(index);
+                }
+            });
+            
+            downloadSelected.disabled = !this.checked;
+        });
+
+        function downloadSingleFile(index) {
+            const file = extractedFiles[index];
+            saveAs(file.blob, file.name);
+        }
+
+        downloadSelected.addEventListener('click', async function() {
+            if (selectedFiles.size === 0) return;
+            
+            loading.style.display = 'block';
+            
+            try {
+                if (selectedFiles.size === 1) {
+                    // Download single file directly
+                    const index = Array.from(selectedFiles)[0];
+                    downloadSingleFile(index);
+                } else {
+                    // Create a new zip for multiple files
+                    const zip = new JSZip();
+                    
+                    for (const index of selectedFiles) {
+                        const file = extractedFiles[index];
+                        zip.file(file.name, file.blob);
+                    }
+                    
+                    const zipBlob = await zip.generateAsync({ type: 'blob' });
+                    saveAs(zipBlob, 'selected_files.zip');
+                }
+            } catch (error) {
+                console.error('Error creating zip:', error);
+                alert('Error creating zip file');
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
+                    

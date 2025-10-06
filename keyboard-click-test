@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Light Blue Keyboard Tester</title>
+    <!-- Google Fonts and Icons for a clean, modern look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Tone.js for sound generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        /* General Styling */
+        :root {
+            --background-color: #f8f9fa;
+            --key-color: #ffffff;
+            --key-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            --key-hover-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --key-border-color: #e0e0e0;
+            --text-color: #3c4043;
+            --header-color: #5f6368;
+            --container-bg: #ffffff;
+            --google-blue: #4285F4;
+            --outline-blue: #ADD8E6;
+            --outline-glow-blue: #cce7f2;
+            --arrow-replacement-color: #ff7043;
+            --arrow-replacement-glow: rgba(255, 112, 67, 0.5);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        /* Main container for the app */
+        .app-container {
+            position: relative; /* Needed for positioning the sound toggle */
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--container-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-sizing: border-box;
+        }
+
+        /* Sound toggle button */
+        #sound-toggle {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            background: none;
+            border: 1px solid var(--key-border-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: var(--header-color);
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        #sound-toggle:hover {
+            background-color: #f1f3f4;
+        }
+        
+        #sound-toggle.active {
+            background-color: var(--outline-blue);
+            color: white;
+            border-color: transparent;
+        }
+
+        /* Header section displaying the pressed key */
+        .status-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background-color: var(--background-color);
+            border-radius: 12px;
+        }
+
+        .status-header h3 {
+            margin: 0;
+            font-weight: 500;
+            font-size: 1.1rem;
+            color: var(--header-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #pressed-key-display {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--text-color);
+            background-color: var(--key-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--key-border-color);
+            min-width: 100px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        /* Keyboard layout using CSS Grid */
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(32, 1fr);
+            grid-auto-rows: 55px;
+            gap: 8px;
+            padding: 16px;
+            border-radius: 12px;
+        }
+
+        /* Individual key styling */
+        .key {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: var(--key-color);
+            border: 1px solid var(--key-border-color);
+            border-radius: 8px;
+            padding: 5px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-sizing: border-box;
+            box-shadow: var(--key-shadow);
+            transition: all 0.15s ease-out;
+            user-select: none;
+            grid-column: span 2;
+        }
+
+        .key:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--key-hover-shadow);
+        }
+
+        /* Special key sizes */
+        .span-3 { grid-column: span 3; }
+        .span-4 { grid-column: span 4; }
+        .span-5 { grid-column: span 5; }
+        .span-12 { grid-column: span 12; }
+
+        /* Light blue outline and background effect for pressed keys */
+        .pressed {
+            color: var(--google-blue);
+            border: 1px solid var(--outline-blue);
+            background-color: var(--outline-glow-blue);
+            transform: translateY(1px);
+            animation: outline-glow 1.5s infinite alternate;
+        }
+
+        @keyframes outline-glow {
+            from { box-shadow: 0 0 5px var(--outline-glow-blue); }
+            to { box-shadow: 0 0 12px var(--outline-glow-blue); }
+        }
+        
+        /* Special styling for when the up arrow key is showing a replacement */
+        .key.replacement {
+            color: var(--arrow-replacement-color);
+            border: 1px solid var(--arrow-replacement-color);
+            background-color: rgba(255, 112, 67, 0.1);
+            animation: arrow-replacement-glow 1s infinite alternate;
+        }
+
+        @keyframes arrow-replacement-glow {
+            from { box-shadow: 0 0 5px var(--arrow-replacement-glow); }
+            to { box-shadow: 0 0 15px var(--arrow-replacement-glow); }
+        }
+        
+        /* Specific grid placements */
+        #ArrowUp { grid-column: 29 / span 2; }
+        #ArrowLeft { grid-column: 27 / span 2; }
+        #ArrowDown { grid-column: 29 / span 2; }
+        #ArrowRight { grid-column: 31 / span 2; }
+
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            .keyboard { grid-template-columns: repeat(16, 1fr); gap: 6px; }
+            .key { grid-column: span 1; }
+            .span-3, .span-4 { grid-column: span 2; }
+            .span-5 { grid-column: span 3; }
+            .span-12 { grid-column: span 6; }
+            #ArrowUp, #ArrowLeft, #ArrowDown, #ArrowRight { grid-column: span 1; }
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .app-container { padding: 16px; }
+            .keyboard { gap: 4px; grid-auto-rows: 45px;}
+            .key { font-size: 0.7rem; border-radius: 6px; }
+            .status-header { flex-direction: column; gap: 8px; }
+            #sound-toggle { top: 16px; left: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Sound Toggle Button -->
+        <button id="sound-toggle" title="Sound Mode: Off">
+            <span class="material-icons" id="sound-icon">volume_off</span>
+        </button>
+
+        <!-- Header to show the currently pressed key -->
+        <div class="status-header">
+            <h3><span class="material-icons">keyboard</span>Pressed Key:</h3>
+            <div id="pressed-key-display">&nbsp;</div>
+        </div>
+
+        <!-- The virtual keyboard layout -->
+        <div class="keyboard" id="keyboard">
+            <!-- Row 1: Function Keys -->
+            <div class="key" id="Escape">Esc</div>
+            <div class="key" id="F1">F1</div>
+            <div class="key" id="F2">F2</div>
+            <div class="key" id="F3">F3</div>
+            <div class="key" id="F4">F4</div>
+            <div class="key" id="F5">F5</div>
+            <div class="key" id="F6">F6</div>
+            <div class="key" id="F7">F7</div>
+            <div class="key" id="F8">F8</div>
+            <div class="key" id="F9">F9</div>
+            <div class="key" id="F10">F10</div>
+            <div class="key" id="F11">F11</div>
+            <div class="key" id="F12">F12</div>
+            <div class="key" id="Home">Home</div>
+            <div class="key" id="End">End</div>
+            <div class="key" id="Delete">Del</div>
+
+            <!-- Row 2: Numbers and Symbols -->
+            <div class="key" id="Backquote">`</div>
+            <div class="key" id="Digit1">1</div>
+            <div class="key" id="Digit2">2</div>
+            <div class="key" id="Digit3">3</div>
+            <div class="key" id="Digit4">4</div>
+            <div class="key" id="Digit5">5</div>
+            <div class="key" id="Digit6">6</div>
+            <div class="key" id="Digit7">7</div>
+            <div class="key" id="Digit8">8</div>
+            <div class="key" id="Digit9">9</div>
+            <div class="key" id="Digit0">0</div>
+            <div class="key" id="Minus">-</div>
+            <div class="key" id="Equal">=</div>
+            <div class="key span-4" id="Backspace">Backspace</div>
+
+
+            <!-- Row 3: QWERTY Row -->
+            <div class="key span-3" id="Tab">Tab</div>
+            <div class="key" id="KeyQ">Q</div>
+            <div class="key" id="KeyW">W</div>
+            <div class="key" id="KeyE">E</div>
+            <div class="key" id="KeyR">R</div>
+            <div class="key" id="KeyT">T</div>
+            <div class="key" id="KeyY">Y</div>
+            <div class="key" id="KeyU">U</div>
+            <div class="key" id="KeyI">I</div>
+            <div class="key" id="KeyO">O</div>
+            <div class="key" id="KeyP">P</div>
+            <div class="key" id="BracketLeft">[</div>
+            <div class="key" id="BracketRight">]</div>
+            <div class="key span-3" id="Backslash">\</div>
+
+            <!-- Row 4: Home Row -->
+            <div class="key span-3" id="CapsLock">Caps Lock</div>
+            <div class="key" id="KeyA">A</div>
+            <div class="key" id="KeyS">S</div>
+            <div class="key" id="KeyD">D</div>
+            <div class="key" id="KeyF">F</div>
+            <div class="key" id="KeyG">G</div>
+            <div class="key" id="KeyH">H</div>
+            <div class="key" id="KeyJ">J</div>
+            <div class="key" id="KeyK">K</div>
+            <div class="key" id="KeyL">L</div>
+            <div class="key" id="Semicolon">;</div>
+            <div class="key" id="Quote">'</div>
+            <div class="key span-4" id="Enter">Enter</div>
+
+            <!-- Row 5: Bottom Letter Row -->
+            <div class="key span-4" id="ShiftLeft">Shift</div>
+            <div class="key" id="KeyZ">Z</div>
+            <div class="key" id="KeyX">X</div>
+            <div class="key" id="KeyC">C</div>
+            <div class="key" id="KeyV">V</div>
+            <div class="key" id="KeyB">B</div>
+            <div class="key" id="KeyN">N</div>
+            <div class="key" id="KeyM">M</div>
+            <div class="key" id="Comma">,</div>
+            <div class="key" id="Period">.</div>
+            <div class="key" id="Slash">/</div>
+            <div class="key span-5" id="ShiftRight">Shift</div>
+            
+
+            <!-- Row 6: Control Keys and Spacebar -->
+            <div class="key span-3" id="ControlLeft">Ctrl</div>
+            <div class="key" id="MetaLeft">Win</div>
+            <div class="key span-3" id="AltLeft">Alt</div>
+            <div class="key span-12" id="Space"></div>
+            <div class="key span-3" id="AltRight">Alt</div>
+            <div class="key" id="ContextMenu">Menu</div>
+            <div class="key span-3" id="ControlRight">Ctrl</div>
+
+            
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const pressedKeyDisplay = document.getElementById('pressed-key-display');
+        const soundToggle = document.getElementById('sound-toggle');
+        const soundIcon = document.getElementById('sound-icon');
+        const arrowUpKey = document.getElementById('ArrowUp');
+
+        // --- Sound Synthesis ---
+        // 0: Off, 1: Default, 2: Keyboard Click
+        let soundMode = 0; 
+
+        const soundModes = [
+            { icon: 'volume_off', title: 'Sound: Off', active: false },
+            { icon: 'music_note', title: 'Sound: Default', active: true },
+            { icon: 'keyboard_voice', title: 'Sound: Keyboard' , active: true }
+        ];
+
+        // Create a simple synth for the key press sound
+        const defaultSynth = new Tone.Synth({
+            oscillator: { type: 'sine' },
+            envelope: {
+                attack: 0.005,
+                decay: 0.1,
+                sustain: 0.3,
+                release: 0.2
+            }
+        }).toDestination();
+        
+        // Create a different synth for a "keyboard click" sound
+        const keyboardSynth = new Tone.MembraneSynth({
+            pitchDecay: 0.008,
+            octaves: 1,
+            envelope: {
+                attack: 0.001,
+                decay: 0.1,
+                sustain: 0,
+            }
+        }).toDestination();
+
+        /**
+         * Updates the sound toggle button's appearance based on the current sound mode.
+         */
+        function updateSoundButton() {
+            const currentMode = soundModes[soundMode];
+            soundIcon.textContent = currentMode.icon;
+            soundToggle.title = currentMode.title;
+            soundToggle.classList.toggle('active', currentMode.active);
+        }
+
+        /**
+         * Temporarily replaces the up arrow key with the specified arrow symbol
+         * @param {string} arrowSymbol - The arrow symbol to display (←, →, or ↓)
+         */
+        function replaceUpArrow(arrowSymbol) {
+            // Save the original content if we haven't already
+            if (!arrowUpKey.hasAttribute('data-original')) {
+                arrowUpKey.setAttribute('data-original', arrowUpKey.textContent);
+            }
+            
+            // Change the content and add special styling
+            arrowUpKey.textContent = arrowSymbol;
+            arrowUpKey.classList.add('replacement');
+            
+            // Set a timeout to revert after 1 second
+            setTimeout(() => {
+                arrowUpKey.textContent = arrowUpKey.getAttribute('data-original');
+                arrowUpKey.classList.remove('replacement');
+            }, 1000);
+        }
+
+        // --- Event Listeners ---
+
+        /**
+         * Toggles the sound mode when the button is clicked.
+         */
+        soundToggle.addEventListener('click', () => {
+            soundMode = (soundMode + 1) % soundModes.length;
+            updateSoundButton();
+
+            // Start Tone.js audio context on the first user interaction
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+            }
+        });
+
+        /**
+         * Handles the keydown event.
+         * Adds a 'pressed' class for visual feedback and plays a sound if enabled.
+         * @param {KeyboardEvent} event - The keyboard event object.
+         */
+        document.addEventListener('keydown', function(event) {
+            event.preventDefault();
+            const keyId = event.code;
+            const keyElement = document.getElementById(keyId);
+            
+            if (pressedKeyDisplay) {
+                // Display the pressed key code
+                pressedKeyDisplay.textContent = keyId;
+            }
+
+            // Handle arrow keys that should replace the up arrow
+            if (keyId === 'ArrowLeft') {
+                replaceUpArrow('←');
+            } else if (keyId === 'ArrowRight') {
+                replaceUpArrow('→');
+            } else if (keyId === 'ArrowDown') {
+                replaceUpArrow('↓');
+            }
+
+            if (keyElement && !keyElement.classList.contains('pressed')) {
+                // Add the visual 'pressed' class
+                keyElement.classList.add('pressed');
+                
+                // Play sound based on the current mode
+                if (soundMode === 1) { // Default sound
+                    defaultSynth.triggerAttackRelease('C5', '8n');
+                } else if (soundMode === 2) { // Keyboard click sound
+                    keyboardSynth.triggerAttackRelease('C4', '32n');
+                }
+            }
+        });
+
+        /**
+         * Handles the keyup event.
+         * Removes the 'pressed' class to reset the key's state.
+         * @param {KeyboardEvent} event - The keyboard event object.
+         */
+        document.addEventListener('keyup', function(event) {
+            event.preventDefault();
+            const keyId = event.code;
+            const keyElement = document.getElementById(keyId);
+
+            if (keyElement) {
+                keyElement.classList.remove('pressed');
+            }
+        });
+
+        // Initialize button state on page load
+        window.onload = updateSoundButton;
+    </script>
+</body>
+</html>
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Click Test</title>
+    <style>
+        body {
+            font-family: 'Roboto', Arial, sans-serif;
+            margin: 0;
+            background-color: #f8f9fa;
+            color: #202124;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            position: relative;
+            overflow: hidden; /* Prevents scrollbars during transition */
+        }
+
+        /* The full-screen overlay with text and blur */
+        .intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+            z-index: 1000;
+        }
+
+        .intro-container {
+            padding: 40px;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(60,64,67,.3), 0 1px 2px rgba(60,64,67,.15);
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2em;
+            font-weight: 400;
+            margin-bottom: 16px;
+        }
+
+        p {
+            font-size: 1.1em;
+            line-height: 1.6;
+            color: #5f6368;
+            margin-bottom: 8px;
+        }
+
+        .cta-text {
+            font-weight: 500;
+            color: #1a73e8;
+            margin-top: 20px;
+        }
+        
+        /* The banner that appears on top */
+        .status-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #ADD8E6;
+            color: #202124;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 0.9em;
+            font-weight: 500;
+            transform: translateY(-100%); /* Start off-screen */
+            transition: transform 0.5s ease-out;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 999;
+        }
+
+        /* Class to show the banner */
+        .status-banner.show {
+            transform: translateY(0);
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div class="intro-overlay" id="introOverlay">
+        <div class="intro-container">
+            <h1>Welcome to Keyboard Click Test</h1>
+            <p>Test your keyboard keys here.</p>
+            <p>You must have a keyboard connected and must use in desktop mode.</p>
+            <p class="cta-text">Click any key on your keyboard or touch the screen to start.</p>
+        </div>
+    </div>
+
+    <div class="status-banner" id="statusBanner">
+        Keyboard Test Active
+    </div>
+
+    <script>
+        const introOverlay = document.getElementById('introOverlay');
+        const statusBanner = document.getElementById('statusBanner');
+
+        function startTest() {
+            // Check if the test has already started to prevent multiple triggers
+            if (introOverlay.style.visibility === 'hidden') {
+                return;
+            }
+
+            introOverlay.style.opacity = '0';
+            setTimeout(() => {
+                introOverlay.style.visibility = 'hidden';
+                introOverlay.style.display = 'none';
+                statusBanner.classList.add('show'); // Add the 'show' class to display the banner
+            }, 500);
+        }
+
+        // Listen for both keyboard and touch events
+        document.addEventListener('keydown', startTest);
+        document.addEventListener('touchstart', startTest);
+    </script>
+
+</body>
+</html>

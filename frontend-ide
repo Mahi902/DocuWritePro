@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web IDE - Professional Code Editor</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/neat.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        :root {
+            --header-height: 50px;
+            --tabs-height: 40px;
+            --border-color: #d1d5db; /* gray-300 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background-color: #f9fafb; /* gray-50 */
+        }
+        .main-layout {
+            display: grid;
+            grid-template-rows: var(--header-height) var(--tabs-height) 1fr;
+            height: 100vh;
+        }
+        .editor-preview-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            height: 100%;
+            overflow: hidden;
+        }
+        .editor-preview-layout.split {
+            grid-template-columns: 1fr 1fr;
+        }
+        .preview-hidden .editor-preview-layout {
+            grid-template-columns: 1fr 0;
+        }
+        .preview-hidden #preview-container {
+            display: none;
+        }
+        #editor-container, #preview-container {
+            height: 100%;
+            overflow: auto;
+            border-top: 1px solid var(--border-color);
+        }
+        #preview-container {
+            border-left: 1px solid var(--border-color);
+        }
+        .CodeMirror {
+            height: 100% !important;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .tab {
+            transition: all 0.2s ease-in-out;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            background-color: white;
+            border-color: #4f46e5; /* indigo-600 */
+            color: #4f46e5;
+        }
+        .tab:not(.active):hover {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        .tab-close {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .tab:hover .tab-close {
+            opacity: 1;
+        }
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            border-radius: 0.375rem;
+        }
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+        .color-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div id="app" class="main-layout">
+        <header class="bg-white border-b border-gray-300 flex items-center px-4 justify-between">
+            <h1 class="text-lg font-semibold text-gray-700">Frontend IDE</h1>
+            <div class="flex items-center space-x-2">
+                <div class="dropdown relative">
+                    <button class="flex items-center space-x-2 bg-indigo-600 text-white px-3 py-1.5 rounded-md hover:bg-indigo-700 transition duration-200">
+                        <i data-lucide="plus" class="w-4 h-4"></i>
+                        <span class="text-sm font-medium">New File</span>
+                    </button>
+                    <div class="dropdown-content mt-1 right-0">
+                        <button onclick="app.addTab('html')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">HTML</a>
+                        <button onclick="app.addTab('css')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">CSS</a>
+                        <button onclick="app.addTab('javascript')" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">JavaScript</a>
+                    </div>
+                </div>
+
+                <button onclick="app.runCode()" class="flex items-center space-x-2 bg-green-500 text-white px-3 py-1.5 rounded-md hover:bg-green-600 transition duration-200">
+                    <i data-lucide="play" class="w-4 h-4"></i>
+                    <span class="text-sm font-medium">Run</span>
+                </button>
+                <button id="toggle-preview-btn" onclick="app.togglePreview()" class="p-2 rounded-md hover:bg-gray-200" title="Toggle Preview">
+                    <i data-lucide="panel-right-close" class="w-5 h-5"></i>
+                </button>
+                
+                 <div class="dropdown relative">
+                    <button class="p-2 rounded-md hover:bg-gray-200" title="Export Files">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </button>
+                    <div id="export-menu" class="dropdown-content mt-1 right-0 w-48">
+                        </div>
+                </div>
+                 
+                <div class="dropdown relative">
+                    <button class="p-2 rounded-md hover:bg-gray-200" title="Upload Files">
+                        <i data-lucide="upload" class="w-5 h-5"></i>
+                    </button>
+                    <div class="dropdown-content mt-1 right-0 w-48">
+                        <label class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                            Upload .zip File
+                            <input type="file" id="zip-upload" class="hidden" accept=".zip" onchange="app.handleZipUpload(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <button onclick="app.showClearConfirmation()" class="p-2 rounded-md hover:bg-gray-200" title="Clear Editor">
+                    <i data-lucide="trash-2" class="w-5 h-5 text-red-500"></i>
+                </button>
+            </div>
+        </header>
+
+        <div id="tab-bar" class="bg-gray-100 flex items-end border-b border-gray-300 overflow-x-auto">
+            </div>
+
+        <div class="editor-preview-layout split">
+            <div id="editor-container">
+                <textarea id="editor"></textarea>
+            </div>
+            <div id="preview-container">
+                <iframe id="preview" class="w-full h-full border-0"></iframe>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-container" class="hidden"></div>
+<script>
+        const app = {
+            editor: null,
+            tabs: [],
+            activeTabId: null,
+            htmlCounter: 1,
+            cssCounter: 1,
+            jsCounter: 1,
+
+            init() {
+                // Initialize CodeMirror editor
+                this.editor = CodeMirror.fromTextArea(document.getElementById('editor'), {
+                    lineNumbers: true,
+                    theme: 'neat',
+                    mode: 'htmlmixed',
+                    lineWrapping: true,
+                    autoCloseTags: true,
+                });
+
+                // Add initial file
+                this.addTab('html', 'index.html', `<!DOCTYPE html>\n<html>\n<head>\n  <title> My Title </title>\n</head>\n<body>\n\n  <h1> Example Text </h1>\n\n</body>\n</html>`);
+                
+                // Render icons
+                lucide.createIcons();
+
+                // Attach event listener for editor changes
+                this.editor.on('change', () => {
+                    if (this.activeTabId) {
+                        const tab = this.tabs.find(t => t.id === this.activeTabId);
+                        if (tab) {
+                            tab.content = this.editor.getValue();
+                        }
+                    }
+                });
+            },
+// TAB MANAGEMENT
+            addTab(type, name = null, content = '') {
+                const newTab = {
+                    id: Date.now(),
+                    type: type,
+                    name: name || this.generateNewTabName(type),
+                    content: content,
+                    color: null
+                };
+                this.tabs.push(newTab);
+                this.switchTab(newTab.id);
+            },
+
+            generateNewTabName(type) {
+                switch (type) {
+                    case 'html': return `index${this.htmlCounter++}.html`;
+                    case 'css': return `style${this.cssCounter++}.css`;
+                    case 'javascript': return `script${this.jsCounter++}.js`;
+                    default: return `file${this.tabs.length + 1}`;
+                }
+            },
+            
+            switchTab(id) {
+                if (this.activeTabId === id) return;
+                this.activeTabId = id;
+                const tab = this.tabs.find(t => t.id === id);
+                if (tab) {
+                    this.editor.setValue(tab.content);
+                    const mode = tab.type === 'html' ? 'htmlmixed' : tab.type;
+                    this.editor.setOption('mode', mode);
+                    this.editor.focus();
+                }
+                this.renderTabs();
+            },
+
+            deleteTab(id) {
+                const tabIndex = this.tabs.findIndex(t => t.id === id);
+                if (tabIndex === -1) return;
+
+                this.tabs.splice(tabIndex, 1);
+                
+                if (this.activeTabId === id) {
+                    if (this.tabs.length > 0) {
+                        const newActiveIndex = Math.max(0, tabIndex - 1);
+                        this.switchTab(this.tabs[newActiveIndex].id);
+                    } else {
+                        this.activeTabId = null;
+                        this.editor.setValue('');
+                        this.renderTabs();
+                    }
+                } else {
+                    this.renderTabs();
+                }
+            },
+            
+            renameTab(id) {
+                const tab = this.tabs.find(t => t.id === id);
+                if (!tab) return;
+                this.showPrompt('Rename tab:', tab.name, (newName) => {
+                    if (newName && newName.trim() !== '') {
+                        tab.name = newName.trim();
+                        this.renderTabs();
+                    }
+                });
+            },
+
+            showColorPicker(id, event) {
+                const colors = ['#f87171', '#fb923c', '#facc15', '#4ade80', '#38bdf8', '#a78bfa', '#f472b6'];
+                const picker = document.createElement('div');
+                picker.className = 'absolute z-20 bg-white shadow-lg rounded p-2 flex space-x-1';
+                picker.style.top = `${event.clientY + 10}px`;
+                picker.style.left = `${event.clientX}px`;
+                
+                colors.forEach(color => {
+                    const dot = document.createElement('div');
+                    dot.className = 'w-5 h-5 rounded-full cursor-pointer hover:scale-110 transition-transform';
+                    dot.style.backgroundColor = color;
+                    dot.onclick = () => {
+                        const tab = this.tabs.find(t => t.id === id);
+                        tab.color = color;
+                        this.renderTabs();
+                        document.body.removeChild(picker);
+                    };
+                    picker.appendChild(dot);
+                });
+                
+                document.body.appendChild(picker);
+                setTimeout(() => document.addEventListener('click', () => picker.remove(), { once: true }), 100);
+            },
+
+            renderTabs() {
+                const tabBar = document.getElementById('tab-bar');
+                tabBar.innerHTML = '';
+                this.tabs.forEach(tab => {
+                    const tabEl = document.createElement('div');
+                    tabEl.className = `tab relative flex items-center justify-between px-4 py-2 cursor-pointer border-t border-r border-gray-300 -mb-px ${tab.id === this.activeTabId ? 'active' : ''}`;
+                    tabEl.style.borderTopColor = tab.color || 'var(--border-color)';
+                    tabEl.onclick = () => this.switchTab(tab.id);
+                    
+                    let icon = '';
+                    if (tab.type === 'html') icon = `<i data-lucide="code" class="w-4 h-4 mr-2 text-orange-500"></i>`;
+                    if (tab.type === 'css') icon = `<i data-lucide="paintbrush" class="w-4 h-4 mr-2 text-blue-500"></i>`;
+                    if (tab.type === 'javascript') icon = `<i data-lucide="braces" class="w-4 h-4 mr-2 text-yellow-500"></i>`;
+
+                    tabEl.innerHTML = `
+                        <div class="flex items-center">
+                            <span class="color-dot mr-2" style="background-color: ${tab.color || 'transparent'}; border: ${tab.color ? 'none' : '1px solid #ccc'}" onclick="event.stopPropagation(); this.parentElement.parentElement.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: event.clientX, clientY: event.clientY }))"></span>
+                            ${icon}
+                            <span class="text-sm">${tab.name}</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); app.deleteTab(${tab.id})" class="tab-close ml-3 p-0.5 rounded-full hover:bg-gray-300">
+                            <i data-lucide="x" class="w-3 h-3"></i>
+                        </button>
+                    `;
+                    tabEl.oncontextmenu = (e) => {
+                        e.preventDefault();
+                        this.showTabContextMenu(tab.id, e);
+                    };
+                    tabBar.appendChild(tabEl);
+                });
+                lucide.createIcons();
+                this.renderExportMenu();
+            },
+            
+            showTabContextMenu(id, e) {
+                 // Remove any existing context menu
+                const existingMenu = document.querySelector('.context-menu');
+                if (existingMenu) existingMenu.remove();
+
+                const menu = document.createElement('div');
+                menu.className = 'context-menu dropdown-content block mt-1 w-40';
+                menu.style.top = `${e.clientY}px`;
+                menu.style.left = `${e.clientX}px`;
+
+                menu.innerHTML = `
+                    <button onclick="app.renameTab(${id})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rename</a>
+                    <button onclick="app.showColorPicker(${id}, event)" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Change Color</a>
+                    <button onclick="app.copyTabContent(${id})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Copy Content</a>
+                    <button onclick="app.pasteTabContent(${id})" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Paste Content</a>
+                    <label class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+                        Upload File
+                        <input type="file" class="hidden" onchange="app.handleSingleFileUpload(event, ${id})">
+                    </label>
+                `;
+                
+                document.body.appendChild(menu);
+
+                const closeMenu = () => {
+                    if (menu.parentElement) {
+                        menu.parentElement.removeChild(menu);
+                    }
+                    document.removeEventListener('click', closeMenu);
+                };
+                setTimeout(() => document.addEventListener('click', closeMenu), 0);
+            },
+// EDITOR AND PREVIEW
+            runCode() {
+                const previewFrame = document.getElementById('preview');
+                const htmlFiles = this.tabs.filter(t => t.type === 'html');
+                const cssFiles = this.tabs.filter(t => t.type === 'css');
+                const jsFiles = this.tabs.filter(t => t.type === 'javascript');
+                
+                if (htmlFiles.length === 0) {
+                    previewFrame.srcdoc = "<html><body><h2 style='font-family: sans-serif; color: #dc2626;'>Error: No HTML file found to display.</h2></body></html>";
+                    return;
+                }
+
+                let htmlContent = htmlFiles[0].content;
+
+                const cssContent = cssFiles.map(f => f.content).join('\n');
+                const jsContent = jsFiles.map(f => f.content).join('\n');
+                
+                // Inject CSS into <head>
+                if (htmlContent.includes('</head>')) {
+                    htmlContent = htmlContent.replace('</head>', `<style>${cssContent}</style></head>`);
+                } else {
+                    htmlContent = `<head><style>${cssContent}</style></head>` + htmlContent;
+                }
+                
+                // Inject JS into <body>, escaping any closing script tags within the user's code
+                if (htmlContent.includes('</body>')) {
+                     htmlContent = htmlContent.replace('</body>', `<script>${jsContent.replace(/<\/script>/gi, '<\\/script>')}<\/script></body>`);
+                } else {
+                    htmlContent += `<script>${jsContent.replace(/<\/script>/gi, '<\\/script>')}<\/script>`;
+                }
+                
+                previewFrame.srcdoc = htmlContent;
+            },
+            
+            togglePreview() {
+                const appBody = document.querySelector('body');
+                appBody.classList.toggle('preview-hidden');
+                const icon = document.querySelector('#toggle-preview-btn i');
+                if (appBody.classList.contains('preview-hidden')) {
+                    icon.setAttribute('data-lucide', 'panel-left-close');
+                } else {
+                    icon.setAttribute('data-lucide', 'panel-right-close');
+                }
+                lucide.createIcons();
+            },
+            
+            showClearConfirmation() {
+                this.showModal(`
+                    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Clear All Tabs & Content?</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">
+                                This action cannot be undone. All your tabs and their content will be permanently deleted.
+                            </p>
+                        </div>
+                        <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                            <button type="button" onclick="app.clearEditor()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700">Clear All</button>
+                            <button type="button" onclick="app.hideModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0">Cancel</button>
+                        </div>
+                    </div>
+                `);
+            },
+            
+            clearEditor() {
+                this.tabs = [];
+                this.activeTabId = null;
+                this.htmlCounter = 1;
+                this.cssCounter = 1;
+                this.jsCounter = 1;
+                this.addTab('html');
+                this.hideModal();
+            },
+// MODAL
+            showModal(content) {
+                const modalContainer = document.getElementById('modal-container');
+                modalContainer.innerHTML = `<div class="modal-backdrop">${content}</div>`;
+                modalContainer.classList.remove('hidden');
+            },
+            
+            hideModal() {
+                document.getElementById('modal-container').classList.add('hidden');
+            },
+
+            showAlert(message, type = 'info') {
+                const colors = { info: 'indigo', success: 'green', error: 'red' };
+                const color = colors[type] || 'gray';
+                this.showModal(`
+                    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+                        <p class="text-base text-gray-700">${message}</p>
+                        <div class="mt-5 sm:mt-6">
+                            <button type="button" onclick="app.hideModal()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-${color}-600 text-base font-medium text-white hover:bg-${color}-700">OK</button>
+                        </div>
+                    </div>
+                `);
+            },
+            
+            showPrompt(message, defaultValue, callback) {
+                this.showModal(`
+                    <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full">
+                        <label for="prompt-input" class="block text-sm font-medium text-gray-700">${message}</label>
+                        <div class="mt-2">
+                            <input type="text" id="prompt-input" value="${defaultValue}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                            <button type="button" id="prompt-ok" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700">OK</button>
+                            <button type="button" onclick="app.hideModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0">Cancel</button>
+                        </div>
+                    </div>
+                `);
+                const input = document.getElementById('prompt-input');
+                const okButton = document.getElementById('prompt-ok');
+
+                const submit = () => {
+                    callback(input.value);
+                    this.hideModal();
+                };
+
+                okButton.onclick = submit;
+                input.onkeydown = (e) => {
+                    if (e.key === 'Enter') submit();
+                };
+                input.focus();
+                input.select();
+            },
+// FILE I/O
+            renderExportMenu() {
+                const menu = document.getElementById('export-menu');
+                menu.innerHTML = `
+                    <div class="px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Export All</div>
+                    <button onclick="app.exportAsCombinedHTML()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export as HTML</a>
+                    <button onclick="app.exportAsZip()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Export as ZIP</a>
+                    <div class="border-t my-1"></div>
+                    <div class="px-4 py-2 text-xs text-gray-500 font-semibold uppercase">Export Single</div>
+                    <button onclick="app.showSingleFileExportModal()" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Select Files...</a>
+                `;
+            },
+            
+            exportAsCombinedHTML() {
+                const htmlFiles = this.tabs.filter(t => t.type === 'html');
+                if (htmlFiles.length === 0) {
+                    this.showAlert('Cannot export: No HTML file found.', 'error');
+                    return;
+                }
+                let htmlContent = htmlFiles[0].content;
+                const cssContent = this.tabs.filter(t => t.type === 'css').map(f => f.content).join('\n');
+                const jsContent = this.tabs.filter(t => t.type === 'javascript').map(f => f.content).join('\n');
+                
+                htmlContent = htmlContent.replace('</head>', `<style>${cssContent}</style></head>`);
+                htmlContent = htmlContent.replace('</body>', `<script>${jsContent.replace(/<\/script>/gi, '<\\/script>')}<\/script></body>`);
+                
+                this.downloadFile('index.html', htmlContent, 'text/html');
+            },
+
+            exportAsZip(files = this.tabs) {
+                this.showPrompt('Enter ZIP file name:', 'website.zip', (fileName) => {
+                    if (fileName) {
+                        const zip = new JSZip();
+                        files.forEach(tab => {
+                            zip.file(tab.name, tab.content);
+                        });
+                        zip.generateAsync({type: "blob"}).then(content => {
+                           this.downloadFile(fileName, content);
+                        });
+                    }
+                });
+            },
+
+            showSingleFileExportModal() {
+                let fileCheckboxes = this.tabs.map(tab => `
+                    <label class="flex items-center space-x-3">
+                        <input type="checkbox" name="export-file" value="${tab.id}" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                        <span class="text-sm text-gray-700">${tab.name}</span>
+                    </label>
+                `).join('');
+
+                this.showModal(`
+                    <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full">
+                        <h3 class="text-lg font-medium text-gray-900">Select Files to Export</h3>
+                        <div class="mt-4 space-y-2 max-h-60 overflow-y-auto">${fileCheckboxes}</div>
+                        <div class="mt-6 flex justify-end space-x-3">
+                            <button onclick="app.hideModal()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+                            <button onclick="app.handleSingleFileExport()" class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700">Export Selected</button>
+                        </div>
+                    </div>
+                `);
+            },
+            
+            handleSingleFileExport() {
+                const selectedIds = Array.from(document.querySelectorAll('input[name="export-file"]:checked')).map(cb => parseInt(cb.value));
+                const selectedFiles = this.tabs.filter(tab => selectedIds.includes(tab.id));
+                if (selectedFiles.length > 0) {
+                    this.hideModal();
+                    this.exportAsZip(selectedFiles);
+                } else {
+                    this.showAlert('No files selected.', 'error');
+                }
+            },
+            
+            handleZipUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                JSZip.loadAsync(file).then(zip => {
+                    zip.forEach((relativePath, zipEntry) => {
+                        if (!zipEntry.dir) {
+                            zipEntry.async('string').then(content => {
+                                let type = 'html';
+                                if (relativePath.endsWith('.css')) type = 'css';
+                                else if (relativePath.endsWith('.js')) type = 'javascript';
+                                
+                                this.addTab(type, relativePath, content);
+                            });
+                        }
+                    });
+                });
+                event.target.value = ''; // Reset input
+            },
+
+            handleSingleFileUpload(event, tabId) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const tab = this.tabs.find(t => t.id === tabId);
+                    tab.content = e.target.result;
+                    if (this.activeTabId === tabId) {
+                        this.editor.setValue(tab.content);
+                    }
+                };
+                reader.readAsText(file);
+            },
+            
+            downloadFile(filename, content, mimeType) {
+                const blob = new Blob([content], { type: mimeType });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            },
+// UTILITY
+            async copyTabContent(tabId) {
+                const tab = this.tabs.find(t => t.id === tabId);
+                if (tab && navigator.clipboard) {
+                    try {
+                        await navigator.clipboard.writeText(tab.content);
+                        this.showAlert(`Content of '${tab.name}' copied to clipboard.`, 'success');
+                    } catch (err) {
+                        this.showAlert('Failed to copy content.', 'error');
+                    }
+                }
+            },
+            
+            async pasteTabContent(tabId) {
+                const tab = this.tabs.find(t => t.id === tabId);
+                if (tab && navigator.clipboard) {
+                    try {
+                        const text = await navigator.clipboard.readText();
+                        tab.content = text;
+                        if (this.activeTabId === tabId) {
+                            this.editor.setValue(text);
+                        }
+                    } catch (err) {
+                        this.showAlert('Failed to paste content. Clipboard permission may be denied.', 'error');
+                    }
+                }
+            }
+
+        };
+
+        window.onload = () => app.init();
+    </script>
+<script>window.open = () => null;
+</script>
+</body>
+</html>

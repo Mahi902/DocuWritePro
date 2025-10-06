@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Card Maker</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* Custom styles for the application */
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }
+        .workbench-grid {
+            background-color: #f0f2f5;
+            background-image:
+                linear-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .draggable-item {
+            cursor: pointer;
+        }
+        #canvas {
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden; /* Ensures content stays within card boundaries */
+        }
+        /* --- FIX FOR DRAG ISSUE --- */
+        .canvas-element {
+            touch-action: none; /* Prevents default browser touch actions like pull-to-refresh */
+            user-select: none;  /* Prevents text selection during drag */
+        }
+        .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border: 1px solid #007bff;
+            border-radius: 50%;
+            bottom: -5px;
+            right: -5px;
+            cursor: se-resize;
+            display: none;
+        }
+        .selected {
+            outline: 2px dashed #007bff;
+            outline-offset: 2px;
+        }
+        .selected .resize-handle {
+            display: block;
+        }
+        .delete-mode-active .canvas-element {
+            cursor: crosshair !important;
+            outline: 2px dashed #ef4444 !important;
+        }
+        [contenteditable="true"]:focus {
+            outline: 2px solid #007bff;
+        }
+        .editor-section {
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 h-screen w-screen flex flex-col">
+
+    <header class="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between shadow-sm z-10">
+        <h1 class="text-lg font-semibold text-gray-800">Gift Card Maker</h1>
+        <div class="flex items-center space-x-2">
+            <button id="undoBtn" class="p-2 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Undo (Ctrl+Z)">
+                <span class="material-symbols-outlined">undo</span>
+            </button>
+            <button id="redoBtn" class="p-2 rounded-md hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed" title="Redo (Ctrl+Y)">
+                <span class="material-symbols-outlined">redo</span>
+            </button>
+            <div class="h-6 border-l border-gray-300 mx-2"></div>
+            <button id="downloadBtn" class="flex items-center bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors">
+                <span class="material-symbols-outlined mr-2">download</span>
+                Download
+            </button>
+            <select id="downloadFormat" class="ml-2 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                <option value="png">PNG</option>
+                <option value="jpeg">JPG</option>
+            </select>
+        </div>
+    </header>
+
+    <main class="flex-grow flex overflow-hidden">
+        <div id="workbench" class="flex-grow flex items-center justify-center p-8 workbench-grid overflow-auto">
+            <div id="canvas" class="bg-white relative" style="width: 500px; height: 300px; transition: all 0.2s ease;">
+                </div>
+        </div>
+
+        <aside class="w-80 bg-white border-l border-gray-200 p-4 overflow-y-auto flex-shrink-0">
+            <div class="editor-section">
+                <h3 class="font-semibold mb-3 text-gray-700">Card Size</h3>
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="cardWidth" value="500" class="w-full border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                    <span class="text-gray-500">x</span>
+                    <input type="number" id="cardHeight" value="300" class="w-full border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                </div>
+            </div>
+
+            <div class="editor-section">
+                <h3 class="font-semibold mb-3 text-gray-700">Background</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Solid Color</label>
+                        <input type="color" id="bgColor" value="#ffffff" class="w-full h-8 mt-1 border border-gray-300 rounded-md cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Gradient</label>
+                        <div class="flex space-x-2 mt-1">
+                            <input type="color" id="gradientColor1" value="#ffffff" class="w-1/2 h-8 border border-gray-300 rounded-md cursor-pointer">
+                            <input type="color" id="gradientColor2" value="#000000" class="w-1/2 h-8 border border-gray-300 rounded-md cursor-pointer">
+                        </div>
+                        <select id="gradientDirection" class="w-full mt-2 border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                            <option value="to bottom">Top to Bottom</option>
+                            <option value="to right">Left to Right</option>
+                        </select>
+                        <button id="applyGradientBtn" class="w-full mt-2 bg-gray-200 text-gray-800 py-1 rounded-md text-sm hover:bg-gray-300">Apply Gradient</button>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Image URL</label>
+                        <input type="text" id="bgImageUrl" placeholder="https://example.com/image.png" class="w-full mt-1 border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                    </div>
+                     <div>
+                        <label class="text-sm font-medium text-gray-600">Upload Image</label>
+                        <input type="file" id="bgImageUpload" accept="image/*" class="w-full text-sm mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    <select id="bgImageFit" class="w-full mt-2 border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                        <option value="cover">Fill (Cover)</option>
+                        <option value="contain">Fit (Contain)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="editor-section">
+                <h3 class="font-semibold mb-3 text-gray-700">Add Elements</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="draggable-item border rounded-md p-2 text-center hover:bg-gray-100" data-type="title">
+                        <span class="material-symbols-outlined text-3xl">title</span>
+                        <p class="text-xs">Title</p>
+                    </div>
+                    <div class="draggable-item border rounded-md p-2 text-center hover:bg-gray-100" data-type="text">
+                        <span class="material-symbols-outlined text-3xl">text_fields</span>
+                        <p class="text-xs">Text</p>
+                    </div>
+                    <div class="draggable-item border rounded-md p-2 text-center hover:bg-gray-100" data-type="image">
+                        <span class="material-symbols-outlined text-3xl">image</span>
+                        <p class="text-xs">Image</p>
+                    </div>
+                    <div class="draggable-item border rounded-md p-2 text-center hover:bg-gray-100" data-type="line">
+                        <span class="material-symbols-outlined text-3xl">horizontal_rule</span>
+                        <p class="text-xs">Line</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="contextualEditor" class="hidden editor-section">
+                <h3 class="font-semibold mb-3 text-gray-700">Element Properties</h3>
+                <div id="textOptions" class="hidden space-y-3">
+                     <div>
+                        <label class="text-sm font-medium text-gray-600">Font Family</label>
+                        <select id="fontFamily" class="w-full mt-1 border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                            <option value="Inter">Inter</option>
+                            <option value="Roboto">Roboto</option>
+                            <option value="Lato">Lato</option>
+                            <option value="Montserrat">Montserrat</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Font Size</label>
+                        <input type="number" id="fontSize" min="8" value="16" class="w-full mt-1 border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Color</label>
+                        <input type="color" id="fontColor" value="#000000" class="w-full h-8 mt-1 border border-gray-300 rounded-md cursor-pointer">
+                    </div>
+                    <div class="flex space-x-2">
+                        <button id="boldBtn" class="p-2 rounded-md hover:bg-gray-200 border w-full justify-center flex"><span class="material-symbols-outlined">format_bold</span></button>
+                        <button id="italicBtn" class="p-2 rounded-md hover:bg-gray-200 border w-full justify-center flex"><span class="material-symbols-outlined">format_italic</span></button>
+                    </div>
+                </div>
+                <div id="imageOptions" class="hidden space-y-3">
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Upload Image</label>
+                        <input type="file" id="imageUpload" accept="image/*" class="w-full text-sm mt-1 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Image URL</label>
+                        <input type="text" id="imageUrl" placeholder="https://..." class="w-full mt-1 border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                    </div>
+                    <div>
+                        <label for="borderRadius" class="text-sm font-medium text-gray-600">Border Shape (0% = Square, 50% = Circle)</label>
+                        <input type="range" id="borderRadius" min="0" max="50" value="0" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer mt-1">
+                    </div>
+                </div>
+                 <div id="lineOptions" class="hidden space-y-3">
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Line Color</label>
+                        <input type="color" id="lineColor" value="#000000" class="w-full h-8 mt-1 border border-gray-300 rounded-md cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Line Thickness</label>
+                        <input type="number" id="lineWidth" min="1" value="2" class="w-full mt-1 border-gray-300 rounded-md shadow-sm p-2 text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-section border-none mb-0 pb-0">
+                <h3 class="font-semibold mb-3 text-gray-700">Actions</h3>
+                <button id="deleteModeBtn" class="w-full flex items-center justify-center bg-red-100 text-red-700 py-2 rounded-md hover:bg-red-200 transition-colors">
+                    <span class="material-symbols-outlined mr-2">delete</span>
+                    Toggle Delete Mode
+                </button>
+            </div>
+
+        </aside>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('canvas');
+            const workbench = document.getElementById('workbench');
+            let selectedElement = null;
+            let deleteMode = false;
+
+            // State for Undo/Redo
+            let history = [canvas.innerHTML];
+            let historyIndex = 0;
+
+            const undoBtn = document.getElementById('undoBtn');
+            const redoBtn = document.getElementById('redoBtn');
+
+            // --- HISTORY (UNDO/REDO) MANAGEMENT ---
+            function saveState() {
+                // Clear "future" states
+                history = history.slice(0, historyIndex + 1);
+                // Push current state
+                history.push(canvas.innerHTML);
+                historyIndex++;
+                updateUndoRedoButtons();
+            }
+
+            function undo() {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    canvas.innerHTML = history[historyIndex];
+                    restoreElementFunctionality();
+                    deselectAll();
+                }
+                updateUndoRedoButtons();
+            }
+
+            function redo() {
+                if (historyIndex < history.length - 1) {
+                    historyIndex++;
+                    canvas.innerHTML = history[historyIndex];
+                    restoreElementFunctionality();
+                    deselectAll();
+                }
+                updateUndoRedoButtons();
+            }
+            
+            function updateUndoRedoButtons() {
+                undoBtn.disabled = historyIndex <= 0;
+                redoBtn.disabled = historyIndex >= history.length - 1;
+            }
+            
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            document.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 'z') {
+                    e.preventDefault();
+                    undo();
+                }
+                if (e.ctrlKey && e.key === 'y') {
+                    e.preventDefault();
+                    redo();
+                }
+            });
+
+            // --- CARD CUSTOMIZATION ---
+            const cardWidthInput = document.getElementById('cardWidth');
+            const cardHeightInput = document.getElementById('cardHeight');
+            const bgColorInput = document.getElementById('bgColor');
+            const gradientColor1 = document.getElementById('gradientColor1');
+            const gradientColor2 = document.getElementById('gradientColor2');
+            const gradientDirection = document.getElementById('gradientDirection');
+            const applyGradientBtn = document.getElementById('applyGradientBtn');
+            const bgImageUrlInput = document.getElementById('bgImageUrl');
+            const bgImageUploadInput = document.getElementById('bgImageUpload');
+            const bgImageFitSelect = document.getElementById('bgImageFit');
+
+            cardWidthInput.addEventListener('input', () => {
+                canvas.style.width = `${cardWidthInput.value}px`;
+                saveState();
+            });
+            cardHeightInput.addEventListener('input', () => {
+                canvas.style.height = `${cardHeightInput.value}px`;
+                saveState();
+            });
+            bgColorInput.addEventListener('input', () => {
+                canvas.style.backgroundImage = 'none';
+                canvas.style.backgroundColor = bgColorInput.value;
+                saveState();
+            });
+            applyGradientBtn.addEventListener('click', () => {
+                canvas.style.backgroundImage = `linear-gradient(${gradientDirection.value}, ${gradientColor1.value}, ${gradientColor2.value})`;
+                saveState();
+            });
+            bgImageUrlInput.addEventListener('change', () => {
+                if(bgImageUrlInput.value) {
+                    canvas.style.backgroundImage = `url('${bgImageUrlInput.value}')`;
+                    canvas.style.backgroundSize = bgImageFitSelect.value;
+                    canvas.style.backgroundPosition = 'center';
+                    canvas.style.backgroundRepeat = 'no-repeat';
+                    saveState();
+                }
+            });
+            bgImageUploadInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        canvas.style.backgroundImage = `url('${event.target.result}')`;
+                        canvas.style.backgroundSize = bgImageFitSelect.value;
+                        canvas.style.backgroundPosition = 'center';
+                        canvas.style.backgroundRepeat = 'no-repeat';
+                        saveState();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            bgImageFitSelect.addEventListener('change', () => {
+                canvas.style.backgroundSize = bgImageFitSelect.value;
+                saveState();
+            });
+
+
+            // --- ELEMENT SELECTION & CONTEXTUAL EDITOR ---
+            function deselectAll() {
+                document.querySelectorAll('.canvas-element').forEach(el => el.classList.remove('selected'));
+                selectedElement = null;
+                document.getElementById('contextualEditor').classList.add('hidden');
+            }
+
+            function selectElement(element) {
+                deselectAll();
+                element.classList.add('selected');
+                selectedElement = element;
+                showContextualEditor(element);
+            }
+
+            function showContextualEditor(element) {
+                const editor = document.getElementById('contextualEditor');
+                editor.classList.remove('hidden');
+
+                // Hide all options first
+                document.getElementById('textOptions').classList.add('hidden');
+                document.getElementById('imageOptions').classList.add('hidden');
+                document.getElementById('lineOptions').classList.add('hidden');
+
+                const type = element.dataset.elementType;
+                if (type === 'title' || type === 'text') {
+                    document.getElementById('textOptions').classList.remove('hidden');
+                    updateTextEditorUI(element.querySelector('.editable-text'));
+                } else if (type === 'image') {
+                    document.getElementById('imageOptions').classList.remove('hidden');
+                    updateImageEditorUI(element.querySelector('img'));
+                } else if (type === 'line') {
+                    document.getElementById('lineOptions').classList.remove('hidden');
+                    updateLineEditorUI(element.querySelector('hr'));
+                }
+            }
+            
+            // --- CONTEXTUAL EDITOR UI UPDATES ---
+            const fontFamilySelect = document.getElementById('fontFamily');
+            const fontSizeInput = document.getElementById('fontSize');
+            const fontColorInput = document.getElementById('fontColor');
+            const boldBtn = document.getElementById('boldBtn');
+            const italicBtn = document.getElementById('italicBtn');
+            
+            function updateTextEditorUI(textEl) {
+                fontFamilySelect.value = textEl.style.fontFamily || 'Inter';
+                fontSizeInput.value = parseInt(textEl.style.fontSize) || 16;
+                fontColorInput.value = rgbToHex(textEl.style.color || 'rgb(0, 0, 0)');
+                boldBtn.classList.toggle('bg-blue-200', textEl.style.fontWeight === 'bold');
+                italicBtn.classList.toggle('bg-blue-200', textEl.style.fontStyle === 'italic');
+            }
+
+            fontFamilySelect.addEventListener('input', () => {
+                if (selectedElement) {
+                    selectedElement.querySelector('.editable-text').style.fontFamily = fontFamilySelect.value;
+                    saveState();
+                }
+            });
+            fontSizeInput.addEventListener('input', () => {
+                if (selectedElement) {
+                    selectedElement.querySelector('.editable-text').style.fontSize = `${fontSizeInput.value}px`;
+                    saveState();
+                }
+            });
+            fontColorInput.addEventListener('input', () => {
+                if (selectedElement) {
+                    selectedElement.querySelector('.editable-text').style.color = fontColorInput.value;
+                    saveState();
+                }
+            });
+            boldBtn.addEventListener('click', () => {
+                if (selectedElement) {
+                    const textEl = selectedElement.querySelector('.editable-text');
+                    textEl.style.fontWeight = textEl.style.fontWeight === 'bold' ? 'normal' : 'bold';
+                    updateTextEditorUI(textEl);
+                    saveState();
+                }
+            });
+            italicBtn.addEventListener('click', () => {
+                if (selectedElement) {
+                    const textEl = selectedElement.querySelector('.editable-text');
+                    textEl.style.fontStyle = textEl.style.fontStyle === 'italic' ? 'normal' : 'italic';
+                    updateTextEditorUI(textEl);
+                    saveState();
+                }
+            });
+
+            const imageUploadInput = document.getElementById('imageUpload');
+            const imageUrlInput = document.getElementById('imageUrl');
+            const borderRadiusSlider = document.getElementById('borderRadius');
+            
+            function updateImageEditorUI(imgEl) {
+                imageUrlInput.value = imgEl.src.startsWith('data:') ? '' : imgEl.src;
+                borderRadiusSlider.value = parseInt(imgEl.style.borderRadius) || 0;
+            }
+
+            imageUploadInput.addEventListener('change', (e) => {
+                if (selectedElement && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        selectedElement.querySelector('img').src = event.target.result;
+                        saveState();
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+            imageUrlInput.addEventListener('change', () => {
+                if (selectedElement && imageUrlInput.value) {
+                    selectedElement.querySelector('img').src = imageUrlInput.value;
+                    saveState();
+                }
+            });
+            borderRadiusSlider.addEventListener('input', () => {
+                if (selectedElement) {
+                    selectedElement.querySelector('img').style.borderRadius = `${borderRadiusSlider.value}%`;
+                    saveState();
+                }
+            });
+            
+            const lineColorInput = document.getElementById('lineColor');
+            const lineWidthInput = document.getElementById('lineWidth');
+
+            function updateLineEditorUI(lineEl) {
+                lineColorInput.value = rgbToHex(lineEl.style.borderColor || 'rgb(0, 0, 0)');
+                lineWidthInput.value = parseInt(lineEl.style.borderTopWidth) || 2;
+            }
+
+            lineColorInput.addEventListener('input', () => {
+                if(selectedElement) {
+                    selectedElement.querySelector('hr').style.borderColor = lineColorInput.value;
+                    saveState();
+                }
+            });
+
+            lineWidthInput.addEventListener('input', () => {
+                if(selectedElement) {
+                    selectedElement.querySelector('hr').style.borderTopWidth = `${lineWidthInput.value}px`;
+                    saveState();
+                }
+            });
+
+
+            // --- CLICK TO ADD ELEMENTS ---
+            document.querySelectorAll('.draggable-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const type = item.dataset.type;
+                    const newElement = createNewElement(type);
+                    
+                    // Position the new element in the center of the canvas
+                    const canvasWidth = canvas.offsetWidth;
+                    const canvasHeight = canvas.offsetHeight;
+                    
+                    // Get element dimensions. Fallback to default values if not explicitly set.
+                    const elWidth = parseInt(newElement.style.width) || 180;
+                    const elHeight = parseInt(newElement.style.height) || 50;
+
+                    newElement.style.left = `${(canvasWidth / 2) - (elWidth / 2)}px`;
+                    newElement.style.top = `${(canvasHeight / 2) - (elHeight / 2)}px`;
+                    
+                    canvas.appendChild(newElement);
+                    makeElementInteractive(newElement);
+                    selectElement(newElement);
+                    saveState();
+                });
+            });
+
+
+            function createNewElement(type) {
+                const el = document.createElement('div');
+                el.className = 'canvas-element absolute p-1';
+                el.dataset.elementType = type;
+                el.style.width = 'auto';
+                el.style.height = 'auto';
+
+                if (type === 'title') {
+                    el.innerHTML = `<h1 class="editable-text text-4xl font-bold" contenteditable="false" style="font-family: Inter;">Title Text</h1><div class="resize-handle"></div>`;
+                    el.style.width = '200px';
+                } else if (type === 'text') {
+                    el.innerHTML = `<p class="editable-text text-base" contenteditable="false" style="font-family: Inter;">Some sample text</p><div class="resize-handle"></div>`;
+                    el.style.width = '180px';
+                } else if (type === 'image') {
+                    el.style.width = '150px';
+                    el.style.height = '150px';
+                    el.innerHTML = `<img src="https://placehold.co/150x150/e0e0e0/757575?text=Image" class="w-full h-full object-cover pointer-events-none"><div class="resize-handle"></div>`;
+                } else if (type === 'line') {
+                    el.style.width = '200px';
+                    el.style.height = '20px';
+                    el.innerHTML = `<hr class="w-full border-t-2 border-black pointer-events-none"><div class="resize-handle"></div>`;
+                }
+                
+                return el;
+            }
+
+            // --- ELEMENT INTERACTIVITY ON CANVAS ---
+            function makeElementInteractive(element) {
+                interact(element)
+                    .draggable({
+                        listeners: {
+                            move(event) {
+                                const target = event.target;
+                                const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+                                const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+                                target.style.transform = `translate(${x}px, ${y}px)`;
+                                target.setAttribute('data-x', x);
+                                target.setAttribute('data-y', y);
+                            },
+                            end(event) {
+                                const target = event.target;
+                                target.style.left = `${target.offsetLeft + parseFloat(target.getAttribute('data-x') || 0)}px`;
+                                target.style.top = `${target.offsetTop + parseFloat(target.getAttribute('data-y') || 0)}px`;
+                                target.style.transform = '';
+                                target.removeAttribute('data-x');
+                                target.removeAttribute('data-y');
+                                saveState();
+                            }
+                        },
+                        modifiers: [
+                            interact.modifiers.restrictRect({
+                                restriction: 'parent'
+                            })
+                        ]
+                    })
+                    .resizable({
+                        edges: { right: true, bottom: true },
+                        listeners: {
+                            move(event) {
+                                let { x, y } = event.target.dataset;
+                                x = (parseFloat(x) || 0);
+                                y = (parseFloat(y) || 0);
+
+                                Object.assign(event.target.style, {
+                                    width: `${event.rect.width}px`,
+                                    height: `${event.rect.height}px`,
+                                });
+
+                                // Adjust font size for text elements while resizing
+                                const textEl = event.target.querySelector('.editable-text');
+                                if (textEl) {
+                                    const baseWidth = 180;
+                                    const baseFontSize = 16;
+                                    const newFontSize = Math.max(8, (event.rect.width / baseWidth) * baseFontSize);
+                                    textEl.style.fontSize = `${newFontSize}px`;
+                                }
+                            },
+                            end(event) {
+                                saveState();
+                            }
+                        },
+                        modifiers: [
+                            interact.modifiers.restrictSize({
+                                min: { width: 50, height: 20 }
+                            })
+                        ]
+                    });
+
+                element.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (deleteMode) {
+                        element.remove();
+                        saveState();
+                    } else {
+                        selectElement(element);
+                    }
+                });
+
+                const editableText = element.querySelector('.editable-text');
+                if (editableText) {
+                    element.addEventListener('dblclick', () => {
+                        if (!deleteMode) {
+                            editableText.setAttribute('contenteditable', 'true');
+                            editableText.focus();
+                        }
+                    });
+                    editableText.addEventListener('blur', () => {
+                        editableText.setAttribute('contenteditable', 'false');
+                        saveState();
+                    });
+                }
+            }
+            
+            // This function is crucial for Undo/Redo to work
+            function restoreElementFunctionality() {
+                canvas.querySelectorAll('.canvas-element').forEach(el => {
+                    makeElementInteractive(el);
+                });
+            }
+
+            // --- GENERAL ACTIONS ---
+            const deleteModeBtn = document.getElementById('deleteModeBtn');
+            deleteModeBtn.addEventListener('click', () => {
+                deleteMode = !deleteMode;
+                workbench.classList.toggle('delete-mode-active', deleteMode);
+                deleteModeBtn.classList.toggle('bg-red-600', deleteMode);
+                deleteModeBtn.classList.toggle('text-white', deleteMode);
+                if (deleteMode) {
+                    deselectAll();
+                }
+            });
+
+            canvas.addEventListener('click', () => {
+                if (!deleteMode) deselectAll();
+            });
+            
+            const downloadBtn = document.getElementById('downloadBtn');
+            const downloadFormatSelect = document.getElementById('downloadFormat');
+
+            downloadBtn.addEventListener('click', () => {
+                deselectAll(); // Deselect to hide outlines before capture
+                setTimeout(() => { // Allow UI to update
+                    html2canvas(canvas, {
+                        backgroundColor: null, // Use canvas's actual background
+                        scale: 2 // Higher resolution
+                    }).then(canvasImage => {
+                        const format = downloadFormatSelect.value;
+                        const mimeType = `image/${format}`;
+                        const link = document.createElement('a');
+                        link.download = `gift-card.${format}`;
+                        link.href = canvasImage.toDataURL(mimeType, 1.0);
+                        link.click();
+                    });
+                }, 100);
+            });
+
+            // --- UTILITY FUNCTIONS ---
+            function rgbToHex(rgb) {
+                if (!rgb || !rgb.startsWith('rgb')) return '#000000';
+                let sep = rgb.indexOf(",") > -1 ? "," : " ";
+                rgb = rgb.substr(4).split(")")[0].split(sep);
+                let r = (+rgb[0]).toString(16),
+                    g = (+rgb[1]).toString(16),
+                    b = (+rgb[2]).toString(16);
+                if (r.length == 1) r = "0" + r;
+                if (g.length == 1) g = "0" + g;
+                if (b.length == 1) b = "0" + b;
+                return "#" + r + g + b;
+            }
+
+            // Initial setup
+            updateUndoRedoButtons();
+        });
+    </script>
+</body>
+</html>

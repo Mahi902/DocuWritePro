@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Top Banner</title>
+  <style>
+    .top-banner {
+      background: #d7f1ff; /* light blue */
+      color: #004c6d;
+      text-align: center;
+      padding: 10px 40px 10px 10px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+      max-height: 60px;
+      opacity: 1;
+    }
+    .top-banner.hide {
+      max-height: 0;
+      padding: 0 40px 0 10px;
+      opacity: 0;
+    }
+    .close-btn {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      font-size: 16px;
+      font-weight: bold;
+      color: #004c6d;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 8px; /* Larger hit area */
+    }
+    .close-btn:hover {
+      color: #ff3b3b;
+    }
+  </style>
+</head>
+<body>
+  <div class="top-banner" id="banner">
+    <span id="banner-text">Try without AI Assist &gt;</span>
+    <button class="close-btn" id="close-btn">✕</button>
+  </div>
+
+  <script>
+    const banner = document.getElementById('banner');
+    const closeBtn = document.getElementById('close-btn');
+    const bannerText = document.getElementById('banner-text');
+
+    bannerText.addEventListener('click', () => {
+      window.open("https://sites.google.com/view/docuwritepro/code-playground", "_blank");
+    });
+
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      banner.classList.add('hide');
+      setTimeout(() => banner.remove(), 400);
+    });
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Editor</title>
+    <!-- Tailwind CSS CDN for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Material Icons CDN -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f9; /* Light, clean background */
+            color: #333;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent body scrollbars */
+        }
+        .wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+        .header {
+            background-color: white;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+            position: relative;
+            z-index: 10;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .header-title {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 1.1rem;
+        }
+        .controls-container {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .view-toggle-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .file-action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        .view-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            border: 1px solid #e2e8f0;
+            color: #4a5568;
+            background-color: transparent;
+        }
+        .view-button.active, .view-button:hover {
+            background-color: #eef2f8;
+            border-color: #d1d9e6;
+        }
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+            color: #4a5568;
+        }
+        .icon-button:hover {
+            background-color: #eef2f8;
+        }
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem;
+            width: 100%;
+            height: 100%;
+        }
+        @media (min-width: 768px) {
+            .editor-container.split-view {
+                flex-direction: row;
+            }
+        }
+        .editor-wrapper, .preview-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+            position: relative; /* Added for loading spinner */
+        }
+        .editor__code, .editor__preview {
+            flex-grow: 1;
+            height: 100%;
+            width: 100%;
+        }
+        .editor__preview {
+            border: none;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Loading spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4285F4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-top: -20px;
+            margin-left: -20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        .modal-buttons {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        .modal-button {
+            padding: 0.5rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .modal-button-cancel {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+        .modal-button-confirm {
+            background-color: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div class="wrapper">
+        <div class="header">
+            <div class="header-left">
+                <!-- HTML Icon using Material Icons -->
+                <span class="material-icons text-2xl" style="color:#4a5568;">html</span>
+                <span class="header-title">Editor</span>
+            </div>
+            <div class="controls-container">
+                <div class="view-toggle-buttons">
+                    <button id="showBoth" class="view-button active">Both</button>
+                    <button id="showEditor" class="view-button">Editor</button>
+                    <button id="showPreview" class="view-button">Preview</button>
+                </div>
+                <div class="file-action-buttons">
+                    <button id="clearHtml" class="icon-button" title="Clear Editor">
+                        <span class="material-icons">delete</span>
+                    </button>
+                    <button id="downloadHtml" class="icon-button" title="Download HTML">
+                        <span class="material-icons">download</span>
+                    </button>
+                    <input type="file" id="uploadHtml" class="hidden" accept=".html,.htm">
+                    <label for="uploadHtml" class="icon-button cursor-pointer m-0" title="Upload HTML">
+                        <span class="material-icons">upload_file</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="editor-container split-view">
+            <div id="editorWrapper" class="editor-wrapper">
+                <div class="loader" id="editorLoader"></div>
+                <div id="editorCode" class="editor__code"></div>
+            </div>
+            <div id="previewWrapper" class="preview-wrapper">
+                <iframe id="editorPreview" class="editor__preview"></iframe>
+            </div>
+        </div>
+        
+        <!-- Custom Confirmation Modal -->
+        <div id="clearConfirmModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <p class="text-lg font-medium">Are you sure you want to clear the editor?</p>
+                <p class="text-sm text-gray-500 mt-1">This action cannot be undone.</p>
+                <div class="modal-buttons">
+                    <button id="cancelClear" class="modal-button modal-button-cancel">Cancel</button>
+                    <button id="confirmClear" class="modal-button modal-button-confirm">Clear All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monaco Editor loader -->
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor/min/vs/loader.js"></script>
+
+    <script>
+        // Use a self-invoking function to avoid global variable pollution
+        (function() {
+            // Initial HTML content
+            const HTML_CODE = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f7f7f7; }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 400px;
+            margin: auto;
+        }
+        h1 { color: #333; }
+        p { color: #666; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Welcome!</h1>
+        <p>This is a live preview of your HTML code. Try changing the text above to see it update here instantly.</p>
+    </div>
+</body>
+</html>`;
+
+            // Elements
+            const editorCodeContainer = document.getElementById("editorCode");
+            const editorPreviewFrame = document.getElementById('editorPreview');
+            const editorPreviewDocument = editorPreviewFrame.contentWindow.document;
+            const editorWrapper = document.getElementById('editorWrapper');
+            const previewWrapper = document.getElementById('previewWrapper');
+            const editorContainer = document.querySelector('.editor-container');
+            const editorLoader = document.getElementById('editorLoader');
+            const clearConfirmModal = document.getElementById('clearConfirmModal');
+            const confirmClearButton = document.getElementById('confirmClear');
+            const cancelClearButton = document.getElementById('cancelClear');
+
+            const showBothButton = document.getElementById('showBoth');
+            const showEditorButton = document.getElementById('showEditor');
+            const showPreviewButton = document.getElementById('showPreview');
+            const clearHtmlButton = document.getElementById('clearHtml');
+            const downloadHtmlButton = document.getElementById('downloadHtml');
+            const uploadHtmlInput = document.getElementById('uploadHtml');
+
+            let monacoEditorInstance;
+
+            // Monaco loader configuration
+            require.config({
+                paths: { vs: "https://cdn.jsdelivr.net/npm/monaco-editor/min/vs" }
+            });
+
+            // Monaco environment setup
+            window.MonacoEnvironment = {
+                getWorkerUrl: function(workerId, label) {
+                    return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+                        self.MonacoEnvironment = {
+                            baseUrl: 'https://cdn.jsdelivr.net/npm/monaco-editor/min/'
+                        };
+                        importScripts('https://cdn.jsdelivr.net/npm/monaco-editor/min/vs/base/worker/workerMain.js');`)}`;
+                }
+            };
+
+            // Initialize the Monaco Editor
+            require(["vs/editor/editor.main"], function() {
+                monacoEditorInstance = monaco.editor.create(editorCodeContainer, {
+                    value: HTML_CODE,
+                    language: "html",
+                    theme: "vs-light", // Force light theme
+                    minimap: { enabled: false },
+                    automaticLayout: true,
+                    contextmenu: false,
+                    fontSize: 14,
+                    lineNumbers: "on",
+                    scrollBeyondLastLine: false,
+                });
+
+                // Hide the loader once the editor is ready
+                editorLoader.classList.add('hidden');
+                
+                // Initial update of the preview iframe
+                updatePreview(monacoEditorInstance.getValue());
+
+                // Update the iframe content on every change in the editor
+                monacoEditorInstance.onDidChangeModelContent(() => {
+                    updatePreview(monacoEditorInstance.getValue());
+                });
+
+                // Attach button event listeners
+                showBothButton.addEventListener('click', () => setViewMode('both'));
+                showEditorButton.addEventListener('click', () => setViewMode('editor'));
+                showPreviewButton.addEventListener('click', () => setViewMode('preview'));
+                clearHtmlButton.addEventListener('click', showClearConfirm);
+                downloadHtmlButton.addEventListener('click', downloadEditorContent);
+                uploadHtmlInput.addEventListener('change', uploadHtmlFile);
+                confirmClearButton.addEventListener('click', clearEditor);
+                cancelClearButton.addEventListener('click', hideClearConfirm);
+            });
+
+            // Function to change the view mode
+            function setViewMode(mode) {
+                // Remove active class from all buttons
+                document.querySelectorAll('.view-button').forEach(btn => btn.classList.remove('active'));
+                
+                // Set the correct view and button state
+                if (mode === 'both') {
+                    showBothButton.classList.add('active');
+                    editorContainer.classList.add('split-view');
+                    editorWrapper.classList.remove('hidden');
+                    previewWrapper.classList.remove('hidden');
+                } else if (mode === 'editor') {
+                    showEditorButton.classList.add('active');
+                    editorContainer.classList.remove('split-view');
+                    editorWrapper.classList.remove('hidden');
+                    previewWrapper.classList.add('hidden');
+                } else if (mode === 'preview') {
+                    showPreviewButton.classList.add('active');
+                    editorContainer.classList.remove('split-view');
+                    editorWrapper.classList.add('hidden');
+                    previewWrapper.classList.remove('hidden');
+                }
+                
+                // Manually trigger a layout update for the Monaco editor only if it's visible
+                if (monacoEditorInstance && !editorWrapper.classList.contains('hidden')) {
+                    monacoEditorInstance.layout();
+                }
+            }
+
+            // Function to update the iframe's content
+            function updatePreview(html) {
+                // Ensure a valid HTML structure
+                const fullHtml = `
+                    <!DOCTYPE html>
+                    <html lang="en">
+                    <head>
+                        <meta charset="UTF-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Preview</title>
+                        <!-- Ensure a basic style is always present to avoid a flash of unstyled content -->
+                        <style>body{margin:0;padding:0;font-family:sans-serif;}</style>
+                    </head>
+                    <body>
+                        ${html}
+                    </body>
+                    </html>
+                `;
+                editorPreviewDocument.open();
+                editorPreviewDocument.write(fullHtml);
+                editorPreviewDocument.close();
+            }
+            
+            // Function to show the clear confirmation modal
+            function showClearConfirm() {
+                clearConfirmModal.classList.remove('hidden');
+            }
+
+            // Function to hide the clear confirmation modal
+            function hideClearConfirm() {
+                clearConfirmModal.classList.add('hidden');
+            }
+
+            // Function to clear the editor content
+            function clearEditor() {
+                if (monacoEditorInstance) {
+                    monacoEditorInstance.setValue('');
+                }
+                hideClearConfirm();
+            }
+
+            // Function to download the editor content as an HTML file
+            function downloadEditorContent() {
+                if (monacoEditorInstance) {
+                    const content = monacoEditorInstance.getValue();
+                    const blob = new Blob([content], { type: 'text/html' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'my-document.html';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            }
+
+            // Function to upload an HTML file and load it into the editor
+            function uploadHtmlFile(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        if (monacoEditorInstance) {
+                            monacoEditorInstance.setValue(e.target.result);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+                // Reset the input value to allow re-uploading the same file
+                event.target.value = null;
+            }
+        })();
+    </script>
+</body>
+</html>

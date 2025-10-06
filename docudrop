@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuDrop - Simple File Sharer</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    
+    <style>
+        /* Custom styles for a clean, Google Docs-like feel */
+        body {
+            font-family: 'Inter', sans-serif; /* A font similar to Google's */
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        /* Custom progress bar animation */
+        .progress-bar-inner {
+            transition: width 0.3s ease-in-out;
+        }
+
+        /* Animation for the popup */
+        .popup-enter {
+            animation: slide-up 0.5s ease-out forwards;
+        }
+
+        @keyframes slide-up {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Styles for the new file icon grid */
+        .file-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background-color: #f7f9fc;
+            border-radius: 0.75rem;
+            border: 1px solid #e0e0e0;
+            text-align: center;
+        }
+        
+        .file-item-icon {
+            font-size: 3rem; /* 48px */
+            color: #5f6368;
+        }
+        
+        .file-item-name {
+            font-size: 0.75rem; /* 12px */
+            margin-top: 0.5rem;
+            word-break: break-all;
+            line-height: 1.2;
+            height: 2.4em; /* Allow for two lines of text */
+            overflow: hidden;
+        }
+
+        .file-item-delete-btn {
+            position: absolute;
+            top: -0.5rem;
+            right: -0.5rem;
+            background-color: #dc2626; /* red-600 */
+            color: white;
+            border-radius: 9999px;
+            width: 1.5rem; /* 24px */
+            height: 1.5rem; /* 24px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .file-item-delete-btn:hover {
+            transform: scale(1.1);
+        }
+        .file-item-delete-btn .material-icons {
+            font-size: 1rem; /* 16px */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen">
+
+    <div id="app-container" class="w-full max-w-lg mx-auto bg-white rounded-xl shadow-lg p-8 transition-all duration-300">
+
+        <div id="home-screen">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-blue-600 mb-2">Share File</h1>
+                <p class="text-gray-500 mb-8">Simple, secure, serverless file sharing.</p>
+            </div>
+            <div class="flex flex-col space-y-4">
+                <button id="go-to-sender" class="flex items-center justify-center w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">
+                    <span class="material-icons mr-2">upload_file</span>
+                    Send File
+                </button>
+                <button id="go-to-receiver" class="flex items-center justify-center w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">
+                    <span class="material-icons mr-2">download</span>
+                    Receive File
+                </button>
+            </div>
+        </div>
+
+        <div id="sender-screen" class="hidden">
+            <div class="flex items-center mb-6">
+                <button id="sender-back-btn" class="p-2 rounded-full hover:bg-gray-200 mr-4">
+                    <span class="material-icons text-gray-600">arrow_back</span>
+                </button>
+                <h2 class="text-2xl font-bold">Send Files</h2>
+            </div>
+            
+            <div id="sender-initial-view">
+                <div class="text-center p-6 border-2 border-dashed border-gray-300 rounded-lg">
+                    <label for="file-input" class="cursor-pointer">
+                        <div class="flex flex-col items-center">
+                            <span class="material-icons text-5xl text-gray-400">cloud_upload</span>
+                            <p class="mt-2 text-lg font-semibold text-gray-700">Choose files to send</p>
+                            <p class="text-sm text-gray-500">Or drag and drop here</p>
+                        </div>
+                    </label>
+                    <input type="file" id="file-input" class="hidden" multiple>
+                </div>
+    
+                <div id="file-list-container" class="mt-6 hidden">
+                    <div id="file-list" class="grid grid-cols-3 sm:grid-cols-4 gap-4 max-h-60 overflow-y-auto p-2 bg-gray-50 rounded-lg"></div>
+                    <div class="text-right mt-2 font-bold text-gray-600" id="total-size"></div>
+                </div>
+            </div>
+
+            <div id="sender-connecting-view" class="mt-6 text-center hidden">
+                <p class="text-gray-600 mb-2">Your Peer Code:</p>
+                <div class="flex items-center justify-center bg-gray-100 p-3 rounded-lg">
+                    <span id="peer-id-display" class="text-xl font-mono text-blue-600">Generating...</span>
+                    <button id="copy-peer-id" class="ml-4 p-2 rounded-full hover:bg-gray-200">
+                        <span class="material-icons text-gray-600">content_copy</span>
+                    </button>
+                </div>
+                <p class="text-sm text-gray-500 mt-4 animate-pulse">Waiting for receiver to connect...</p>
+            </div>
+            
+            <button id="send-btn" class="mt-6 w-full bg-blue-500 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                <span class="material-icons mr-2">send</span>
+                Send
+            </button>
+            
+            <div id="sender-progress-view" class="hidden mt-6"></div>
+            
+            <button id="send-another-file-btn" class="hidden mt-6 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">
+                <span class="material-icons mr-2">replay</span>
+                Send Another File
+            </button>
+        </div>
+
+        <div id="receiver-screen" class="hidden">
+            <div class="flex items-center mb-6">
+                <button id="receiver-back-btn" class="p-2 rounded-full hover:bg-gray-200 mr-4">
+                    <span class="material-icons text-gray-600">arrow_back</span>
+                </button>
+                <h2 class="text-2xl font-bold">Receive Files</h2>
+            </div>
+            
+            <div id="receiver-initial-view">
+                <label for="peer-id-input" class="block text-sm font-medium text-gray-700 mb-1">Enter Sender's Peer Code</label>
+                <input type="text" id="peer-id-input" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="e.g., abc-123-xyz">
+                <button id="connect-btn" class="mt-4 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center">
+                    <span class="material-icons mr-2">link</span>
+                    Connect
+                </button>
+            </div>
+
+            <div id="receiver-progress-view" class="hidden mt-4">
+                 <p id="receiver-status" class="text-center text-gray-600 animate-pulse">Connecting to sender...</p>
+                 <div id="receiver-files-container" class="mt-4 space-y-4"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="message-popup" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 bg-gray-800 text-white py-2 px-5 rounded-full shadow-lg text-sm">
+        <span id="message-text"></span>
+    </div>
+
+    <div id="restart-popup" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 w-11/12 max-w-md popup-enter">
+        <div class="bg-white rounded-lg shadow-2xl p-4 flex items-center justify-between">
+            <p class="text-gray-700">Sender wants to send another file.</p>
+            <div>
+                <button id="accept-restart-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-semibold mr-2">Accept</button>
+                <button id="reject-restart-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold">Reject</button>
+            </div>
+        </div>
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const CHUNK_SIZE = 64 * 1024; // 64KB
+
+        // --- DOM Elements ---
+        const homeScreen = document.getElementById('home-screen');
+        const senderScreen = document.getElementById('sender-screen');
+        const receiverScreen = document.getElementById('receiver-screen');
+
+        const goToSenderBtn = document.getElementById('go-to-sender');
+        const goToReceiverBtn = document.getElementById('go-to-receiver');
+        const senderBackBtn = document.getElementById('sender-back-btn');
+        const receiverBackBtn = document.getElementById('receiver-back-btn');
+
+        // Sender elements
+        const fileInput = document.getElementById('file-input');
+        const fileListContainer = document.getElementById('file-list-container');
+        const fileList = document.getElementById('file-list');
+        const totalSizeEl = document.getElementById('total-size');
+        const senderInitialView = document.getElementById('sender-initial-view');
+        const senderConnectingView = document.getElementById('sender-connecting-view');
+        const peerIdDisplay = document.getElementById('peer-id-display');
+        const copyPeerIdBtn = document.getElementById('copy-peer-id');
+        const sendBtn = document.getElementById('send-btn');
+        const senderProgressView = document.getElementById('sender-progress-view');
+        const sendAnotherFileBtn = document.getElementById('send-another-file-btn');
+
+        // Receiver elements
+        const peerIdInput = document.getElementById('peer-id-input');
+        const connectBtn = document.getElementById('connect-btn');
+        const receiverInitialView = document.getElementById('receiver-initial-view');
+        const receiverProgressView = document.getElementById('receiver-progress-view');
+        const receiverStatus = document.getElementById('receiver-status');
+        const receiverFilesContainer = document.getElementById('receiver-files-container');
+        
+        // Popup elements
+        const messagePopup = document.getElementById('message-popup');
+        const messageText = document.getElementById('message-text');
+        const restartPopup = document.getElementById('restart-popup');
+        const acceptRestartBtn = document.getElementById('accept-restart-btn');
+        const rejectRestartBtn = document.getElementById('reject-restart-btn');
+
+
+        // --- App State ---
+        let peer;
+        let conn;
+        let filesToSend = [];
+        
+        // --- Utility Functions ---
+        const showScreen = (screen) => {
+            homeScreen.classList.add('hidden');
+            senderScreen.classList.add('hidden');
+            receiverScreen.classList.add('hidden');
+            screen.classList.remove('hidden');
+        };
+
+        const formatBytes = (bytes, decimals = 2) => {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        };
+
+        const showMessage = (msg) => {
+            messageText.textContent = msg;
+            messagePopup.classList.remove('hidden');
+            setTimeout(() => {
+                messagePopup.classList.add('hidden');
+            }, 3000);
+        };
+
+        const resetSenderState = () => {
+            filesToSend = [];
+            fileList.innerHTML = '';
+            fileListContainer.classList.add('hidden');
+            totalSizeEl.textContent = '';
+            fileInput.value = '';
+            sendBtn.disabled = true;
+            senderInitialView.classList.remove('hidden');
+            senderProgressView.classList.add('hidden');
+            senderProgressView.innerHTML = '';
+            sendAnotherFileBtn.classList.add('hidden');
+        };
+        
+        const resetReceiverState = () => {
+            receivedFiles = {};
+            receiverProgressView.classList.add('hidden');
+            receiverInitialView.classList.remove('hidden');
+            peerIdInput.value = '';
+            receiverStatus.textContent = 'Connecting to sender...';
+            receiverFilesContainer.innerHTML = '';
+        };
+
+
+        // --- Navigation ---
+        goToSenderBtn.addEventListener('click', () => {
+            showScreen(senderScreen);
+            initSenderPeer();
+        });
+
+        goToReceiverBtn.addEventListener('click', () => {
+            showScreen(receiverScreen);
+            initReceiverPeer();
+        });
+
+        senderBackBtn.addEventListener('click', () => {
+            showScreen(homeScreen);
+            if (peer) peer.destroy();
+        });
+
+        receiverBackBtn.addEventListener('click', () => {
+            showScreen(homeScreen);
+            if (peer) peer.destroy();
+        });
+// --- Sender Logic ---
+        function initSenderPeer() {
+            if (peer) peer.destroy();
+            peer = new Peer();
+            peer.on('open', id => {
+                peerIdDisplay.textContent = id;
+                senderConnectingView.classList.remove('hidden');
+            });
+            peer.on('connection', newConn => {
+                conn = newConn;
+                showMessage('Receiver connected!');
+                if (filesToSend.length > 0) {
+                    sendBtn.disabled = false;
+                }
+                conn.on('data', handleReceiverData);
+            });
+            peer.on('error', err => {
+                console.error("PeerJS error:", err);
+                showMessage(`Error: ${err.message}`);
+            });
+        }
+
+        fileInput.addEventListener('change', (e) => {
+            filesToSend = Array.from(e.target.files);
+            updateFileListUI();
+        });
+
+        function getIconForFile(file) {
+            const fileName = file.name;
+            const fileType = file.type;
+            const extension = fileName.split('.').pop().toLowerCase();
+
+            // Image files
+            if (fileType.startsWith('image/')) return 'image';
+            // Video files
+            if (fileType.startsWith('video/')) return 'video_file';
+            // APK/AAB
+            if (['apk', 'aab'].includes(extension)) return 'android';
+            // Compressed files
+            if (['zip', 'rar', '7z', 'tar', 'gz'].includes(extension)) return 'folder_zip';
+            // PDF
+            if (['pdf'].includes(extension)) return 'picture_as_pdf';
+            // Code files
+            if (['html', 'css', 'js', 'jsx', 'ts', 'py', 'java', 'cpp', 'c', 'h', 'json', 'xml'].includes(extension)) return 'code';
+            // Document files (broad)
+            if (['doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx'].includes(extension)) return 'description';
+            
+            // Default to generic file icon for everything else
+            return 'insert_drive_file';
+        }
+
+        function updateFileListUI() {
+            fileList.innerHTML = '';
+            if (filesToSend.length === 0) {
+                fileListContainer.classList.add('hidden');
+                sendBtn.disabled = true;
+                return;
+            }
+
+            let totalSize = 0;
+            filesToSend.forEach((file, index) => {
+                totalSize += file.size;
+
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                
+                fileItem.innerHTML = `
+                    <div class="file-item-delete-btn" data-index="${index}">
+                        <span class="material-icons">close</span>
+                    </div>
+                    <span class="material-icons file-item-icon">${getIconForFile(file)}</span>
+                    <p class="file-item-name">${file.name}</p>
+                `;
+                fileList.appendChild(fileItem);
+            });
+
+            totalSizeEl.textContent = `Total Size: ${formatBytes(totalSize)}`;
+            fileListContainer.classList.remove('hidden');
+
+            document.querySelectorAll('.file-item-delete-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const indexToRemove = parseInt(e.currentTarget.getAttribute('data-index'));
+                    filesToSend.splice(indexToRemove, 1);
+                    updateFileListUI();
+                });
+            });
+
+            if (conn && conn.open) {
+                sendBtn.disabled = filesToSend.length === 0;
+            }
+        }
+
+        copyPeerIdBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(peerIdDisplay.textContent)
+                .then(() => showMessage('Peer ID copied!'))
+                .catch(err => showMessage('Failed to copy ID.'));
+        });
+
+        sendBtn.addEventListener('click', sendFiles);
+
+        async function sendFiles() {
+            sendBtn.disabled = true;
+            senderInitialView.classList.add('hidden');
+            senderConnectingView.classList.add('hidden');
+            senderProgressView.classList.remove('hidden');
+            senderProgressView.innerHTML = '';
+
+            const metadata = filesToSend.map(file => ({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+            }));
+            
+            conn.send({ type: 'metadata', payload: metadata });
+
+            for (const file of filesToSend) {
+                createSenderProgressUI(file);
+                await sendFileInChunks(file);
+            }
+        }
+        
+        function sendFileInChunks(file) {
+             return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                let offset = 0;
+
+                reader.onload = (e) => {
+                    try {
+                        const chunk = e.target.result;
+                        conn.send({ type: 'chunk', payload: { name: file.name, chunk } });
+                        offset += chunk.byteLength;
+                        updateSenderProgress(file.name, (offset / file.size) * 100);
+
+                        if (offset < file.size) {
+                            readSlice(offset);
+                        } else {
+                           conn.send({ type: 'file_complete', payload: { name: file.name } });
+                           resolve();
+                        }
+                    } catch(err) {
+                        reject(err);
+                    }
+                };
+                reader.onerror = (err) => reject(err);
+                
+                const readSlice = (o) => {
+                    const slice = file.slice(o, o + CHUNK_SIZE);
+                    reader.readAsArrayBuffer(slice);
+                };
+                
+                readSlice(0);
+            });
+        }
+        
+        function createSenderProgressUI(file) {
+             const progressItem = document.createElement('div');
+            progressItem.id = `sender-progress-${file.name}`;
+            progressItem.className = 'mb-4';
+            progressItem.innerHTML = `
+                <div class="flex justify-between items-center text-sm mb-1">
+                    <span class="font-medium truncate max-w-xs">${file.name}</span>
+                    <span class="text-gray-500" id="sender-percent-${file.name}">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="sender-bar-${file.name}" class="bg-blue-600 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                </div>
+            `;
+            senderProgressView.appendChild(progressItem);
+        }
+
+        function updateSenderProgress(fileName, percentage) {
+            const percentEl = document.getElementById(`sender-percent-${fileName}`);
+            const barEl = document.getElementById(`sender-bar-${fileName}`);
+            if (percentEl && barEl) {
+                const p = Math.round(percentage);
+                percentEl.textContent = `${p}%`;
+                barEl.style.width = `${p}%`;
+                 if(p === 100) {
+                    percentEl.textContent = 'Sent!';
+                    barEl.classList.remove('bg-blue-600');
+                    barEl.classList.add('bg-green-500');
+                }
+            }
+             // Check if all files are complete
+            const allDone = filesToSend.every(f => {
+                const bar = document.getElementById(`sender-bar-${f.name}`);
+                return bar && bar.style.width === '100%';
+            });
+
+            if (allDone) {
+                sendAnotherFileBtn.classList.remove('hidden');
+            }
+        }
+        
+        sendAnotherFileBtn.addEventListener('click', () => {
+            if (conn && conn.open) {
+                conn.send({ type: 'restart_request' });
+                resetSenderState();
+                senderConnectingView.classList.remove('hidden');
+            } else {
+                showMessage('Connection lost. Please restart.');
+                showScreen(homeScreen);
+            }
+        });
+// --- Receiver Logic ---
+        let receivedFiles = {};
+
+        function initReceiverPeer() {
+            if (peer) peer.destroy();
+            peer = new Peer();
+            peer.on('error', err => {
+                console.error("PeerJS error:", err);
+                showMessage(`Error: ${err.message}`);
+            });
+        }
+
+        connectBtn.addEventListener('click', () => {
+            const senderId = peerIdInput.value.trim();
+            if (!senderId) {
+                showMessage('Please enter a Peer ID.');
+                return;
+            }
+            conn = peer.connect(senderId);
+            receiverInitialView.classList.add('hidden');
+            receiverProgressView.classList.remove('hidden');
+
+            conn.on('open', () => {
+                receiverStatus.textContent = 'Connected! Waiting for files...';
+                conn.send({type: 'receiver_ready'});
+            });
+            conn.on('data', handleReceiverData);
+             conn.on('close', () => {
+                showMessage('Connection lost.');
+                resetReceiverState();
+            });
+        });
+
+        function handleReceiverData(data) {
+            switch (data.type) {
+                case 'metadata':
+                    receiverStatus.textContent = 'Receiving files...';
+                    receiverFilesContainer.innerHTML = ''; // Clear previous files
+                    data.payload.forEach(meta => {
+                        receivedFiles[meta.name] = { metadata: meta, chunks: [] };
+                        createReceiverProgressUI(meta);
+                    });
+                    break;
+                case 'chunk':
+                    const file = receivedFiles[data.payload.name];
+                    if (file) {
+                        file.chunks.push(data.payload.chunk);
+                        const receivedSize = file.chunks.reduce((acc, chunk) => acc + chunk.byteLength, 0);
+                        const progress = (receivedSize / file.metadata.size) * 100;
+                        updateReceiverProgress(file.metadata.name, progress, receivedSize, file.metadata.size);
+                    }
+                    break;
+                case 'file_complete':
+                    const completedFile = receivedFiles[data.payload.name];
+                    if (completedFile) {
+                        const fileBlob = new Blob(completedFile.chunks, { type: completedFile.metadata.type });
+                        const url = URL.createObjectURL(fileBlob);
+                        addDownloadLink(completedFile.metadata.name, url);
+                    }
+                    break;
+                case 'restart_request':
+                    restartPopup.classList.remove('hidden');
+                    break;
+                case 'restart_accepted':
+                    showMessage('Restarting for new files...');
+                    resetSenderState();
+                    senderConnectingView.classList.remove('hidden');
+                    break;
+            }
+        }
+        
+        function createReceiverProgressUI(metadata) {
+             const progressItem = document.createElement('div');
+            progressItem.id = `receiver-progress-${metadata.name}`;
+            progressItem.className = 'mb-4 bg-gray-50 p-3 rounded-lg';
+            progressItem.innerHTML = `
+                <div class="flex justify-between items-center text-sm mb-1">
+                    <span class="font-medium truncate max-w-xs">${metadata.name}</span>
+                    <span class="text-gray-500" id="receiver-percent-${metadata.name}">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="receiver-bar-${metadata.name}" class="bg-blue-600 h-2.5 rounded-full progress-bar-inner" style="width: 0%"></div>
+                </div>
+                <div class="text-xs text-right text-gray-500 mt-1" id="receiver-size-info-${metadata.name}">
+                    0 Bytes / ${formatBytes(metadata.size)}
+                </div>
+                <div id="download-container-${metadata.name}" class="hidden mt-2"></div>
+            `;
+            receiverFilesContainer.appendChild(progressItem);
+        }
+        
+        function updateReceiverProgress(fileName, percentage, receivedSize, totalSize) {
+            const percentEl = document.getElementById(`receiver-percent-${fileName}`);
+            const barEl = document.getElementById(`receiver-bar-${fileName}`);
+            const sizeInfoEl = document.getElementById(`receiver-size-info-${fileName}`);
+
+            if (percentEl && barEl && sizeInfoEl) {
+                const p = Math.round(percentage);
+                percentEl.textContent = `${p}%`;
+                barEl.style.width = `${p}%`;
+                sizeInfoEl.textContent = `${formatBytes(receivedSize)} / ${formatBytes(totalSize)}`;
+                if (p === 100) {
+                    barEl.classList.remove('bg-blue-600');
+                    barEl.classList.add('bg-green-500');
+                }
+            }
+        }
+
+        function addDownloadLink(fileName, url) {
+            const container = document.getElementById(`download-container-${fileName}`);
+            const percentEl = document.getElementById(`receiver-percent-${fileName}`);
+
+            if (container) {
+                percentEl.textContent = "Complete!";
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                link.className = 'inline-flex items-center bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105';
+                link.innerHTML = `<span class="material-icons mr-2">download_for_offline</span>Download`;
+                container.innerHTML = '';
+                container.appendChild(link);
+                container.classList.remove('hidden');
+            }
+        }
+        
+        // --- Restart Logic ---
+        acceptRestartBtn.addEventListener('click', () => {
+            if (conn && conn.open) {
+                conn.send({ type: 'restart_accepted' });
+                resetReceiverState();
+                receiverInitialView.classList.add('hidden');
+                receiverProgressView.classList.remove('hidden');
+                receiverStatus.textContent = 'Ready for next file transfer...';
+            }
+            restartPopup.classList.add('hidden');
+        });
+
+        rejectRestartBtn.addEventListener('click', () => {
+            restartPopup.classList.add('hidden');
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,4542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuWrite Pro - Google Docs Clone</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Autocorrect misspelled styling */
+.misspelled {
+  text-decoration-line: underline;
+  text-decoration-style: wavy;
+  text-decoration-color: #d93025; /* red */
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+/* Collapsed Sidebar as Top Bar */
+.sidebar.collapsed {
+    position: relative;
+    width: 100%;
+    height: 48px;
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px; /* small gap between buttons */
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    background-color: var(--toolbar-bg);
+}
+
+/* Buttons inside collapsed bar */
+/* Compact buttons in collapsed top bar */
+.sidebar.collapsed .sidebar-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    height: 36px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.sidebar.collapsed .sidebar-btn { display:inline-flex !important; width:auto !important; margin:0 4px !important; }
+/* Prevent clicking and hide the dropdown arrow */
+.no-arrow {
+    pointer-events: none; /* cannot click */
+    -webkit-appearance: none; /* remove arrow in Chrome/Safari */
+    -moz-appearance: none;    /* remove arrow in Firefox */
+    appearance: none;         /* remove arrow in modern browsers */
+    background: none;         /* transparent background */
+    border: none;             /* optional: remove border if needed */
+    padding-right: 0;         /* remove space for arrow */
+    cursor: default;          /* normal cursor */
+}
+
+/* Keep the font size and alignment consistent */
+.toolbar .toolbar-group .no-arrow {
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--text-color);
+}
+.misspelled {
+  text-decoration: underline wavy red;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+</style>
+    <style>
+        :root {
+            --primary-color: #1a73e8;
+            --header-bg: #f1f3f4;
+            --toolbar-bg: #f8f9fa;
+            --border-color: #dadce0;
+            --text-color: #202124;
+            --hover-bg: #f1f3f4;
+            --dark-bg: #121212;         /* Main background */
+--dark-toolbar: #1e1e1e;    /* Toolbar/sidebar */
+--dark-border: #3a3a3a;     /* Sharper borders */
+--dark-text: #e8eaed;       /* Main text */
+--dark-subtext: #b0b3b8;    /* Secondary text */
+--dark-hover: rgba(255,255,255,0.08); /* Hover effect */
+
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', 'Arial', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background-color: #f8f9fa;
+            color: var(--text-color);
+            transition: background-color 0.3s;
+        }
+        
+        body.dark-mode {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+        
+        /* Header Styles */
+        header {
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+            height: 60px;
+            transition: all 0.3s;
+        }
+        
+        body.dark-mode header {
+            background-color: var(--dark-toolbar);
+            border-color: var(--dark-border);
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        
+        .logo-icon {
+            font-size: 32px;
+            color: var(--primary-color);
+            margin-right: 10px;
+        }
+        
+        .logo-text {
+            font-size: 22px;
+            font-weight: 500;
+        }
+        
+        .menu-icon {
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .menu-icon:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .document-name {
+            flex-grow: 1;
+            padding: 0 15px;
+        }
+        
+        .doc-title {
+            font-size: 18px;
+            font-weight: 500;
+            padding: 5px 10px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 500px;
+        }
+body.dark-mode .doc-title {
+    background-color: #2a2b2d;   /* dark input background */
+    color: var(--dark-text);      /* readable light text */
+    border: 1px solid var(--dark-border);
+}
+
+body.dark-mode .doc-title:focus {
+    border-color: var(--primary-color); /* highlight when focused */
+    outline: none;
+}
+
+        
+        .doc-title:focus {
+            border-color: var(--border-color);
+            outline: none;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+body.dark-mode .action-btn {
+    color: #ffffff; /* white text for dark mode */
+}
+
+body.dark-mode .action-btn i {
+    color: #ffffff; /* make the icon white too */
+}
+
+        
+        .action-btn:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        /* Toolbar Styles */
+        .toolbar {
+            display: flex;
+            padding: 8px 16px;
+            background-color: var(--toolbar-bg);
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            transition: all 0.3s;
+        }
+        
+        body.dark-mode .toolbar {
+            background-color: var(--dark-toolbar);
+            border-color: var(--dark-border);
+        }
+        
+        .toolbar-group {
+            display: flex;
+            border-right: 1px solid var(--border-color);
+            padding: 0 8px;
+            margin: 4px 0;
+        }
+        
+        body.dark-mode .toolbar-group {
+            border-color: var(--dark-border);
+        }
+        
+        .toolbar-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            font-size: 18px;
+        }
+
+body.dark-mode .toolbar-btn {
+    color: var(--dark-text);
+}
+
+        
+        /* Dark mode improvements */
+body.dark-mode .toolbar-btn:hover,
+body.dark-mode .sidebar-btn:hover,
+body.dark-mode .action-btn:hover {
+    background-color: var(--dark-hover);
+    color: var(--primary-color); /* Blue accent highlight */
+}
+
+
+body.dark-mode .toolbar-btn.active {
+    background-color: rgba(26,115,232,0.2);
+    color: var(--primary-color);
+}
+
+        
+        .toolbar-btn.active {
+            background-color: #e8f0fe;
+            color: var(--primary-color);
+        }
+        
+        .toolbar-select {
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 5px 8px;
+            margin: 0 5px;
+            background-color: white;
+            cursor: pointer;
+        }
+        
+        body.dark-mode .toolbar-select {
+            background-color: #3c4043;
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+        }
+        
+        .color-picker {
+            width: 24px;
+            height: 24px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            background: none;
+        }
+        
+        /* Editor Area */
+        .editor-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 240px;
+            background-color: white;
+            border-right: 1px solid var(--border-color);
+            padding: 16px;
+            transition: all 0.3s;
+overflow-y: auto;  /* ✅ allow vertical scrolling */
+    max-height: 100vh; /* ✅ ensure it fits screen height */
+        }
+        
+        body.dark-mode .sidebar {
+    background-color: #181818; /* darker than toolbar */
+    border-color: var(--dark-border);
+}
+
+        
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+        
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            color: #5f6368;
+        }
+        
+        body.dark-mode .sidebar-title {
+    color: var(--dark-subtext);
+    font-weight: 500;
+}
+
+        
+        .sidebar-btn {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+body.dark-mode .sidebar-btn {
+    color: var(--dark-text);
+}
+
+        
+        .sidebar-btn:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .sidebar-btn i {
+            margin-right: 12px;
+            font-size: 18px;
+        }
+        
+        .editor-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .document-container {
+            flex: 1;
+            overflow: auto;
+            padding: 20px 60px;
+            background-color: white;
+            position: relative;
+            transition: background-color 0.3s;
+        }
+        
+        body.dark-mode .document-container {
+            background-color: #1e1e1e;
+        }
+        
+        #editor {
+            min-height: 100%;
+            outline: none;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--text-color);
+            transition: color 0.3s;
+        }
+        
+        body.dark-mode #editor {
+            color: var(--dark-text);
+        }
+        
+        .page {
+            width: 21cm;
+            min-height: 29.7cm;
+            margin: 0 auto;
+            padding: 2.5cm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: white;
+            position: relative;
+        }
+        
+        body.dark-mode .page {
+            background-color: #2d2e30;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .watermark {
+            position: absolute;
+            bottom: 1cm;
+            right: 1cm;
+            opacity: 0.2;
+            font-size: 48px;
+            color: #5f6368;
+            pointer-events: none;
+        }
+        
+        /* Status Bar */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 16px;
+            background-color: var(--toolbar-bg);
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: #5f6368;
+            transition: all 0.3s;
+        }
+        
+        body.dark-mode .status-bar {
+            background-color: var(--dark-toolbar);
+            border-color: var(--dark-border);
+            color: #9aa0a6;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        /* Modals and Popups */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            padding: 24px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        body.dark-mode .modal-content {
+    background-color: #242526;
+    border: 1px solid var(--dark-border);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #5f6368;
+        }
+        
+        body.dark-mode .close-modal {
+            color: #9aa0a6;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        body.dark-mode .form-input {
+            background-color: #3c4043;
+            border-color: var(--dark-border);
+            color: var(--dark-text);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #f1f3f4;
+            color: var(--text-color);
+        }
+        
+        body.dark-mode .btn-secondary {
+            background-color: #3c4043;
+            color: var(--dark-text);
+        }
+        
+        /* Autosave Popup */
+        .autosave-popup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 300px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        
+        .autosave-popup.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        body.dark-mode .autosave-popup {
+            background-color: #2d2e30;
+        }
+        
+        .autosave-text {
+            font-size: 14px;
+        }
+        
+        .autosave-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* Fullscreen */
+        body.fullscreen {
+            overflow: hidden;
+        }
+        
+        body.fullscreen .sidebar {
+            display: none;
+        }
+        
+        body.fullscreen .toolbar, 
+        body.fullscreen header, 
+        body.fullscreen .status-bar {
+            display: none;
+        }
+        
+        body.fullscreen .document-container {
+            padding: 0;
+        }
+        
+        body.fullscreen .page {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 2cm;
+            box-shadow: none;
+        }
+        
+        .fullscreen-exit {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .fullscreen-exit.visible {
+            opacity: 1;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -240px;
+                top: 60px;
+                height: calc(100vh - 60px);
+                z-index: 50;
+                transition: left 0.3s;
+            }
+            
+            .sidebar.active {
+                left: 0;
+            }
+            
+            .toolbar {
+                overflow-x: auto;
+            }
+            
+            .page {
+                width: 100%;
+                padding: 1.5cm;
+            }
+        }
+    </style>
+<style></style></head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <i class="material-icons logo-icon">description</i>
+            <div class="logo-text">Editor</div>
+        </div>
+        <i class="material-icons menu-icon" id="menu-toggle">menu</i>
+        <div class="document-name">
+            <input type="text" class="doc-title" id="doc-title" placeholder="Untitled Document" value="Untitled Document">
+        </div>
+        <div class="header-actions">
+            <button class="action-btn" id="dark-mode-toggle">
+                <i class="material-icons">dark_mode</i>
+                Dark Mode
+            </button>
+            <button class="action-btn" id="fullscreen-btn">
+                <i class="material-icons">fullscreen</i>
+                Fullscreen
+            </button>
+            <button class="action-btn" id="save-btn">
+                <i class="material-icons">save</i>
+                Save
+            </button>
+            <button class="action-btn" id="export-btn">
+                <i class="material-icons">download</i>
+                Export
+            </button>
+        </div>
+    </header>
+    
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-group">
+            <button class="toolbar-btn" data-command="undo" title="Undo">
+                <i class="material-icons">undo</i>
+            </button>
+            <button class="toolbar-btn" data-command="redo" title="Redo">
+                <i class="material-icons">redo</i>
+            </button>
+        </div>
+        
+        <div class="toolbar-group">
+            <select class="toolbar-select" id="format-block">
+                <option value="p">Paragraph</option>
+                <option value="h1">Heading 1</option>
+                <option value="h2">Heading 2</option>
+                <option value="h3">Heading 3</option>
+                <option value="h4">Heading 4</option>
+                <option value="h5">Heading 5</option>
+                <option value="h6">Heading 6</option>
+            </select>
+        </div>
+        
+        <div class="toolbar-group">
+            <button class="toolbar-btn" data-command="bold" title="Bold">
+                <i class="material-icons">format_bold</i>
+            </button>
+            <button class="toolbar-btn" data-command="italic" title="Italic">
+                <i class="material-icons">format_italic</i>
+            </button>
+            <button class="toolbar-btn" data-command="underline" title="Underline">
+                <i class="material-icons">format_underlined</i>
+            </button>
+            <button class="toolbar-btn" data-command="strikeThrough" title="Strikethrough">
+                <i class="material-icons">strikethrough_s</i>
+            </button>
+        </div>
+        
+        <div class="toolbar-group">
+            <button class="toolbar-btn" data-command="justifyLeft" title="Align left">
+                <i class="material-icons">format_align_left</i>
+            </button>
+            <button class="toolbar-btn" data-command="justifyCenter" title="Center">
+                <i class="material-icons">format_align_center</i>
+            </button>
+            <button class="toolbar-btn" data-command="justifyRight" title="Align right">
+                <i class="material-icons">format_align_right</i>
+            </button>
+            <button class="toolbar-btn" data-command="justifyFull" title="Justify">
+                <i class="material-icons">format_align_justify</i>
+            </button>
+        </div>
+        
+        <div class="toolbar-group">
+            <button class="toolbar-btn" data-command="insertUnorderedList" title="Bullet list">
+                <i class="material-icons">format_list_bulleted</i>
+            </button>
+            <button class="toolbar-btn" data-command="insertOrderedList" title="Numbered list">
+                <i class="material-icons">format_list_numbered</i>
+            </button>
+            <button class="toolbar-btn" id="insert-link" title="Insert link">
+                <i class="material-icons">insert_link</i>
+            </button>
+            <button class="toolbar-btn" id="insert-image" title="Insert image">
+                <i class="material-icons">insert_photo</i>
+            </button>
+        </div>
+        
+        <div class="toolbar-group">
+            <select class="toolbar-select no-arrow" id="font-family" disabled>
+    <option value="Arial">Arial (Default)</option>
+    <option value="Times New Roman">Advanced Fonts</option>
+    
+</select>
+            <select class="toolbar-select" id="font-size">
+                <option value="1">8pt</option>
+                <option value="2">10pt</option>
+                <option value="3">12pt</option>
+                <option value="4">14pt</option>
+                <option value="5">18pt</option>
+                <option value="6">24pt</option>
+                <option value="7">36pt</option>
+            </select>
+        </div>
+        
+        <div class="toolbar-group">
+            <input type="color" class="color-picker" id="text-color" title="Text color">
+            <input type="color" class="color-picker" id="highlight-color" title="Highlight color">
+            <button class="toolbar-btn" data-command="removeFormat" title="Clear formatting">
+                <i class="material-icons">format_clear</i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Editor Area -->
+    <div class="editor-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-section">
+
+<!-- Smart Lookup Sidebar Button -->
+<button class="sidebar-btn" id="lookup-btn" style="border:2px solid #1a73e8; color:#1a73e8; background:none; padding:8px 12px; border-radius:6px; display:flex; align-items:center; gap:6px; cursor:pointer;">
+    <i class="material-icons">tips_and_updates</i>
+    Smart Lookup
+</button>
+
+<div class="modal" id="lookup-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Smart Lookup</h3>
+      <button id="close-lookup-modal" class="close-modal">&times;</button>
+    </div>
+    
+    <div class="modal-search">
+      <input type="text" id="lookup-word" placeholder="Enter a word..." />
+      <button id="lookup-search">Search</button>
+    </div>
+    
+    <div id="lookup-error" class="lookup-error"></div>
+    <div id="lookup-loading" class="lookup-loading">
+      <div class="spinner"></div>
+      <p>Loading...</p>
+    </div>
+    
+    <div id="lookup-result"></div>
+  </div>
+</div>
+
+<style>
+/* Modal overlay */
+.modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); justify-content:center; align-items:center; z-index:9999; }
+.modal.active { display:flex; }
+
+/* Modal content */
+.modal-content {
+  background:#fff;
+  border-radius:8px;
+  width:90%; max-width:720px;
+  max-height:85vh;
+  overflow-y:auto;
+  padding:20px;
+  box-shadow:0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Header */
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+.modal-header h3 { margin:0; color:#1a73e8; }
+.close-modal { background:none; border:none; font-size:24px; cursor:pointer; color:#333; }
+
+/* Search */
+.modal-search { display:flex; gap:10px; margin-bottom:15px; }
+.modal-search input { flex:1; padding:10px; font-size:16px; border:1px solid #dadce0; border-radius:6px; outline:none; }
+.modal-search input:focus { border-color:#1a73e8; box-shadow:0 0 5px rgba(26,115,232,0.3); }
+.modal-search button { padding:10px 20px; background:#1a73e8; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:500; }
+.modal-search button:hover { background:#1765cc; }
+
+/* Loading */
+.lookup-loading { display:none; text-align:center; padding:20px; }
+.spinner { width:40px; height:40px; border:4px solid rgba(0,0,0,0.1); border-top-color:#1a73e8; border-radius:50%; margin:0 auto 10px; animation:spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Error */
+.lookup-error { color:red; margin-bottom:10px; display:none; }
+
+/* Result content */
+#lookup-result h3 { margin-top:0; color:#1a73e8; }
+#lookup-result p { margin:5px 0; line-height:1.5; }
+#lookup-result audio { width:100%; margin:5px 0; }
+
+/* Synonyms/Antonyms */
+.synonym, .antonym { display:inline-block; background:#e8f0fe; color:#1a73e8; padding:3px 8px; border-radius:12px; margin:2px; font-size:13px; }
+
+/* Images */
+.images-container { display:flex; flex-wrap:wrap; gap:10px; margin:10px 0; }
+.image-card { position:relative; border-radius:6px; overflow:hidden; height:120px; flex:1 1 calc(50% - 10px); background:#f0f0f0; display:flex; align-items:center; justify-content:center; }
+.image-card img { width:100%; height:100%; object-fit:cover; }
+.image-overlay { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.6); color:#fff; padding:3px; font-size:12px; text-align:center; opacity:0; transition:opacity 0.3s; }
+.image-card:hover .image-overlay { opacity:1; }
+
+@media(max-width:480px){ .image-card { flex:1 1 100%; } }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const lookupBtn = document.getElementById('lookup-btn');
+  const lookupModal = document.getElementById('lookup-modal');
+  const closeLookup = document.getElementById('close-lookup-modal');
+  const lookupSearch = document.getElementById('lookup-search');
+  const lookupWordInput = document.getElementById('lookup-word');
+  const lookupResult = document.getElementById('lookup-result');
+  const lookupError = document.getElementById('lookup-error');
+  const lookupLoading = document.getElementById('lookup-loading');
+  const UNSPLASH_API_KEY = 'zE9SiiMyCl5TxAqvpUIphoUSd72HIHrQFBmwUAm4hAg';
+
+  lookupBtn.addEventListener('click', () => {
+    lookupWordInput.value=''; lookupResult.innerHTML=''; lookupError.style.display='none';
+    lookupModal.classList.add('active'); lookupWordInput.focus();
+  });
+  closeLookup.addEventListener('click', ()=>lookupModal.classList.remove('active'));
+  lookupSearch.addEventListener('click', searchWord);
+  lookupWordInput.addEventListener('keypress', e=>{ if(e.key==='Enter') searchWord(); });
+
+  async function searchWord() {
+    const word = lookupWordInput.value.trim();
+    if(!word){ lookupError.textContent='Please enter a word'; lookupError.style.display='block'; return; }
+    lookupError.style.display='none'; lookupResult.innerHTML=''; lookupLoading.style.display='block';
+
+    try {
+      // Dictionary API
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      if(!res.ok) throw new Error('Word not found');
+      const data = await res.json();
+      const entry = data[0];
+      let html = `<h3>${entry.word}</h3>`;
+      if(entry.phonetics && entry.phonetics.length>0){
+        html += `<p>Phonetic: ${entry.phonetics[0].text||'N/A'}</p>`;
+        if(entry.phonetics[0].audio) html += `<audio controls src="${entry.phonetics[0].audio}"></audio>`;
+      }
+      if(entry.meanings && entry.meanings.length>0){
+        entry.meanings.forEach(m=>{
+          html+=`<p><strong>${m.partOfSpeech}:</strong></p>`;
+          m.definitions.slice(0,3).forEach(d=>{ html+=`<p>- ${d.definition}${d.example?`<br><em>Example: ${d.example}</em>`:''}</p>`; });
+        });
+      }
+
+      // Synonyms/Antonyms
+      let syns=[], ants=[];
+      entry.meanings.forEach(m=>{ if(m.synonyms) syns.push(...m.synonyms); if(m.antonyms) ants.push(...m.antonyms); });
+      if(syns.length) html+=`<p>Synonyms: ${syns.slice(0,10).map(s=>`<span class="synonym">${s}</span>`).join(' ')}</p>`;
+      if(ants.length) html+=`<p>Antonyms: ${ants.slice(0,10).map(a=>`<span class="antonym">${a}</span>`).join(' ')}</p>`;
+
+      // Unsplash Images
+      const imgRes = await fetch(`https://api.unsplash.com/search/photos?page=1&per_page=4&query=${word}&client_id=${UNSPLASH_API_KEY}`);
+      const imgData = await imgRes.json();
+      if(imgData.results && imgData.results.length>0){
+        html+=`<h4>Images</h4><div class="images-container">`;
+        imgData.results.forEach(p=>{ html+=`<div class="image-card"><img src="${p.urls.small}" alt="${word}"><div class="image-overlay">Photo by ${p.user.name}</div></div>`; });
+        html+=`</div>`;
+      }
+
+      // AI Images
+      const prompts = [`A beautiful ${word}`, `Digital art of ${word}`, `Abstract ${word}`, `Modern interpretation of ${word}`];
+      html+=`<h4>AI Images</h4><div class="images-container">`;
+      prompts.forEach((p,i)=>{ const ts=Date.now()+i; html+=`<div class="image-card"><img src="https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?seed=${ts}" alt="${word}"><div class="image-overlay">AI Generated</div></div>`; });
+      html+=`</div>`;
+
+      lookupResult.innerHTML=html; lookupLoading.style.display='none';
+    } catch(e){ lookupResult.innerHTML=''; lookupError.textContent=e.message; lookupError.style.display='block'; lookupLoading.style.display='none'; }
+  }
+});
+</script>
+
+       
+                <button class="sidebar-btn" id="autosave-settings">
+                    <i class="material-icons">settings</i>
+                    Autosave Settings
+                </button>
+<!-- Sidebar Button -->
+<button class="sidebar-btn" id="smart-spell-btn">
+  <i class="material-icons">spellcheck</i>
+  Smart Spelling
+</button>
+
+<!-- Slide-in Smart Spelling Sidebar -->
+<div id="smart-spell-panel">
+  <div class="smart-header">
+    <span>Smart Spelling Check</span>
+    <button id="close-smart-panel" title="Close">
+      <i class="material-icons">chevron_left</i>
+    </button>
+  </div>
+  <div id="smart-output"></div>
+  <div class="smart-footer">
+    <button id="smart-recheck">Recheck</button>
+    <span id="smart-count">Mistakes Found: 0</span>
+  </div>
+</div>
+
+<style>
+/* Slide-in panel */
+#smart-spell-panel {
+  position: fixed;
+  top: 0;
+  left: -400px; /* hidden by default */
+  width: 400px;
+  height: 100%;
+  background: #fff;
+  box-shadow: 2px 0 6px rgba(0,0,0,0.2);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  transition: left 0.3s ease;
+}
+#smart-spell-panel.active { left: 0; }
+
+.smart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #4285f4;
+  color: #fff;
+  font-weight: 500;
+}
+.smart-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+#smart-output {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.smart-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-top: 1px solid #dadce0;
+  background: #f8f9fa;
+}
+.smart-footer button {
+  background: #4285f4;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.smart-footer button:hover {
+  background: #3367d6;
+}
+
+/* Highlight misspelled words */
+.smart-misspelled {
+  text-decoration: underline wavy red;
+  text-decoration-thickness: 1px;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const smartBtn = document.getElementById("smart-spell-btn");
+  const panel = document.getElementById("smart-spell-panel");
+  const closeBtn = document.getElementById("close-smart-panel");
+  const output = document.getElementById("smart-output");
+  const recheckBtn = document.getElementById("smart-recheck");
+  const countDisplay = document.getElementById("smart-count");
+
+  // Extended whitelist for common English words, names, and app-specific terms
+const whitelist = new Set([
+  "a","an","and","are","as","at","be","been","but","by","can","did","do","does","for",
+  "from","he","her","hers","him","his","i","if","in","is","it","its","me","my","no","not",
+  "of","on","or","our","she","so","that","the","their","them","they","this","to","we",
+  "were","what","when","which","who","will","with","you","your","yours","DocuWrite",
+  "Azad","Mahi","Mohtadi","EBMA","education","school","text","editor","page","pages","DocuWrite","DocuWrite Pro","DocuWrite"
+]);
+
+// Extended contractions list
+const contractions = new Set([
+  "aren't","can't","couldn't","didn't","doesn't","don't","hadn't","hasn't","haven't",
+  "he'd","he'll","he's","i'd","i'll","i'm","i've","isn't","it's","let's","mightn't",
+  "mustn't","shan't","she'd","she'll","she's","shouldn't","that's","there's","they'd",
+  "they'll","they're","they've","we'd","we'll","we're","we've","weren't","what's","where's",
+  "who's","won't","wouldn't","you're","you'd","you'll","DocuWrite","DocuWrite Pro","you've"
+]);
+
+
+  smartBtn.addEventListener("click", () => {
+    panel.classList.add("active");
+    runSpellCheck();
+  });
+
+  closeBtn.addEventListener("click", () => {
+    panel.classList.remove("active");
+  });
+
+  recheckBtn.addEventListener("click", runSpellCheck);
+
+  async function runSpellCheck() {
+    output.innerHTML = "Checking spelling...";
+    countDisplay.textContent = "Mistakes Found: 0";
+
+    // COLLECT ALL TEXT FROM .page ELEMENTS
+    const pageElements = document.querySelectorAll('.page');
+    let fullText = "";
+    pageElements.forEach(p => {
+      fullText += p.innerText + "\n"; // preserve line breaks between pages
+    });
+
+    // Split by word boundaries but preserve spaces and newlines
+    const splitRegex = /(\s+|[^\s]+)/g;
+    const wordsAndSpaces = fullText.match(splitRegex) || [];
+    
+    let mistakeCount = 0;
+
+    const results = await Promise.all(wordsAndSpaces.map(async (chunk) => {
+      // Only check real words
+      if (/^[a-zA-Z']+$/.test(chunk)) {
+        const lower = chunk.toLowerCase();
+        if (whitelist.has(lower) || contractions.has(lower)) return chunk;
+
+
+	if (whitelist.has(chunk) || whitelist.has(chunk.toLowerCase()) || contractions.has(chunk.toLowerCase())) return chunk;
+
+
+        try {
+          const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${lower}`);
+          if (!res.ok) {
+            mistakeCount++;
+            return `<span class="smart-misspelled">${chunk}</span>`;
+          }
+        } catch {
+          return chunk; // assume correct if API fails
+        }
+      }
+      return chunk; // spaces/punctuation
+    }));
+
+    // Insert checked content into the sidebar
+    output.innerHTML = results.join("");
+    countDisplay.textContent = "Mistakes Found: " + mistakeCount;
+  }
+});
+
+
+
+</script>
+
+
+
+
+
+
+<button class="sidebar-btn" id="advanced-fonts-btn">
+    <i class="material-icons">font_download</i>
+    Custom Fonts
+</button>
+
+
+
+
+<div class="modal" id="advanced-fonts-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Advanced Fonts</h3>
+            <button class="close-modal" id="close-advanced-fonts">&times;</button>
+        </div>
+
+        <!-- Instructions Section -->
+<div class="form-group">
+    <label class="form-label">How to Import Google Fonts:</label>
+    <div class="instruction-box">
+        <ol>
+            <li>Go to <a href="https://fonts.google.com/" target="_blank">Google Fonts</a>.</li>
+            <li>Choose the font you like and select the style(s).</li>
+            <li>Click "View Selected Families" / "Get Font" and click "Get Embed" following by "@import".</li>
+            <li>Copy just the URL and paste the URL in the input below and click "Add Font".</li>
+            <li>The font will appear in the dropdown and can be applied to your entire document.</li>
+        </ol>
+    </div>
+</div>
+
+<style>
+.instruction-box {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px 20px;
+    background-color: var(--toolbar-bg);
+    color: var(--text-color);
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.instruction-box ol {
+    padding-left: 20px;
+}
+
+.instruction-box a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+body.dark-mode .instruction-box {
+    background-color: var(--dark-toolbar);
+    color: var(--dark-text);
+    border-color: var(--dark-border);
+}
+
+body.dark-mode .instruction-box a {
+    color: var(--primary-color);
+}
+</style>
+
+
+        <!-- Connect Google Font -->
+        <div class="form-group">
+            <label class="form-label" for="google-font-url">Connect Google Font (URL)</label>
+            <input type="text" class="form-input" id="google-font-url" placeholder="Enter Google Fonts URL">
+            <button class="btn btn-primary" id="add-google-font">Add Font</button>
+        </div>
+
+        <!-- Upload Custom Font -->
+        <div class="form-group">
+            <label class="form-label">Upload Font File (ttf/woff/woff2)</label>
+            <input type="file" class="form-input" id="upload-font-file" accept=".ttf,.woff,.woff2">
+            <button class="btn btn-primary" id="add-uploaded-font">Add Font</button>
+        </div>
+
+        <!-- Available Fonts Dropdown -->
+        <div class="form-group">
+            <label class="form-label">Available Fonts</label>
+            <select class="toolbar-select" id="custom-font-list">
+                <option value="Arial">Arial</option>
+                <option value="Times New Roman">Times New Roman</option>
+                <option value="Courier New">Courier New</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Verdana">Verdana</option>
+            </select>
+            <button class="btn btn-primary" id="apply-custom-font">Apply Font</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<!-- Autocorrect Settings Modal -->
+<div class="modal" id="autocorrect-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Autocorrect Settings</h3>
+      <button class="close-modal" id="close-autocorrect-modal">&times;</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">
+        <input type="checkbox" id="autocorrect-toggle">
+        Enable autocorrect (underline misspelled words)
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" id="cancel-autocorrect">Cancel</button>
+      <button class="btn btn-primary" id="apply-autocorrect">Apply</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // --- CONFIG ---
+  const INTERVAL_MS = 1000; // runs every 1 second
+  const DICT_API = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
+
+  // --- ELEMENTS ---
+  const editor = document.getElementById('editor');
+  const toggleInput = document.getElementById('autocorrect-toggle'); // your modal toggle
+  if(!editor) return console.warn('Autocorrect: #editor not found.');
+
+  // --- DICTIONARY / CACHE / HELPERS ---
+  const cache = new Map(); // word(lowercase) => boolean (true=valid)
+  let spellInterval = null;
+  let debounceTimer = null;
+
+  const whitelist = new Set([
+    'is','the','and','a','an','in','on','at','for','to','of','by','with','as','it','he','she','you','we','they','that','this','these','those','are','was','were','be','been','have','has','had','do','does','did','but','or','if','so','not','no','yes','from','my','your','our','their','i','me','him','her','us','them','his','hers','its','mine','yours','theirs','fullscreen'
+  ]);
+
+  const contractions = new Set([
+    "i'm","you're","he's","she's","it's","we're","they're","i've","you've","we've","they've","i'd","you'd","he'd","she'd","we'd","they'd","i'll","you'll","he'll","she'll","we'll","they'll",
+    "isn't","aren't","wasn't","weren't","haven't","hasn't","hadn't","don't","doesn't","didn't","can't","couldn't","shouldn't","wouldn't","won't","mustn't","mightn't","needn't"
+  ]);
+
+  // sanitize token to check form
+  function normalizeWord(w){
+    return w.toLowerCase().replace(/^[^a-z']+|[^a-z']+$/g,''); // trim punctuation edges
+  }
+
+  async function checkWordAPI(word){
+    // returns true if word is valid (found), false if 404 (not found)
+    try{
+      const r = await fetch(DICT_API + encodeURIComponent(word));
+      if(r.ok) return true;
+      if(r.status === 404) return false;
+      return true;
+    }catch(e){
+      console.warn('Autocorrect: dictionary API error for', word, e);
+      // On network/CORS error: assume unknown => we fallback to "likely-unknown" only if not in cache
+      // To avoid false positives, return null to indicate "unknown because of error"
+      return null;
+    }
+  }
+
+  async function checkWordCached(word){
+    const lw = word.toLowerCase();
+    if(cache.has(lw)) return cache.get(lw);
+    // whitelist & contractions quick checks
+    if(whitelist.has(lw) || contractions.has(lw) || lw.length < 2) {
+      cache.set(lw, true);
+      return true;
+    }
+    const res = await checkWordAPI(lw);
+    if(res === null){
+      // fallback: treat as "unknown" conservatively -> mark as correct to avoid over-marking
+      cache.set(lw, true);
+      return true;
+    } else {
+      cache.set(lw, !!res);
+      return !!res;
+    }
+  }
+
+  // --- CARET helpers (save and restore position by character offset) ---
+  function getCaretCharacterOffsetWithin(el) {
+    const sel = window.getSelection();
+    if(!sel || !sel.anchorNode) return 0;
+    const range = sel.getRangeAt(0).cloneRange();
+    range.selectNodeContents(el);
+    range.setEnd(sel.anchorNode, sel.anchorOffset);
+    return range.toString().length;
+  }
+
+  function setCaretPosition(el, chars) {
+    el.focus();
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    let count = 0;
+    while (node = walker.nextNode()) {
+      const textLen = node.nodeValue.length;
+      if (count + textLen >= chars) {
+        const range = document.createRange();
+        range.setStart(node, chars - count);
+        range.collapse(true);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        return true;
+      }
+      count += textLen;
+    }
+    // fallback: place caret at end
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    return false;
+  }
+
+  // --- main spellcheck pass (walks text nodes and replaces with spans for misspellings) ---
+  async function checkSpellingOnce(){
+    if(!editor) return;
+    // do nothing if editor is empty
+    if(!editor.innerText || !editor.innerText.trim()) return;
+
+    console.debug('Autocorrect: run start');
+    const caret = getCaretCharacterOffsetWithin(editor);
+
+    // gather text nodes
+    const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, {
+      acceptNode: function(node){
+        // skip nodes inside elements we don't want to touch
+        let anc = node.parentNode;
+        while(anc && anc !== editor){
+          if(anc.nodeType === 1 && anc.classList && anc.classList.contains('misspelled')) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          // skip nodes inside elements that are not editable
+          if(anc.contentEditable === 'false') return NodeFilter.FILTER_REJECT;
+          anc = anc.parentNode;
+        }
+        if(!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    }, false);
+
+    const textNodes = [];
+    let n;
+    while(n = walker.nextNode()) textNodes.push(n);
+
+    // collect unique words to check
+    const wordRE = /[A-Za-z']{2,}/g;
+    const wordsToCheck = new Set();
+    for(const tnode of textNodes){
+      let m;
+      while(m = wordRE.exec(tnode.nodeValue)){
+        const raw = m[0];
+        const normalized = normalizeWord(raw);
+        if(!normalized) continue;
+        if(whitelist.has(normalized) || contractions.has(normalized) || normalized.length<2) continue;
+        wordsToCheck.add(normalized);
+      }
+    }
+
+    // Check all unique words (cache-aware)
+    const checks = Array.from(wordsToCheck).map(w => checkWordCached(w).then(valid => [w, valid]));
+    const results = await Promise.all(checks);
+    const resultMap = new Map(results); // word -> boolean
+
+    // Now replace text nodes piecewise, preserving formatting
+    for(const tnode of textNodes){
+      let text = tnode.nodeValue;
+      const frag = document.createDocumentFragment();
+      let lastIndex = 0;
+      wordRE.lastIndex = 0;
+      let m;
+      while(m = wordRE.exec(text)){
+        const idx = m.index;
+        const raw = m[0];
+        // append before text
+        const before = text.slice(lastIndex, idx);
+        if(before) frag.appendChild(document.createTextNode(before));
+        const normalized = normalizeWord(raw);
+        const valid = normalized ? ( resultMap.has(normalized) ? resultMap.get(normalized) : true ) : true;
+        if(!valid){
+          const span = document.createElement('span');
+          span.className = 'misspelled';
+          span.setAttribute('data-word', raw);
+          span.textContent = raw;
+          frag.appendChild(span);
+        } else {
+          frag.appendChild(document.createTextNode(raw));
+        }
+        lastIndex = wordRE.lastIndex;
+      }
+      const tail = text.slice(lastIndex);
+      if(tail) frag.appendChild(document.createTextNode(tail));
+
+      // Replace node if any misspellings or simply skip when identical
+      // Quick check: if frag contains a span.misspelled then replace
+      if (frag.querySelector && frag.querySelector('.misspelled')) {
+        tnode.parentNode.replaceChild(frag, tnode);
+      } else {
+        // no misspellings found — but we still might have changed nothing, so skip replacement to preserve nodes
+      }
+    }
+
+    // restore caret
+    setCaretPosition(editor, caret);
+
+    // attach simple click handler for suggestions (optional)
+    editor.querySelectorAll('.misspelled').forEach(el => {
+      if(el.__autocorrectBound) return;
+      el.addEventListener('click', (e) => {
+        const w = el.getAttribute('data-word') || el.textContent;
+        console.log('Autocorrect: clicked misspelled word:', w);
+        // you can show suggestions UI here
+      });
+      el.__autocorrectBound = true;
+    });
+
+    console.debug('Autocorrect: run finished');
+  }
+
+  // --- debounce + interval control ---
+  function scheduleImmediateCheck(){
+    if(debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => { checkSpellingOnce(); debounceTimer = null; }, 250);
+  }
+
+  function startAutocorrect(){
+    if(spellInterval) return;
+    // initial run
+    checkSpellingOnce().catch(e => console.error('Autocorrect error:', e));
+    // input-based quick checks
+    editor.addEventListener('input', scheduleImmediateCheck);
+    // interval fallback every INTERVAL_MS
+    spellInterval = setInterval(() => {
+      checkSpellingOnce().catch(e => console.error('Autocorrect (interval) error:', e));
+    }, INTERVAL_MS);
+
+    console.info('Autocorrect started (interval ' + INTERVAL_MS + ' ms)');
+  }
+
+  function stopAutocorrect(){
+    if(spellInterval) {
+      clearInterval(spellInterval);
+      spellInterval = null;
+    }
+    if(debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+    editor.removeEventListener('input', scheduleImmediateCheck);
+    console.info('Autocorrect stopped');
+  }
+
+  // expose for debugging
+  window.autocorrectStart = startAutocorrect;
+  window.autocorrectStop = stopAutocorrect;
+  window.autocorrectCheckOnce = checkSpellingOnce;
+
+  // restore setting if saved
+  if(localStorage.getItem('docuwrite_autocorrect') === 'on'){
+    if(toggleInput) toggleInput.checked = true;
+    startAutocorrect();
+  }
+
+  // If user toggles in modal 'Apply' button in your UI, you already set localStorage; but to be safe:
+  // Listen for storage changes (so manual localStorage set from console will also start it)
+  window.addEventListener('storage', (e) => {
+    if(e.key === 'docuwrite_autocorrect'){
+      if(e.newValue === 'on') startAutocorrect();
+      else stopAutocorrect();
+    }
+  });
+
+})();
+</script>
+
+
+
+		
+<style>
+#customize-editor-modal .modal-content { overflow-y: auto; max-height: 80vh; }
+</style>
+  
+  
+
+<style>@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }</style>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+<!-- Sidebar Button -->
+<button class="sidebar-btn" id="watermark-settings">
+    <i class="material-icons">opacity</i>
+    Customize Watermark
+</button>
+
+
+
+
+<button class="sidebar-btn" id="customize-editor">
+    <i class="material-icons">palette</i>
+    Customize Theme
+</button>
+
+
+
+
+<!-- Sidebar Button -->
+<button class="sidebar-btn" id="customize-page-settings">
+    <i class="material-icons">format_size</i>
+    Customize Page
+</button>
+
+
+
+
+
+
+
+<button class="sidebar-btn" id="edit-image-btn">
+    <i class="material-icons">edit</i>
+    Edit Images
+</button>
+
+
+<button class="sidebar-btn" id="insert-table">
+  <i class="material-icons">grid_on</i>
+  Insert Table
+</button>
+
+
+
+
+<button class="sidebar-btn" id="translate-btn">
+    <i class="material-icons">translate</i>
+    Translate Text
+</button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Sidebar Button -->
+<button class="sidebar-btn" id="beta-extension-btn">
+    <i class="material-icons">extension</i>
+    Beta Extension
+</button>
+
+<!-- Beta Extension Confirmation Modal -->
+<div class="modal" id="beta-extension-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Enable Beta Extension</h3>
+            <button class="close-modal" id="close-beta-extension">&times;</button>
+        </div>
+        <p>
+            Are you sure you want to enable Beta Extension? This will give the service provider full access to your canvas, editor, document, layout, functionality, etc.
+            The extension will be granted <strong>MASModofier Permission</strong>! Do you really want to enable Beta Extensions alongside granting MASModofier permissions to these extensions?
+        </p>
+        <div class="form-actions">
+            <button class="btn btn-secondary" id="back-beta">Back Down</button>
+            <button class="btn btn-primary" id="yes-beta">Yes & Continue</button>
+        </div>
+    </div>
+</div>
+
+<!-- Connected Extensions Modal -->
+<div class="modal" id="connected-extensions-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Connected Extensions</h3>
+            <button class="close-modal" id="close-connected-extensions">&times;</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Enter Peer Code:</label>
+            <input type="text" class="form-input" id="peer-code-input" placeholder="Peer Code">
+        </div>
+        <div class="form-group" id="connected-extensions-list">
+            <!-- Dynamic list of connected extensions will appear here -->
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const betaBtn = document.getElementById('beta-extension-btn');
+    const betaModal = document.getElementById('beta-extension-modal');
+    const closeBeta = document.getElementById('close-beta-extension');
+    const backBeta = document.getElementById('back-beta');
+    const yesBeta = document.getElementById('yes-beta');
+
+    const connectedModal = document.getElementById('connected-extensions-modal');
+    const closeConnected = document.getElementById('close-connected-extensions');
+    const peerInput = document.getElementById('peer-code-input');
+    const connectedList = document.getElementById('connected-extensions-list');
+
+    let extensions = []; // Store connected extensions
+    let betaEnabled = false; // Flag to remember if Beta Extension is enabled
+
+    function renderConnectedExtensions() {
+        connectedList.innerHTML = '';
+        if(extensions.length === 0){
+            connectedList.innerHTML = '<p>No extensions connected.</p>';
+        } else {
+            extensions.forEach((ext, index) => {
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.alignItems = 'center';
+                div.style.marginBottom = '8px';
+                div.innerHTML = `
+                    <span>${ext}</span>
+                    <button class="btn btn-secondary" data-index="${index}">Remove</button>
+                `;
+                connectedList.appendChild(div);
+
+                div.querySelector('button').addEventListener('click', (e) => {
+                    const idx = e.target.dataset.index;
+                    extensions.splice(idx, 1);
+                    renderConnectedExtensions();
+                });
+            });
+        }
+    }
+
+    // Open Beta Extension modal or directly connected extensions if already enabled
+    betaBtn.addEventListener('click', () => {
+        if(betaEnabled){
+            connectedModal.classList.add('active');
+            renderConnectedExtensions();
+        } else {
+            betaModal.classList.add('active');
+        }
+    });
+
+    // Close modal functions
+    closeBeta.addEventListener('click', () => betaModal.classList.remove('active'));
+    backBeta.addEventListener('click', () => betaModal.classList.remove('active'));
+    closeConnected.addEventListener('click', () => connectedModal.classList.remove('active'));
+
+    // Confirm Beta Extension
+    yesBeta.addEventListener('click', () => {
+        betaEnabled = true; // Mark Beta as enabled
+        betaModal.classList.remove('active');
+        connectedModal.classList.add('active');
+        renderConnectedExtensions();
+    });
+
+    // Handle adding peer code
+    peerInput.addEventListener('keypress', (e) => {
+        if(e.key === 'Enter'){
+            const code = peerInput.value.trim();
+            if(code && !extensions.includes(code)){
+                extensions.push(code);
+                peerInput.value = '';
+                renderConnectedExtensions();
+            }
+        }
+    });
+
+});
+</script>
+
+
+
+
+
+
+
+<!-- Sidebar Button -->
+
+
+
+
+
+<button class="sidebar-btn" id="collapse-sidebar">
+    <i class="material-icons">unfold_less</i>
+    Collapse
+</button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div class="modal" id="customize-page-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Customize Page</h3>
+            <button class="close-modal" id="close-customize-page-modal">&times;</button>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Width (cm)</label>
+            <input type="number" class="form-input" id="page-width" value="21">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Height (cm)</label>
+            <input type="number" class="form-input" id="page-height" value="29.7">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Margin (cm)</label>
+            <input type="number" class="form-input" id="page-margin" value="2.5">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Background Type</label>
+            <select class="form-input" id="bg-type">
+                <option value="color">Color</option>
+                <option value="gradient">Gradient</option>
+                <option value="image">Image</option>
+            </select>
+        </div>
+
+        <!-- Color picker -->
+        <div class="form-group" id="bg-color-group">
+            <label class="form-label">Color</label>
+            <input type="color" class="form-input" id="page-bgcolor" value="#ffffff">
+        </div>
+
+        <!-- Gradient options -->
+        <div class="form-group" id="bg-gradient-group" style="display:none;">
+            <label class="form-label">Color 1</label>
+            <input type="color" class="form-input" id="gradient-color1" value="#ffffff">
+            <label class="form-label">Color 2</label>
+            <input type="color" class="form-input" id="gradient-color2" value="#000000">
+            <label class="form-label">Direction</label>
+            <select class="form-input" id="gradient-direction">
+                <option value="to bottom">Top → Bottom</option>
+                <option value="to right">Left → Right</option>
+            </select>
+        </div>
+
+        <!-- Image upload -->
+        <div class="form-group" id="bg-image-group" style="display:none;">
+            <label class="form-label">Upload Image</label>
+            <input type="file" class="form-input" id="bg-image-file" accept="image/*">
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-secondary" id="cancel-customize-page">Cancel</button>
+            <button class="btn btn-primary" id="apply-customize-page">Apply</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<div class="modal" id="customize-editor-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Customize Editor Colors</h3>
+            <button class="close-modal" id="close-customize-editor">&times;</button>
+        </div>
+        <div class="form-group" id="color-customizer">
+            <!-- Color pickers will be generated here dynamically -->
+        </div>
+        <div class="form-actions" style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn btn-secondary" id="cancel-customize-editor">Cancel</button>
+            <button class="btn btn-secondary" id="reset-customize-editor">Reset</button>
+            <button class="btn btn-primary" id="save-customize-editor">Save</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+<div class="modal" id="table-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Insert Table</h3>
+      <button class="close-modal" id="close-table-modal">&times;</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="table-rows">Rows</label>
+      <input type="number" class="form-input" id="table-rows" value="2" min="1">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="table-cols">Columns</label>
+      <input type="number" class="form-input" id="table-cols" value="2" min="1">
+<p>↺ To delete a table click the redo button. </p>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" id="cancel-table">Cancel</button>
+      <button class="btn btn-primary" id="insert-table-btn">Insert</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+<div class="modal" id="edit-image-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Edit Images</h3>
+            <button class="close-modal" id="close-edit-image">&times;</button>
+        </div>
+
+        <!-- List of images -->
+        <div id="image-list" style="max-height:200px; overflow-y:auto; margin-bottom:15px;"></div>
+
+        <!-- Controls for selected image -->
+        <div id="image-controls" style="display:none;">
+            <div class="form-group">
+                <label class="form-label">Crop (%)</label>
+                <input type="range" id="crop-range" min="50" max="100" value="100">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Width (px)</label>
+                <input type="number" id="img-width" class="form-input" placeholder="e.g. 300">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Height (px)</label>
+                <input type="number" id="img-height" class="form-input" placeholder="e.g. 200">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Position</label>
+                <select id="img-float" class="form-input">
+                    <option value="none">Inline</option>
+                    <option value="left">Left</option>
+                    <option value="right">Right</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Text Wrap</label>
+                <select id="img-wrap" class="form-input">
+                    <option value="inline">Inline</option>
+                    <option value="front">In Front</option>
+                    <option value="behind">Behind</option>
+                    <option value="break">Break Text</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" id="cancel-edit">Cancel</button>
+                <button class="btn btn-primary" id="apply-edit">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+<div class="modal" id="translate-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Translate Document</h3>
+            <button class="close-modal" id="close-translate-modal">&times;</button>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="from-lang">From Language (ex: en)</label>
+            <input type="text" class="form-input" id="from-lang" placeholder="Source language code">
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="to-lang">Target Language (ex: es)</label>
+            <input type="text" class="form-input" id="to-lang" placeholder="Target language code">
+        </div>
+        <p style="color: red; font-size: 13px; margin-top: 8px;">⚠ This change cannot be reverted. All formattings will be discarded.</p>
+        <div class="form-actions">
+            <button class="btn btn-secondary" id="cancel-translate">Cancel</button>
+            <button class="btn btn-primary" id="apply-translate">Translate</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<!-- Watermark Settings Modal -->
+<div class="modal" id="watermark-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Watermark Settings</h3>
+            <button class="close-modal" id="close-watermark-modal">&times;</button>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Custom Text</label>
+            <input type="text" class="form-input" id="watermark-text" placeholder="DocuWrite Pro">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Color</label>
+            <input type="color" class="form-input" id="watermark-color" value="#5f6368">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Font Size (px)</label>
+            <input type="number" class="form-input" id="watermark-size" value="48">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Position</label>
+            <select class="form-input" id="watermark-position">
+                <option value="bottom-right" selected>Bottom Right</option>
+                <option value="bottom-left">Bottom Left</option>
+                <option value="top-right">Top Right</option>
+                <option value="top-left">Top Left</option>
+                <option value="center">Center</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" id="watermark-off"> Turn Off
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-secondary" id="cancel-watermark">Cancel</button>
+            <button class="btn btn-primary" id="apply-watermark">Apply</button>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+        
+    <div id="preview-instruction-modal" class="modal">
+    <div class="modal-content" style="
+        max-width:400px;
+        margin:200px auto;
+        padding:20px;
+        text-align:center;
+        border-radius:10px;
+        background:white;
+    ">
+        <p style="font-size:16px; margin-bottom:20px;">
+            To close preview just click ESC or double tap inside editor.
+        </p>
+        <button id="preview-ok-btn" class="btn btn-primary">OK</button>
+    </div>
+</div>
+
+
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const previewBtn = document.getElementById('preview-document-btn');
+    const instructionModal = document.getElementById('preview-instruction-modal');
+    const okBtn = document.getElementById('preview-ok-btn');
+    const editor = document.getElementById('editor');
+    const sidebar = document.querySelector('.sidebar');
+    const toolbar = document.querySelector('.toolbar');
+    const header = document.querySelector('header');
+    const statusBar = document.querySelector('.status-bar');
+
+    let previewActive = false;
+
+    previewBtn.addEventListener('click', ()=>{
+        instructionModal.classList.add('active'); // show message modal
+    });
+
+    okBtn.addEventListener('click', ()=>{
+        instructionModal.classList.remove('active');
+
+        // Activate preview
+        previewActive = true;
+
+        // Blur UI
+        sidebar.style.filter = 'blur(8px)';
+        toolbar.style.filter = 'blur(8px)';
+        header.style.filter = 'blur(8px)';
+        statusBar.style.filter = 'blur(8px)';
+
+        // Optional: make editor background white
+        editor.style.background = 'white';
+
+        // Disable editing
+        editor.contentEditable = "false";
+
+        // Save original content if needed
+        editor.dataset.originalContent = editor.innerHTML;
+    });
+
+    // Exit preview function
+    function exitPreview(){
+        if(!previewActive) return;
+        previewActive = false;
+
+        // Remove blur
+        sidebar.style.filter = '';
+        toolbar.style.filter = '';
+        header.style.filter = '';
+        statusBar.style.filter = '';
+        editor.style.background = '';
+        editor.contentEditable = "true";
+
+        // Restore content
+        if(editor.dataset.originalContent){
+            editor.innerHTML = editor.dataset.originalContent;
+            delete editor.dataset.originalContent;
+        }
+    }
+
+    // Close preview with ESC
+    document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape' && previewActive){
+            exitPreview();
+        }
+    });
+
+    // Close preview with double-tap inside editor
+    editor.addEventListener('dblclick', function(){
+        if(previewActive){
+            exitPreview();
+        }
+    });
+});
+</script>
+
+
+<script>
+const editImageBtn = document.getElementById('edit-image-btn');
+const editImageModal = document.getElementById('edit-image-modal');
+const closeEditImage = document.getElementById('close-edit-image');
+const imageList = document.getElementById('image-list');
+const imageControls = document.getElementById('image-controls');
+let selectedImage = null;
+
+editImageBtn.addEventListener('click', () => {
+    imageList.innerHTML = '';
+    selectedImage = null;
+    imageControls.style.display = 'none';
+
+    const imgs = editor.querySelectorAll('img');
+
+    if (imgs.length === 0) {
+        // No images message
+        const messageDiv = document.createElement('div');
+        messageDiv.style.textAlign = 'center';
+        messageDiv.style.padding = '20px';
+        messageDiv.innerHTML = `
+            <p style="font-size:16px; margin-bottom:20px;">
+                Edit your images using DocuWrite Pro Image Editor!
+            </p>
+        `;
+        const continueBtn = document.createElement('button');
+        continueBtn.innerHTML = `<span>Continue</span> <i class="material-icons" style="font-size:18px;">arrow_forward</i>`;
+        continueBtn.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            background-color: #1a73e8;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        `;
+        continueBtn.addEventListener('mouseover', () => continueBtn.style.backgroundColor = '#1666c1');
+        continueBtn.addEventListener('mouseout', () => continueBtn.style.backgroundColor = '#1a73e8');
+
+        // OPEN IMAGE EDITOR & CLOSE MODAL
+        continueBtn.addEventListener('click', () => {
+            window.open('https://sites.google.com/view/docuwritepro/image-editor', '_blank');
+            editImageModal.classList.remove('active');
+        });
+
+        messageDiv.appendChild(continueBtn);
+        imageList.appendChild(messageDiv);
+    } else {
+        imgs.forEach((img, index) => {
+            const thumb = document.createElement('div');
+            thumb.style.display = 'flex';
+            thumb.style.alignItems = 'center';
+            thumb.style.cursor = 'pointer';
+            thumb.style.marginBottom = '8px';
+            thumb.innerHTML = `<img src="${img.src}" style="max-width:60px; max-height:60px; margin-right:10px;"> <span>Image ${index+1}</span>`;
+            
+            thumb.addEventListener('click', () => {
+                selectedImage = img;
+                imageControls.style.display = 'block';
+                document.getElementById('img-width').value = img.width;
+                document.getElementById('img-height').value = img.height;
+                document.getElementById('img-float').value = img.style.float || 'none';
+            });
+            imageList.appendChild(thumb);
+        });
+    }
+
+    // Open modal
+    editImageModal.classList.add('active');
+});
+
+// CLOSE MODAL BUTTONS
+closeEditImage.addEventListener('click', () => editImageModal.classList.remove('active'));
+document.getElementById('cancel-edit').addEventListener('click', () => editImageModal.classList.remove('active'));
+
+// APPLY IMAGE EDIT
+document.getElementById('apply-edit').addEventListener('click', () => {
+    if (!selectedImage) return;
+
+    const width = document.getElementById('img-width').value;
+    const height = document.getElementById('img-height').value;
+    const floatVal = document.getElementById('img-float').value;
+    const wrapVal = document.getElementById('img-wrap').value;
+    const crop = document.getElementById('crop-range').value;
+
+    if (width) selectedImage.style.width = width + "px";
+    if (height) selectedImage.style.height = height + "px";
+    selectedImage.style.float = floatVal;
+
+    // Text wrapping
+    if (wrapVal === "front") {
+        selectedImage.style.position = "absolute";
+        selectedImage.style.zIndex = "10";
+    } else if (wrapVal === "behind") {
+        selectedImage.style.position = "absolute";
+        selectedImage.style.zIndex = "-1";
+    } else if (wrapVal === "break") {
+        selectedImage.style.display = "block";
+        selectedImage.style.clear = "both";
+        selectedImage.style.position = "static";
+    } else {
+        selectedImage.style.position = "static";
+        selectedImage.style.zIndex = "1";
+    }
+
+    // Crop
+    selectedImage.style.objectFit = "cover";
+    selectedImage.style.width = crop + "%";
+
+    editImageModal.classList.remove('active');
+    saveState();
+});
+</script>
+
+
+
+
+
+
+<script>
+const advancedFontsBtn = document.getElementById('advanced-fonts-btn');
+const advancedFontsModal = document.getElementById('advanced-fonts-modal');
+const closeAdvancedFonts = document.getElementById('close-advanced-fonts');
+const googleFontUrl = document.getElementById('google-font-url');
+const addGoogleFont = document.getElementById('add-google-font');
+const uploadFontFile = document.getElementById('upload-font-file');
+const addUploadedFont = document.getElementById('add-uploaded-font');
+const customFontList = document.getElementById('custom-font-list');
+const applyCustomFont = document.getElementById('apply-custom-font');
+
+// Open modal
+advancedFontsBtn.addEventListener('click', () => {
+    advancedFontsModal.classList.add('active');
+});
+
+// Close modal
+closeAdvancedFonts.addEventListener('click', () => {
+    advancedFontsModal.classList.remove('active');
+});
+
+// Add Google Font
+addGoogleFont.addEventListener('click', () => {
+    const url = googleFontUrl.value.trim();
+    if (!url) return;
+
+    const link = document.createElement('link');
+    link.href = url;
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+
+    // Extract base font name
+    const fontNameMatch = url.match(/family=([^:&]+)/);
+    if (fontNameMatch) {
+        const rawName = decodeURIComponent(fontNameMatch[1]).split(':')[0]; 
+        const fontName = rawName.replace(/\+/g, ' '); // Remove + and weights
+        const option = document.createElement('option');
+option.value = fontName;
+option.textContent = fontName;
+customFontList.prepend(option);                  // modal dropdown
+fontFamilySelect.prepend(option.cloneNode(true)); // topbar dropdown
+
+    }
+
+    googleFontUrl.value = '';
+});
+
+// Upload font file
+addUploadedFont.addEventListener('click', () => {
+    const file = uploadFontFile.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const fontData = e.target.result;
+        const fontName = file.name.split('.')[0];
+
+        const style = document.createElement('style');
+        style.innerHTML = `
+        @font-face {
+            font-family: '${fontName}';
+            src: url(${fontData}) format('${file.type.includes("woff") ? "woff" : "truetype"}');
+        }`;
+        document.head.appendChild(style);
+
+        const option = document.createElement('option');
+option.value = fontName;
+option.textContent = fontName;
+customFontList.prepend(option);                  // modal dropdown
+fontFamilySelect.prepend(option.cloneNode(true)); // topbar dropdown
+
+    };
+    reader.readAsDataURL(file);
+    uploadFontFile.value = '';
+});
+
+
+// Apply selected font to entire editor (syncs with topbar)
+applyCustomFont.addEventListener('click', () => {
+    const font = customFontList.value;
+    if (!font) return;
+
+    // Apply font everywhere
+    const targetAreas = document.querySelectorAll(
+        '#editor, #editor *,' +
+        '.page, .page *,' +
+        '.document-container, .document-container *'
+    );
+    targetAreas.forEach(el => {
+        el.style.fontFamily = `'${font}', sans-serif`;
+    });
+
+    // Sync topbar selector to match
+    fontFamilySelect.value = font;
+
+    advancedFontsModal.classList.remove('active');
+});
+
+
+</script>
+
+
+
+
+<script>
+// Table modal
+const tableModal = document.getElementById('table-modal');
+const insertTableBtn = document.getElementById('insert-table');
+
+// Open modal
+insertTableBtn.addEventListener('click', () => {
+  tableModal.classList.add('active');
+});
+
+// Close modal
+document.getElementById('close-table-modal').addEventListener('click', () => {
+  tableModal.classList.remove('active');
+});
+document.getElementById('cancel-table').addEventListener('click', () => {
+  tableModal.classList.remove('active');
+});
+
+// Insert table
+document.getElementById('insert-table-btn').addEventListener('click', () => {
+  const rows = parseInt(document.getElementById('table-rows').value) || 2;
+  const cols = parseInt(document.getElementById('table-cols').value) || 2;
+
+  let table = '<table style="border-collapse: collapse; width: 100%;">';
+  for (let r = 0; r < rows; r++) {
+    table += '<tr>';
+    for (let c = 0; c < cols; c++) {
+      table += '<td style="border:1px solid #ccc; padding:8px;">&nbsp;</td>';
+    }
+    table += '</tr>';
+  }
+  table += '</table><br>';
+
+  document.execCommand('insertHTML', false, table);
+  editor.focus();
+  saveState();
+
+  tableModal.classList.remove('active');
+});
+</script>
+
+
+
+
+<script>
+// Translate modal
+const translateModal = document.getElementById('translate-modal');
+const translateBtn = document.getElementById('translate-btn');
+
+translateBtn.addEventListener('click', () => {
+    translateModal.classList.add('active');
+});
+
+document.getElementById('close-translate-modal').addEventListener('click', () => {
+    translateModal.classList.remove('active');
+});
+
+document.getElementById('cancel-translate').addEventListener('click', () => {
+    translateModal.classList.remove('active');
+});
+
+document.getElementById('apply-translate').addEventListener('click', async () => {
+    const from = document.getElementById('from-lang').value.trim();
+    const to = document.getElementById('to-lang').value.trim();
+    if (!from || !to) {
+        alert("Please enter both source and target language codes.");
+        return;
+    }
+
+    // Collect text from all pages
+    const editors = document.querySelectorAll('.editor-page');
+    const text = Array.from(editors).map(ed => ed.innerText).join("\n\n");
+
+    // Split into chunks (API limit)
+    const chunks = [];
+    for (let i = 0; i < text.length; i += 500) {
+        chunks.push(text.slice(i, i + 500));
+    }
+
+    let translated = "";
+    for (const chunk of chunks) {
+        try {
+            const res = await fetch(
+                `https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=${from}|${to}`
+            );
+            const data = await res.json();
+            if (data.responseData && data.responseData.translatedText) {
+                translated += data.responseData.translatedText + " ";
+            }
+        } catch (e) {
+            console.error("Translation error:", e);
+        }
+    }
+
+    if (translated.trim()) {
+        // Put translation back into the first page, clear others
+        editors.forEach((ed, i) => {
+            if (i === 0) {
+                ed.innerText = translated.trim();
+            } else {
+                ed.innerText = "";
+            }
+        });
+    }
+
+    translateModal.classList.remove('active');
+});
+</script>
+
+
+
+
+
+
+
+
+
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const shareBtn = document.getElementById('share-view-btn');
+    const shareModal = document.getElementById('share-view-modal');
+    const closeModal = document.getElementById('close-share-view');
+    const peerIdInput = document.getElementById('peer-id-display');
+    const copyBtn = document.getElementById('copy-peer-id');
+    const disconnectBtn = document.getElementById('disconnect-btn');
+    const editor = document.getElementById('editor');
+
+    let peer = null;
+    let connections = {};
+
+    // Open modal and initialize PeerJS
+    shareBtn.addEventListener('click', () => {
+        shareModal.classList.add('active');
+
+        if (!peer) {
+            peer = new Peer(); // Auto-generate Peer ID
+
+            peer.on('open', id => {
+                peerIdInput.value = id;
+                console.log('PeerJS ID:', id);
+            });
+
+            peer.on('connection', conn => {
+                connections[conn.peer] = conn;
+                conn.on('open', () => conn.send(editor.innerHTML));
+                conn.on('close', () => delete connections[conn.peer]);
+            });
+        }
+    });
+
+    // Broadcast editor content
+    editor.addEventListener('input', () => {
+        Object.values(connections).forEach(conn => { if(conn.open) conn.send(editor.innerHTML); });
+    });
+
+    // Close modal
+    closeModal.addEventListener('click', () => {
+        shareModal.classList.remove('active');
+        if(peer){
+            Object.values(connections).forEach(c=>c.close());
+            connections = {};
+            peer.destroy();
+            peer = null;
+        }
+    });
+
+    // Copy Peer ID
+    copyBtn.addEventListener('click', () => {
+        try {
+            peerIdInput.select();
+            document.execCommand('copy');
+            alert('Peer ID copied!');
+        } catch {
+            alert('Unable to copy, copy manually.');
+        }
+    });
+
+    // Disconnect viewers
+    disconnectBtn.addEventListener('click', () => {
+        Object.values(connections).forEach(c => { 
+            if(c.open) c.send("End"); 
+            c.close(); 
+        });
+        connections = {};
+        if(peer) { peer.destroy(); peer = null; }
+        shareModal.classList.remove('active');
+    });
+
+    // Close on ESC key
+    document.addEventListener('keydown', e => {
+        if(e.key === 'Escape') {
+            shareModal.classList.remove('active');
+        }
+    });
+});
+</script>
+
+
+
+
+
+
+
+
+
+<script>
+// Sidebar button and modal
+const customizeEditorBtn = document.getElementById('customize-editor');
+const customizeEditorModal = document.getElementById('customize-editor-modal');
+const closeCustomizeBtn = document.getElementById('close-customize-editor');
+const cancelCustomizeBtn = document.getElementById('cancel-customize-editor');
+const resetCustomizeBtn = document.getElementById('reset-customize-editor');
+const saveCustomizeBtn = document.getElementById('save-customize-editor');
+const colorCustomizerDiv = document.getElementById('color-customizer');
+
+// List of customizable colors
+const editorColors = [
+    { name: 'Primary Color', var: '--primary-color' },
+    { name: 'Header Background', var: '--header-bg' },
+    { name: 'Toolbar Background', var: '--toolbar-bg' },
+    { name: 'Border Color', var: '--border-color' },
+    { name: 'Text Color', var: '--text-color' },
+    { name: 'Hover Background', var: '--hover-bg' },
+    { name: 'Dark Background', var: '--dark-bg' },
+    { name: 'Dark Text', var: '--dark-text' },
+    { name: 'Dark Toolbar', var: '--dark-toolbar' },
+    { name: 'Dark Border', var: '--dark-border' }
+];
+
+// Default colors for reset
+const defaultColors = {
+    '--primary-color': '#1a73e8',
+    '--header-bg': '#f1f3f4',
+    '--toolbar-bg': '#f8f9fa',
+    '--border-color': '#dadce0',
+    '--text-color': '#202124',
+    '--hover-bg': '#f1f3f4',
+    '--dark-bg': '#1e1e1e',
+    '--dark-text': '#e8eaed',
+    '--dark-toolbar': '#2d2e30',
+    '--dark-border': '#5f6368'
+};
+
+// Generate color pickers dynamically
+function populateColorCustomizers() {
+    colorCustomizerDiv.innerHTML = '';
+    editorColors.forEach(color => {
+        const current = getComputedStyle(document.documentElement).getPropertyValue(color.var).trim();
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        div.innerHTML = `
+            <label class="form-label">${color.name} (${current})</label>
+            <input type="color" class="form-input" data-var="${color.var}" value="${current}">
+        `;
+        colorCustomizerDiv.appendChild(div);
+    });
+}
+
+// Open modal
+customizeEditorBtn.addEventListener('click', () => {
+    populateColorCustomizers();
+    customizeEditorModal.classList.add('active');
+});
+
+// Close modal
+closeCustomizeBtn.addEventListener('click', () => customizeEditorModal.classList.remove('active'));
+cancelCustomizeBtn.addEventListener('click', () => customizeEditorModal.classList.remove('active'));
+
+// Live preview
+colorCustomizerDiv.addEventListener('input', e => {
+    if (e.target.tagName === 'INPUT' && e.target.type === 'color') {
+        document.documentElement.style.setProperty(e.target.dataset.var, e.target.value);
+        const label = e.target.previousElementSibling;
+        if (label) label.textContent = `${label.textContent.split('(')[0]}(${e.target.value})`;
+    }
+});
+
+// Reset colors to default
+resetCustomizeBtn.addEventListener('click', () => {
+    Object.keys(defaultColors).forEach(key => {
+        document.documentElement.style.setProperty(key, defaultColors[key]);
+    });
+
+    // Update color pickers
+    document.querySelectorAll('#color-customizer input[type="color"]').forEach(input => {
+        input.value = defaultColors[input.dataset.var] || '#ffffff';
+        const label = input.previousElementSibling;
+        if (label) label.textContent = `${label.textContent.split('(')[0]}(${input.value})`;
+    });
+
+    // Remove saved colors
+    localStorage.removeItem('editorColors');
+});
+
+// Save colors to localStorage
+saveCustomizeBtn.addEventListener('click', () => {
+    const colorsToSave = {};
+    document.querySelectorAll('#color-customizer input[type="color"]').forEach(input => {
+        colorsToSave[input.dataset.var] = input.value;
+    });
+    localStorage.setItem('editorColors', JSON.stringify(colorsToSave));
+    customizeEditorModal.classList.remove('active');
+});
+
+// Apply saved colors on load
+document.addEventListener('DOMContentLoaded', () => {
+    const savedColors = JSON.parse(localStorage.getItem('editorColors') || '{}');
+    Object.keys(savedColors).forEach(key => {
+        document.documentElement.style.setProperty(key, savedColors[key]);
+    });
+});
+</script>
+
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const customizeBtn = document.getElementById('customize-page-settings');
+    const modal = document.getElementById('customize-page-modal');
+    const closeBtn = document.getElementById('close-customize-page-modal');
+    const cancelBtn = document.getElementById('cancel-customize-page');
+    const applyBtn = document.getElementById('apply-customize-page');
+
+    const page = document.querySelector('.page');
+    const widthInput = document.getElementById('page-width');
+    const heightInput = document.getElementById('page-height');
+    const marginInput = document.getElementById('page-margin');
+
+    const bgTypeSelect = document.getElementById('bg-type');
+    const colorGroup = document.getElementById('bg-color-group');
+    const gradientGroup = document.getElementById('bg-gradient-group');
+    const imageGroup = document.getElementById('bg-image-group');
+
+    const colorInput = document.getElementById('page-bgcolor');
+    const gradientColor1 = document.getElementById('gradient-color1');
+    const gradientColor2 = document.getElementById('gradient-color2');
+    const gradientDir = document.getElementById('gradient-direction');
+    const imageFile = document.getElementById('bg-image-file');
+
+    // Open modal
+    customizeBtn.addEventListener('click', () => {
+        widthInput.value = parseFloat(page.style.width) || 21;
+        heightInput.value = parseFloat(page.style.height) || 29.7;
+        marginInput.value = parseFloat(page.style.padding) || 2.5;
+        modal.classList.add('active');
+    });
+
+    // Close modal
+    closeBtn.addEventListener('click', ()=> modal.classList.remove('active'));
+    cancelBtn.addEventListener('click', ()=> modal.classList.remove('active'));
+
+    // Change background type
+    bgTypeSelect.addEventListener('change', ()=>{
+        colorGroup.style.display = bgTypeSelect.value==='color' ? 'block':'none';
+        gradientGroup.style.display = bgTypeSelect.value==='gradient' ? 'block':'none';
+        imageGroup.style.display = bgTypeSelect.value==='image' ? 'block':'none';
+    });
+
+    // Apply changes
+    applyBtn.addEventListener('click', ()=>{
+        page.style.width = widthInput.value+'cm';
+        page.style.height = heightInput.value+'cm';
+        page.style.padding = marginInput.value+'cm';
+
+        if(bgTypeSelect.value==='color'){
+            page.style.background = colorInput.value;
+        } else if(bgTypeSelect.value==='gradient'){
+            page.style.background = `linear-gradient(${gradientDir.value}, ${gradientColor1.value}, ${gradientColor2.value})`;
+        } else if(bgTypeSelect.value==='image' && imageFile.files[0]){
+            const reader = new FileReader();
+            reader.onload = function(e){
+                page.style.background = `url(${e.target.result}) center/cover no-repeat`;
+            }
+            reader.readAsDataURL(imageFile.files[0]);
+        }
+
+        modal.classList.remove('active');
+    });
+});
+</script>
+
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    const settingsBtn = document.getElementById('watermark-settings');
+    const modal = document.getElementById('watermark-modal');
+    const closeBtn = document.getElementById('close-watermark-modal');
+    const cancelBtn = document.getElementById('cancel-watermark');
+    const applyBtn = document.getElementById('apply-watermark');
+
+    const textInput = document.getElementById('watermark-text');
+    const colorInput = document.getElementById('watermark-color');
+    const sizeInput = document.getElementById('watermark-size');
+    const positionSelect = document.getElementById('watermark-position');
+    const offCheckbox = document.getElementById('watermark-off');
+
+    const watermark = document.querySelector('.watermark');
+
+    // Open/close modal
+    settingsBtn.addEventListener('click', ()=> modal.classList.add('active'));
+    closeBtn.addEventListener('click', ()=> modal.classList.remove('active'));
+    cancelBtn.addEventListener('click', ()=> modal.classList.remove('active'));
+
+    // Apply changes
+    applyBtn.addEventListener('click', ()=>{
+        if(!watermark) return;
+
+        if(offCheckbox.checked){
+            watermark.style.display = 'none';
+        } else {
+            watermark.style.display = 'block';
+            watermark.textContent = textInput.value.trim() || 'DocuWrite Pro';
+            watermark.style.color = colorInput.value;
+            watermark.style.fontSize = sizeInput.value + 'px';
+
+            // Reset position
+            watermark.style.top = '';
+            watermark.style.left = '';
+            watermark.style.right = '';
+            watermark.style.bottom = '';
+            watermark.style.transform = '';
+
+            switch(positionSelect.value){
+                case 'top-left':
+                    watermark.style.top = '1cm';
+                    watermark.style.left = '1cm';
+                    break;
+                case 'top-right':
+                    watermark.style.top = '1cm';
+                    watermark.style.right = '1cm';
+                    break;
+                case 'bottom-left':
+                    watermark.style.bottom = '1cm';
+                    watermark.style.left = '1cm';
+                    break;
+                case 'bottom-right':
+                    watermark.style.bottom = '1cm';
+                    watermark.style.right = '1cm';
+                    break;
+                case 'center':
+                    watermark.style.top = '50%';
+                    watermark.style.left = '50%';
+                    watermark.style.transform = 'translate(-50%, -50%)';
+                    break;
+            }
+        }
+
+        modal.classList.remove('active');
+    });
+});
+</script>
+
+
+            </div>
+        </div>
+        
+        <!-- Document Editor -->
+        <div class="editor-area">
+            <div class="document-container">
+                <div class="page">
+                    <div id="editor" contenteditable="true">
+                        <p>
+                    </div>
+                    <div class="watermark">DocuWrite Pro</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-item">
+            <i class="material-icons">description</i>
+            <span id="word-count">0 words</span>
+        </div>
+        <div class="status-item">
+            <i class="material-icons">schedule</i>
+            <span id="reading-time">0 min read</span>
+        </div>
+        <div class="status-item">
+            <i class="material-icons">cloud</i>
+            <span id="save-status">All changes saved</span>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div class="modal" id="link-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Insert Link</h3>
+                <button class="close-modal" id="close-link-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="link-text">Text to display</label>
+                <input type="text" class="form-input" id="link-text">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="link-url">URL</label>
+                <input type="text" class="form-input" id="link-url" placeholder="https://example.com">
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" id="cancel-link">Cancel</button>
+                <button class="btn btn-primary" id="insert-link-btn">Insert</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="image-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Insert Image</h3>
+                <button class="close-modal" id="close-image-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="image-upload">Upload Image</label>
+                <input type="file" class="form-input" id="image-upload" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="image-url">Image URL</label>
+                <input type="text" class="form-input" id="image-url" placeholder="https://example.com/image.jpg">
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" id="cancel-image">Cancel</button>
+                <button class="btn btn-primary" id="insert-image-btn">Insert</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="autosave-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Autosave Settings</h3>
+                <button class="close-modal" id="close-autosave-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="autosave-interval">Autosave Interval</label>
+                <select class="form-input" id="autosave-interval">
+                    <option value="20">20 seconds</option>
+                    <option value="60">1 minute</option>
+                    <option value="300" selected>5 minutes</option>
+                    <option value="600">10 minutes</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" id="autosave-jpeg">
+                    Prepare downloadable file on autosave
+                </label>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" id="cancel-autosave">Cancel</button>
+                <button class="btn btn-primary" id="save-autosave">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="export-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Export Document</h3>
+                <button class="close-modal" id="close-export-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Format</label>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary export-option" data-format="pdf">PDF</button>
+                    
+                    <button class="btn btn-secondary export-option" data-format="html">HTML</button>
+                    <button class="btn btn-secondary export-option" data-format="md">Markdown</button>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" id="cancel-export">Cancel</button>
+                <button class="btn btn-primary" id="export-document" disabled>Export</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Autosave Popup -->
+    <div class="autosave-popup" id="autosave-popup">
+        <div class="autosave-text">Autosave is ready. Would you like to download a JPEG backup?</div>
+        <div class="autosave-actions">
+            <button class="btn btn-primary" id="autosave-yes">Yes, Download</button>
+            <button class="btn btn-secondary" id="autosave-no">No, Thanks</button>
+        </div>
+    </div>
+    
+    <!-- Fullscreen Exit Button -->
+    <button class="fullscreen-exit" id="exit-fullscreen">
+        <i class="material-icons">fullscreen_exit</i>
+    </button>
+    
+    <script>
+        // Document Editor
+        const editor = document.getElementById('editor');
+        const docTitle = document.getElementById('doc-title');
+        const wordCount = document.getElementById('word-count');
+        const readingTime = document.getElementById('reading-time');
+        const saveStatus = document.getElementById('save-status');
+        
+        // Modals
+        const linkModal = document.getElementById('link-modal');
+        const imageModal = document.getElementById('image-modal');
+        const autosaveModal = document.getElementById('autosave-modal');
+        const exportModal = document.getElementById('export-modal');
+        
+        // Buttons
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const exitFullscreen = document.getElementById('exit-fullscreen');
+        const saveBtn = document.getElementById('save-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const insertLinkBtn = document.getElementById('insert-link');
+        const insertImageBtn = document.getElementById('insert-image');
+        
+        // Autosave
+        const autosavePopup = document.getElementById('autosave-popup');
+        let autosaveInterval = 300000; // 5 minutes
+        let autosaveTimer;
+        let saveJPEG = false;
+        
+        // State Management
+        let currentFormat = 'p';
+        let isDirty = false;
+        let undoStack = [];
+        let redoStack = [];
+        let currentState = '';
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize word count
+            updateWordCount();
+            
+            // Set up autosave
+            setupAutosave();
+            
+            // Initialize editor content state
+            saveState();
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Editor events
+            editor.addEventListener('input', function() {
+                isDirty = true;
+                updateWordCount();
+                saveStatus.textContent = 'Unsaved changes';
+            });
+// === Customize Page modal logic ===
+const customizeModal = document.getElementById('customize-page-modal');
+const applyCustomizeBtn = document.getElementById('apply-customize-page');
+const cancelCustomizeBtn = document.getElementById('cancel-customize-page');
+const closeCustomizeBtn = document.getElementById('close-customize-page-modal');
+
+function applyCustomize() {
+    const width = parseFloat(document.getElementById('page-width').value) || 21;
+    const height = parseFloat(document.getElementById('page-height').value) || 29.7;
+    const margin = parseFloat(document.getElementById('page-margin').value) || 2.5;
+    const bgType = document.getElementById('bg-type').value;
+
+    let bg = "#ffffff";
+    if (bgType === "color") {
+        bg = document.getElementById('page-bgcolor').value;
+    } else if (bgType === "gradient") {
+        const c1 = document.getElementById('gradient-color1').value;
+        const c2 = document.getElementById('gradient-color2').value;
+        const dir = document.getElementById('gradient-direction').value;
+        bg = `linear-gradient(${dir}, ${c1}, ${c2})`;
+    } else if (bgType === "image") {
+        const file = document.getElementById('bg-image-file').files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                setPageStyles(width, height, margin, `url(${e.target.result})`);
+            };
+            reader.readAsDataURL(file);
+            customizeModal.classList.remove('active');
+            return;
+        }
+    }
+
+    setPageStyles(width, height, margin, bg);
+    customizeModal.classList.remove('active');
+}
+
+function setPageStyles(width, height, margin, bg) {
+    document.querySelectorAll('.page').forEach(page => {
+        page.style.width = width + "cm";
+        page.style.minHeight = height + "cm";
+        page.style.padding = margin + "cm";
+        page.style.background = bg;
+    });
+}
+
+applyCustomizeBtn.addEventListener('click', applyCustomize);
+cancelCustomizeBtn.addEventListener('click', () => customizeModal.classList.remove('active'));
+closeCustomizeBtn.addEventListener('click', () => customizeModal.classList.remove('active'));
+
+
+
+// Save document
+function saveDocument() {
+    const content = editor.innerHTML;
+    const title = docTitle.value || 'Untitled Document';
+    const blob = new Blob([content], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = title + '.html';
+    a.click();
+
+    URL.revokeObjectURL(url);
+    saveStatus.textContent = 'All changes saved';
+
+    if (saveJPEG) {
+        showAutosavePopup();
+    }
+}
+
+// Autosave popup
+function showAutosavePopup() {
+    autosavePopup.classList.add('active');
+    setTimeout(() => autosavePopup.classList.remove('active'), 5000);
+}
+
+document.getElementById('autosave-yes').addEventListener('click', () => {
+    autosavePopup.classList.remove('active');
+    html2canvas(document.querySelector('.page')).then(canvas => {
+        const link = document.createElement('a');
+        link.href = canvas.toDataURL('image/jpeg');
+        link.download = (docTitle.value || 'Untitled Document') + '.jpg';
+        link.click();
+    });
+});
+
+document.getElementById('autosave-no').addEventListener('click', () => {
+    autosavePopup.classList.remove('active');
+});
+            
+            editor.addEventListener('keydown', function(e) {
+                // Handle undo/redo with Ctrl+Z/Ctrl+Y
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'z') {
+                        e.preventDefault();
+                        undo();
+                    } else if (e.key === 'y') {
+                        e.preventDefault();
+                        redo();
+                    }
+                }
+                
+                // Save state on important changes
+                if (e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete') {
+                    setTimeout(saveState, 10);
+                }
+            });
+            
+            // Formatting buttons
+            document.querySelectorAll('.toolbar-btn[data-command]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const command = this.getAttribute('data-command');
+                    document.execCommand(command, false, null);
+                    editor.focus();
+                    saveState();
+                });
+            });
+            
+            // Font family
+document.getElementById('font-family').addEventListener('change', function() {
+    const font = this.value;
+    const selection = window.getSelection();
+
+    if (!selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+
+    if (range.collapsed) {
+        // If no text is selected, apply font to editor for new text
+        editor.style.fontFamily = font;
+        return;
+    }
+
+    // Use execCommand as a fallback but with correct font name
+    try {
+        document.execCommand('fontName', false, font);
+    } catch(e) {
+        // If execCommand fails, wrap selection in a span
+        const span = document.createElement('span');
+        span.style.fontFamily = font;
+        span.appendChild(range.extractContents());
+        range.insertNode(span);
+    }
+
+    editor.focus();
+    saveState();
+});
+
+
+            
+            // Font size
+            document.getElementById('font-size').addEventListener('change', function() {
+                document.execCommand('fontSize', false, this.value);
+                editor.focus();
+                saveState();
+            });
+            
+            // Text color
+            document.getElementById('text-color').addEventListener('input', function() {
+                document.execCommand('foreColor', false, this.value);
+                editor.focus();
+                saveState();
+            });
+            
+            // Highlight color
+            document.getElementById('highlight-color').addEventListener('input', function() {
+                document.execCommand('hiliteColor', false, this.value);
+                editor.focus();
+                saveState();
+            });
+            
+            // Format block
+            document.getElementById('format-block').addEventListener('change', function() {
+                document.execCommand('formatBlock', false, `<${this.value}>`);
+                editor.focus();
+                saveState();
+            });
+            
+            // Document title
+            docTitle.addEventListener('input', function() {
+                isDirty = true;
+                saveStatus.textContent = 'Unsaved changes';
+            });
+            
+            // Menu toggle
+            menuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('active');
+            });
+            
+            // Dark mode toggle
+            darkModeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                const icon = this.querySelector('i');
+                if (document.body.classList.contains('dark-mode')) {
+                    icon.textContent = 'light_mode';
+                    this.innerHTML = '<i class="material-icons">light_mode</i> Light Mode';
+                } else {
+                    icon.textContent = 'dark_mode';
+                    this.innerHTML = '<i class="material-icons">dark_mode</i> Dark Mode';
+                }
+            });
+            
+            // Fullscreen
+            fullscreenBtn.addEventListener('click', toggleFullscreen);
+            exitFullscreen.addEventListener('click', toggleFullscreen);
+            
+            // Save
+            saveBtn.addEventListener('click', function() {
+                saveDocument();
+            });
+            
+            // Export
+            exportBtn.addEventListener('click', function() {
+                exportModal.classList.add('active');
+            });
+            
+            // Insert link
+            insertLinkBtn.addEventListener('click', function() {
+                linkModal.classList.add('active');
+            });
+            
+            // Insert image
+            insertImageBtn.addEventListener('click', function() {
+                imageModal.classList.add('active');
+            });
+            
+            // Close modals
+            document.querySelectorAll('.close-modal, .btn-secondary').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    linkModal.classList.remove('active');
+                    imageModal.classList.remove('active');
+                    autosaveModal.classList.remove('active');
+                    exportModal.classList.remove('active');
+                });
+            });
+            
+            // Insert link
+            document.getElementById('insert-link-btn').addEventListener('click', function() {
+                const text = document.getElementById('link-text').value || 'Link';
+                const url = document.getElementById('link-url').value;
+                
+                if (url) {
+                    document.execCommand('insertHTML', false, `<a href="${url}" target="_blank">${text}</a>`);
+                    editor.focus();
+                    saveState();
+                }
+                
+                linkModal.classList.remove('active');
+                document.getElementById('link-text').value = '';
+                document.getElementById('link-url').value = '';
+            });
+            
+            // Insert image
+            document.getElementById('insert-image-btn').addEventListener('click', function() {
+                const url = document.getElementById('image-url').value;
+                const fileInput = document.getElementById('image-upload');
+                
+                if (url) {
+                    insertImageAtCursor(url);
+                } else if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        insertImageAtCursor(e.target.result);
+                    };
+                    
+                    reader.readAsDataURL(file);
+                }
+                
+                imageModal.classList.remove('active');
+                document.getElementById('image-url').value = '';
+                fileInput.value = '';
+            });
+            
+            // Autosave settings
+            document.getElementById('autosave-settings').addEventListener('click', function() {
+                autosaveModal.classList.add('active');
+            });
+            
+            document.getElementById('save-autosave').addEventListener('click', function() {
+                const interval = document.getElementById('autosave-interval').value;
+                autosaveInterval = parseInt(interval) * 1000;
+                saveJPEG = document.getElementById('autosave-jpeg').checked;
+                setupAutosave();
+                autosaveModal.classList.remove('active');
+            });
+            
+            // Export options
+            document.querySelectorAll('.export-option').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.export-option').forEach(b => {
+                        b.classList.remove('btn-primary');
+                        b.classList.add('btn-secondary');
+                    });
+                    this.classList.remove('btn-secondary');
+                    this.classList.add('btn-primary');
+                    document.getElementById('export-document').disabled = false;
+                    document.getElementById('export-document').dataset.format = this.dataset.format;
+                });
+            });
+            
+            document.getElementById('export-document').addEventListener('click', function() {
+                const format = this.dataset.format;
+                exportDocument(format);
+                exportModal.classList.remove('active');
+            });
+            
+            // Autosave popup
+            document.getElementById('autosave-yes').addEventListener('click', function() {
+                exportDocument('jpg');
+                autosavePopup.classList.remove('active');
+            });
+            
+            document.getElementById('autosave-no').addEventListener('click', function() {
+                autosavePopup.classList.remove('active');
+            });
+        }
+        
+        // Save editor state for undo/redo
+        function saveState() {
+            const html = editor.innerHTML;
+            if (html === currentState) return;
+            
+            undoStack.push(html);
+            currentState = html;
+            redoStack = [];
+            isDirty = true;
+            saveStatus.textContent = 'Unsaved changes';
+        }
+        
+        // Undo functionality
+        function undo() {
+            if (undoStack.length < 2) return;
+            
+            redoStack.push(undoStack.pop());
+            currentState = undoStack[undoStack.length - 1];
+            editor.innerHTML = currentState;
+            isDirty = true;
+            saveStatus.textContent = 'Unsaved changes';
+        }
+        
+        // Redo functionality
+        function redo() {
+            if (redoStack.length === 0) return;
+            
+            currentState = redoStack.pop();
+            undoStack.push(currentState);
+            editor.innerHTML = currentState;
+            isDirty = true;
+            saveStatus.textContent = 'Unsaved changes';
+        }
+        
+        // Update word count and reading time
+        function updateWordCount() {
+            const text = editor.innerText || editor.textContent;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            wordCount.textContent = `${words} words`;
+            
+            // Reading time (200 words per minute)
+            const minutes = Math.ceil(words / 200);
+            readingTime.textContent = `${minutes} min read`;
+        }
+        
+        
+        
+        // Export document
+        function exportDocument(format) {
+            const title = docTitle.value || 'document';
+            
+            if (format === 'html') {
+                const blob = new Blob([editor.innerHTML], {type: 'text/html'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `${title}.html`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                return;
+            }
+            
+            if (format === 'md') {
+                // Simple HTML to Markdown conversion
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = editor.innerHTML;
+                
+                // Replace headings
+                for (let i = 1; i <= 6; i++) {
+                    const headings = tempDiv.querySelectorAll(`h${i}`);
+                    headings.forEach(h => {
+                        h.outerHTML = `${'#'.repeat(i)} ${h.innerText}\n\n`;
+                    });
+                }
+                
+                // Replace paragraphs
+                const paragraphs = tempDiv.querySelectorAll('p');
+                paragraphs.forEach(p => {
+                    p.outerHTML = `${p.innerText}\n\n`;
+                });
+                
+                // Replace lists
+                const ul = tempDiv.querySelectorAll('ul');
+                ul.forEach(u => {
+                    const items = u.querySelectorAll('li');
+                    let md = '';
+                    items.forEach(i => {
+                        md += `- ${i.innerText}\n`;
+                    });
+                    u.outerHTML = `${md}\n`;
+                });
+                
+                const ol = tempDiv.querySelectorAll('ol');
+                ol.forEach(o => {
+                    const items = o.querySelectorAll('li');
+                    let md = '';
+                    items.forEach((i, index) => {
+                        md += `${index + 1}. ${i.innerText}\n`;
+                    });
+                    o.outerHTML = `${md}\n`;
+                });
+                
+                // Replace links
+                const links = tempDiv.querySelectorAll('a');
+                links.forEach(a => {
+                    a.outerHTML = `[${a.innerText}](${a.href})`;
+                });
+                
+                // Replace images
+                const images = tempDiv.querySelectorAll('img');
+                images.forEach(img => {
+                    img.outerHTML = `![${img.alt || 'image'}](${img.src})`;
+                });
+                
+                // Create and download Markdown file
+                const blob = new Blob([tempDiv.innerText], {type: 'text/markdown'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `${title}.md`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                return;
+            }
+            
+            // PDF or JPEG export
+            const page = document.querySelector('.page');
+            
+            html2canvas(page).then(canvas => {
+                if (format === 'jpg') {
+                    // Export as JPEG
+                    const imgData = canvas.toDataURL('image/jpeg');
+                    const a = document.createElement('a');
+                    a.href = imgData;
+                    a.download = `${title}.jpg`;
+                    a.click();
+                } else {
+                    // Export as PDF
+                    const imgData = canvas.toDataURL('image/jpeg');
+                    const pdf = new jspdf.jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+                    
+                    const imgWidth = pdf.internal.pageSize.getWidth();
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+                    pdf.save(`${title}.pdf`);
+                }
+            });
+            
+            isDirty = false;
+            saveStatus.textContent = 'All changes saved';
+        }
+        
+        // Insert image at cursor position
+        function insertImageAtCursor(src) {
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = 'Inserted image';
+            img.style.maxWidth = '100%';
+            img.style.height = 'auto';
+            
+            const sel = window.getSelection();
+            if (sel.rangeCount) {
+                const range = sel.getRangeAt(0);
+                range.deleteContents();
+                range.insertNode(img);
+            } else {
+                editor.appendChild(img);
+            }
+            
+            editor.focus();
+            saveState();
+        }
+        
+        // Set up autosave
+        function setupAutosave() {
+            clearInterval(autosaveTimer);
+            autosaveTimer = setInterval(() => {
+                if (isDirty) {
+                    if (saveJPEG) {
+                        autosavePopup.classList.add('active');
+                        
+                        // Hide after 5 seconds
+                        setTimeout(() => {
+                            autosavePopup.classList.remove('active');
+                        }, 5000);
+                    } else {
+                        saveDocument();
+                    }
+                }
+            }, autosaveInterval);
+        }
+        
+        // Toggle fullscreen
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().then(() => {
+                    document.body.classList.add('fullscreen');
+                    exitFullscreen.classList.add('visible');
+                });
+            } else {
+                document.exitFullscreen().then(() => {
+                    document.body.classList.remove('fullscreen');
+                    exitFullscreen.classList.remove('visible');
+                });
+            }
+        }
+        
+        // Close modals on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                linkModal.classList.remove('active');
+                imageModal.classList.remove('active');
+                autosaveModal.classList.remove('active');
+                exportModal.classList.remove('active');
+                autosavePopup.classList.remove('active');
+            }
+        });
+    </script>
+<!-- Add this at the end of your body before <script></script></body> -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    let popup, keyboardIcon;
+    let lastCtrlTime = 0;
+    const doubleTapDelay = 300; // max ms between taps
+
+    // Create popup container
+    popup = document.createElement("div");
+    popup.id = "shortcut-popup";
+    popup.style.position = "fixed";
+    popup.style.top = "50%";
+    popup.style.left = "50%";
+    popup.style.transform = "translate(-50%, -50%)";
+    popup.style.background = "#fff";
+    popup.style.borderRadius = "8px";
+    popup.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
+    popup.style.padding = "20px";
+    popup.style.zIndex = "2000";
+    popup.style.display = "none";
+    popup.style.minWidth = "400px";
+    document.body.appendChild(popup);
+
+    // Small keyboard icon
+    keyboardIcon = document.createElement("div");
+    keyboardIcon.innerHTML = "&#9000;";
+    keyboardIcon.style.position = "fixed";
+    keyboardIcon.style.bottom = "20px";
+    keyboardIcon.style.right = "20px";
+    keyboardIcon.style.background = "#1a73e8";
+    keyboardIcon.style.color = "#fff";
+    keyboardIcon.style.padding = "8px 10px";
+    keyboardIcon.style.borderRadius = "6px";
+    keyboardIcon.style.fontSize = "18px";
+    keyboardIcon.style.display = "none";
+    keyboardIcon.style.zIndex = "3000";
+    document.body.appendChild(keyboardIcon);
+
+    function flashKeyboardIcon() {
+        keyboardIcon.style.display = "block";
+        keyboardIcon.style.opacity = "1";
+        setTimeout(() => {
+            keyboardIcon.style.transition = "opacity 0.5s";
+            keyboardIcon.style.opacity = "0";
+            setTimeout(() => keyboardIcon.style.display = "none", 600);
+        }, 1500);
+    }
+
+    function buildShortcutPopup() {
+        popup.innerHTML = "<h3 style='margin-bottom:15px;'>Keyboard Shortcuts</h3>";
+        const sidebarButtons = document.querySelectorAll(".sidebar-btn");
+        const container = document.createElement("div");
+        container.style.display = "grid";
+        container.style.gridTemplateColumns = "repeat(3, 1fr)";
+        container.style.gap = "20px";
+
+        sidebarButtons.forEach((btn, i) => {
+            const shortcutKey = "Shift+" + String.fromCharCode(65 + i);
+            const item = document.createElement("div");
+            item.style.textAlign = "center";
+            item.style.fontSize = "13px";
+            item.style.cursor = "pointer";
+
+            const iconClone = btn.querySelector("i")?.cloneNode(true) || document.createElement("i");
+            iconClone.style.display = "block";
+            iconClone.style.fontSize = "24px";
+            iconClone.style.marginBottom = "5px";
+
+            const label = document.createElement("div");
+            let text = btn.textContent.trim();
+            const icon = btn.querySelector("i");
+            if (icon) {
+                const iconText = icon.textContent.trim();
+                if (iconText && text.startsWith(iconText)) {
+                    text = text.slice(iconText.length).trim();
+                }
+            }
+            label.textContent = text;
+            label.style.marginBottom = "4px";
+
+            const shortcut = document.createElement("div");
+            shortcut.textContent = shortcutKey;
+            shortcut.style.color = "#1a73e8";
+            shortcut.style.fontSize = "12px";
+
+            item.appendChild(iconClone);
+            item.appendChild(label);
+            item.appendChild(shortcut);
+
+            item.addEventListener("click", () => btn.click());
+            container.appendChild(item);
+        });
+
+        popup.appendChild(container);
+    }
+
+    document.addEventListener("keydown", e => {
+        if (e.key === "Control") {
+            const now = Date.now();
+            if (now - lastCtrlTime < doubleTapDelay) {
+                // Double-tap detected
+                buildShortcutPopup();
+                popup.style.display = (popup.style.display === "none") ? "block" : "none";
+                flashKeyboardIcon();
+            }
+            lastCtrlTime = now;
+        }
+
+        // Handle Shift+Letter shortcuts
+        if (e.shiftKey && /^[A-Z]$/.test(e.key)) {
+            const index = e.key.charCodeAt(0) - 65;
+            const sidebarButtons = document.querySelectorAll(".sidebar-btn");
+            if (sidebarButtons[index]) {
+                sidebarButtons[index].click();
+                popup.style.display = "none";
+            }
+        }
+
+        // Close popup on Escape
+        if (e.key === "Escape") {
+            popup.style.display = "none";
+        }
+    });
+});
+
+
+</script>
+<script>let shown=false;document.addEventListener('keydown',()=>{if(shown)return;shown=true;let p=document.createElement('div');p.innerHTML='⌨ Keyboard Connected | Double click Ctrl for shortcuts';Object.assign(p.style,{position:'fixed',top:'20px',right:'20px',padding:'10px 14px',border:'2px solid #1a73e8',borderRadius:'6px',background:'#fff',color:'#000',fontFamily:'sans-serif',fontSize:'14px',display:'flex',alignItems:'center',gap:'6px',boxShadow:'0 2px 8px rgba(0,0,0,0.2)',zIndex:9999,transform:'translateX(100%)',opacity:'0',transition:'transform 0.3s,opacity 0.3s'});document.body.appendChild(p);requestAnimationFrame(()=>{p.style.transform='translateX(0)';p.style.opacity='1'});setTimeout(()=>{p.style.transform='translateX(100%)';p.style.opacity='0';setTimeout(()=>p.remove(),300)},3000);});</script>
+<script>document.addEventListener('keydown', e => e.ctrlKey && document.querySelectorAll('.modal, .autosave-popup, .sidebar.active').forEach(el => el.classList.remove('active')));
+</script>
+<script>
+// Collapse Sidebar
+const collapseBtn = document.getElementById('collapse-sidebar');
+collapseBtn.addEventListener('click', function() {
+    const toolbar = document.querySelector('.toolbar');
+    const editorContainer = document.querySelector('.editor-container');
+
+    if (!sidebar.classList.contains('collapsed')) {
+        // Collapse: move under toolbar
+        sidebar.classList.add('collapsed');
+        toolbar.insertAdjacentElement('afterend', sidebar);
+        this.innerHTML = '<i class="material-icons">unfold_more</i> Expand';
+    } else {
+        // Expand: move back to editor container
+        sidebar.classList.remove('collapsed');
+        editorContainer.insertBefore(sidebar, editorContainer.firstChild);
+        this.innerHTML = '<i class="material-icons">unfold_less</i> Collapse';
+    }
+});
+
+</script>
+
+<script>
+const container = document.querySelector('.document-container');
+const pageHeightPx = 1122; // ~29.7cm at 96dpi
+const watermarkText = "DocuWrite Pro";
+
+// Replace current #editor with editable div inside page
+const firstPage = document.querySelector('.page');
+let firstEditor = document.createElement('div');
+firstEditor.className = 'editor-page';
+firstEditor.contentEditable = "true";
+firstEditor.innerHTML = firstPage.querySelector('#editor').innerHTML;
+firstPage.innerHTML = '';
+firstPage.appendChild(firstEditor);
+
+// Add watermark
+let watermark = document.createElement('div');
+watermark.className = 'watermark';
+watermark.textContent = watermarkText;
+firstPage.appendChild(watermark);
+
+// Attach input listener to a page
+function attachInputListener(editorPage) {
+    editorPage.addEventListener('input', () => {
+        checkPageOverflow(editorPage);
+    });
+}
+
+// Check if page overflowed
+function checkPageOverflow(editorPage) {
+    if (editorPage.scrollHeight > pageHeightPx) {
+        const newPage = createPage();
+
+        // Move last element to new page
+        const lastNode = editorPage.lastChild;
+        newPage.querySelector('.editor-page').appendChild(lastNode);
+
+        // Move cursor to new page
+        placeCursorAtEnd(newPage.querySelector('.editor-page'));
+    }
+}
+
+// Create new page
+function createPage() {
+    const page = document.createElement('div');
+    page.className = 'page';
+    page.innerHTML = `
+        <div class="editor-page" contenteditable="true"></div>
+        <div class="watermark">${watermarkText}</div>
+    `;
+    container.appendChild(page);
+
+    const editorPage = page.querySelector('.editor-page');
+    attachInputListener(editorPage);
+    return page;
+}
+
+// Move cursor to end of contenteditable
+function placeCursorAtEnd(el) {
+    el.focus();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
+// Initialize first page
+attachInputListener(firstEditor);
+</script>
+<style>
+.page .editor-page {
+    min-height: 100%;
+    padding-bottom: 0.5cm; /* space before bottom border */
+}
+
+/* Remove the dark border when typing (focus outline) */
+.editor-page:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+</style>
+
+<script>
+// PDF export that respects multiple pages
+function exportToPDF() {
+    const pages = document.querySelectorAll('.page');
+    const pdf = new jspdf.jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+    });
+
+    let promises = [];
+
+    pages.forEach((page, index) => {
+        promises.push(html2canvas(page).then(canvas => {
+            const imgData = canvas.toDataURL('image/jpeg');
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+            if (index > 0) pdf.addPage();
+            pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        }));
+    });
+
+    Promise.all(promises).then(() => {
+        const title = document.getElementById('doc-title')?.value || 'document';
+        pdf.save(`${title}.pdf`);
+    });
+}
+
+// Example: replace your existing PDF export button action
+document.getElementById('export-document')?.addEventListener('click', function() {
+    if (this.dataset.format === 'pdf') exportToPDF();
+});
+</script>
+
+<script>
+/* === Mirror structural/style changes from first page to all pages ===
+   - Safe: never overwrites contenteditable areas (so editors keep user text)
+   - Mirrors: inline styles, classes, attributes, watermark text/HTML,
+     and non-editable subtree changes (childList) by copying innerHTML
+     of the affected non-editable parent.
+   - Debounced for performance.
+*/
+(function(){
+  const container = document.querySelector('.document-container');
+  const getPages = () => Array.from(document.querySelectorAll('.page'));
+  const firstPage = () => document.querySelector('.page');
+
+  function isInsideEditable(node){
+    if (!node) return false;
+    return Boolean(node.nodeType === 1 && node.closest('[contenteditable]')) ||
+           Boolean(node.nodeType === 3 && node.parentElement && node.parentElement.closest('[contenteditable]'));
+  }
+
+  // Helper: path of element among element-children (for fallback matching)
+  function getElementPath(el, root){
+    const path = [];
+    let node = el;
+    while(node && node !== root && node.parentElement){
+      const parent = node.parentElement;
+      const idx = Array.prototype.indexOf.call(parent.children, node);
+      path.unshift(idx);
+      node = parent;
+    }
+    return path;
+  }
+  function getByPath(root, path){
+    let node = root;
+    for(const i of path){
+      if (!node || !node.children[i]) return null;
+      node = node.children[i];
+    }
+    return node;
+  }
+
+  // Find a reasonably matching element in a target page for a source element
+  function findMatchInPage(srcEl, pageRoot, srcRoot){
+    if (!srcEl) return null;
+
+    // 1) If element has id -> use it
+    if (srcEl.id){
+      try {
+        const byId = pageRoot.querySelector('#' + CSS.escape(srcEl.id));
+        if (byId) return byId;
+      } catch(e){}
+    }
+
+    // 2) Try matching by full class-list (if any)
+    if (srcEl.classList && srcEl.classList.length){
+      const clsSel = Array.from(srcEl.classList).map(c => '.' + CSS.escape(c)).join('');
+      try {
+        const byClass = pageRoot.querySelector(clsSel);
+        if (byClass) return byClass;
+      } catch(e){}
+    }
+
+    // 3) Fallback: path mapping (structure-based)
+    const path = getElementPath(srcEl, srcRoot);
+    if (path.length){
+      return getByPath(pageRoot, path);
+    }
+
+    return null;
+  }
+
+  // Copy attributes and inline style from src -> dst (skip id and contenteditable)
+  function copyAttrsAndStyle(src, dst){
+    if (!src || !dst) return;
+    dst.className = src.className;                 // copy classes
+    dst.style.cssText = src.style.cssText || '';   // copy inline style
+    // copy all attributes except id/contenteditable
+    for(const attr of Array.from(src.attributes || [])){
+      if (attr.name === 'id' || attr.name === 'contenteditable') continue;
+      try { dst.setAttribute(attr.name, attr.value); } catch(e){}
+    }
+  }
+
+  // Apply a snapshot of the first page to all others (initial sync)
+  function initialSync(){
+    const fp = firstPage();
+    if (!fp) return;
+    const pages = getPages();
+    // sync page-level style/class
+    pages.slice(1).forEach(p => {
+      p.style.cssText = fp.style.cssText;
+      p.className = fp.className;
+      // sync watermark quickly if exists
+      const srcWm = fp.querySelector('.watermark');
+      const dstWm = p.querySelector('.watermark');
+      if (srcWm && dstWm) dstWm.innerHTML = srcWm.innerHTML;
+    });
+  }
+
+  // Core observer callback: intelligently apply changes from first page -> others
+  function startSyncObserver(){
+    const srcRoot = firstPage();
+    if (!srcRoot) return;
+
+    const observer = new MutationObserver(mutations => {
+      // debounce (coalesce many rapid mutations)
+      if (observer._timer) clearTimeout(observer._timer);
+      observer._timer = setTimeout(() => {
+        const pages = getPages();
+        const others = pages.slice(1);
+
+        mutations.forEach(m => {
+          // If mutation target is inside editable content, skip it
+          if (isInsideEditable(m.target)) return;
+
+          if (m.type === 'attributes'){
+            // copy changed attribute/style/class to matching nodes
+            const srcEl = m.target;
+            others.forEach(page => {
+              const match = findMatchInPage(srcEl, page, srcRoot);
+              if (match && !isInsideEditable(match)) copyAttrsAndStyle(srcEl, match);
+            });
+          } else if (m.type === 'characterData'){
+            // text node changed (e.g., watermark text)
+            const parent = m.target.parentElement;
+            if (!parent || isInsideEditable(parent)) return;
+            others.forEach(page => {
+              const match = findMatchInPage(parent, page, srcRoot);
+              if (match && !isInsideEditable(match)){
+                match.textContent = parent.textContent;
+              }
+            });
+          } else if (m.type === 'childList'){
+            // children added/removed under a non-editable parent -> copy parent's innerHTML to matches
+            const parent = m.target;
+            if (isInsideEditable(parent)) return;
+            others.forEach(page => {
+              const match = findMatchInPage(parent, page, srcRoot);
+              if (match && !isInsideEditable(match)){
+                // copy structure/content of this non-editable parent
+                match.innerHTML = parent.innerHTML;
+              } else {
+                // fallback: copy page-level styles & watermark
+                page.style.cssText = srcRoot.style.cssText;
+                const srcWm = srcRoot.querySelector('.watermark');
+                const dstWm = page.querySelector('.watermark');
+                if (srcWm && dstWm) dstWm.innerHTML = srcWm.innerHTML;
+              }
+            });
+          }
+        });
+
+        // done
+        observer._timer = null;
+      }, 25); // 25ms debounce
+    });
+
+    observer.observe(srcRoot, {
+      attributes: true,
+      attributeOldValue: false,
+      subtree: true,
+      childList: true,
+      characterData: true
+    });
+
+    // Also observe the document container for new pages being added later
+    const containerObserver = new MutationObserver(muts => {
+      if (muts.some(m=>m.type==='childList' && m.addedNodes.length)){
+        // initial-sync newly added pages
+        initialSync();
+      }
+    });
+    if (container) containerObserver.observe(container, { childList: true, subtree: false });
+  }
+
+  // init
+  document.addEventListener('DOMContentLoaded', () => {
+    initialSync();
+    startSyncObserver();
+  });
+
+  // also safe-call in case you attach script after DOM load
+  if (document.readyState === 'interactive' || document.readyState === 'complete'){
+    initialSync();
+    startSyncObserver();
+  }
+
+})();
+<link href="https://fonts.googleapis.com/css2?family=Roboto&family=Arial&family=Times+New+Roman&family=Courier+New&family=Georgia&family=Verdana&display=swap" rel="stylesheet">
+
+</script>
+<script>
+const fontSelect = document.getElementById('font-family');
+const editor = document.getElementById('editor');
+
+// Apply font recursively to all existing elements inside editor
+function applyFontRecursive(el, font) {
+    if(el.nodeType === Node.ELEMENT_NODE) {
+        el.style.fontFamily = font;
+        Array.from(el.childNodes).forEach(child => applyFontRecursive(child, font));
+    }
+}
+
+// Apply to editor container and all current content
+function applyFont(font) {
+    applyFontRecursive(editor, font);
+    document.querySelectorAll('.page, .document-container').forEach(el => el.style.fontFamily = font);
+}
+
+// Ensure new text inherits font via editor's default style
+function setEditorDefaultFont(font) {
+    editor.style.fontFamily = font;
+}
+
+// Handle topbar font change
+fontSelect.addEventListener('change', e => {
+    const font = e.target.value;
+    applyFont(font);        // update all existing text
+    setEditorDefaultFont(font); // new text inherits font
+    editor.focus();
+});
+
+// Optional: apply initial font on page load
+setEditorDefaultFont(fontSelect.value);
+</script>
+<script>
+const fontSelect = document.getElementById('font-family');
+const editor = document.getElementById('editor');
+
+let styleTag = document.createElement('style');
+document.head.appendChild(styleTag);
+
+fontSelect.addEventListener('change', e => {
+    const font = e.target.value;
+    styleTag.innerHTML = `
+        #editor, 
+        #editor * {
+            font-family: '${font}' !important;
+        }
+    `;
+});
+</script>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+    const applyCustomFont = document.getElementById('apply-custom-font');
+    const customFontList = document.getElementById('custom-font-list');
+    const topbarFontSelect = document.getElementById('font-family');
+    const advancedFontsModal = document.getElementById('advanced-fonts-modal');
+
+    // Unified function to apply font everywhere and update both lists
+    function applyFont(font) {
+        if (!font) return;
+
+        // Apply font to editor/pages
+        document.querySelectorAll('.page, #editor, .document-container').forEach(el => {
+            el.style.fontFamily = font;
+        });
+
+        // Update Topbar font selector if not already present
+        if (![...topbarFontSelect.options].some(opt => opt.value === font)) {
+            const newOption = document.createElement('option');
+            newOption.value = font;
+            newOption.textContent = font;
+            topbarFontSelect.appendChild(newOption);
+        }
+        topbarFontSelect.value = font;
+
+        // Update Advanced Fonts dropdown if not already present
+        if (![...customFontList.options].some(opt => opt.value === font)) {
+            const newOption = document.createElement('option');
+            newOption.value = font;
+            newOption.textContent = font;
+            customFontList.appendChild(newOption);
+        }
+        customFontList.value = font;
+    }
+
+    // Apply font when clicking Apply in Advanced Fonts
+    applyCustomFont.addEventListener('click', () => {
+        const font = customFontList.value;
+        applyFont(font);
+        advancedFontsModal.classList.remove('active');
+    });
+
+    // Apply font when selecting from Topbar
+    topbarFontSelect.addEventListener('change', () => {
+        const font = topbarFontSelect.value;
+        applyFont(font);
+    });
+
+    // Optional: Add font from Google Fonts input
+    const googleFontUrl = document.getElementById('google-font-url');
+    const addGoogleFont = document.getElementById('add-google-font');
+
+    addGoogleFont.addEventListener('click', () => {
+        const url = googleFontUrl.value.trim();
+        if (!url) return;
+
+        const link = document.createElement('link');
+        link.href = url;
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+
+        // Extract font name from URL
+        const fontNameMatch = url.match(/family=([^:&]+)/);
+        if (fontNameMatch) {
+            const fontName = decodeURIComponent(fontNameMatch[1]).replace(/\+/g, ' ');
+            applyFont(fontName); // Adds to dropdowns and applies immediately
+        }
+
+        googleFontUrl.value = '';
+    });
+
+    // Optional: Add uploaded font file
+    const uploadFontFile = document.getElementById('upload-font-file');
+    const addUploadedFont = document.getElementById('add-uploaded-font');
+
+    addUploadedFont.addEventListener('click', () => {
+        const file = uploadFontFile.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const fontData = e.target.result;
+            const fontName = file.name.split('.')[0];
+
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @font-face {
+                    font-family: '${fontName}';
+                    src: url(${fontData});
+                }
+            `;
+            document.head.appendChild(style);
+
+            applyFont(fontName); // Adds to dropdowns and applies immediately
+        };
+        reader.readAsDataURL(file);
+        uploadFontFile.value = '';
+    });
+});
+[...customFontList.options].find(opt => opt.value === topbarFontSelect.value) && applyFont(topbarFontSelect.value);
+setInterval(() => {
+    const font = topbarFontSelect.value;
+    if ([...customFontList.options].some(opt => opt.value === font)) {
+        applyFont(font);
+    }
+}, 5000);
+
+
+</script>
+
+
+<script>
+const panel = document.getElementById('smart-spell-panel');
+if(document.body.classList.contains('dark')){
+    panel.style.backgroundColor = '#1e1e1e';  // dark background
+    panel.style.color = '#f5f5f5';            // light text
+} else {
+    panel.style.backgroundColor = '#ffffff';  // white background
+    panel.style.color = '#202124';            // dark text
+}
+</script>
+<script>
+const panel = document.getElementById('smart-spell-panel');
+const smartBtn = document.getElementById('smart-spell-btn');
+
+function updateSidebarBg() {
+    // force background based on editor's dark mode
+    if(document.body.classList.contains('dark-mode')){
+        panel.style.backgroundColor = '#2a2a2a'; // gray for dark mode
+    } else {
+        panel.style.backgroundColor = '#ffffff'; // default light
+    }
+}
+
+// Apply when sidebar opens
+smartBtn.addEventListener('click', () => {
+    updateSidebarBg();
+});
+
+// Optional: listen for dark mode toggle events if your editor triggers one
+// Example: if you have a button that toggles dark mode
+const darkModeToggle = document.getElementById('dark-mode-toggle');
+if(darkModeToggle){
+    darkModeToggle.addEventListener('click', () => {
+        setTimeout(updateSidebarBg, 50); // small delay to let body class update
+    });
+}
+</script>
+<script>
+(function(){
+    const fonts = [
+        "Roboto","Open Sans","Lato","Montserrat","Oswald","Raleway","PT Sans","Merriweather","Noto Sans","Ubuntu",
+        "Source Sans Pro","Playfair Display","Poppins","Nunito","Fira Sans","Rubik","Work Sans","Roboto Condensed","Mukta","Inconsolata",
+        "Dosis","Karla","Arimo","Quicksand","Hind","Oxygen","Titillium Web","Muli","Exo 2","Bebas Neue",
+        "Josefin Sans","Cabin","Anton","Varela Round","Comfortaa","Lobster","Bitter","Fjalla One","Yanone Kaffeesatz","Spectral",
+        "PT Serif","Alfa Slab One","Crimson Text","DM Sans","Overpass","Jost","Cairo","Pangolin","Fira Code","Hind Madurai",
+        "Archivo","Nanum Gothic","Catamaran","Heebo","Kanit","Righteous","Signika","Chivo","Lexend","Pathway Gothic One",
+        "Zilla Slab","Amatic SC","Bangers","Shadows Into Light","Rokkitt","Exo","Cabin Sketch","Baloo 2","Asap","Mukta Malar",
+        "Satisfy","Indie Flower","Candal","Fredoka One","Gloria Hallelujah","Noto Serif","Patrick Hand","Vollkorn","Teko","Nanum Myeongjo","Pacifico","Lobster Two","Acme","Actor","Adamina","Aladin","Aldrich","Allan","Allura","Amarante",
+"Amatic SC","Amiri","Antic","Antic Didone","Antic Slab","Architects Daughter","Archivo Black","Archivo Narrow","Arima Madurai","Armata",
+"Artifika","Arvo","Asap Condensed","Asset","Assistant","Astloch","Atma","Aubrey","Audiowide","Autour One",
+"Average","Average Sans","Averia Gruesa Libre","Averia Libre","Averia Sans Libre","B612","B612 Mono","Bai Jamjuree","Baloo Bhaina 2","Baloo Bhaijaan 2",
+"Baloo Chettan 2","Baloo Da 2","Baloo Paaji 2","Baloo Tamma 2","Baloo Tammudu 2","Balthazar","Bangers","Barlow","Barlow Condensed","Barlow Semi Condensed",
+"Barriecito","Basic","Be Vietnam","Belleza","BenchNine","Bentham","Berkshire Swash","Beth Ellen","Big Shoulders Display","Big Shoulders Text",
+"Bigelow Rules","Bigshot One","Bilbo","Bilbo Swash Caps","BioRhyme","BioRhyme Expanded","Biryani","Bitter","Black Ops One","Blaka",
+"Blaka Hollow","Blaka Ink","Blinker","Bodoni Moda","Bona Nova","Bonbon","Boogaloo","Bowlby One","Bowlby One SC","Brawler",
+"Bubblegum Sans","Bubbler One","Buda","Buenard","Bungee","Bungee Hairline","Bungee Inline","Bungee Outline","Bungee Shade","Butcherman",
+"Butterfly Kids","Cabin Condensed","Cabin Sketch","Caesar Dressing","Cagliostro","Calligraffitti","Cambay","Cambo","Candal","Cantarell",
+"Cantata One","Cantora One","Capriola","Cardo","Carme","Carrois Gothic","Carrois Gothic SC","Carter One","Catamaran","Caudex","Chakra Petch","Changa","Changa One","Chango","Charm","Charmonman","Chathura","Chelsea Market","Chenla","Chicle",
+"Chivo Mono","Cinzel","Cinzel Decorative","Clicker Script","Coda","Coda Caption","Codystar","Coiny","Combo","Comforter",
+"Comforter Brush","Comica One","Concert One","Condiment","Content","Contrail One","Convergence","Cookie","Copse","Corben",
+"Cormorant","Cormorant Garamond","Cormorant Infant","Cormorant SC","Cormorant Unicase","Cormorant Upright","Courgette","Cousine","Coustard","Covered By Your Grace",
+"Crafty Girls","Creepster","Crete Round","Crimson Pro","Croissant One","Crushed","Cuprum","Cute Font","Cutive","Cutive Mono",
+"DM Serif Display","DM Serif Text","Damion","Dancing Script","Dangrek","Darker Grotesque","David Libre","Days One","Dekko","Delius",
+"Delius Swash Caps","Delius Unicase","Della Respira","Denk One","Devonshire","Dhurjati","Didact Gothic","Diplomata","Diplomata SC","Do Hyeon",
+"Dokdo","Domine","Donegal One","Doppio One","Dorsa","Dosis","Dr Sugiyama","Duru Sans","Dynalight","EB Garamond",
+"Eater","Economica","Eczar","El Messiri","Electrolize","Elsie","Elsie Swash Caps","Emblema One","Emilys Candy","Encode Sans",
+"Encode Sans Condensed","Encode Sans Expanded","Encode Sans Semi Condensed","Encode Sans Semi Expanded","Engagement","Englebert","Enriqueta","Erica One","Esteban","Euphoria Script",
+"Ewert","Exo","Exo 2","Expletus Sans","Fahkwang","Fanwood Text","Farro","Fascinate","Fascinate Inline","Faster One","Bitcount Grid Double","Tagesschrift","Story Script","Saira","Asimovian","Caprasimo","Dosis","Kode Mono","Bungee","Michroma","Permanent Marker","Montserrat Alternates","Orbitron","Libertinus Keyboard","Unica One","Press Start 2P","Monoton","Cinzel Decorative","Knewave","Special Elite"
+    ];
+
+    const fontListDropdown = document.getElementById('custom-font-list');
+    if(!fontListDropdown) return;
+
+    fonts.forEach(fontName => {
+        // Create link tag to load font
+        const link = document.createElement('link');
+        link.href = `https://fonts.googleapis.com/css2?family=${fontName.replace(/ /g,'+')}:wght@400;700&display=swap`;
+        link.rel = 'stylesheet';
+        document.head.appendChild(link);
+
+        // Add to dropdown
+        const option = document.createElement('option');
+        option.value = fontName;
+        option.textContent = fontName;
+        fontListDropdown.appendChild(option);
+    });
+
+    // Apply font immediately when selected
+    fontListDropdown.addEventListener('change', function(){
+        const selectedFont = this.value;
+        document.querySelectorAll('.page, #editor, .document-container').forEach(el=>{
+            el.style.fontFamily = selectedFont;
+        });
+    });
+})();
+</script>
+<!-- jQuery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script>
+// populate dropdown with fonts first...
+
+// then sort alphabetically
+$('#custom-font-list option')
+  .sort((a,b)=>a.text.localeCompare(b.text))
+  .appendTo('#custom-font-list');
+</script>
+
+<!-- Select2 CSS & JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const advancedFontsBtn = document.getElementById('advanced-fonts-btn');
+    const advancedFontsModal = document.getElementById('advanced-fonts-modal');
+    const customFontList = $('#custom-font-list'); // jQuery object
+
+    advancedFontsBtn.addEventListener('click', () => {
+        advancedFontsModal.classList.add('active');
+
+        // Initialize Select2 (only if not already initialized)
+        if (!customFontList.hasClass("select2-hidden-accessible")) {
+            customFontList.select2({
+                placeholder: 'Search fonts...',
+                width: '100%',
+                minimumResultsForSearch: 0,
+                dropdownParent: $(advancedFontsModal) // <-- ensures dropdown appears above the modal
+            });
+        }
+    });
+
+    // Apply selected font
+    $('#apply-custom-font').on('click', function() {
+        const font = customFontList.val();
+        if (!font) return;
+        $('.page, #editor, .document-container').css('font-family', font);
+        advancedFontsModal.classList.remove('active');
+    });
+});
+</script>
+<script>
+(function(){
+  const CONF = { wpm: 200, debounceMs: 120 };
+
+  // Get all editable containers (handles single #editor and multi .editor-page)
+  function getEditors(){
+    return Array.from(document.querySelectorAll('#editor, .editor-page')).filter(Boolean);
+  }
+
+  function getFullText(){
+    const editors = getEditors();
+    if(editors.length === 0) return '';
+    return editors.map(e => (e.innerText || e.textContent || '')).join(' ');
+  }
+
+  function countWords(text){
+    if(!text) return 0;
+    // Normalize NBSP and split on whitespace
+    const t = text.replace(/\u00A0/g,' ').trim();
+    if(!t) return 0;
+    return t.split(/\s+/).filter(Boolean).length;
+  }
+
+  function safeSet(el, txt){
+    if(!el) return;
+    try{ el.textContent = txt; } catch(e){ console.error('wordcount:set', e); }
+  }
+
+  function updateWordUI(){
+    try {
+      const text = getFullText();
+      const words = countWords(text);
+      const wc = document.getElementById('word-count');
+      const rt = document.getElementById('reading-time');
+
+      if(wc) safeSet(wc, `${words} words`);
+
+      if(rt) {
+        const mins = words > 0 ? Math.max(1, Math.ceil(words / CONF.wpm)) : 0;
+        safeSet(rt, words > 0 ? `${mins} min read` : '0 min read');
+      }
+    } catch(err){
+      console.error('updateWordUI error', err);
+    }
+  }
+
+  // Debounced scheduler
+  let _timer = null;
+  function scheduleUpdate(){
+    if(_timer) clearTimeout(_timer);
+    _timer = setTimeout(()=>{ updateWordUI(); _timer = null; }, CONF.debounceMs);
+  }
+
+  // Attach listeners to any editor nodes (idempotent)
+  function attachListeners(){
+    getEditors().forEach(el => {
+      if(el.__dw_wc_attached) return;
+      el.addEventListener('input', scheduleUpdate, { passive: true });
+      el.addEventListener('paste', ()=> setTimeout(scheduleUpdate, 60), { passive: true });
+      // Watch for attribute changes like contentEditable toggles
+      const attrObs = new MutationObserver(() => scheduleUpdate());
+      attrObs.observe(el, { attributes: true, attributeFilter: ['contenteditable'] });
+      el.__dw_wc_attached = true;
+    });
+  }
+
+  // Global document fallback: catch any input that happens inside editor(s)
+  document.addEventListener('input', (e) => {
+    if(e.target && e.target.closest && e.target.closest('#editor, .editor-page')) scheduleUpdate();
+  }, true);
+
+  // Observe DOM for newly added editor elements (dynamic pages)
+  const mo = new MutationObserver((mutations) => {
+    let found = false;
+    for(const m of mutations){
+      for(const n of m.addedNodes){
+        if(n.nodeType !== 1) continue;
+        if(n.matches && (n.matches('#editor') || n.matches('.editor-page'))) { found = true; break; }
+        if(n.querySelector && (n.querySelector('#editor') || n.querySelector('.editor-page'))) { found = true; break; }
+      }
+      if(found) break;
+    }
+    if(found) { attachListeners(); scheduleUpdate(); }
+  });
+  mo.observe(document.body, { childList: true, subtree: true });
+
+  // Initial setup
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', () => { attachListeners(); updateWordUI(); });
+  } else {
+    attachListeners();
+    updateWordUI();
+  }
+
+  // Expose a safe manual trigger if you need to call from other scripts
+  window.__dw_updateWordCount = updateWordUI;
+})();
+</script>
+<!-- Floating Pollinated Assist -->
+<script>
+(function() {
+  // Load Google Material Icons if not already
+  if (!document.querySelector('link[href*="fonts.googleapis.com/icon"]')) {
+    const link = document.createElement("link");
+    link.href = "https://fonts.googleapis.com/icon?family=Material+Icons";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+  }
+
+  // Styles
+  const style = document.createElement("style");
+  style.textContent = `
+    #pollinated-assist-btn {
+      position: fixed;
+      bottom: 50px;
+      right: 20px;
+      background: none;
+      color: #1976d2;
+      border: 2px solid #1976d2;
+      border-radius: 12px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: Arial, sans-serif;
+      transition: all 0.3s ease;
+      z-index: 9999;
+    }
+    #pollinated-assist-btn:hover {
+      background: #1976d2;
+      color: white;
+    }
+    #pollinated-assist-window {
+      position: fixed;
+      bottom: 60px;
+      right: 20px;
+      width: 400px;
+      height: 500px;
+      max-width: 90vw;
+      background: white;
+      border: 2px solid #1976d2;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+      display: none;
+      flex-direction: column;
+      resize: both;          /* 👈 makes corners & edges draggable */
+      overflow: hidden;
+      z-index: 10000;
+    }
+    #pollinated-assist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #1976d2;
+      color: white;
+      padding: 8px 12px;
+      font-weight: bold;
+      cursor: pointer;
+      user-select: none;
+    }
+    #pollinated-assist-header .material-icons {
+      font-size: 20px;
+      cursor: pointer;
+    }
+    #pollinated-assist-iframe {
+      flex: 1;
+      border: none;
+      width: 100%;
+      height: 100%;
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Button
+  const btn = document.createElement("button");
+  btn.id = "pollinated-assist-btn";
+  btn.innerHTML = `<span class="material-icons">local_florist</span> Assist`;
+  document.body.appendChild(btn);
+
+  // Window
+  const win = document.createElement("div");
+  win.id = "pollinated-assist-window";
+  win.innerHTML = `
+    <div id="pollinated-assist-header">
+      <span>Pollinated Assist</span>
+      <span class="material-icons" id="pollinated-assist-toggle">expand_more</span>
+    </div>
+    <iframe id="pollinated-assist-iframe" src="https://mahi902.github.io/Aurora/pollinatedai.html"></iframe>
+  `;
+  document.body.appendChild(win);
+
+  // Keep height a little shorter than page
+  function adjustHeight() {
+    const pageHeight = document.documentElement.scrollHeight;
+    const viewportHeight = window.innerHeight;
+    const maxHeight = Math.min(pageHeight, viewportHeight) - 100;
+    win.style.maxHeight = maxHeight + "px";
+    if (win.style.display === "flex" && win.offsetHeight > maxHeight) {
+      win.style.height = maxHeight + "px";
+    }
+  }
+  window.addEventListener("resize", adjustHeight);
+  window.addEventListener("load", adjustHeight);
+
+  // Toggle logic
+  btn.addEventListener("click", () => {
+    btn.style.display = "none";
+    win.style.display = "flex";
+    adjustHeight();
+  });
+
+  document.getElementById("pollinated-assist-toggle").addEventListener("click", () => {
+    win.style.display = "none";
+    btn.style.display = "flex";
+  });
+})();
+</script>
+
+</body>
+</html>

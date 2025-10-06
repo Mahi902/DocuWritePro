@@ -20,6 +20,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 
 ## Main Tools
 - **Editor**: General document editing
+- **Collab**: Editing documents together
 - **Document Viewer**: Viewing documents
 - **Word Finder**: Searching for specific words
 - **Translator**: Language translation

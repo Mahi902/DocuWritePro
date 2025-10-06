@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Writer</title>
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Google Fonts for 19 font options -->
+    <link href="https://fonts.googleapis.com/css2?family=Arial&family=Times+New+Roman&family=Courier+New&family=Georgia&family=Verdana&family=Dancing+Script&family=Pacifico&family=Roboto&family=Open+Sans&family=Lato&family=Montserrat&family=Oswald&family=Slabo+27px&family=PT+Sans&family=Source+Sans+Pro&family=Raleway&family=Ubuntu&family=Merriweather&family=Playfair+Display&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 300px;
+            padding: 20px;
+            background-color: #f1f1f1;
+            overflow-y: auto;
+        }
+        .sidebar label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        .sidebar input[type="text"],
+        .sidebar textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .sidebar textarea {
+            height: 60px;
+            resize: vertical;
+        }
+        .sidebar button {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 10px 0;
+            border: none;
+            background-color: #4285f4;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .sidebar button .material-icons {
+            margin-right: 5px;
+        }
+        .sidebar select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .main {
+            flex: 1;
+            padding: 20px;
+            background-color: #e0e0e0;
+            overflow: auto;
+        }
+        .a4-page {
+            width: 210mm;
+            height: 297mm;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20mm;
+            margin: 0 auto;
+            background-size: 100% 100%;
+            position: relative;
+        }
+        .with-border {
+            border: 1px solid black;
+        }
+        .email-header p,
+        .email-body p {
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <strong><label>From: <input type="text" id="from"></label>
+            <label>To: <input type="text" id="to"></label>
+            <label>Sent: <input type="text" id="sent"></label>
+            <label>Subject: <input type="text" id="subject"></label></strong>
+            <label>Greeting: <textarea id="greeting"></textarea></label>
+            <label>Introduction: <textarea id="introduction"></textarea></label>
+            <div id="descriptions">
+                <label>Description 1: <textarea class="description"></textarea></label>
+            </div>
+            <button id="add-description"><i class="material-icons">add</i> Add another Description</button>
+            <label>Bye: <input type="text" id="bye"></label>
+            <label>Your Name: <input type="text" id="from-title"></label>
+            <label>From Title: <input type="text" id="your-name"></label>
+            <label>Sender's Info: <textarea id="sender-info"></textarea></label>
+            <label><input type="checkbox" id="border"> Add border</label>
+            <label>Background Image Link: <input type="text" id="bg-link"></label>
+            <label>Or Upload Image: <input type="file" id="bg-upload" accept="image/*"></label>
+            <label>Font: <select id="font-select">
+                <option value="Arial, sans-serif">Arial</option>
+                <option value="'Times New Roman', serif">Times New Roman</option>
+                <option value="'Courier New', monospace">Courier New</option>
+                <option value="Georgia, serif">Georgia</option>
+                <option value="Verdana, sans-serif">Verdana</option>
+                <option value="'Dancing Script', cursive">Dancing Script</option>
+                <option value="'Pacifico', cursive">Pacifico</option>
+                <option value="Roboto, sans-serif">Roboto</option>
+                <option value="'Open Sans', sans-serif">Open Sans</option>
+                <option value="Lato, sans-serif">Lato</option>
+                <option value="Montserrat, sans-serif">Montserrat</option>
+                <option value="Oswald, sans-serif">Oswald</option>
+                <option value="'Slabo 27px', serif">Slabo 27px</option>
+                <option value="'PT Sans', sans-serif">PT Sans</option>
+                <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
+                <option value="Raleway, sans-serif">Raleway</option>
+                <option value="Ubuntu, sans-serif">Ubuntu</option>
+                <option value="Merriweather, serif">Merriweather</option>
+                <option value="'Playfair Display', serif">Playfair Display</option>
+            </select></label>
+            <button id="download-jpg"><i class="material-icons">image</i> Download as JPG</button>
+            <button id="download-pdf"><i class="material-icons">picture_as_pdf</i> Download as PDF</button>
+        </div>
+        <div class="main">
+            <div class="a4-page" id="a4-page">
+                <div class="email-header">
+                    <p id="from-display"></p>
+                    <p id="to-display"></p>
+                    <p id="sent-display"></p>
+                    <p id="subject-display"></p>
+                </div>
+                <div class="email-body">
+                    <p id="greeting-display"></p>
+                    <p id="introduction-display"></p>
+                    <div id="descriptions-display">
+                        <p class="description-display"></p>
+                    </div>
+                    <p id="bye-display"></p>
+                    <p id="your-name-display"></p>
+                    <p id="from-title-display"></p>
+                    <p id="sender-info-display"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        const { jsPDF } = window.jspdf;
+
+        // Real-time updates from inputs to display
+        document.getElementById('from').addEventListener('input', function() {
+            document.getElementById('from-display').textContent = 'From: ' + this.value;
+        });
+        document.getElementById('to').addEventListener('input', function() {
+            document.getElementById('to-display').textContent = 'To: ' + this.value;
+        });
+        document.getElementById('sent').addEventListener('input', function() {
+            document.getElementById('sent-display').textContent = 'Sent: ' + this.value;
+        });
+        document.getElementById('subject').addEventListener('input', function() {
+            document.getElementById('subject-display').textContent = 'Subject: ' + this.value;
+        });
+        document.getElementById('greeting').addEventListener('input', function() {
+            document.getElementById('greeting-display').textContent = this.value;
+        });
+        document.getElementById('introduction').addEventListener('input', function() {
+            document.getElementById('introduction-display').textContent = this.value;
+        });
+        document.getElementById('bye').addEventListener('input', function() {
+            document.getElementById('bye-display').textContent = this.value;
+        });
+        document.getElementById('your-name').addEventListener('input', function() {
+            document.getElementById('your-name-display').textContent = this.value;
+        });
+        document.getElementById('from-title').addEventListener('input', function() {
+            document.getElementById('from-title-display').textContent = this.value;
+        });
+        document.getElementById('sender-info').addEventListener('input', function() {
+            document.getElementById('sender-info-display').textContent = this.value;
+        });
+
+        // Initial description binding
+        document.querySelector('.description').addEventListener('input', function() {
+            document.querySelector('.description-display').textContent = this.value;
+        });
+
+        // Add additional description fields
+        let descriptionCount = 1;
+        document.getElementById('add-description').addEventListener('click', function() {
+            descriptionCount++;
+            const newLabel = document.createElement('label');
+            newLabel.textContent = `Description ${descriptionCount}: `;
+            const newTextarea = document.createElement('textarea');
+            newTextarea.className = 'description';
+            newLabel.appendChild(newTextarea);
+            document.getElementById('descriptions').appendChild(newLabel);
+
+            const newP = document.createElement('p');
+            newP.className = 'description-display';
+            document.getElementById('descriptions-display').appendChild(newP);
+
+            newTextarea.addEventListener('input', function() {
+                newP.textContent = this.value;
+            });
+        });
+
+        // Toggle border
+        document.getElementById('border').addEventListener('change', function() {
+            document.getElementById('a4-page').classList.toggle('with-border', this.checked);
+        });
+
+        // Set background image from link
+        document.getElementById('bg-link').addEventListener('change', function() {
+            const url = this.value;
+            document.getElementById('a4-page').style.backgroundImage = url ? `url(${url})` : '';
+        });
+
+        // Set background image from upload
+        document.getElementById('bg-upload').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('a4-page').style.backgroundImage = `url(${e.target.result})`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Font selection
+        document.getElementById('font-select').addEventListener('change', function() {
+            document.getElementById('a4-page').style.fontFamily = this.value;
+        });
+
+        // Download as JPG
+        document.getElementById('download-jpg').addEventListener('click', function() {
+            html2canvas(document.getElementById('a4-page'), { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'email.jpg';
+                link.href = canvas.toDataURL('image/jpeg');
+                link.click();
+            });
+        });
+
+        // Download as PDF
+        document.getElementById('download-pdf').addEventListener('click', function() {
+            html2canvas(document.getElementById('a4-page'), { scale: 2 }).then(canvas => {
+                const imgData = canvas.toDataURL('image/jpeg');
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+                pdf.save('email.pdf');
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+
+

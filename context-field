@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context Field - Text Analysis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for a more modern look */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        textarea::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .stat-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .chart-bar {
+            background-color: #4f46e5;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            white-space: nowrap;
+            text-align: left;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+
+    <div class="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Header -->
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-bold text-slate-900">Context Field</h1>
+            <p class="text-slate-600 mt-2">Paste your text below for a complete analysis.</p>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Left Column: Text Input -->
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <h2 class="text-xl font-semibold mb-4 text-slate-900">Your Text</h2>
+                <textarea id="textInput" class="w-full h-96 p-4 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 ease-in-out resize-none" placeholder="Start typing or paste your article here..."></textarea>
+            </div>
+
+            <!-- Right Column: Analysis Output -->
+            <div class="bg-white p-6 rounded-lg shadow-sm">
+                <h2 class="text-xl font-semibold mb-4 text-slate-900">Analysis</h2>
+                
+                <!-- Summary Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold" id="word-count">0</div>
+                        <div class="text-sm text-slate-500">Words</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold" id="char-count">0</div>
+                        <div class="text-sm text-slate-500">Characters</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold" id="char-space-count">0</div>
+                        <div class="text-sm text-slate-500">w/ Spaces</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold" id="line-count">0</div>
+                        <div class="text-sm text-slate-500">Lines</div>
+                    </div>
+                     <div class="stat-card">
+                        <div class="text-2xl font-bold" id="paragraph-count">0</div>
+                        <div class="text-sm text-slate-500">Paragraphs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="text-2xl font-bold" id="read-time">0 min</div>
+                        <div class="text-sm text-slate-500">Read Time</div>
+                    </div>
+                </div>
+
+                <!-- Frequency Charts -->
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="font-semibold text-slate-900 mb-2">Word Frequency</h3>
+                        <div id="word-frequency-chart" class="h-48 overflow-y-auto p-3 bg-slate-50 rounded-md border border-slate-200">
+                            <p class="text-slate-400">Analysis will appear here...</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-slate-900 mb-2">Alphabet Frequency</h3>
+                        <div id="alphabet-frequency-chart" class="h-48 overflow-y-auto p-3 bg-slate-50 rounded-md border border-slate-200">
+                             <p class="text-slate-400">Analysis will appear here...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        
+        // --- DOM Elements for displaying stats ---
+        const wordCountEl = document.getElementById('word-count');
+        const charCountEl = document.getElementById('char-count');
+        const charSpaceCountEl = document.getElementById('char-space-count');
+        const lineCountEl = document.getElementById('line-count');
+        const paragraphCountEl = document.getElementById('paragraph-count');
+        const readTimeEl = document.getElementById('read-time');
+        const wordFrequencyChartEl = document.getElementById('word-frequency-chart');
+        const alphabetFrequencyChartEl = document.getElementById('alphabet-frequency-chart');
+
+        // --- Analysis Functions ---
+
+        /**
+         * Analyzes the input text and updates the UI.
+         */
+        function analyzeText() {
+            const text = textInput.value;
+
+            // --- Basic Counts ---
+            const words = text.match(/\b[-'\w]+\b/g) || [];
+            const wordCount = words.length;
+            const charCount = text.replace(/\s/g, '').length;
+            const charSpaceCount = text.length;
+            const lineCount = text.split(/\r\n|\r|\n/).length;
+            const paragraphCount = text.split(/\n\s*\n/).filter(p => p.trim().length > 0).length;
+
+            // --- Read Time ---
+            const wordsPerMinute = 200;
+            const readTime = Math.ceil(wordCount / wordsPerMinute);
+
+            // --- Update UI ---
+            wordCountEl.textContent = wordCount;
+            charCountEl.textContent = charCount;
+            charSpaceCountEl.textContent = charSpaceCount;
+            // Adjust for empty input
+            lineCountEl.textContent = text.length === 0 ? 0 : lineCount;
+            paragraphCountEl.textContent = text.length === 0 ? 0 : paragraphCount;
+            readTimeEl.textContent = `${readTime} min`;
+
+            // --- Frequency Analysis ---
+            updateWordFrequency(words);
+            updateAlphabetFrequency(text);
+        }
+
+        /**
+         * Calculates and displays word frequency.
+         * @param {string[]} words - An array of words from the text.
+         */
+        function updateWordFrequency(words) {
+            if (words.length === 0) {
+                wordFrequencyChartEl.innerHTML = '<p class="text-slate-400">No words to analyze.</p>';
+                return;
+            }
+
+            const frequency = words.reduce((acc, word) => {
+                const lowerWord = word.toLowerCase();
+                acc[lowerWord] = (acc[lowerWord] || 0) + 1;
+                return acc;
+            }, {});
+
+            const sortedWords = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
+            const maxCount = sortedWords.length > 0 ? sortedWords[0][1] : 0;
+
+            let html = '<div class="space-y-2">';
+            sortedWords.slice(0, 50).forEach(([word, count]) => { // Show top 50
+                const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                html += `
+                    <div class="grid grid-cols-4 items-center gap-2 text-sm">
+                        <span class="col-span-1 truncate font-medium text-slate-700">${word}</span>
+                        <div class="col-span-3 flex items-center">
+                            <div class="w-full bg-slate-200 rounded-full h-5">
+                                <div class="chart-bar h-5 flex items-center justify-end pr-2" style="width: ${barWidth}%">
+                                    <span class="text-xs font-bold">${count}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            wordFrequencyChartEl.innerHTML = html;
+        }
+
+        /**
+         * Calculates and displays alphabet frequency.
+         * @param {string} text - The full input text.
+         */
+        function updateAlphabetFrequency(text) {
+             if (text.length === 0) {
+                alphabetFrequencyChartEl.innerHTML = '<p class="text-slate-400">No text to analyze.</p>';
+                return;
+            }
+
+            const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+            const frequency = {};
+            
+            for (const char of alphabet) {
+                frequency[char] = 0;
+            }
+
+            for (const char of text.toLowerCase()) {
+                if (alphabet.includes(char)) {
+                    frequency[char]++;
+                }
+            }
+
+            const sortedAlphabet = Object.entries(frequency).sort((a, b) => b[1] - a[1]);
+            const maxCount = sortedAlphabet.length > 0 ? sortedAlphabet[0][1] : 0;
+
+
+            let html = '<div class="space-y-2">';
+            // We sort by alphabet order for the display, not by frequency
+            Object.entries(frequency).forEach(([letter, count]) => {
+                const barWidth = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                html += `
+                    <div class="grid grid-cols-4 items-center gap-2 text-sm">
+                        <span class="col-span-1 truncate font-medium text-slate-700 uppercase">${letter}</span>
+                        <div class="col-span-3 flex items-center">
+                            <div class="w-full bg-slate-200 rounded-full h-5">
+                                <div class="chart-bar h-5 flex items-center justify-end pr-2" style="width: ${barWidth}%">
+                                    <span class="text-xs font-bold">${count}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            alphabetFrequencyChartEl.innerHTML = html;
+        }
+
+
+        // --- Event Listener ---
+        textInput.addEventListener('input', analyzeText);
+
+        // --- Initial Placeholder and Analysis ---
+        const placeholderText = "Welcome to Context Field!\n\nThis is a simple yet powerful tool for analyzing text. Just paste your content here, and you'll get instant statistics. For example, we calculate word count, character count, and even estimate the reading time.\n\nParagraphs, like this one, are also counted. The tool generates frequency charts for both words and individual letters of the alphabet. This can be useful for writers, editors, students, or anyone curious about the structure of their text. The number 123 and 456 will be ignored in word counts but are part of the character count.";
+        textInput.value = placeholderText;
+        analyzeText(); // Initial analysis on load
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles for Google Docs light theme feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa; /* Light gray background */
+            color: #3c4043; /* Dark gray text */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Align to top for better layout */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff; /* White background for the board area */
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15); /* Google-like shadow */
+            overflow: hidden;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            background-color: #f1f3f4; /* Light header background */
+            border-bottom: 1px solid #dadce0;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column; /* Stack controls and canvas vertically on small screens */
+            flex-grow: 1;
+        }
+
+        .controls {
+            background-color: #ffffff; /* White background for controls */
+            padding: 16px;
+            border-right: 1px solid #dadce0; /* Separator for desktop */
+            min-width: 200px;
+            max-width: 250px;
+            overflow-y: auto;
+        }
+
+        .canvas-area {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background-color: #e8eaed; /* Canvas paper background */
+            overflow: auto; /* Allow scrolling if canvas is larger than view */
+        }
+
+        canvas {
+            background-color: #ffffff; /* Actual canvas background */
+            border: 1px solid #dadce0;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.1), 0 2px 6px 2px rgba(60, 64, 67, 0.15);
+            border-radius: 4px;
+            /* touch-action: none; This will be controlled by JS based on lock state */
+            display: block; /* Remove extra space below canvas */
+            transform-origin: 0 0; /* Set transform origin for zooming */
+        }
+
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+        .control-group label {
+            display: block;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            margin-bottom: 8px;
+            color: #5f6368; /* Darker gray for labels */
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 4px;
+            background: #dadce0;
+            border-radius: 2px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+
+        .control-group input[type="range"]:hover {
+            opacity: 1;
+        }
+
+        .control-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #1a73e8; /* Google Blue */
+            cursor: pointer;
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.2);
+        }
+
+        .control-group input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #1a73e8; /* Google Blue */
+            cursor: pointer;
+            box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.2);
+        }
+
+        .control-group input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        .action-button {
+            @apply flex items-center justify-center p-2 rounded-full text-gray-600 hover:bg-gray-200 transition-colors duration-200 cursor-pointer;
+            box-shadow: none; /* Override default button shadow */
+        }
+
+        .action-button.active {
+            @apply bg-blue-100 text-blue-700;
+        }
+
+        .tool-button {
+            @apply flex items-center justify-center p-2 rounded-md text-gray-600 hover:bg-gray-200 transition-colors duration-200 cursor-pointer;
+            box-shadow: none;
+            width: 40px; /* Fixed width for tool buttons */
+            height: 40px; /* Fixed height for tool buttons */
+        }
+
+        .tool-button.active {
+            @apply bg-blue-100 text-blue-700;
+        }
+
+        .paper-size-buttons .tool-button {
+            width: auto; /* Allow text to dictate width */
+            padding: 8px 12px;
+        }
+
+        /* Responsive adjustments */
+        @media (min-width: 768px) {
+            .main-content {
+                flex-direction: row; /* Controls on left, canvas on right for desktop */
+            }
+        }
+
+        /* Message Box Styling */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        .message-box-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            z-index: 999;
+            display: none; /* Hidden by default */
+        }
+
+        .message-box button {
+            @apply bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="text-xl font-medium text-gray-700">Drawing Board</h1>
+            <div class="flex items-center space-x-2">
+                <button id="lockBoardBtn" class="action-button" title="Lock/Unlock Board for Scrolling">
+                    <span class="material-icons">lock_open</span>
+                </button>
+                <button id="zoomOutBtn" class="action-button" title="Zoom Out">
+                    <span class="material-icons">zoom_out</span>
+                </button>
+                <button id="zoomInBtn" class="action-button" title="Zoom In">
+                    <span class="material-icons">zoom_in</span>
+                </button>
+                <button id="signBtn" class="action-button" title="Sign Canvas">
+                    <span class="material-icons">edit_note</span>
+                </button>
+                <button id="undoBtn" class="action-button" title="Undo">
+                    <span class="material-icons">undo</span>
+                </button>
+                <button id="redoBtn" class="action-button" title="Redo">
+                    <span class="material-icons">redo</span>
+                </button>
+                <button id="downloadBtn" class="action-button" title="Download as JPG">
+                    <span class="material-icons">download</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <div class="control-group">
+                    <label for="colorPicker">Color</label>
+                    <input type="color" id="colorPicker" value="#1a73e8">
+                </div>
+
+                <div class="control-group">
+                    <label for="lineWidth">Line Width: <span id="lineWidthValue">5</span>px</label>
+                    <input type="range" id="lineWidth" min="1" max="50" value="5">
+                </div>
+
+                <div class="control-group">
+                    <label for="transparency">Transparency: <span id="transparencyValue">100</span>%</label>
+                    <input type="range" id="transparency" min="0" max="100" value="100">
+                </div>
+
+                <div class="control-group">
+                    <label for="glowBlur">Glow Blur: <span id="glowBlurValue">0</span>px</label>
+                    <input type="range" id="glowBlur" min="0" max="50" value="0">
+                </div>
+
+                <div class="control-group">
+                    <label for="glowColorPicker">Glow Color</label>
+                    <input type="color" id="glowColorPicker" value="#ffffff">
+                </div>
+
+                <div class="control-group">
+                    <label>Tool</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="pencilTool" class="tool-button active" title="Pencil">
+                            <span class="material-icons">create</span>
+                        </button>
+                        <button id="eraserTool" class="tool-button" title="Eraser">
+                            <span class="material-icons">cleaning_services</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label>Canvas Paper Size</label>
+                    <div class="flex flex-wrap gap-2 paper-size-buttons">
+                        <button class="tool-button" data-width="800" data-height="600">800x600</button>
+                        <button class="tool-button" data-width="1024" data-height="768">1024x768</button>
+                        <button class="tool-button" data-width="1280" data-height="720">1280x720</button>
+                        <button class="tool-button" data-width="1920" data-height="1080">1920x1080</button>
+                        <button class="tool-button" data-width="500" data-height="800">500x800</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="canvas-area">
+                <canvas id="drawingCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageBoxOverlay" class="message-box-overlay"></div>
+    <div id="messageBox" class="message-box">
+        <p id="messageBoxText"></p>
+        <button id="messageBoxCloseBtn">OK</button>
+    </div>
+<script>
+        // Get canvas and context
+        const canvas = document.getElementById('drawingCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Get control elements
+        const colorPicker = document.getElementById('colorPicker');
+        const lineWidthInput = document.getElementById('lineWidth');
+        const lineWidthValueSpan = document.getElementById('lineWidthValue');
+        const transparencyInput = document.getElementById('transparency');
+        const transparencyValueSpan = document.getElementById('transparencyValue');
+        const glowBlurInput = document.getElementById('glowBlur');
+        const glowBlurValueSpan = document.getElementById('glowBlurValue');
+        const glowColorPicker = document.getElementById('glowColorPicker');
+        const pencilToolBtn = document.getElementById('pencilTool');
+        const eraserToolBtn = document.getElementById('eraserTool');
+        const undoBtn = document.getElementById('undoBtn');
+        const redoBtn = document.getElementById('redoBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const paperSizeButtons = document.querySelectorAll('.paper-size-buttons .tool-button');
+        const lockBoardBtn = document.getElementById('lockBoardBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const signBtn = document.getElementById('signBtn');
+
+        // Message Box elements
+        const messageBox = document.getElementById('messageBox');
+        const messageBoxOverlay = document.getElementById('messageBoxOverlay');
+        const messageBoxText = document.getElementById('messageBoxText');
+        const messageBoxCloseBtn = document.getElementById('messageBoxCloseBtn');
+
+        // Drawing state variables
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        let drawingHistory = [];
+        let historyPointer = -1;
+        let currentTool = 'pencil'; // 'pencil' or 'eraser'
+
+        // Lock board state
+        let isBoardLocked = false;
+
+        // Zoom variables
+        let zoomLevel = 1.0;
+        const ZOOM_STEP = 0.1;
+        const MAX_ZOOM = 3.0;
+        const MIN_ZOOM = 0.2;
+
+        // --- Initial Canvas Setup ---
+        function initializeCanvas() {
+            // Set initial canvas dimensions
+            canvas.width = 1024;
+            canvas.height = 768;
+
+            // Set initial drawing properties
+            ctx.strokeStyle = colorPicker.value;
+            ctx.lineWidth = lineWidthInput.value;
+            ctx.globalAlpha = transparencyInput.value / 100;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.shadowBlur = glowBlurInput.value;
+            ctx.shadowColor = glowColorPicker.value;
+            ctx.globalCompositeOperation = 'source-over'; // Default to normal drawing mode
+
+            // Clear canvas and save initial blank state
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            saveState();
+            updateToolButtons(); // Ensure pencil is active initially
+            updateHistoryButtons();
+            updateLockBoardButton(); // Initialize lock button state
+            applyZoom(); // Apply initial zoom (1.0)
+        }
+// --- History (Undo/Redo) Functions ---
+        function saveState() {
+            // If we are not at the end of the history (i.e., we've undone some actions),
+            // clear the "redo" history before adding a new state.
+            if (historyPointer < drawingHistory.length - 1) {
+                drawingHistory = drawingHistory.slice(0, historyPointer + 1);
+            }
+            drawingHistory.push(canvas.toDataURL()); // Save current canvas image data
+            historyPointer = drawingHistory.length - 1;
+            updateHistoryButtons();
+        }
+
+        function restoreState(index) {
+            if (index >= 0 && index < drawingHistory.length) {
+                const imageData = drawingHistory[index];
+                const img = new Image();
+                img.src = imageData;
+                img.onload = () => {
+                    // Temporarily reset transform for accurate drawing of the base image
+                    ctx.save();
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                    ctx.restore(); // Restore previous transform (including zoom)
+                };
+                historyPointer = index;
+                updateHistoryButtons();
+            }
+        }
+
+        function undo() {
+            if (historyPointer > 0) {
+                restoreState(historyPointer - 1);
+            } else {
+                showMessage("Nothing more to undo.");
+            }
+        }
+
+        function redo() {
+            if (historyPointer < drawingHistory.length - 1) {
+                restoreState(historyPointer + 1);
+            } else {
+                showMessage("Nothing more to redo.");
+            }
+        }
+
+        function updateHistoryButtons() {
+            undoBtn.disabled = historyPointer <= 0;
+            redoBtn.disabled = historyPointer >= drawingHistory.length - 1;
+            // Add/remove active class for visual feedback
+            undoBtn.classList.toggle('active', !undoBtn.disabled);
+            redoBtn.classList.toggle('active', !redoBtn.disabled);
+        }
+// --- Drawing Functions ---
+        function drawLine(eventObject) {
+            if (!isDrawing) return; // Stop the function if not drawing
+
+            ctx.beginPath(); // Start a new path
+
+            // Set drawing properties based on current tool
+            if (currentTool === 'pencil') {
+                ctx.globalCompositeOperation = 'source-over'; // Normal drawing mode
+                ctx.strokeStyle = colorPicker.value;
+                ctx.shadowBlur = glowBlurInput.value;
+                ctx.shadowColor = glowColorPicker.value;
+            } else if (currentTool === 'eraser') {
+                ctx.globalCompositeOperation = 'destination-out'; // Erase mode
+                ctx.strokeStyle = 'rgba(0,0,0,1)'; // Any color, but destination-out makes it transparent
+                ctx.shadowBlur = 0; // No glow for eraser
+                ctx.shadowColor = 'transparent';
+            }
+
+            ctx.lineWidth = lineWidthInput.value / zoomLevel; // Adjust line width for zoom
+            ctx.globalAlpha = transparencyInput.value / 100;
+
+            // Get coordinates from mouse or touch event, adjusted for zoom
+            const { x, y } = getEventCoords(eventObject);
+
+            ctx.moveTo(lastX, lastY); // Move to the last recorded position
+            ctx.lineTo(x, y); // Draw a line to the current position
+            ctx.stroke(); // Apply the stroke
+
+            // Update last coordinates for the next segment
+            lastX = x;
+            lastY = y;
+        }
+
+        // --- Event Handlers for Canvas Interaction ---
+
+        // Helper to get coordinates from mouse or touch event, adjusted for zoom
+        function getEventCoords(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX, clientY;
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            // Adjust coordinates by current zoom level
+            return {
+                x: (clientX - rect.left) / zoomLevel,
+                y: (clientY - rect.top) / zoomLevel
+            };
+        }
+
+        function handleMouseDown(e) {
+            if (isBoardLocked) return; // If board is locked, allow scrolling, not drawing
+            e.preventDefault(); // Prevent default browser actions like text selection
+
+            const { x, y } = getEventCoords(e);
+
+            if (currentTool === 'pencil' || currentTool === 'eraser') {
+                isDrawing = true;
+                lastX = x;
+                lastY = y;
+                drawLine(e); // Draw a dot on click
+            }
+        }
+
+        function handleMouseMove(e) {
+            if (isBoardLocked) return;
+            e.preventDefault();
+
+            if (isDrawing) {
+                drawLine(e);
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (isDrawing) {
+                isDrawing = false;
+                saveState();
+            }
+        }
+
+        function handleMouseOut(e) {
+            if (isDrawing) {
+                isDrawing = false;
+                saveState();
+            }
+        }
+
+        // Touch event handlers (mirroring mouse events)
+        function handleTouchStart(e) {
+            if (isBoardLocked) return;
+            e.preventDefault(); // Prevent scrolling
+
+            const { x, y } = getEventCoords(e);
+
+            if (currentTool === 'pencil' || currentTool === 'eraser') {
+                isDrawing = true;
+                lastX = x;
+                lastY = y;
+                drawLine(e.touches[0]); // Pass touch object
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (isBoardLocked) return;
+            e.preventDefault(); // Prevent scrolling
+
+            if (isDrawing) {
+                drawLine(e.touches[0]);
+            }
+        }
+
+        function handleTouchEnd(e) {
+            if (isDrawing) {
+                isDrawing = false;
+                saveState();
+            }
+        }
+
+        function handleTouchCancel(e) {
+            if (isDrawing) {
+                isDrawing = false;
+                saveState();
+            }
+        }
+
+        // Attach event listeners to canvas
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('mouseout', handleMouseOut);
+
+        canvas.addEventListener('touchstart', handleTouchStart);
+        canvas.addEventListener('touchmove', handleTouchMove);
+        canvas.addEventListener('touchend', handleTouchEnd);
+        canvas.addEventListener('touchcancel', handleTouchCancel);
+// --- Control Panel Event Listeners ---
+
+        colorPicker.addEventListener('input', (e) => {
+            ctx.strokeStyle = e.target.value;
+        });
+
+        lineWidthInput.addEventListener('input', (e) => {
+            ctx.lineWidth = e.target.value / zoomLevel; // Adjust for zoom
+            lineWidthValueSpan.textContent = e.target.value;
+        });
+
+        transparencyInput.addEventListener('input', (e) => {
+            ctx.globalAlpha = e.target.value / 100;
+        });
+
+        glowBlurInput.addEventListener('input', (e) => {
+            ctx.shadowBlur = e.target.value;
+            glowBlurValueSpan.textContent = e.target.value;
+            // If glow blur is set, ensure glow color is not transparent for pencil tool
+            if (currentTool === 'pencil' && e.target.value > 0 && ctx.shadowColor === 'transparent') {
+                ctx.shadowColor = glowColorPicker.value;
+            }
+        });
+
+        glowColorPicker.addEventListener('input', (e) => {
+            ctx.shadowColor = e.target.value;
+        });
+
+        // Tool selection
+        function updateToolButtons() {
+            const allToolButtons = document.querySelectorAll('.tool-button');
+            allToolButtons.forEach(btn => btn.classList.remove('active'));
+
+            switch (currentTool) {
+                case 'pencil':
+                    pencilToolBtn.classList.add('active');
+                    break;
+                case 'eraser':
+                    eraserToolBtn.classList.add('active');
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        pencilToolBtn.addEventListener('click', () => {
+            currentTool = 'pencil';
+            updateToolButtons();
+            // Restore glow settings when switching back to pencil
+            ctx.shadowBlur = glowBlurInput.value;
+            ctx.shadowColor = glowColorPicker.value;
+            ctx.globalCompositeOperation = 'source-over'; // Ensure normal drawing
+        });
+
+        eraserToolBtn.addEventListener('click', () => {
+            currentTool = 'eraser';
+            updateToolButtons();
+            // Eraser-specific settings
+            ctx.shadowBlur = 0; // No glow for eraser
+            ctx.shadowColor = 'transparent'; // No glow for eraser
+            ctx.globalCompositeOperation = 'destination-out'; // Erase mode
+        });
+
+        // Undo/Redo buttons
+        undoBtn.addEventListener('click', undo);
+        redoBtn.addEventListener('click', redo);
+
+        // Download button
+        downloadBtn.addEventListener('click', () => {
+            showDownloadPrompt();
+        });
+
+        function showDownloadPrompt() {
+            messageBoxText.innerHTML = `
+                <p class="text-lg font-medium mb-3">Download Drawing</p>
+                <input type="text" id="filenameInput" placeholder="Enter filename (e.g., my_drawing)" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4">
+                <div class="flex justify-end w-full space-x-2">
+                    <button id="cancelDownloadBtn" class="bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2 rounded-md">Cancel</button>
+                    <button id="confirmDownloadBtn" class="bg-blue-500 text-white hover:bg-blue-600 px-4 py-2 rounded-md">Download</button>
+                </div>
+            `;
+            messageBox.style.display = 'flex';
+            messageBoxOverlay.style.display = 'block';
+
+            const filenameInput = document.getElementById('filenameInput');
+            const cancelDownloadBtn = document.getElementById('cancelDownloadBtn');
+            const confirmDownloadBtn = document.getElementById('confirmDownloadBtn');
+
+            // Focus on input field
+            setTimeout(() => filenameInput.focus(), 100);
+
+            // Event listeners for the download prompt
+            confirmDownloadBtn.onclick = () => {
+                const filename = filenameInput.value.trim() || 'drawing_board';
+                performDownload(filename);
+                hideMessageBox();
+            };
+
+            cancelDownloadBtn.onclick = hideMessageBox;
+
+            // Allow pressing Enter to confirm download
+            filenameInput.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    confirmDownloadBtn.click();
+                }
+            };
+        }
+
+        function performDownload(filename) {
+            // Create a temporary canvas with a white background to ensure JPG looks good
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+
+            // Fill with white background
+            tempCtx.fillStyle = '#FFFFFF';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+            // Draw the current canvas content onto the temporary canvas
+            // IMPORTANT: Temporarily reset canvas transform for accurate drawing to temp canvas
+            ctx.save();
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset zoom for drawing to temp canvas
+            tempCtx.drawImage(canvas, 0, 0);
+            ctx.restore(); // Restore original zoom level
+
+            // Get data URL from the temporary canvas
+            const image = tempCanvas.toDataURL('image/jpeg', 0.9); // 0.9 quality for JPG
+
+            const link = document.createElement('a');
+            link.href = image;
+            link.download = `${filename}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showMessage(`Image downloaded as ${filename}.jpg!`);
+        }
+// Canvas paper size buttons
+        paperSizeButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const newWidth = parseInt(e.target.dataset.width);
+                const newHeight = parseInt(e.target.dataset.height);
+
+                drawingHistory = [];
+                historyPointer = -1;
+
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+
+                // Re-initialize context properties after canvas resize
+                ctx.strokeStyle = colorPicker.value;
+                ctx.lineWidth = lineWidthInput.value / zoomLevel;
+                ctx.globalAlpha = transparencyInput.value / 100;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowBlur = glowBlurInput.value; // Glow blur is not scaled by zoom
+                ctx.shadowColor = glowColorPicker.value;
+                ctx.globalCompositeOperation = currentTool === 'pencil' ? 'source-over' : 'destination-out';
+
+                // Apply current zoom after resizing canvas
+                applyZoom();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                saveState(); // Save the new blank state
+                showMessage(`Canvas resized to ${newWidth}x${newHeight}. History cleared.`);
+            });
+        });
+
+        // Lock/Unlock Board Button
+        lockBoardBtn.addEventListener('click', () => {
+            isBoardLocked = !isBoardLocked;
+            updateLockBoardButton();
+            showMessage(`Drawing board ${isBoardLocked ? 'locked' : 'unlocked'} for scrolling.`);
+        });
+
+        function updateLockBoardButton() {
+            lockBoardBtn.classList.toggle('active', isBoardLocked);
+            lockBoardBtn.querySelector('.material-icons').textContent = isBoardLocked ? 'lock' : 'lock_open';
+            // Control touch-action to allow/prevent default scrolling on canvas
+            canvas.style.touchAction = isBoardLocked ? 'auto' : 'none';
+        }
+
+        // --- Zoom Functions ---
+        zoomInBtn.addEventListener('click', () => {
+            if (zoomLevel < MAX_ZOOM) {
+                zoomLevel = Math.min(MAX_ZOOM, zoomLevel + ZOOM_STEP);
+                applyZoom();
+                redrawCanvasFromHistory();
+                showMessage(`Zoom: ${Math.round(zoomLevel * 100)}%`);
+            } else {
+                showMessage("Maximum zoom reached.");
+            }
+        });
+
+        zoomOutBtn.addEventListener('click', () => {
+            if (zoomLevel > MIN_ZOOM) {
+                zoomLevel = Math.max(MIN_ZOOM, zoomLevel - ZOOM_STEP);
+                applyZoom();
+                redrawCanvasFromHistory();
+                showMessage(`Zoom: ${Math.round(zoomLevel * 100)}%`);
+            } else {
+                showMessage("Minimum zoom reached.");
+            }
+        });
+
+        function applyZoom() {
+            // Apply CSS transform for visual scaling
+            canvas.style.transform = `scale(${zoomLevel})`;
+            // Adjust the actual CSS width/height of the canvas element to reflect the scaled size
+            // This ensures the parent container's scrollbars appear correctly if the canvas overflows
+            canvas.style.width = `${canvas.width * zoomLevel}px`;
+            canvas.style.height = `${canvas.height * zoomLevel}px`;
+
+            // Adjust drawing properties for the next strokes based on new zoom level
+            ctx.lineWidth = lineWidthInput.value / zoomLevel;
+            // Glow blur should not scale with zoom visually, so keep its base value
+            ctx.shadowBlur = glowBlurInput.value;
+        }
+
+        function redrawCanvasFromHistory() {
+            // This function is called after zoom changes to redraw the current history state
+            // It ensures that the image is drawn correctly *before* the CSS scale is applied.
+            if (historyPointer !== -1) {
+                const imageData = drawingHistory[historyPointer];
+                const img = new Image();
+                img.src = imageData;
+                img.onload = () => {
+                    ctx.save();
+                    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform to clear and draw base image
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0);
+                    ctx.restore(); // Restore original transform (which includes zoom)
+                };
+            } else {
+                ctx.save();
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.restore();
+            }
+        }
+// --- Sign Function ---
+        signBtn.addEventListener('click', () => {
+            showSignPrompt();
+        });
+
+        function showSignPrompt() {
+            messageBoxText.innerHTML = `
+                <p class="text-lg font-medium mb-3">Sign Your Artwork</p>
+                <input type="text" id="signerNameInput" placeholder="Enter your name" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4">
+                <label for="signColorPicker" class="block text-sm font-medium text-gray-700 mb-2">Signature Color:</label>
+                <input type="color" id="signColorPicker" value="#000000" class="w-full mb-4">
+                <div class="flex justify-end w-full space-x-2">
+                    <button id="cancelSignBtn" class="bg-gray-200 text-gray-700 hover:bg-gray-300 px-4 py-2 rounded-md">Cancel</button>
+                    <button id="nextSignBtn" class="bg-blue-500 text-white hover:bg-blue-600 px-4 py-2 rounded-md">Next</button>
+                </div>
+            `;
+            messageBox.style.display = 'flex';
+            messageBoxOverlay.style.display = 'block';
+
+            const signerNameInput = document.getElementById('signerNameInput');
+            const signColorPicker = document.getElementById('signColorPicker');
+            const cancelSignBtn = document.getElementById('cancelSignBtn');
+            const nextSignBtn = document.getElementById('nextSignBtn');
+
+            setTimeout(() => signerNameInput.focus(), 100);
+
+            nextSignBtn.onclick = () => {
+                const name = signerNameInput.value.trim();
+                const color = signColorPicker.value;
+                if (name) {
+                    showSignPlacementPrompt(name, color);
+                } else {
+                    showMessage("Please enter your name.");
+                }
+            };
+
+            cancelSignBtn.onclick = hideMessageBox;
+
+            signerNameInput.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    nextSignBtn.click();
+                }
+            };
+        }
+
+        function showSignPlacementPrompt(name, color) {
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            messageBoxText.innerHTML = `
+                <p class="text-lg font-medium mb-3">Choose Signature Placement</p>
+                <p class="mb-4">Signature: <br><strong>${name}</strong><br>${today}</p>
+                <div class="grid grid-cols-2 gap-2 w-full">
+                    <button id="topLeftBtn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Top Left</button>
+                    <button id="topRightBtn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Top Right</button>
+                    <button id="bottomLeftBtn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Bottom Left</button>
+                    <button id="bottomRightBtn" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600">Bottom Right</button>
+                </div>
+                <button id="cancelPlacementBtn" class="bg-gray-200 text-gray-700 hover:bg-gray-300 mt-4 px-4 py-2 rounded-md w-full">Cancel</button>
+            `;
+            messageBox.style.display = 'flex';
+            messageBoxOverlay.style.display = 'block';
+
+            const topLeftBtn = document.getElementById('topLeftBtn');
+            const topRightBtn = document.getElementById('topRightBtn');
+            const bottomLeftBtn = document.getElementById('bottomLeftBtn');
+            const bottomRightBtn = document.getElementById('bottomRightBtn');
+            const cancelPlacementBtn = document.getElementById('cancelPlacementBtn');
+
+            const signatureData = { name: name, date: today, color: color };
+
+            topLeftBtn.onclick = () => { placeSignature(signatureData, 'topLeft'); hideMessageBox(); };
+            topRightBtn.onclick = () => { placeSignature(signatureData, 'topRight'); hideMessageBox(); };
+            bottomLeftBtn.onclick = () => { placeSignature(signatureData, 'bottomLeft'); hideMessageBox(); };
+            bottomRightBtn.onclick = () => { placeSignature(signatureData, 'bottomRight'); hideMessageBox(); };
+            cancelPlacementBtn.onclick = hideMessageBox;
+        }
+
+        function placeSignature(signature, position) {
+            const fontSizeName = 24; // Font size for name
+            const fontSizeDate = 18; // Font size for date
+            const padding = 20; // Padding from canvas edges
+
+            ctx.save(); // Save current drawing state (including current zoom transform)
+
+            // Temporarily reset transform for accurate text placement regardless of current zoom
+            // This ensures the signature is placed at absolute canvas coordinates.
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+            ctx.fillStyle = signature.color; // Use selected color
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.shadowBlur = 0; // No glow for signature
+
+            // Set font for name
+            ctx.font = `${fontSizeName}px 'Dancing Script', cursive`;
+            const nameWidth = ctx.measureText(signature.name).width;
+
+            // Set font for date
+            ctx.font = `${fontSizeDate}px 'Dancing Script', cursive`;
+            const dateWidth = ctx.measureText(signature.date).width;
+
+            let xName, yName, xDate, yDate;
+
+            switch (position) {
+                case 'topLeft':
+                    xName = padding;
+                    yName = padding;
+                    xDate = padding;
+                    yDate = padding + fontSizeName + 5; // 5px spacing between name and date
+                    break;
+                case 'topRight':
+                    xName = canvas.width - nameWidth - padding;
+                    yName = padding;
+                    xDate = canvas.width - dateWidth - padding;
+                    yDate = padding + fontSizeName + 5;
+                    break;
+                case 'bottomLeft':
+                    xName = padding;
+                    yName = canvas.height - (fontSizeName + fontSizeDate + 5) - padding;
+                    xDate = padding;
+                    yDate = canvas.height - fontSizeDate - padding;
+                    break;
+                case 'bottomRight':
+                    xName = canvas.width - nameWidth - padding;
+                    yName = canvas.height - (fontSizeName + fontSizeDate + 5) - padding;
+                    xDate = canvas.width - dateWidth - padding;
+                    yDate = canvas.height - fontSizeDate - padding;
+                    break;
+            }
+
+            // Draw name
+            ctx.font = `${fontSizeName}px 'Dancing Script', cursive`;
+            ctx.fillText(signature.name, xName, yName);
+
+            // Draw date
+            ctx.font = `${fontSizeDate}px 'Dancing Script', cursive`;
+            ctx.fillText(signature.date, xDate, yDate);
+
+            ctx.restore(); // Restore original drawing state (including current zoom)
+
+            saveState(); // Save canvas with signature to history
+            showMessage("Signature added to canvas!");
+        }
+
+
+        // --- Message Box Functions ---
+        function showMessage(message) {
+            messageBoxText.innerHTML = `<p>${message}</p>`; // Use innerHTML for simple messages
+            messageBox.style.display = 'flex';
+            messageBoxOverlay.style.display = 'block';
+
+            // Re-attach simple close handler for standard messages
+            messageBoxCloseBtn.onclick = hideMessageBox;
+        }
+
+        function hideMessageBox() {
+            messageBox.style.display = 'none';
+            messageBoxOverlay.style.display = 'none';
+        }
+
+        messageBoxOverlay.addEventListener('click', hideMessageBox); // Close if clicking outside box
+
+        // Initialize the drawing board when the window loads
+        window.onload = initializeCanvas;
+
+    </script>
+</body>
+</html>
+
+
+
+
+

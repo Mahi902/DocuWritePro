@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404... Page Not Found!</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configure Tailwind to use the Inter font -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+                    },
+                    colors: {
+                        'editor-primary': '#4f46e5', // Indigo-600 for primary actions
+                        'editor-bg': '#f3f4f6', // Light gray background
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom cursor animation for the typing effect */
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+        .blinking-cursor {
+            font-weight: 300;
+            animation: blink 1s step-end infinite;
+        }
+        /* Styling for the main editor container shadow */
+        .editor-container {
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-height: 90vh;
+        }
+        /* Fade transition for the helpful content */
+        .helpful-content {
+            transition: opacity 1s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-editor-bg font-sans min-h-screen flex items-center justify-center p-4">
+
+    <!-- Main Editor Interface Card -->
+    <div class="editor-container w-full max-w-4xl bg-white rounded-xl overflow-hidden flex flex-col">
+        
+        <!-- Editor Toolbar (Static) -->
+        <header class="p-3 border-b border-gray-200 bg-gray-50 flex justify-between items-center text-sm text-gray-600">
+            <div class="flex space-x-4">
+                <span class="font-medium text-gray-800">Error.txt</span>
+                <span>File</span>
+                <span>Edit</span>
+                <span>View</span>
+                <span>Insert</span>
+                <span>Format</span>
+            </div>
+            <div class="flex space-x-4">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.55 4.55a1 1 0 010 1.41l-4.55 4.55m-6 0a1 1 0 01-1.41 0l-4.55-4.55a1 1 0 010-1.41L9 10m6 0a1 1 0 00-1.41-1.41L9 10m6 0a1 1 0 00-1.41-1.41L9 10"></path></svg>
+                <span>Share</span>
+            </div>
+        </header>
+
+        <!-- Document Content Area -->
+        <main class="flex-grow p-6 md:p-12 text-gray-800 text-lg overflow-y-auto">
+            <div id="document-content" class="min-h-[200px]">
+                <span id="typing-output" class="font-mono text-xl text-red-600 font-bold"></span>
+                <span id="cursor" class="blinking-cursor font-mono text-xl text-red-600">|</span>
+
+                <!-- Helpful Content (Starts invisible, fades in after typing) -->
+                <div id="helpful-content" class="helpful-content opacity-0 mt-8 space-y-8">
+                    <h2 class="text-2xl font-semibold text-gray-800">The requested file could not be located.</h2>
+                    <p class="text-gray-600 max-w-2xl">
+                        It looks like the page you were trying to reach has either been moved, deleted, or the address was typed incorrectly. 
+                        Our server tried to open the document, but it came up blank.
+                    </p>
+
+                    <!-- Navigation Actions (UPDATED LINKS) -->
+                    <div class="flex flex-col sm:flex-row gap-4 items-start">
+                        <!-- Dashboard Link Updated -->
+                        <a href="https://mahi902.github.io/DocuWritePro/Dashboard.html" class="px-6 py-3 bg-editor-primary text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 transform hover:scale-105">
+                            <svg class="w-5 h-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                            Go to Dashboard
+                        </a>
+                        <!-- Help Link Updated to Get in touch -->
+                        <a href="https://mahi902.github.io/DocuWritePro/contact.html" class="px-6 py-3 text-editor-primary border-2 border-editor-primary font-semibold rounded-lg hover:bg-editor-primary/10 transition duration-300">
+                            Get in touch
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Editor Footer/Status Bar (Static) -->
+        <footer class="p-2 border-t border-gray-200 bg-gray-100 flex justify-between items-center text-xs text-gray-500">
+            <span>Status: Disconnected</span>
+            <span class="hidden sm:inline">Ln 1, Col 1</span>
+        </footer>
+    </div>
+
+    <!-- JavaScript for the Typing Animation -->
+    <script>
+        const typingDelay = 120; // Standard typing speed (ms)
+        const backspaceDelay = 70; // Fast backspace
+        const thoughtDelay = 1000; // Long pause for "thinking"
+
+        const outputElement = document.getElementById('typing-output');
+        const cursorElement = document.getElementById('cursor');
+        const helpfulContent = document.getElementById('helpful-content');
+
+        // Simple utility function for delay
+        const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+        async function typeText(text) {
+            for (const char of text) {
+                outputElement.textContent += char;
+                await delay(typingDelay);
+            }
+        }
+
+        async function backspace(count) {
+            for (let i = 0; i < count; i++) {
+                let currentText = outputElement.textContent;
+                outputElement.textContent = currentText.substring(0, currentText.length - 1);
+                await delay(backspaceDelay);
+            }
+        }
+
+        async function startTypingAnimation() {
+            // 1. Type "40"
+            await typeText("40");
+            
+            // 2. Pause (Thinking)
+            await delay(thoughtDelay / 2);
+
+            // 3. Type "3" (The mistake)
+            await typeText("3");
+
+            // 4. Pause (Realizing mistake)
+            await delay(thoughtDelay);
+
+            // 5. Backspace "3"
+            await backspace(1);
+
+            // 6. Type "4" (Correction)
+            await typeText("4");
+            
+            // 7. Type "..." (Suspense pause)
+            await typeText("...");
+            await delay(thoughtDelay * 1.5);
+
+            // 8. Type the final, full error message
+            await typeText(" Page Not Found!");
+
+            // 9. Typing finished: stop cursor, and reveal helpful content
+            cursorElement.classList.remove('blinking-cursor');
+            cursorElement.classList.add('opacity-0'); 
+            
+            // Wait briefly then show the rest of the content
+            await delay(500);
+            helpfulContent.classList.remove('opacity-0');
+            helpfulContent.classList.add('opacity-100');
+        }
+
+        // Start the animation when the window loads
+        window.onload = startTypingAnimation;
+    </script>
+</body>
+</html>

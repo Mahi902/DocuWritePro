@@ -1068,17 +1068,62 @@
 </head>
 <body>
 
-<a href="https://mahi902.github.io/Aurora/" target="_blank" class="floating-box">
-  <div class="icon">
-    <!-- Mobile SVG icon -->
-    <svg viewBox="0 0 24 24" fill="none">
-      <rect x="7" y="2" width="10" height="20" rx="2" stroke="black"/>
-      <circle cx="12" cy="18" r="1" fill="black"/>
-    </svg>
-  </div>
-  <div class="text">Aurora Web Launcher</div>
-  <div class="new-badge">NEW</div>
-</a>
+<div id="pwaInstallContainer" style="position: relative;">
+  <button id="pwaInstallBtn" style="
+    display: none;
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #0078ff, #00b4ff);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 22px;
+    font-size: 15px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    z-index: 9999;
+  ">Install App</button>
+</div>
+
+<script>
+  let deferredPrompt;
+  const installBtn = document.getElementById('pwaInstallBtn');
+
+  // Register service worker if needed
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(console.error);
+  }
+
+  // Listen for Chrome’s PWA event
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    installBtn.disabled = true;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`Install outcome: ${outcome}`);
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+
+  // Optional visual feedback
+  installBtn.addEventListener('mouseenter', () => {
+    installBtn.style.transform = 'translateX(-50%) scale(1.05)';
+  });
+  installBtn.addEventListener('mouseleave', () => {
+    installBtn.style.transform = 'translateX(-50%) scale(1)';
+  });
+</script>
+
 
 </body>
 </html>

@@ -1,6 +1,8 @@
 const CACHE_NAME = 'docuwrite-cache-v2';
 const urlsToCache = [
   '/',  // homepage
+  '/DocuWritePro/app.html',
+  '/DocuWritePro/recents.html',
   '/DocuWritePro/index.html',
   '/DocuWritePro/editor.html',
   '/DocuWritePro/collab.html',

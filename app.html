@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>DocuWrite Pro</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* Custom Styles */
+        :root {
+            --bg-light: #f8f9fa;
+            --bg-dark: #121212;
+            --sidebar-light: #ffffff;
+            --sidebar-dark: #1f1f1f;
+            --tabbar-light: #ffffff;
+            --tabbar-dark: #1f1f1f;
+            --text-light: #202124;
+            --text-dark: #e8eaed;
+            --text-muted-light: #5f6368;
+            --text-muted-dark: #9aa0a6;
+            --border-light: #e0e0e0;
+            --border-dark: #3c4043;
+            --accent: #4285F4;
+            --hover-light: #f1f3f4;
+            --hover-dark: #3c4043;
+            --active-tab-light: #e8eaed;
+            --active-tab-dark: #5f6368;
+        }
+
+        html {
+            font-family: 'Inter', sans-serif;
+        }
+
+        html.dark {
+            color-scheme: dark;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+        }
+
+        html.dark body {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+        
+        .app-shell {
+            display: grid;
+            grid-template-columns: 48px 1fr;
+            grid-template-rows: 40px 1fr;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar { 
+            background-color: var(--sidebar-light); 
+            border-right: 1px solid var(--border-light); 
+        }
+        .main-content { 
+            background-color: var(--bg-light); 
+        }
+        .tab-bar { 
+            background-color: var(--tabbar-light); 
+            border-bottom: 1px solid var(--border-light); 
+        }
+        
+        html.dark .sidebar { 
+            background-color: var(--sidebar-dark); 
+            border-right-color: var(--border-dark); 
+        }
+        html.dark .main-content { 
+            background-color: var(--bg-dark); 
+        }
+        html.dark .tab-bar { 
+            background-color: var(--tabbar-dark); 
+            border-bottom-color: var(--border-dark); 
+        }
+
+        /* Custom scrollbar for webkit browsers */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .tab-bar-scroll::-webkit-scrollbar {
+            height: 2px;
+        }
+        
+        /* New improvements */
+        .tool-icon {
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        .tool-icon.active::after {
+            content: '';
+            position: absolute;
+            right: -4px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 16px;
+            background-color: var(--accent);
+            border-radius: 2px;
+        }
+        
+        .tab-item {
+            transition: all 0.2s ease;
+            max-width: 180px;
+        }
+        
+        .tab-item.active {
+            background-color: var(--active-tab-light);
+            color: var(--text-light);
+        }
+        
+        html.dark .tab-item.active {
+            background-color: var(--active-tab-dark);
+            color: var(--text-dark);
+        }
+        
+        .tab-item.active .close-tab-btn {
+            color: rgba(0, 0, 0, 0.6);
+        }
+        
+        html.dark .tab-item.active .close-tab-btn {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .tab-item.active .close-tab-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        html.dark .tab-item.active .close-tab-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .settings-popup {
+            backdrop-filter: blur(10px);
+        }
+        
+        .all-tools-popup {
+            backdrop-filter: blur(10px);
+        }
+        
+        .search-highlight {
+            background-color: rgba(66, 133, 244, 0.2);
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+        
+        .quick-access-item {
+            transition: all 0.15s ease;
+        }
+        
+        .quick-access-item:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        html.dark .quick-access-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .quick-access-container {
+            border-top: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        html.dark .quick-access-container {
+            border-top-color: var(--border-dark);
+            border-bottom-color: var(--border-dark);
+        }
+        
+        .tool-category {
+            border-bottom: 1px solid var(--border-light);
+        }
+        
+        html.dark .tool-category {
+            border-bottom-color: var(--border-dark);
+        }
+        
+        /* Theme option active state */
+        .theme-option.active {
+            background-color: var(--accent);
+            color: white;
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+
+    <div id="app-container" class="app-shell">
+        <!-- Sidebar -->
+        <nav class="sidebar row-span-2 flex flex-col justify-between z-20 shadow-md">
+            <div class="flex-grow overflow-y-auto custom-scrollbar flex flex-col items-center py-2 space-y-1">
+                <!-- All Tools Button -->
+                <div class="w-full px-2 py-1 mb-1">
+                    <button id="all-tools-toggle" class="w-full p-1.5 rounded-md transition-colors duration-200 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] flex justify-center">
+                        <i class="material-icons text-sm">menu</i>
+                    </button>
+                </div>
+                
+                <!-- Tool icons will be injected here by JavaScript -->
+                <div id="tools-container" class="flex-grow overflow-y-auto custom-scrollbar flex flex-col items-center w-full space-y-1">
+                    <!-- Tools injected here -->
+                </div>
+            </div>
+            
+            <!-- Quick Access Section -->
+            <div id="quick-access-container" class="quick-access-container py-1">
+                <!-- Quick access tools will be injected here -->
+            </div>
+            
+            <!-- Bottom buttons -->
+            <div class="flex-shrink-0 p-1 flex justify-center items-center border-t border-[var(--border-light)] dark:border-[var(--border-dark)]">
+                <button id="settings-btn" class="p-1.5 rounded-md transition-colors duration-200 hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)]" title="Settings">
+                    <i class="material-icons text-sm text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)]">settings</i>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Tab Bar -->
+        <div id="tab-bar" class="tab-bar flex items-center overflow-x-auto tab-bar-scroll custom-scrollbar z-10 shadow-sm">
+            <!-- Tabs will be injected here -->
+        </div>
+
+        <!-- Main Content (iFrames) -->
+        <main id="iframe-container" class="main-content relative overflow-hidden">
+            <!-- iFrames will be injected here -->
+        </main>
+    </div>
+    
+    <!-- All Tools Popup -->
+    <div id="all-tools-popup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden all-tools-popup">
+        <div class="bg-[var(--sidebar-light)] dark:bg-[var(--sidebar-dark)] rounded-xl shadow-2xl w-full max-w-4xl m-4 p-6 text-[var(--text-light)] dark:text-[var(--text-dark)] flex flex-col max-h-[90vh]">
+            <div class="flex-shrink-0 flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">All Tools</h2>
+                <button id="close-all-tools-btn" class="p-2 rounded-full hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)]">
+                    <i class="material-icons text-xl">close</i>
+                </button>
+            </div>
+            
+            <div class="flex-shrink-0 mb-6">
+                <div class="relative">
+                    <input 
+                        id="all-tools-search" 
+                        type="text" 
+                        placeholder="Search for tools..." 
+                        class="w-full bg-[var(--hover-light)] dark:bg-[var(--hover-dark)] text-[var(--text-light)] dark:text-[var(--text-dark)] text-lg px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                        autofocus
+                    >
+                    <i class="material-icons absolute right-4 top-1/2 transform -translate-y-1/2 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)]">search</i>
+                </div>
+            </div>
+            
+            <div id="all-tools-results" class="flex-grow overflow-y-auto custom-scrollbar -mr-3 pr-3">
+                <!-- All tools will be populated here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Popup -->
+    <div id="settings-popup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden settings-popup">
+        <div class="bg-[var(--sidebar-light)] dark:bg-[var(--sidebar-dark)] rounded-lg shadow-2xl w-full max-w-sm m-4 p-5 text-[var(--text-light)] dark:text-[var(--text-dark)] flex flex-col max-h-[90vh]">
+            <div class="flex-shrink-0 flex justify-between items-center mb-5">
+                <h2 class="text-lg font-bold">Settings</h2>
+                <button id="close-settings-btn" class="p-1 rounded-full hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)]">
+                    <i class="material-icons text-base">close</i>
+                </button>
+            </div>
+            
+            <div class="flex-grow overflow-y-auto custom-scrollbar -mr-3 pr-3">
+                <!-- Theme Settings -->
+                <div class="mb-5">
+                    <h3 class="font-semibold mb-2 text-sm">Theme</h3>
+                    <div class="flex space-x-1 rounded-md bg-[var(--hover-light)] dark:bg-[var(--hover-dark)] p-1">
+                        <button data-theme="light" class="theme-option transition-colors duration-200 flex-1 p-1.5 text-xs rounded flex items-center justify-center gap-1"><i class="material-icons text-xs">light_mode</i> Light</button>
+                        <button data-theme="dark" class="theme-option transition-colors duration-200 flex-1 p-1.5 text-xs rounded flex items-center justify-center gap-1"><i class="material-icons text-xs">dark_mode</i> Dark</button>
+                    </div>
+                </div>
+
+                <!-- Quick Access Settings -->
+                <div class="mb-5">
+                    <h3 class="font-semibold mb-2 text-sm">Quick Access</h3>
+                    <p class="text-xs text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)] mb-2">Drag tools to reorder quick access items</p>
+                    <div id="quick-access-list" class="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
+                        <!-- Quick access items will be populated here -->
+                    </div>
+                    <button id="add-quick-access-btn" class="mt-2 w-full flex items-center justify-center p-1.5 rounded-md bg-[var(--hover-light)] dark:bg-[var(--hover-dark)] hover:bg-[var(--accent)] hover:text-white transition-colors duration-200 text-xs">
+                        <i class="material-icons text-xs mr-1">add</i> Add Tool to Quick Access
+                    </button>
+                </div>
+
+                <!-- Links -->
+                <div class="mb-5">
+                     <h3 class="font-semibold mb-2 text-sm">About</h3>
+                     <a href="https://mahi902.github.io/DocuWritePro/ci.html" target="_blank" class="flex items-center p-1.5 rounded-md hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] text-sm">
+                         <i class="material-icons mr-2 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)] text-base">attribution</i>
+                         <span>Creator Info</span>
+                     </a>
+                     <a href="https://mahi902.github.io/DocuWritePro/legal-documents.html" target="_blank" class="flex items-center p-1.5 rounded-md hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] text-sm">
+                         <i class="material-icons mr-2 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)] text-base">gavel</i>
+                         <span>Legal</span>
+                     </a>
+                     <a href="https://mahi902.github.io/DocuWritePro/pricing.html" target="_blank" class="flex items-center p-1.5 rounded-md hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] text-sm">
+                         <i class="material-icons mr-2 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)] text-base">payments</i>
+                         <span>Pricing</span>
+                     </a>
+                      <a href="https://mahi902.github.io/DocuWritePro/contact.html" target="_blank" class="flex items-center p-1.5 rounded-md hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] text-sm">
+                         <i class="material-icons mr-2 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)] text-base">email</i>
+                         <span>Contact Us</span>
+                     </a>
+                </div>
+                
+                <!-- Updates -->
+                <div>
+                    <h3 class="font-semibold mb-2 text-sm">Updates</h3>
+                    <div id="updates-container" class="max-h-32 overflow-y-auto p-2 rounded-md bg-[var(--hover-light)] dark:bg-[var(--hover-dark)] custom-scrollbar text-xs">
+                        Fetching latest updates...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Tool to Quick Access Popup -->
+    <div id="add-tool-popup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden settings-popup">
+        <div class="bg-[var(--sidebar-light)] dark:bg-[var(--sidebar-dark)] rounded-lg shadow-2xl w-full max-w-xs m-4 p-5 text-[var(--text-light)] dark:text-[var(--text-dark)] flex flex-col max-h-[80vh]">
+            <div class="flex-shrink-0 flex justify-between items-center mb-5">
+                <h2 class="text-lg font-bold">Add Tool to Quick Access</h2>
+                <button id="close-add-tool-btn" class="p-1 rounded-full hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)]">
+                    <i class="material-icons text-base">close</i>
+                </button>
+            </div>
+            
+            <div class="flex-grow overflow-y-auto custom-scrollbar -mr-3 pr-3">
+                <div class="mb-3">
+                    <input 
+                        id="add-tool-search" 
+                        type="text" 
+                        placeholder="Search tools..." 
+                        class="w-full bg-[var(--hover-light)] dark:bg-[var(--hover-dark)] text-[var(--text-light)] dark:text-[var(--text-dark)] text-sm px-3 py-2 rounded-md focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                    >
+                </div>
+                <div id="add-tool-list" class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+                    <!-- Tools list will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const tools = [
+                // Document Editing
+                { name: 'Document Editor', icon: 'edit', url: 'https://mahi902.github.io/DocuWritePro/document-writer.html', category: 'Document Editing' },
+                { name: 'Collab', icon: 'group', url: 'https://mahi902.github.io/DocuWritePro/collab-document-editor.html', category: 'Document Editing' },
+                { name: 'Document Viewer', icon: 'visibility', url: 'https://mahi902.github.io/DocuWritePro/viewer.html', category: 'Document Editing' },
+                { name: 'Word Finder', icon: 'menu_book', url: 'https://mahi902.github.io/DocuWritePro/word-description-finder.html', category: 'Document Editing' },
+                { name: 'Translator', icon: 'language', url: 'https://mahi902.github.io/DocuWritePro/translator.html', category: 'Document Editing' },
+                { name: 'Document Signer', icon: 'draw', url: 'https://mahi902.github.io/DocuWritePro/document-signer.html', category: 'Document Editing' },
+                { name: 'Page Number Adder', icon: 'format_list_numbered', url: 'https://mahi902.github.io/DocuWritePro/page-number-adder.html', category: 'Document Editing' },
+                { name: 'Chart Maker', icon: 'bar_chart', url: 'https://mahi902.github.io/DocuWritePro/chart-maker.html', category: 'Document Editing' },
+                { name: 'Table Maker', icon: 'table_chart', url: 'https://mahi902.github.io/DocuWritePro/table-maker.html', category: 'Document Editing' },
+                { name: 'Watermark Adder', icon: 'filter', url: 'https://mahi902.github.io/DocuWritePro/watermarker.html', category: 'Document Editing' },
+                { name: 'Email Writer', icon: 'email', url: 'https://mahi902.github.io/DocuWritePro/email-writer.html', category: 'Document Editing' },
+                { name: 'Spell Checker', icon: 'spellcheck', url: 'https://mahi902.github.io/DocuWritePro/spell-checker.html', category: 'Document Editing' },
+                { name: 'File Extractor', icon: 'unarchive', url: 'https://mahi902.github.io/DocuWritePro/file-extractor.html', category: 'Document Editing' },
+                { name: 'QR Maker', icon: 'qr_code', url: 'https://mahi902.github.io/DocuWritePro/qr-code-maker.html', category: 'Document Editing' },
+                { name: 'ID Card Maker', icon: 'badge', url: 'https://mahi902.github.io/DocuWritePro/id-card-maker.html', category: 'Document Editing' },
+                { name: 'File Zipper', icon: 'archive', url: 'https://mahi902.github.io/DocuWritePro/file-zipper.html', category: 'Document Editing' },
+                { name: 'PDF Converter', icon: 'picture_as_pdf', url: 'https://mahi902.github.io/DocuWritePro/converters.html', category: 'Document Editing' },
+                { name: 'Context Field', icon: 'summarize', url: 'https://mahi902.github.io/DocuWritePro/context-field.html', category: 'Document Editing' },
+                { name: 'Gift Card Maker', icon: 'card_giftcard', url: 'https://mahi902.github.io/DocuWritePro/gift-card-maker.html', category: 'Document Editing' },
+                { name: 'Share File', icon: 'file_upload', url: 'https://mahi902.github.io/DocuWritePro/docudrop.html', category: 'Document Editing' },
+                { name: 'Text Extractor', icon: 'document_scanner', url: 'https://mahi902.github.io/DocuWritePro/text-extractor.html', category: 'Document Editing' },
+                { name: 'Keyboard Click Test', icon: 'keyboard', url: 'https://mahi902.github.io/DocuWritePro/keyboard-click-test.html', category: 'Document Editing' },
+                
+                // Code Editing
+                { name: 'Code Editor', icon: 'code', url: 'https://mahi902.github.io/DocuWritePro/code-playground.html', category: 'Code Editing' },
+                { name: 'Frontend IDE', icon: 'developer_mode', url: 'https://mahi902.github.io/DocuWritePro/frontend-ide.html', category: 'Code Editing' },
+                { name: 'HTML Writer', icon: 'html', url: 'https://mahi902.github.io/DocuWritePro/html.html', category: 'Code Editing' },
+                { name: 'Button Designer', icon: 'smart_button', url: 'https://mahi902.github.io/DocuWritePro/button-designer.html', category: 'Code Editing' },
+                { name: 'HTML Splitter', icon: 'integration_instructions', url: 'https://mahi902.github.io/DocuWritePro/html-splitter.html', category: 'Code Editing' },
+                { name: 'GoTo Code', icon: 'merge', url: 'https://mahi902.github.io/DocuWritePro/goto-code.html', category: 'Code Editing' },
+                { name: 'Code Snipper', icon: 'content_cut', url: 'https://mahi902.github.io/DocuWritePro/code-snipper.html', category: 'Code Editing' },
+                
+                // Image Editing
+                { name: 'Image Editor', icon: 'collections', url: 'https://mahi902.github.io/DocuWritePro/image-editor.html', category: 'Image Editing' },
+                { name: 'Image Generator', icon: 'auto_awesome', url: 'https://mahi902.github.io/DocuWritePro/image-generator.html', category: 'Image Editing' },
+                { name: 'Drawing Board', icon: 'brush', url: 'https://mahi902.github.io/DocuWritePro/draw.html', category: 'Image Editing' },
+            ];
+
+            const toolsContainer = document.getElementById('tools-container');
+            const quickAccessContainer = document.getElementById('quick-access-container');
+            const quickAccessList = document.getElementById('quick-access-list');
+            const iframeContainer = document.getElementById('iframe-container');
+            const tabBar = document.getElementById('tab-bar');
+            const allToolsPopup = document.getElementById('all-tools-popup');
+            const allToolsToggle = document.getElementById('all-tools-toggle');
+            const closeAllToolsBtn = document.getElementById('close-all-tools-btn');
+            const allToolsSearch = document.getElementById('all-tools-search');
+            const allToolsResults = document.getElementById('all-tools-results');
+            const addToolPopup = document.getElementById('add-tool-popup');
+            const addToolSearch = document.getElementById('add-tool-search');
+            const addToolList = document.getElementById('add-tool-list');
+            const addQuickAccessBtn = document.getElementById('add-quick-access-btn');
+            const closeAddToolBtn = document.getElementById('close-add-tool-btn');
+
+            let openTabs = [];
+            let activeTabId = null;
+            let tabCounter = 0;
+            let quickAccessTools = JSON.parse(localStorage.getItem('quickAccessTools')) || [
+                'Document Editor', 'Code Editor', 'Image Editor', 'Translator'
+            ];
+
+            // --- App Initialization ---
+            function init() {
+                // Populate sidebar with tools
+                renderTools();
+                
+                // Populate quick access
+                renderQuickAccess();
+                
+                // Open default tab
+                openTool({
+                    name: 'Recents',
+                    icon: 'history',
+                    url: 'https://mahi902.github.io/DocuWritePro/recents',
+                    category: 'General'
+                });
+
+                initTheme();
+                initSettingsPopup();
+                initAllToolsPopup();
+                initAddToolPopup();
+            }
+
+            // --- Tool Rendering ---
+            function renderTools() {
+                toolsContainer.innerHTML = '';
+                
+                tools.forEach(tool => {
+                    const toolButton = document.createElement('button');
+                    toolButton.className = 'tool-icon p-2 rounded-lg transition-colors duration-200 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] w-full flex justify-center';
+                    toolButton.title = tool.name;
+                    toolButton.innerHTML = `<i class="material-icons text-base">${tool.icon}</i>`;
+                    toolButton.onclick = () => openTool(tool);
+                    toolsContainer.appendChild(toolButton);
+                    
+                    // Add right-click context menu for adding to quick access
+                    toolButton.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        addToQuickAccess(tool.name);
+                        
+                        // Show a quick confirmation
+                        const originalHTML = toolButton.innerHTML;
+                        toolButton.innerHTML = '<i class="material-icons text-base text-green-500">check</i>';
+                        setTimeout(() => {
+                            toolButton.innerHTML = originalHTML;
+                        }, 1000);
+                    });
+                });
+            }
+            
+            function renderQuickAccess() {
+                quickAccessContainer.innerHTML = '';
+                quickAccessList.innerHTML = '';
+                
+                quickAccessTools.forEach(toolName => {
+                    const tool = tools.find(t => t.name === toolName);
+                    if (!tool) return;
+                    
+                    // Add to quick access bar
+                    const quickAccessButton = document.createElement('button');
+                    quickAccessButton.className = 'quick-access-item p-1.5 rounded-md transition-all duration-200 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)] hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] w-full flex justify-center mb-1';
+                    quickAccessButton.title = tool.name;
+                    quickAccessButton.innerHTML = `<i class="material-icons text-base">${tool.icon}</i>`;
+                    quickAccessButton.onclick = () => openTool(tool);
+                    quickAccessContainer.appendChild(quickAccessButton);
+                    
+                    // Add to settings list
+                    const listItem = document.createElement('div');
+                    listItem.className = 'flex items-center p-1.5 rounded-md bg-[var(--hover-light)] dark:bg-[var(--hover-dark)]';
+                    listItem.innerHTML = `
+                        <i class="material-icons text-base mr-2 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)]">drag_indicator</i>
+                        <i class="material-icons text-base mr-2">${tool.icon}</i>
+                        <span class="text-sm flex-grow">${tool.name}</span>
+                        <button class="remove-quick-access p-1 rounded-full hover:bg-gray-500/20" data-tool="${tool.name}">
+                            <i class="material-icons text-xs">close</i>
+                        </button>
+                    `;
+                    listItem.draggable = true;
+                    listItem.addEventListener('dragstart', handleDragStart);
+                    listItem.addEventListener('dragover', handleDragOver);
+                    listItem.addEventListener('drop', handleDrop);
+                    listItem.addEventListener('dragend', handleDragEnd);
+                    
+                    quickAccessList.appendChild(listItem);
+                });
+                
+                // Add event listeners for remove buttons
+                document.querySelectorAll('.remove-quick-access').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const toolName = e.target.closest('button').dataset.tool;
+                        removeFromQuickAccess(toolName);
+                    });
+                });
+            }
+            
+            function initAllToolsPopup() {
+                allToolsToggle.addEventListener('click', () => {
+                    allToolsPopup.classList.remove('hidden');
+                    allToolsSearch.focus();
+                    renderAllToolsResults();
+                });
+                
+                closeAllToolsBtn.addEventListener('click', () => {
+                    allToolsPopup.classList.add('hidden');
+                    allToolsSearch.value = '';
+                });
+                
+                allToolsPopup.addEventListener('click', (e) => {
+                    if (e.target === allToolsPopup) {
+                        allToolsPopup.classList.add('hidden');
+                        allToolsSearch.value = '';
+                    }
+                });
+                
+                allToolsSearch.addEventListener('input', (e) => {
+                    renderAllToolsResults(e.target.value);
+                });
+                
+                // Close all tools with Escape key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && !allToolsPopup.classList.contains('hidden')) {
+                        allToolsPopup.classList.add('hidden');
+                        allToolsSearch.value = '';
+                    }
+                });
+            }
+            
+            function renderAllToolsResults(filter = '') {
+                allToolsResults.innerHTML = '';
+                
+                const filteredTools = tools.filter(tool => 
+                    tool.name.toLowerCase().includes(filter.toLowerCase())
+                );
+                
+                if (filteredTools.length === 0) {
+                    allToolsResults.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-10 text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)]">
+                            <i class="material-icons text-4xl mb-2">search_off</i>
+                            <p class="text-lg">No tools found</p>
+                            <p class="text-sm">Try a different search term</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Group by category
+                const toolsByCategory = {};
+                filteredTools.forEach(tool => {
+                    if (!toolsByCategory[tool.category]) {
+                        toolsByCategory[tool.category] = [];
+                    }
+                    toolsByCategory[tool.category].push(tool);
+                });
+                
+                // Render each category
+                Object.keys(toolsByCategory).forEach(category => {
+                    const categorySection = document.createElement('div');
+                    categorySection.className = 'mb-6';
+                    categorySection.innerHTML = `
+                        <h3 class="font-semibold mb-3 text-lg tool-category pb-2">${category}</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                            ${toolsByCategory[category].map(tool => `
+                                <button class="tool-search-item flex flex-col items-center p-4 rounded-lg bg-[var(--hover-light)] dark:bg-[var(--hover-dark)] hover:bg-[var(--accent)] hover:text-white transition-all duration-200" data-tool="${tool.name}">
+                                    <i class="material-icons text-2xl mb-2">${tool.icon}</i>
+                                    <span class="text-sm font-medium text-center">${tool.name}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                    `;
+                    allToolsResults.appendChild(categorySection);
+                });
+                
+                // Add event listeners to all tools result items
+                document.querySelectorAll('.tool-search-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const toolName = item.dataset.tool;
+                        const tool = tools.find(t => t.name === toolName);
+                        if (tool) {
+                            openTool(tool);
+                            allToolsPopup.classList.add('hidden');
+                            allToolsSearch.value = '';
+                        }
+                    });
+                });
+            }
+            
+            function initAddToolPopup() {
+                addQuickAccessBtn.addEventListener('click', () => {
+                    addToolPopup.classList.remove('hidden');
+                    renderAddToolList();
+                });
+                
+                closeAddToolBtn.addEventListener('click', () => {
+                    addToolPopup.classList.add('hidden');
+                });
+                
+                addToolPopup.addEventListener('click', (e) => {
+                    if (e.target === addToolPopup) {
+                        addToolPopup.classList.add('hidden');
+                    }
+                });
+                
+                addToolSearch.addEventListener('input', (e) => {
+                    renderAddToolList(e.target.value);
+                });
+            }
+            
+            function renderAddToolList(filter = '') {
+                addToolList.innerHTML = '';
+                
+                const filteredTools = tools.filter(tool => 
+                    tool.name.toLowerCase().includes(filter.toLowerCase()) && 
+                    !quickAccessTools.includes(tool.name)
+                );
+                
+                if (filteredTools.length === 0) {
+                    addToolList.innerHTML = '<p class="text-center text-xs text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)] py-2">No tools found</p>';
+                    return;
+                }
+                
+                filteredTools.forEach(tool => {
+                    const toolItem = document.createElement('button');
+                    toolItem.className = 'flex items-center w-full p-2 rounded-md hover:bg-[var(--hover-light)] dark:hover:bg-[var(--hover-dark)] text-left';
+                    toolItem.innerHTML = `
+                        <i class="material-icons text-base mr-2">${tool.icon}</i>
+                        <span class="text-sm flex-grow">${tool.name}</span>
+                        <i class="material-icons text-base text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)]">add</i>
+                    `;
+                    toolItem.addEventListener('click', () => {
+                        addToQuickAccess(tool.name);
+                        addToolPopup.classList.add('hidden');
+                    });
+                    addToolList.appendChild(toolItem);
+                });
+            }
+            
+            // --- Quick Access Management ---
+            function addToQuickAccess(toolName) {
+                if (!quickAccessTools.includes(toolName)) {
+                    quickAccessTools.push(toolName);
+                    localStorage.setItem('quickAccessTools', JSON.stringify(quickAccessTools));
+                    renderQuickAccess();
+                }
+            }
+            
+            function removeFromQuickAccess(toolName) {
+                quickAccessTools = quickAccessTools.filter(name => name !== toolName);
+                localStorage.setItem('quickAccessTools', JSON.stringify(quickAccessTools));
+                renderQuickAccess();
+            }
+            
+            // Drag and drop for quick access reordering
+            let draggedItem = null;
+            
+            function handleDragStart(e) {
+                draggedItem = this;
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', this.innerHTML);
+                this.classList.add('opacity-50');
+            }
+            
+            function handleDragOver(e) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                return false;
+            }
+            
+            function handleDrop(e) {
+                e.stopPropagation();
+                if (draggedItem !== this) {
+                    const allItems = Array.from(quickAccessList.children);
+                    const fromIndex = allItems.indexOf(draggedItem);
+                    const toIndex = allItems.indexOf(this);
+                    
+                    if (fromIndex < toIndex) {
+                        quickAccessList.insertBefore(draggedItem, this.nextSibling);
+                    } else {
+                        quickAccessList.insertBefore(draggedItem, this);
+                    }
+                    
+                    // Update quickAccessTools array
+                    const toolNames = Array.from(quickAccessList.children).map(item => 
+                        item.querySelector('span').textContent
+                    );
+                    quickAccessTools = toolNames;
+                    localStorage.setItem('quickAccessTools', JSON.stringify(quickAccessTools));
+                    renderQuickAccess();
+                }
+                return false;
+            }
+            
+            function handleDragEnd(e) {
+                this.classList.remove('opacity-50');
+            }
+
+            // --- Tab and iFrame Management ---
+            function openTool(tool) {
+                // Check if tool is already open
+                const existingTab = openTabs.find(tab => tab.url === tool.url);
+                if (existingTab) {
+                    switchToTab(existingTab.id);
+                    return;
+                }
+
+                // Create new tab
+                const tabId = `tab-${tabCounter++}`;
+                const newTab = { ...tool, id: tabId };
+                openTabs.push(newTab);
+
+                // Create iFrame
+                const iframe = document.createElement('iframe');
+                iframe.id = `iframe-${tabId}`;
+                iframe.src = tool.url;
+                iframe.className = 'w-full h-full border-none absolute top-0 left-0';
+                iframe.style.display = 'none'; // Initially hidden
+                iframeContainer.appendChild(iframe);
+
+                // Create Tab in Tab Bar
+                const tabElement = document.createElement('div');
+                tabElement.id = tabId;
+                tabElement.className = 'tab-item flex items-center justify-between px-3 py-1 mx-0.5 rounded-md cursor-pointer whitespace-nowrap text-xs flex-shrink-0 transition-all duration-200';
+                tabElement.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="material-icons text-xs mr-1.5">${tool.icon}</i>
+                        <span class="truncate max-w-[100px]">${tool.name}</span>
+                    </div>
+                    <button class="close-tab-btn p-0.5 rounded-full hover:bg-gray-500/20 ml-1">
+                        <i class="material-icons text-xs">close</i>
+                    </button>
+                `;
+                tabBar.appendChild(tabElement);
+                
+                tabElement.addEventListener('click', (e) => {
+                    if (!e.target.closest('.close-tab-btn')) {
+                        switchToTab(tabId);
+                    }
+                });
+
+                tabElement.querySelector('.close-tab-btn').addEventListener('click', (e) => {
+                     e.stopPropagation();
+                     closeTab(tabId);
+                });
+
+                switchToTab(tabId);
+            }
+
+            function switchToTab(tabId) {
+                activeTabId = tabId;
+
+                // Update iFrames visibility
+                Array.from(iframeContainer.children).forEach(iframe => {
+                    iframe.style.display = iframe.id === `iframe-${tabId}` ? 'block' : 'none';
+                });
+
+                // Update tab styles
+                Array.from(tabBar.children).forEach(tab => {
+                    const isActive = tab.id === tabId;
+                    if (isActive) {
+                        tab.classList.add('active');
+                    } else {
+                        tab.classList.remove('active');
+                    }
+                });
+                
+                // Update tool icons active state
+                Array.from(toolsContainer.children).forEach(button => {
+                    const toolName = button.title;
+                    const tool = tools.find(t => t.name === toolName);
+                    if (tool && openTabs.find(tab => tab.url === tool.url && tab.id === tabId)) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                });
+                
+                const activeTabElement = document.getElementById(tabId);
+                if (activeTabElement) {
+                    activeTabElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }
+            }
+
+            function closeTab(tabId) {
+                const tabIndex = openTabs.findIndex(tab => tab.id === tabId);
+                if (tabIndex === -1) return;
+
+                // Remove from state
+                openTabs.splice(tabIndex, 1);
+
+                // Remove DOM elements
+                document.getElementById(tabId)?.remove();
+                document.getElementById(`iframe-${tabId}`)?.remove();
+
+                // If the closed tab was active, switch to another one
+                if (activeTabId === tabId) {
+                    if (openTabs.length > 0) {
+                        // Switch to the previous tab or the first one
+                        const newActiveIndex = Math.max(0, tabIndex - 1);
+                        switchToTab(openTabs[newActiveIndex].id);
+                    } else {
+                        activeTabId = null;
+                        // Optionally open the default tab again or show a blank screen
+                        openTool({ name: 'Recents', icon: 'history', url: 'https://mahi902.github.io/DocuWritePro/recents' });
+                    }
+                }
+            }
+            
+            // --- Settings Popup ---
+            function initSettingsPopup() {
+                const settingsPopup = document.getElementById('settings-popup');
+                const openBtn = document.getElementById('settings-btn');
+                const closeBtn = document.getElementById('close-settings-btn');
+                const updatesContainer = document.getElementById('updates-container');
+
+                openBtn.addEventListener('click', () => {
+                    settingsPopup.classList.remove('hidden');
+                    fetchUpdates();
+                });
+                closeBtn.addEventListener('click', () => settingsPopup.classList.add('hidden'));
+                settingsPopup.addEventListener('click', (e) => {
+                     if (e.target === settingsPopup) {
+                         settingsPopup.classList.add('hidden');
+                     }
+                });
+                
+                async function fetchUpdates() {
+                    updatesContainer.innerHTML = 'Fetching latest updates...';
+                    try {
+                        const response = await fetch("https://api.github.com/repos/mahi902/DocuWritePro/releases?per_page=5");
+                        const releases = await response.json();
+                        if (releases.length > 0) {
+                            updatesContainer.innerHTML = releases.map(release => `
+                                <div class="mb-2 pb-2 border-b border-[var(--border-light)] dark:border-[var(--border-dark)] last:border-0 last:mb-0 last:pb-0">
+                                    <a href="${release.html_url}" target="_blank" class="font-semibold hover:underline flex items-center">
+                                        ${release.name}
+                                        <i class="material-icons text-xs ml-1">open_in_new</i>
+                                    </a>
+                                    <p class="text-xs text-[var(--text-muted-light)] dark:text-[var(--text-muted-dark)]">${new Date(release.published_at).toLocaleDateString()}</p>
+                                </div>
+                            `).join('');
+                        } else {
+                            updatesContainer.innerHTML = 'No recent updates found.';
+                        }
+                    } catch (error) {
+                        console.error("Failed to fetch updates:", error);
+                        updatesContainer.innerHTML = 'Could not fetch updates.';
+                    }
+                }
+            }
+
+            // --- Theme Management ---
+            function initTheme() {
+                const themeOptions = document.querySelectorAll('.theme-option');
+                const savedTheme = localStorage.getItem('theme') || 'light';
+
+                function applyTheme(theme) {
+                    const html = document.documentElement;
+                    
+                    // Simple theme application - no system detection
+                    if (theme === 'dark') {
+                        html.classList.add('dark');
+                    } else {
+                        html.classList.remove('dark');
+                    }
+                    
+                    // Update theme buttons
+                    themeOptions.forEach(opt => {
+                        const isSelected = opt.dataset.theme === theme;
+                        if (isSelected) {
+                            opt.classList.add('active');
+                        } else {
+                            opt.classList.remove('active');
+                        }
+                    });
+
+                    // Re-apply active tab style
+                    if (activeTabId) {
+                        switchToTab(activeTabId);
+                    }
+                    
+                    // Force re-render of popups to apply theme changes
+                    if (!allToolsPopup.classList.contains('hidden')) {
+                        renderAllToolsResults(allToolsSearch.value);
+                    }
+                }
+                
+                themeOptions.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const theme = button.dataset.theme;
+                        localStorage.setItem('theme', theme);
+                        applyTheme(theme);
+                    });
+                });
+
+                // Apply initial theme
+                applyTheme(savedTheme);
+            }
+
+            // Start the application
+            init();
+        });
+    </script>
+</body>
+</html>

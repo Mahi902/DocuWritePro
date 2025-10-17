@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recents App</title>
+    <title>Dashboard</title>
     <!-- Load Tailwind CSS for modern, responsive styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -12,6 +12,15 @@
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fc;
         }
+        /* Custom CSS for soft blue animated background */
+        @keyframes soft-blue-shift {
+            0% { background-color: #e0f2fe; } /* Light blue 100 */
+            50% { background-color: #bae6fd; } /* Light blue 200 */
+            100% { background-color: #e0f2fe; }
+        }
+        .animated-bg {
+            animation: soft-blue-shift 10s ease-in-out infinite alternate;
+        }
         /* Fullscreen Layout: The main container takes up the whole screen */
         .full-app-container {
             width: 100%;
@@ -19,6 +28,7 @@
             display: flex;
             flex-direction: column;
             background-color: white;
+            overflow: hidden; /* Prevent body scroll */
         }
         /* Hide scrollbar for a cleaner mobile aesthetic */
         .file-list-container::-webkit-scrollbar {
@@ -39,15 +49,72 @@
     <!-- Fullscreen Application Container -->
     <div class="full-app-container">
 
-        <!-- Header -->
-        <header class="p-6 bg-white border-b border-gray-100 flex-shrink-0 shadow-sm">
-            <h1 class="text-3xl font-bold text-gray-800">Recents</h1>
-        </header>
+        <!-- DASHBOARD AREA (Thin Animated Blue Background) -->
+        <div id="dashboard-header" class="py-4 px-6 text-gray-800 flex-shrink-0 animated-bg shadow-lg">
+            <h1 class="text-3xl font-extrabold mb-4 text-blue-900">Dashboard</h1>
+            
+            <!-- REMOVED: To see your files, click "Select Folder Access" below. -->
 
-        <!-- Sort and Control Section -->
-        <section id="controls" class="p-4 bg-white border-b border-gray-100 flex-shrink-0">
-            <div class="flex flex-wrap gap-2 text-sm">
-                <!-- Initial active state for Alphabetical -->
+            <div class="space-y-3">
+                
+                <!-- NEW DOCUMENT BUTTON (Toggle) - Light and subtle -->
+                <button id="newDocument-toggle" onclick="toggleMenu('newDocument')" 
+                        class="w-full flex items-center justify-between p-3 bg-white text-blue-700 rounded-xl shadow-md border border-gray-200 
+                               hover:bg-blue-50 transition transform hover:scale-[1.01] font-semibold text-lg">
+                    New Document
+                    <!-- Plus Icon (now text-blue-700) -->
+                    <svg id="newDocument-icon" class="w-6 h-6 transform transition-transform text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                </button>
+
+                <!-- New Document Sub-Menu (Lighter blue background) -->
+                <div id="newDocument-menu" class="hidden pl-4 space-y-2">
+                    <a href="https://mahi902.github.io/DocuWritePro/document-writer.html" 
+                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">Document Editor</a>
+                    <a href="https://mahi902.github.io/DocuWritePro/collab-document-editor.html" 
+                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">Collab Editor</a>
+                </div>
+
+                <!-- EDIT IMAGE & EDIT CODE BUTTONS (One Line) - Light and subtle -->
+                <div class="flex gap-4">
+                    <!-- Edit Image Button (Direct Link) - Light/Subtle Style -->
+                    <a href="https://mahi902.github.io/DocuWritePro/image-editor.html" 
+                       class="flex-1 flex flex-col items-center justify-center p-3 bg-white text-blue-700 rounded-xl shadow-md border border-gray-200 
+                              hover:bg-blue-50 transition transform hover:scale-[1.01] font-semibold text-base">
+                        <!-- Icon (now text-blue-700) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mb-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L15 15m0 0l4.586-4.586a2 2 0 012.828 0L21 17m-9.757-4.243V12m0 0a2.25 2.25 0 00-.757 1.621v.571m0 0a2.25 2.25 0 00.757 1.621m-.757-1.621h.007" /></svg>
+                        Edit Image
+                    </a>
+
+                    <!-- Edit Code Button (Toggle) - Light/Subtle Style -->
+                    <button id="editCode-toggle" onclick="toggleMenu('editCode')" 
+                            class="flex-1 flex flex-col items-center justify-center p-3 bg-white text-blue-700 rounded-xl shadow-md border border-gray-200 
+                                   hover:bg-blue-50 transition transform hover:scale-[1.01] font-semibold text-base">
+                        <!-- Icon (now text-blue-700) -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mb-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                        Edit Code
+                    </button>
+                </div>
+                
+                <!-- Edit Code Sub-Menu (Lighter blue background) -->
+                <div id="editCode-menu" class="hidden pl-4 space-y-2">
+                    <a href="https://mahi902.github.io/DocuWritePro/frontend-ide.html" 
+                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">Frontend IDE (HTML, CSS, JS)</a>
+                    <a href="https://mahi902.github.io/DocuWritePro/code-playground.html" 
+                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">Code Launcher (HTML)</a>
+                    <a href="https://mahi902.github.io/DocuWritePro/html.html" 
+                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">HTML Editor (HTML)</a>
+                </div>
+            </div>
+        </div>
+        <!-- END DASHBOARD AREA -->
+
+
+        <!-- RECENTS HEADER & CONTROLS -->
+        <header class="p-4 bg-white border-b border-gray-100 flex-shrink-0">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Recents</h2>
+            <!-- Sort and Control Section -->
+            <div id="controls" class="flex flex-wrap gap-2 text-sm">
+                <!-- Sorting buttons remain blue/gray for functional contrast -->
                 <button id="sort-name" onclick="sortFiles('name')" class="sort-btn bg-blue-500 text-white px-3 py-1 rounded-full shadow-md hover:bg-blue-600 transition">
                     Sort Alphabetically
                 </button>
@@ -58,17 +125,21 @@
                     Recently Created
                 </button>
             </div>
-        </section>
+        </header>
 
         <!-- File List Container - Takes up remaining height and scrolls -->
         <main class="file-list-container p-4 flex-grow overflow-y-auto">
+            
+            <!-- INITIAL PROMPT - Now a direct child of main and safe from renderFiles() -->
+            <div id="initial-prompt" class="p-8 text-center text-gray-500 max-w-3xl mx-auto">
+                <button onclick="selectFolder()" class="mt-6 bg-blue-500 text-white p-3 rounded-xl font-semibold shadow-lg hover:bg-blue-600 transition min-w-[200px]">
+                    Select Folder Access
+                </button>
+            </div>
+
+            <!-- File List - This is the only element cleared by renderFiles() -->
             <div id="file-list" class="space-y-3 max-w-3xl mx-auto">
-                <div id="initial-prompt" class="p-8 text-center text-gray-500">
-                    <p>This app needs **read and write** access to a folder to display, rename, and edit your recent files.</p>
-                    <button onclick="selectFolder()" class="mt-6 bg-blue-500 text-white p-3 rounded-xl font-semibold shadow-lg hover:bg-blue-600 transition min-w-[200px]">
-                        Select Folder Access
-                    </button>
-                </div>
+                <!-- File items are rendered here -->
             </div>
 
             <!-- Loading Spinner -->
@@ -85,7 +156,6 @@
         <div id="message-box" class="fixed inset-0 bg-gray-900 bg-opacity-70 hidden items-center justify-center p-4 z-50 overflow-y-auto">
             <div id="message-content" class="bg-white p-6 rounded-xl shadow-2xl max-w-4xl w-full transform transition-all duration-300 scale-95 opacity-0 m-4">
                 <h3 id="message-title" class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Action</h3>
-                <!-- message-body will hold all dynamic content and buttons -->
                 <div id="message-body" class="text-gray-600 mb-4"></div> 
             </div>
         </div>
@@ -100,7 +170,56 @@
         const initialPrompt = document.getElementById('initial-prompt');
         let currentSortKey = 'name';
         let currentSortDirection = 'asc';
-        let currentFileIndex = -1; // Added to track which file is currently open for editing/actions
+        let currentFileIndex = -1; 
+        
+        let activeMenu = null; // State to track which dashboard menu is open
+
+        // ---------------------------------------------------------------------
+        // DASHBOARD TOGGLE LOGIC
+        // ---------------------------------------------------------------------
+
+        window.toggleMenu = (menuId) => {
+            const menuElement = document.getElementById(menuId + '-menu');
+            const toggleButton = document.getElementById(menuId + '-toggle');
+            
+            // Check if the button element exists
+            if (!toggleButton) return; 
+
+            // Look for the icon inside the button
+            const iconElement = toggleButton.querySelector('svg');
+
+            // If the clicked menu is already open, close it.
+            if (activeMenu === menuId) {
+                if (menuElement) menuElement.classList.add('hidden');
+                if (iconElement) {
+                    iconElement.classList.remove('rotate-45');
+                }
+                activeMenu = null;
+                return;
+            }
+
+            // Close the currently active menu if one is open
+            if (activeMenu) {
+                const prevMenu = document.getElementById(activeMenu + '-menu');
+                const prevButton = document.getElementById(activeMenu + '-toggle');
+                
+                if (prevMenu) prevMenu.classList.add('hidden');
+                
+                const prevIcon = prevButton ? prevButton.querySelector('svg') : null;
+                
+                if (prevIcon) {
+                    prevIcon.classList.remove('rotate-45');
+                }
+            }
+
+            // Open the new menu
+            if (menuElement) menuElement.classList.remove('hidden');
+            if (iconElement) {
+                iconElement.classList.add('rotate-45');
+            }
+            activeMenu = menuId;
+        };
+
 
         // ---------------------------------------------------------------------
         // Message Box Functions
@@ -112,11 +231,9 @@
             const messageBox = document.getElementById('message-box');
             const messageContent = document.getElementById('message-content');
             
-            // Check if the modal is already open and simply update content
             if (messageBox.classList.contains('hidden')) {
                 messageBox.classList.remove('hidden');
                 messageBox.classList.add('flex');
-                // Trigger animation only if opening for the first time
                 setTimeout(() => {
                     messageContent.classList.remove('opacity-0', 'scale-95');
                     messageContent.classList.add('opacity-100', 'scale-100');
@@ -129,7 +246,6 @@
             const messageContent = document.getElementById('message-content');
             messageContent.classList.remove('opacity-100', 'scale-100');
             messageContent.classList.add('opacity-0', 'scale-95');
-            // Reset index on close
             currentFileIndex = -1;
             setTimeout(() => {
                 messageBox.classList.remove('flex');
@@ -138,7 +254,7 @@
         };
 
         // ---------------------------------------------------------------------
-        // File System Helpers
+        // File System Helpers (Recents)
         // ---------------------------------------------------------------------
 
         const getMimeTypeFromExtension = (filename) => {
@@ -165,7 +281,7 @@
         };
         
         // ---------------------------------------------------------------------
-        // File I/O and Core Logic
+        // File I/O and Core Logic (Recents)
         // ---------------------------------------------------------------------
 
         window.selectFolder = async () => {
@@ -178,7 +294,7 @@
             }
 
             try {
-                // Request directory access with readwrite mode
+                // Request readwrite permissions for the selected directory
                 directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
                 initialPrompt.classList.add('hidden');
                 await loadFiles(directoryHandle);
@@ -203,20 +319,23 @@
             files = [];
             fileListElement.innerHTML = '';
             loadingElement.classList.remove('hidden');
+            initialPrompt.classList.add('hidden'); // Ensure prompt is hidden on successful load
 
             try {
                 const filePromises = [];
                 for await (const entry of dirHandle.values()) {
                     if (entry.kind === 'file') {
-                        filePromises.push(entry.getFile().then(file => {
+                        // Request a new file handle (important for updated timestamps/references)
+                        const fileHandle = await dirHandle.getFileHandle(entry.name);
+                        
+                        filePromises.push(fileHandle.getFile().then(file => {
                             const mimeType = file.type || getMimeTypeFromExtension(file.name);
                             return {
                                 name: file.name,
                                 size: file.size,
                                 lastModified: file.lastModified,
-                                handle: entry,
+                                handle: fileHandle, // Store the up-to-date file handle
                                 mimeType: mimeType,
-                                // Create a blob URL immediately for image thumbnails
                                 thumbnailUrl: mimeType.startsWith('image/') ? URL.createObjectURL(file) : null 
                             };
                         }));
@@ -234,13 +353,20 @@
                     </div>`);
             } finally {
                 loadingElement.classList.add('hidden');
-                if (files.length === 0) {
+                if (files.length === 0 && directoryHandle) {
                      fileListElement.innerHTML = '<p class="text-center text-gray-500 p-8">No files found in the selected folder.</p>';
                 }
             }
         };
 
         window.sortFiles = (key, direction = 'asc') => {
+            // Only attempt to sort if a folder has been selected
+            if (!directoryHandle) {
+                // Initial prompt is a sibling of fileListElement now, so it's not accidentally cleared.
+                // We just stop the sorting and do nothing.
+                return;
+            }
+            
             currentSortKey = key;
             currentSortDirection = direction;
             const isDesc = direction === 'desc';
@@ -264,7 +390,6 @@
                 return 0;
             });
 
-            // Update button styles to reflect active sort
             document.querySelectorAll('.sort-btn').forEach(btn => {
                 btn.classList.remove('bg-blue-500', 'text-white');
                 btn.classList.add('bg-gray-200', 'text-gray-700');
@@ -285,11 +410,10 @@
         };
 
         const renderFiles = () => {
-            fileListElement.innerHTML = ''; // Clear existing list
+            fileListElement.innerHTML = ''; 
 
             files.forEach((file, index) => {
                 const fileItem = document.createElement('div');
-                // The main container provides padding/shadow but is not clickable itself
                 fileItem.className = "flex items-center p-3 bg-gray-50 rounded-xl shadow-sm transition";
                 
                 const dateString = formatDate(file.lastModified);
@@ -328,7 +452,7 @@
                         </div>
                     </div>
 
-                    <!-- Options Button: Clicking here opens the action menu (no propagation issue) -->
+                    <!-- Options Button: Clicking here opens the action menu -->
                     <div class="flex-shrink-0 ml-3 relative">
                         <button onclick="showActionMenu(${index})" 
                                 class="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition focus:outline-none">
@@ -352,7 +476,6 @@
             const mimeType = file.mimeType;
             let isEditable = false;
 
-            // Display loading state in the modal temporarily
             showMessage(title, `<p class="text-center py-8"><svg class="animate-spin mx-auto h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2">Reading file...</p></p>`);
             
             try {
@@ -367,11 +490,9 @@
                 } else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
                     const content = await fileContent.text();
                     isEditable = true;
-                    // Editable text area
                     previewContent = `<pre id="editable-file-content" contenteditable="true" spellcheck="false"
-                              class="whitespace-pre-wrap max-h-[70vh] overflow-y-auto p-4 bg-gray-100 rounded-lg text-sm text-gray-800 border border-gray-300 focus:ring-blue-500">${content}</pre>`;
+                              class="whitespace-pre-wrap max-h-[70vh] overflow-y-auto p-4 bg-gray-100 rounded-lg text-sm text-gray-800 border border-gray-300 focus:ring-blue-500 focus:border-blue-500">${content}</pre>`;
                 } else {
-                    // Fallback for non-supported file types
                     previewContent = `<p class="text-center text-lg text-gray-700 p-8">Preview not supported for this file type (<strong>${mimeType}</strong>). Please download the file to view it.</p>`;
                 }
 
@@ -384,7 +505,6 @@
                     `;
                 }
 
-                // Update the modal with the actual content and dynamic buttons
                 showMessage(
                     title,
                     `<div class="text-left">${previewContent}</div>
@@ -397,7 +517,6 @@
                     </div>`
                 );
 
-                // Ensure the editable area is focused if it exists
                 if(isEditable) {
                     document.getElementById('editable-file-content').focus();
                 }
@@ -435,23 +554,20 @@
             }
 
             try {
-                // We assume the file handle is still valid for the same file name.
-                const fileHandle = await directoryHandle.getFileHandle(file.name);
-                const writable = await fileHandle.createWritable();
+                // Get a writable stream from the file handle
+                const writable = await file.handle.createWritable();
                 
-                // Write the new content to the file
                 await writable.write(newContent);
                 await writable.close();
 
-                // Close the modal and show success
                 closeMessage(); 
                 showMessage("Save Successful", `Changes to <strong>${file.name}</strong> have been saved to disk!
                     <div class="flex justify-end pt-2">
                         <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
                     </div>`);
 
-                // Update file metadata (last modified time) and re-render
-                const updatedFile = await fileHandle.getFile();
+                // Update the local list entry with new metadata
+                const updatedFile = await file.handle.getFile();
                 file.size = updatedFile.size;
                 file.lastModified = updatedFile.lastModified;
                 
@@ -468,7 +584,6 @@
         };
 
 
-        // Function to show the action menu (Rename/Delete)
         window.showActionMenu = (index) => {
             const file = files[index];
             currentFileIndex = index;
@@ -492,7 +607,6 @@
         };
 
         window.handleRenamePrompt = (index, currentName) => {
-            // No need to closeMessage() here, we just update the content of the modal
             
             showMessage(
                 `Rename File: ${currentName}`,
@@ -507,7 +621,6 @@
                     </button>
                 </div>`
             );
-            // Focus the input field when the modal is shown
             setTimeout(() => {
                 document.getElementById('new-filename-input')?.focus();
             }, 350);
@@ -525,31 +638,46 @@
                     </div>`);
                 return;
             }
-
-            try {
-                // Attempt to get the file handle with the old name
-                const fileHandle = await directoryHandle.getFileHandle(oldName);
-                
-                // IMPORTANT: The File System Access API does not provide a standard `rename` method.
-                // It requires using the `move` method, which is not supported in this isolated environment.
-                // We proceed with a robust simulation and notification.
-                
-                // SIMULATION: Update the local array
-                file.name = newName;
-                
-                // Re-sort and re-render the list
-                sortFiles(currentSortKey, currentSortDirection); 
-                closeMessage();
-                
-                showMessage("Rename Success (Simulated)", `File successfully renamed locally to <strong>${newName}</strong>. Due to environment limitations, this operation is simulated and not applied to the actual file system.
+            if (!directoryHandle) {
+                 showMessage("Error", `Directory access is lost. Please re-select the folder.
                     <div class="flex justify-end pt-2">
                         <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
                     </div>`);
+                return;
+            }
+
+            // Show loading message while renaming
+            showMessage("Renaming...", `<p class="text-center py-8"><svg class="animate-spin mx-auto h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2">Performing rename (read, create, write, delete)...</p></p>`);
+
+
+            try {
+                // 1. Get content of the old file
+                const oldFileContent = await file.handle.getFile();
+                // NOTE: Using text() here assumes the file is text-based (most common case). For binary files, this would need updating.
+                const content = await oldFileContent.text(); 
+
+                // 2. Create new file handle and writable stream
+                const newFileHandle = await directoryHandle.getFileHandle(newName, { create: true });
+                const newWritable = await newFileHandle.createWritable();
+
+                // 3. Write content to the new file
+                await newWritable.write(content);
+                await newWritable.close();
+
+                // 4. Delete the old file
+                await directoryHandle.removeEntry(oldName, { recursive: false });
+                
+                // 5. Update local state and UI
+                closeMessage();
+                // Re-load all files to get the new file handle and update the list
+                await loadFiles(directoryHandle); 
+
+                showMessage("Rename Successful", `<strong>${oldName}</strong> successfully renamed to <strong>${newName}</strong>.`);
 
             } catch (e) {
                 console.error("Error renaming file:", e);
                 closeMessage();
-                showMessage("Rename Failed", `Could not rename file. Error: ${e.message}
+                showMessage("Rename Failed", `Failed to rename ${oldName}. Error: ${e.message}
                     <div class="flex justify-end pt-2">
                         <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
                     </div>`);
@@ -565,47 +693,45 @@
                     <button onclick="showActionMenu(${index})" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 transition">
                         Back to Menu
                     </button>
-                    <button onclick="simulateDeleteAction(${index}, '${fileName}')" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition">
+                    <button onclick="handleDeleteAction(${index}, '${fileName}')" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition">
                         Delete Permanently
                     </button>
                 </div>`
             );
         };
 
-        window.simulateDeleteAction = async (index, fileName) => {
+        window.handleDeleteAction = async (index, fileName) => {
             closeMessage();
-            
+            if (!directoryHandle) {
+                 showMessage("Error", `Directory access is lost. Please re-select the folder.
+                    <div class="flex justify-end pt-2">
+                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
+                    </div>`);
+                return;
+            }
+
+            // Show loading message
+            showMessage("Deleting...", `<p class="text-center py-8"><svg class="animate-spin mx-auto h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2">Deleting file from disk...</p></p>`);
+
             try {
-                // Remove the file from the local array
+                // 1. Delete the file from the disk using the directory handle
+                await directoryHandle.removeEntry(fileName, { recursive: false });
+
+                // 2. Update local list only after successful disk deletion
                 const fileToRemove = files[index];
                 if (fileToRemove.thumbnailUrl) {
                     URL.revokeObjectURL(fileToRemove.thumbnailUrl);
                 }
-                
-                // Get the file handle to attempt deletion
-                const fileHandle = await directoryHandle.getFileHandle(fileName);
-
-                // This is the actual deletion attempt using the API
-                // await directoryHandle.removeEntry(fileName);
-
-                // SIMULATION: Since removeEntry can fail in some environments, we proceed with local list update
                 files.splice(index, 1);
-                
                 sortFiles(currentSortKey, currentSortDirection);
                 
-                // Show success message
-                showMessage("Deleted! (Simulated)", `${fileName} has been removed from the local list. (Actual disk deletion would require 'readwrite' permission and confirmed API support.)
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
+                closeMessage();
+                showMessage("Delete Successful", `<strong>${fileName}</strong> has been permanently deleted.`);
 
             } catch (e) {
-                 // Even if actual deletion fails, we update the local list for continuity
-                files.splice(index, 1);
-                sortFiles(currentSortKey, currentSortDirection);
-                console.error("Deletion failed:", e);
-
-                showMessage("Deletion Failed (Simulated)", `Could not remove ${fileName} from disk. Error: ${e.message}. It has been removed from the app's list.
+                console.error("Error deleting file:", e);
+                closeMessage();
+                showMessage("Deletion Failed", `Could not delete ${fileName}. Error: ${e.message}
                     <div class="flex justify-end pt-2">
                         <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
                     </div>`);

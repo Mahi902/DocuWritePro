@@ -4,1301 +4,222 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | DocuWrite Pro</title>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
+    <!-- Replaced Material Icons with Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
 <style>
-    /* Add this CSS to your stylesheet (e.g., style.css) or within a <style> tag in your HTML <head> */
-
-    .document-cards-container {
-        display: flex; /* Makes the container a flex container */
-        gap: 20px; /* Adds space between your cards (adjust as needed) */
-        /* You can add more properties here, like: */
-        /* justify-content: center; /* To center the cards horizontally */
-        /* align-items: flex-start; /* To align items at the top */
-        /* flex-wrap: wrap; /* If you want cards to wrap to the next line on smaller screens */
-    }
-
-    .document-card {
-        /* You might want to give your cards a specific width or max-width here */
-        /* flex-basis: 48%; /* Example: Makes cards take roughly half the container width */
-        /* flex-shrink: 0; /* Prevents cards from shrinking */
-        /* flex-grow: 1; /* Allows cards to grow if there's extra space */
-    }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Roboto', Arial, sans-serif;
-        }
-
-        body {
-            background-color: #f8f9fa;
-            color: #202124;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        body.dark-theme {
-            background-color: #202124;
-            color: #e8eaed;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            padding: 10px 24px;
-            border-bottom: 1px solid #dadce0;
-            background-color: #fff;
-            height: 60px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .dark-theme .header {
-            background-color: #303134;
-            border-bottom: 1px solid #5f6368;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            margin-right: 30px;
-        }
-
-        .logo img {
-            height: 40px;
-            margin-right: 12px;
-        }
-
-        .logo h1 {
-            font-size: 22px;
-            font-weight: 500;
-            color: #5f6368;
-        }
-
-        .dark-theme .logo h1 {
-            color: #9aa0a6;
-        }
-
-        .nav-items {
-            display: flex;
-            gap: 25px;
-            overflow-x: auto;
-            padding: 5px 0;
-        }
-
-        .nav-items::-webkit-scrollbar {
-            display: none;
-        }
-
-        .nav-items span {
-            font-size: 14px;
-            color: #5f6368;
-            white-space: nowrap;
-            cursor: pointer;
-            padding: 5px 8px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-
-        .nav-items span:hover {
-            background-color: #f1f3f4;
-        }
-
-        .dark-theme .nav-items span {
-            color: #9aa0a6;
-        }
-
-        .dark-theme .nav-items span:hover {
-            background-color: #3c4043;
-        }
-
-        .menu-btn, .grid-btn {
-            background: none;
-            border: none;
-            color: #5f6368;
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            margin-right: 10px;
-            transition: background-color 0.2s;
-        }
-
-        .dark-theme .menu-btn, .dark-theme .grid-btn {
-            color: #9aa0a6;
-        }
-
-        .menu-btn:hover, .grid-btn:hover {
-            background-color: #f1f3f4;
-        }
-
-        .dark-theme .menu-btn:hover, .dark-theme .grid-btn:hover {
-            background-color: #3c4043;
-        }
-
-        .main-content {
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
-
-        .section-title {
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 20px;
-            color: #202124;
-        }
-
-        .dark-theme .section-title {
-            color: #e8eaed;
-        }
-
-        .new-document {
-            margin-bottom: 40px;
-        }
-
-        .document-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 140px;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .document-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .document-icon {
-            width: 120px;
-            height: 160px;
-            background-color: #fff;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 12px;
-        }
-
-        .dark-theme .document-icon {
-            background-color: #303134;
-            border: 1px solid #5f6368;
-        }
-
-        .plus-icon {
-            font-size: 40px;
-            color: #1a73e8;
-        }
-
-        .document-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #202124;
-            text-align: center;
-        }
-
-        .dark-theme .document-name {
-            color: #e8eaed;
-        }
-
-        .tools-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 30px;
-            margin-top: 20px;
-        }
-
-        .tool-card {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .tool-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .tool-icon {
-            width: 100px;
-            height: 130px;
-            background-color: #fff;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            position: relative;
-        }
-
-        .dark-theme .tool-icon {
-            background-color: #303134;
-            border: 1px solid #5f6368;
-        }
-
-        .tool-icon::before {
-            content: "";
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            right: 10px;
-            height: 20px;
-            background-color: #f1f3f4;
-            border-radius: 2px;
-        }
-
-        .dark-theme .tool-icon::before {
-            background-color: #3c4043;
-        }
-
-        .tool-icon i {
-            font-size: 30px;
-            color: #1a73e8;
-            margin-top: 40px;
-        }
-
-        .tool-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #202124;
-            text-align: center;
-        }
-
-        .dark-theme .tool-name {
-            color: #e8eaed;
-        }
-
-        /* Sidebar styles */
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 280px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            transform: translateX(-100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .dark-theme .sidebar {
-            background-color: #303134;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        .sidebar.active {
-            transform: translateX(0);
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            border-bottom: 1px solid #dadce0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .dark-theme .sidebar-header {
-            border-bottom: 1px solid #5f6368;
-        }
-
-        .sidebar-header h2 {
-            font-size: 20px;
-            font-weight: 500;
-            color: #202124;
-        }
-
-        .dark-theme .sidebar-header h2 {
-            color: #e8eaed;
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: #5f6368;
-            cursor: pointer;
-            font-size: 24px;
-        }
-
-        .dark-theme .close-btn {
-            color: #9aa0a6;
-        }
-
-        .sidebar-menu {
-            padding: 20px 0;
-            flex-grow: 1;
-        }
-
-        .menu-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 24px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .menu-item:hover {
-            background-color: #f1f3f4;
-        }
-
-        .dark-theme .menu-item:hover {
-            background-color: #3c4043;
-        }
-
-        .menu-item i {
-            margin-right: 20px;
-            color: #5f6368;
-            font-size: 20px;
-        }
-
-        .dark-theme .menu-item i {
-            color: #9aa0a6;
-        }
-
-        .menu-item span {
-            font-size: 16px;
-            color: #202124;
-        }
-
-        .dark-theme .menu-item span {
-            color: #e8eaed;
-        }
-
-        .sidebar-footer {
-            padding: 20px;
-            border-top: 1px solid #dadce0;
-            text-align: center;
-            font-size: 14px;
-            color: #5f6368;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .dark-theme .sidebar-footer {
-            border-top: 1px solid #5f6368;
-            color: #9aa0a6;
-        }
-
-        .sidebar-footer:hover {
-            color: #1a73e8;
-        }
-
-        /* Projects sidebar */
-        .projects-sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            height: 100%;
-            width: 400px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            transform: translateX(100%);
-            transition: transform 0.3s ease;
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .dark-theme .projects-sidebar {
-            background-color: #303134;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        .projects-sidebar.active {
-            transform: translateX(0);
-        }
-
-        .projects-content {
-            flex-grow: 1;
-            padding: 20px;
-        }
-
-        .projects-content iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            border-radius: 8px;
-        }
-
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            display: none;
-            z-index: 999;
-        }
-
-        .overlay.active {
-            display: block;
-        }
-
-        @media (max-width: 768px) {
-            .logo h1 {
-                display: none;
-            }
-            
-            .nav-items {
-                gap: 15px;
-            }
-            
-            .tools-container {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-                gap: 20px;
-            }
-            
-            .projects-sidebar {
-                width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Header with navigation -->
-    <header class="header">
-        <div class="left-section">
-            <button class="menu-btn" id="menuBtn">
-                <i class="material-icons">menu</i>
-            </button>
-            
-        </div>
-        
-        <div class="nav-items">
-            <span>DocuWrite Pro 3.2</span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-        
-        <div class="right-section" style="margin-left: auto;">
-            <button class="grid-btn" id="gridBtn">
-                <i class="material-icons">apps</i>
-            </button>
-        </div>
-    </header>
-    
- <main class="main-content">
-    <section class="new-document">
-
-
-
-
-
-
-<div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap;">
-  <h2 style="margin: 0;">Start a new document</h2>
-  <div style="display: flex; gap: 10px; align-items: center;">
-    
-    <span class="material-icons" onclick="setTheme('light')" title="Light">light_mode</span>
-    <span class="material-icons" onclick="setTheme('dark')" title="Dark">dark_mode</span>
-  </div>
-</div>
-
-<script>
-  const f = d => document.documentElement.style.filter = d ? 'invert(1) hue-rotate(180deg)' : 'none';
-  const m = matchMedia('(prefers-color-scheme: light)');
-  let auto = true;
-
-  function applyTheme(mode) {
-    if (mode === 'auto') {
-      auto = true;
-      f(m.matches);
-    } else {
-      auto = false;
-      f(mode === 'dark');
-    }
-  }
-
-  function setTheme(mode) {
-    localStorage.setItem('themeMode', mode);
-    applyTheme(mode);
-  }
-
-  m.addEventListener('change', e => auto && f(e.matches));
-
-  const saved = localStorage.getItem('themeMode') || 'auto';
-  applyTheme(saved);
-</script>
-
-
-        
-</br>
-        <div class="document-cards-container"> <div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/document-writer.html', '_blank')">
-                <div class="document-icon">
-                    <i class="material-icons plus-icon">add</i>
-                </div>
-                <div class="document-name">Blank Document</div>
-            </div>
-
-
-	<div class="document-cards-container"> <div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/collab-document-editor.html', '_blank')">
-                <div class="document-icon">
-                    <i class="material-icons plus-icon">group</i>
-                </div>
-                <div class="document-name">Collab</div>
-            </div>
-
-            
-	<div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/code-playground.html', '_blank')">
-                <div class="document-icon">
-                    <i class="material-icons plus-icon">code</i>
-                </div>
-                <div class="document-name">Code Editor</div>
-            </div>
-
-
-	<div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/image-editor.html', '_blank')">
-                <div class="document-icon">
-                    <i class="material-icons plus-icon">collections</i>
-                </div>
-                <div class="document-name">Image Editor</div>
-            </div>
-
-
-        </div>
-    </section>
-</main>
-
-
-
-
-<section class="popular-tools">
-    <div class="section-header">
-        <h3> Popular Tools </h3>
-        <div class="organize-menu">
-            <i class="material-icons organize-icon" onclick="toggleFilterOptions()">sort</i>
-            <div class="filter-options" id="filterOptions">
-                <span onclick="filterTools('All')">All</span>
-                <span onclick="filterTools('Document Editing')">Document Editing</span>
-                <span onclick="filterTools('Image Editing')">Image Editing</span>
-                <span onclick="filterTools('Code Editing')">Code Editing</span>
-		
-            </div>
-        </div>
-    </div>
-    <div class="tools-container" id="toolsContainer">
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/document-writer.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">edit</i>
-            </div>
-            <div class="tool-name">Editor</div>
-        </div>
-
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/viewer.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">visibility</i>
-            </div>
-            <div class="tool-name">Document Viewer</div>
-        </div>
-
-	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/word-description-finder.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">menu_book</i>
-            </div>
-            <div class="tool-name">Word Finder</div>
-        </div>
-
-	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/translator.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">language</i>
-            </div>
-            <div class="tool-name">Translator</div>
-        </div>
-
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/document-signer.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">draw</i>
-            </div>
-            <div class="tool-name">Document Signer</div>
-        </div>
-
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/page-number-adder.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">format_list_numbered</i>
-            </div>
-            <div class="tool-name">Page Number Adder</div>
-        </div>
-
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/chart-maker.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">bar_chart</i>
-            </div>
-            <div class="tool-name">Chart Maker</div>
-        </div>
-
-<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/table-maker.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">table_chart</i>
-            </div>
-            <div class="tool-name">Table Maker</div>
-        </div>
-
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/watermarker.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">filter</i>
-            </div>
-            <div class="tool-name">Watermark Adder</div>
-        </div>
-
-	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/email-writer.html', '_blank')">
-                <div class="tool-icon">
-                    <i class="material-icons plus-icon">email</i>
-                </div>
-                <div class="tool-name">Email Writer</div>
-            </div>
-
-
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/spell-checker.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">spellcheck</i>
-            </div>
-            <div class="tool-name">Spell Checker</div>
-        </div>
-
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/file-extractor.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">unarchive</i>
-            </div>
-            <div class="tool-name">File Extractor</div>
-        </div>
-
-	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/qr-code-maker.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">qr_code</i>
-            </div>
-            <div class="tool-name">QR Maker</div>
-        </div>
-
-	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/id-card-maker.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">badge</i>
-            </div>
-            <div class="tool-name">ID Card Maker</div>
-        </div>
-
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/file-zipper.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">archive</i>
-            </div>
-            <div class="tool-name">File Zipper</div>
-        </div>
-            
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/converters.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">picture_as_pdf</i>
-            </div>
-            <div class="tool-name">PDF Converter</div>
-        </div>
-        
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/context-field.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">summarize</i>
-            </div>
-            <div class="tool-name">Context Field</div>
-        </div>
-
-	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/gift-card-maker.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">card_giftcard</i>
-            </div>
-            <div class="tool-name">Gift Card Maker</div>
-        </div>
-
-	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/docudrop.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">file_upload</i>
-            </div>
-            <div class="tool-name">Share File</div>
-        </div>
-        
-        <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/text-extractor.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">document_scanner</i>
-            </div>
-            <div class="tool-name">Text Extractor</div>
-        </div>
-
-	<div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/keyboard-click-test.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">keyboard</i>
-            </div>
-            <div class="tool-name">Keyboard Click Test</div>
-        </div>
-
-	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/frontend-ide.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">developer_mode</i>
-            </div>
-            <div class="tool-name">Frontend IDE</div>
-        </div>
-
-	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/code-playground.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">code</i>
-            </div>
-            <div class="tool-name">HTML Editor</div>
-        </div>
-
-	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/html.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">html</i>
-            </div>
-            <div class="tool-name">HTML Writer</div>
-        </div>
-
-
-	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/button-designer.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">smart_button</i>
-            </div>
-            <div class="tool-name">Button Designer</div>
-        </div>
-
-	<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/html-splitter.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">integration_instructions</i>
-            </div>
-            <div class="tool-name">HTML Splitter</div>
-        </div>
-
-
-        <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/goto-code.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">merge</i>
-            </div>
-            <div class="tool-name">GoTo Code</div>
-        </div>
-
-        <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/code-snipper.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">content_cut</i>
-            </div>
-            <div class="tool-name">Code Snipper</div>
-        </div>
-
-	<div class="tool-card" data-category="Image Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/image-editor.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">collections</i>
-            </div>
-            <div class="tool-name">Image Editor</div>
-        </div>
-
-	<div class="tool-card" data-category="Image Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/image-generator.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">auto_awesome</i>
-            </div>
-            <div class="tool-name">Image Generator</div>
-        </div>
-
-	<div class="tool-card" data-category="Image Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/draw.html', '_blank')">
-            <div class="tool-icon">
-                <i class="material-icons">brush</i>
-            </div>
-            <div class="tool-name">Drawing Board</div>
-        </div>
-
-	
-    </div>
-</section>
-
-<style>
-    .popular-tools {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .section-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-
-    .section-title {
+    /* General Styles */
+    * {
         margin: 0;
-        font-size: 2em;
-        color: #333;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Roboto', Arial, sans-serif;
     }
 
-    .organize-menu {
-        position: relative;
-        display: inline-block;
+    body {
+        background-color: #f8f9fa;
+        color: #202124;
+        transition: background-color 0.3s, color 0.3s;
+        overflow-x: hidden; /* Prevent horizontal scroll */
     }
 
-    .organize-icon {
-        cursor: pointer;
-        font-size: 28px; /* Slightly larger icon */
-        color: #555;
-        transition: color 0.2s ease-in-out;
+    body.dark-theme {
+        background-color: #202124;
+        color: #e8eaed;
     }
 
-    .organize-icon:hover {
-        color: #007bff; /* Hover effect for icon */
+    /* Animated Background */
+    .animated-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
+        overflow: hidden;
+        z-index: -1;
     }
 
-    .filter-options {
-        display: none; /* Hidden by default */
+    .dark-theme .animated-bg {
+         background: linear-gradient(135deg, #202124 0%, #303134 100%);
+    }
+
+    .bubble {
         position: absolute;
-        background-color: #f9f9f9;
-        min-width: 180px; /* Slightly wider dropdown */
-        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-        z-index: 10; /* Ensure it's above other content */
-        right: 0;
-        border-radius: 5px;
-        padding: 10px 0;
-        top: 100%; /* Position below the icon */
-        margin-top: 5px; /* Small gap between icon and dropdown */
+        border-radius: 50%;
+        background: rgba(156, 39, 176, 0.05);
+        z-index: 1;
+    }
+    .bubble:nth-child(1) { width: 120px; height: 120px; top: 10%; left: 5%; animation: float 15s infinite ease-in-out; }
+    .bubble:nth-child(2) { width: 80px; height: 80px; bottom: 15%; right: 8%; animation: float 12s infinite ease-in-out; }
+    .bubble:nth-child(3) { width: 60px; height: 60px; top: 40%; right: 15%; animation: float 18s infinite ease-in-out; }
+
+    .pulse span {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(66, 133, 244, 0.1);
+        animation: ripple-bg 6s linear infinite;
+    }
+    .pulse span:nth-child(1) { width: 800px; height: 800px; top: -300px; left: -300px; animation-delay: 0s; }
+    .pulse span:nth-child(2) { width: 700px; height: 700px; top: -250px; right: -300px; animation-delay: 1s; }
+    .pulse span:nth-child(3) { width: 600px; height: 600px; bottom: -300px; left: -200px; animation-delay: 2s; }
+    .particle { position: absolute; background: #4285F4; border-radius: 50%; opacity: 0.3; z-index: 2; }
+
+    /* Water Drop Effect */
+    .water-drop {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(173, 216, 230, 0.5);
+        transform: scale(0);
+        pointer-events: none;
+        animation: ripple-click 1s linear;
+        z-index: 99999;
     }
 
-    .filter-options span {
-        color: #333;
-        padding: 12px 18px; /* More padding for better click area */
-        text-decoration: none;
-        display: block;
-        cursor: pointer;
-        transition: background-color 0.2s ease-in-out;
-    }
+    /* Keyframes */
+    @keyframes float { 0%, 100% { transform: translateY(0) translateX(0); } 25% { transform: translateY(-20px) translateX(15px); } 50% { transform: translateY(10px) translateX(-20px); } 75% { transform: translateY(-15px) translateX(-10px); } }
+    @keyframes ripple-bg { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+    @keyframes ripple-click { to { transform: scale(4); opacity: 0; } }
 
-    .filter-options span:hover {
-        background-color: #e9e9e9;
-    }
-
-    .filter-options.show {
-        display: block;
-    }
-
-    .tools-container {
+    /* Header */
+    .header {
         display: flex;
-        flex-wrap: wrap;
-        gap: 20px; /* Space between tool cards */
-        justify-content: center; /* Center cards if they don't fill a row */
-    }
-
-    .tool-card {
-        background-color: #fff;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 20px;
-        text-align: center;
-        width: 150px; /* Fixed width for cards */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        cursor: pointer;
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        display: flex; /* Use flex for icon and name alignment */
-        flex-direction: column;
-        justify-content: space-between;
         align-items: center;
+        padding: 10px 24px;
+        border-bottom: 1px solid #dadce0;
+        background-color: #fff;
+        height: 60px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
     }
+    .dark-theme .header { background-color: #303134; border-bottom: 1px solid #5f6368; }
+    .logo { display: flex; align-items: center; margin-right: 30px; }
+    .logo img { height: 40px; margin-right: 12px; }
+    .logo h1 { font-size: 22px; font-weight: 500; color: #5f6368; }
+    .dark-theme .logo h1 { color: #9aa0a6; }
+    .nav-items { display: flex; gap: 25px; overflow-x: auto; padding: 5px 0; }
+    .nav-items::-webkit-scrollbar { display: none; }
+    .nav-items span { font-size: 14px; color: #5f6368; white-space: nowrap; cursor: pointer; padding: 5px 8px; border-radius: 4px; transition: background-color 0.2s; }
+    .nav-items span:hover { background-color: #f1f3f4; }
+    .dark-theme .nav-items span { color: #9aa0a6; }
+    .dark-theme .nav-items span:hover { background-color: #3c4043; }
+    .menu-btn, .grid-btn { background: none; border: none; color: #5f6368; cursor: pointer; padding: 8px; border-radius: 50%; margin-right: 10px; transition: background-color 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+    .dark-theme .menu-btn, .dark-theme .grid-btn { color: #9aa0a6; }
+    .menu-btn:hover, .grid-btn:hover { background-color: #f1f3f4; }
+    .dark-theme .menu-btn:hover, .dark-theme .grid-btn:hover { background-color: #3c4043; }
 
-    .tool-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
+    /* Main Content */
+    .main-content { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+    .section-title { font-size: 18px; font-weight: 500; margin-bottom: 20px; color: #202124; }
+    .dark-theme .section-title { color: #e8eaed; }
+    .new-document { margin-bottom: 40px; }
+    .document-cards-container { display: flex; gap: 20px; flex-wrap: wrap; }
+    .document-card { display: flex; flex-direction: column; align-items: center; width: 140px; cursor: pointer; transition: transform 0.2s; }
+    .document-card:hover { transform: translateY(-5px); }
+    .document-icon { width: 120px; height: 160px; background-color: #fff; border: 1px solid #dadce0; border-radius: 4px; display: flex; align-items: center; justify-content: center; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 12px; }
+    .dark-theme .document-icon { background-color: #303134; border: 1px solid #5f6368; }
+    .plus-icon { font-size: 40px !important; color: #1a73e8; }
+    .document-name { font-size: 14px; font-weight: 500; color: #202124; text-align: center; }
+    .dark-theme .document-name { color: #e8eaed; }
 
-    .tool-icon {
-        margin-bottom: 10px;
-        font-size: 48px; /* Larger icons */
-        color: #007bff; /* Icon color */
-    }
+    /* Tools Section */
+    .popular-tools { padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .dark-theme .popular-tools { background-color: #2c2d30; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .organize-menu { position: relative; display: inline-block; }
+    .organize-icon { cursor: pointer; font-size: 28px; color: #555; transition: color 0.2s; }
+    .dark-theme .organize-icon { color: #bbb; }
+    .organize-icon:hover { color: #1a73e8; }
+    .filter-options { display: none; position: absolute; background-color: #f9f9f9; min-width: 180px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 10; right: 0; border-radius: 5px; padding: 10px 0; top: 100%; margin-top: 5px; }
+    .dark-theme .filter-options { background-color: #3c4043; }
+    .filter-options span { color: #333; padding: 12px 18px; text-decoration: none; display: block; cursor: pointer; transition: background-color 0.2s; }
+    .dark-theme .filter-options span { color: #e8eaed; }
+    .filter-options span:hover { background-color: #e9e9e9; }
+    .dark-theme .filter-options span:hover { background-color: #5f6368; }
+    .filter-options.show { display: block; }
+    .tools-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 30px; margin-top: 20px; }
 
-    .tool-name {
-        font-size: 1.1em;
-        font-weight: bold;
-        color: #333;
+    .tool-card { display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; padding: 15px; background-color: #fff; border-radius: 8px; border: 1px solid #ddd; }
+    .dark-theme .tool-card { background-color: #303134; border: 1px solid #5f6368; }
+    .tool-card:hover { transform: translateY(-5px); }
+    .tool-icon { margin-bottom: 10px; font-size: 48px !important; color: #1a73e8; } /* Important to override other styles */
+    .tool-name { font-size: 14px; font-weight: 500; text-align: center; color: #202124; }
+    .dark-theme .tool-name { color: #e8eaed; }
+
+    /* Sidebars */
+    .sidebar, .projects-sidebar { position: fixed; top: 0; height: 100%; width: 280px; background-color: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.2); transition: transform 0.3s ease; z-index: 1000; display: flex; flex-direction: column; }
+    .dark-theme .sidebar, .dark-theme .projects-sidebar { background-color: #303134; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+    .sidebar { left: 0; transform: translateX(-100%); }
+    .projects-sidebar { right: 0; width: 400px; transform: translateX(100%); }
+    .sidebar.active, .projects-sidebar.active { transform: translateX(0); }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid #dadce0; display: flex; align-items: center; justify-content: space-between; }
+    .dark-theme .sidebar-header { border-bottom: 1px solid #5f6368; }
+    .sidebar-header h2 { font-size: 20px; font-weight: 500; }
+    .close-btn { background: none; border: none; color: #5f6368; cursor: pointer; font-size: 24px; display: inline-flex; align-items: center; justify-content: center; }
+    .dark-theme .close-btn { color: #9aa0a6; }
+    .sidebar-menu { padding: 20px 0; flex-grow: 1; }
+    .menu-item { display: flex; align-items: center; padding: 12px 24px; cursor: pointer; transition: background-color 0.2s; }
+    .menu-item:hover { background-color: #f1f3f4; }
+    .dark-theme .menu-item:hover { background-color: #3c4043; }
+    .menu-item .material-symbols-outlined { margin-right: 20px; color: #5f6368; font-size: 20px; }
+    .dark-theme .menu-item .material-symbols-outlined { color: #9aa0a6; }
+    .menu-item span { font-size: 16px; }
+    .sidebar-footer { padding: 20px; border-top: 1px solid #dadce0; text-align: center; font-size: 14px; color: #5f6368; cursor: pointer; transition: color 0.2s; }
+    .dark-theme .sidebar-footer { border-top: 1px solid #5f6368; color: #9aa0a6; }
+    .sidebar-footer:hover { color: #1a73e8; }
+    .projects-content { flex-grow: 1; padding: 20px; }
+    .projects-content iframe { width: 100%; height: 100%; border: none; border-radius: 8px; }
+    .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); display: none; z-index: 999; }
+    .overlay.active { display: block; }
+    
+    /* Aurora Floating Box */
+    .floating-box { position: fixed; bottom: 120px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 12px 20px; border-radius: 16px; background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 0 12px rgba(106, 0, 255, 0.4), 0 0 24px rgba(0, 157, 255, 0.3); border: 1.5px solid rgba(255, 255, 255, 0.4); text-decoration: none; z-index: 9999; transition: transform 0.2s ease, box-shadow 0.3s ease; }
+    .floating-box:hover { transform: translateX(-50%) scale(1.03); box-shadow: 0 0 16px rgba(138, 43, 226, 0.5), 0 0 28px rgba(0, 191, 255, 0.4); }
+    .floating-box .icon svg { width: 20px; height: 20px; stroke: #000; stroke-width: 2; }
+    .floating-box .text { font-size: 15px; color: #000; font-weight: 500; }
+    .floating-box .new-badge { background: linear-gradient(to right, #6a00ff, #00bfff); color: white; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 12px; }
+
+    /* Release Log */
+    #docuGlassWrapper { position: fixed; top: 20px; right: 0; z-index: 99999; font-family: 'Arial', sans-serif; }
+    #glassButton { background: rgba(240, 248, 255, 0.6); backdrop-filter: blur(10px); color: #555; border: none; border-radius: 20px 0 0 20px; padding: 12px 18px; cursor: pointer; font-size: 16px; display: flex; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.12); transition: background 0.3s; }
+    #glassButton:hover { background: rgba(230, 245, 255, 0.6); }
+    #glassButton .material-symbols-outlined { margin-left: 8px; font-size: 20px; color: #7bc8f6; }
+    #glassPopup { position: fixed; top: 75px; right: 20px; width: 360px; max-width: 90vw; background: rgba(255,255,255,0.5); backdrop-filter: blur(15px); border-radius: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.18); padding: 22px; display: none; flex-direction: column; color: #333; animation: fadeInGlass 0.3s ease forwards; }
+    @keyframes fadeInGlass { from {opacity: 0; transform: translateY(-10px);} to {opacity: 1; transform: translateY(0);} }
+    #glassPopup .closeBtn { position: absolute; top: 12px; right: 14px; font-size: 24px; background: none; border: none; cursor: pointer; color: #666; }
+    #glassPopup h2 { margin: 0 0 12px 0; font-size: 18px; color: #1a73e8; }
+    #releaseContainer { max-height: 60vh; overflow-y: auto; padding-right: 6px; }
+    .release-item { background: rgba(255,255,255,0.7); border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 14px; transition: transform 0.2s ease; }
+    .release-item:hover { transform: scale(1.01); }
+    .release-item h3 { margin: 5px 0; font-size: 15px; font-weight: bold; color: #333; }
+    .release-item small { color: #666; display: block; margin-bottom: 8px; }
+    .release-item p { font-size: 13px; line-height: 1.4; color: #444; }
+    .release-item a { text-decoration: none; color: #1a73e8; font-size: 13px; display: inline-block; margin-top: 6px; }
+    .release-item a:hover { text-decoration: underline; }
+    #releaseContainer::-webkit-scrollbar { width: 6px; }
+    #releaseContainer::-webkit-scrollbar-thumb { background: rgba(100, 100, 100, 0.3); border-radius: 4px; }
+    #releaseContainer::-webkit-scrollbar-thumb:hover { background: rgba(100, 100, 100, 0.5); }
+    .dark-theme #glassButton, .dark-theme #glassPopup { color: #e8eaed; }
+    .dark-theme #glassButton { background: rgba(48, 49, 52, 0.6); }
+    .dark-theme #glassPopup { background: rgba(48, 49, 52, 0.5); }
+    .dark-theme .release-item { background: rgba(60, 64, 67, 0.7); color: #e8eaed; }
+    .dark-theme .release-item h3, .dark-theme .release-item small, .dark-theme .release-item p { color: #e8eaed; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .logo h1 { display: none; }
+        .nav-items { gap: 15px; }
+        .projects-sidebar { width: 100%; }
+        .tools-container { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 20px; }
     }
 </style>
-
-<script>
-    function toggleFilterOptions() {
-        document.getElementById("filterOptions").classList.toggle("show");
-    }
-
-    function filterTools(category) {
-        const toolsContainer = document.getElementById("toolsContainer");
-        const toolCards = toolsContainer.getElementsByClassName("tool-card");
-
-        for (let i = 0; i < toolCards.length; i++) {
-            const toolCard = toolCards[i];
-            const toolCategory = toolCard.getAttribute("data-category");
-
-            if (category === "All" || toolCategory === category) {
-                toolCard.style.display = ""; // Show the tool card
-            } else {
-                toolCard.style.display = "none"; // Hide the tool card
-            }
-        }
-        document.getElementById("filterOptions").classList.remove("show"); // Hide dropdown after selection
-    }
-
-    // Close the dropdown if the user clicks outside of it
-    window.onclick = function(event) {
-        if (!event.target.matches('.organize-icon')) {
-            const dropdowns = document.getElementsByClassName("filter-options");
-            for (let i = 0; i < dropdowns.length; i++) {
-                const openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    }
-</script>
-
-
-
-    </main>
-    
-    <!-- Menu Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <button class="close-btn" id="closeSidebar">
-                <i class="material-icons">close</i>
-            </button>
-        </div>
-        
-        <div class="sidebar-menu">
-            <div class="menu-item"
-
-
-            </div>
-<div>
-            <div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/ci.html', '_blank')">
-                <i class="material-icons">attribution</i>
-                <span>Creator Info</span>
-            </div>
-
-	<div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/legal-documents.html', '_blank')">
-                <i class="material-icons">gavel</i>
-                <span>Legal</span>
-</div>
-
-		<div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/pricing.html', '_blank')">
-                <i class="material-icons">payments</i>
-                <span>Pricing</span>
-            </div>
-
-		<div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/contact.html', '_blank')">
-                <i class="material-icons">email</i>
-                <span>Contact Us</span>
-            </div>
-
-</div>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Aurora</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      background: #f3f4f8;
-      font-family: 'Segoe UI', sans-serif;
-    }
-
-    .floating-box {
-      position: fixed;
-      bottom: 120px; /* Updated from 20px */
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 20px;
-      border-radius: 16px;
-      background: rgba(255, 255, 255, 0.3);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      box-shadow: 0 0 12px rgba(106, 0, 255, 0.4), 0 0 24px rgba(0, 157, 255, 0.3);
-      border: 1.5px solid rgba(255, 255, 255, 0.4);
-      text-decoration: none;
-      z-index: 9999;
-      transition: transform 0.2s ease, box-shadow 0.3s ease;
-    }
-
-    .floating-box:hover {
-      transform: translateX(-50%) scale(1.03);
-      box-shadow: 0 0 16px rgba(138, 43, 226, 0.5), 0 0 28px rgba(0, 191, 255, 0.4);
-    }
-
-    .icon svg {
-      width: 20px;
-      height: 20px;
-      stroke: #000;
-      stroke-width: 2;
-    }
-
-    .text {
-      font-size: 15px;
-      color: #000;
-      font-weight: 500;
-    }
-
-    .new-badge {
-      background: linear-gradient(to right, #6a00ff, #00bfff);
-      color: white;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 12px;
-    }
-  </style>
 </head>
 <body>
-
-<a href="https://mahi902.github.io/Aurora/" target="_blank" class="floating-box">
-  <div class="icon">
-    <!-- Mobile SVG icon -->
-    <svg viewBox="0 0 24 24" fill="none">
-      <rect x="7" y="2" width="10" height="20" rx="2" stroke="black"/>
-      <circle cx="12" cy="18" r="1" fill="black"/>
-    </svg>
-  </div>
-  <div class="text">Aurora Web Launcher</div>
-  <div class="new-badge">NEW</div>
-</a>
-
-</body>
-</html>
-
-        </div>
-        
-        <div class="sidebar-footer" onclick="window.open('https://github.com/Mahi902/', '_blank')">
-            Made by mahi902
-        </div>
-    </aside>
-    
-    <!-- Projects Sidebar -->
-    <aside class="projects-sidebar" id="projectsSidebar">
-        <div class="sidebar-header">
-            <h2>Projects</h2>
-            <button class="close-btn" id="closeProjects">
-                <i class="material-icons">close</i>
-            </button>
-        </div>
-        
-        <div class="projects-content">
-            <iframe src="https://662d1c5ead845.site123.me/projects"></iframe>
-        </div>
-    </aside>
-    
-    <!-- Overlay -->
-    <div class="overlay" id="overlay"></div>
-    
-    <script>
-        // DOM Elements
-        const menuBtn = document.getElementById('menuBtn');
-        const gridBtn = document.getElementById('gridBtn');
-        const sidebar = document.getElementById('sidebar');
-        const projectsSidebar = document.getElementById('projectsSidebar');
-        const closeSidebar = document.getElementById('closeSidebar');
-        const closeProjects = document.getElementById('closeProjects');
-        const overlay = document.getElementById('overlay');
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        
-        // Toggle menu sidebar
-        menuBtn.addEventListener('click', () => {
-            sidebar.classList.add('active');
-            overlay.classList.add('active');
-        });
-        
-        // Toggle projects sidebar
-        gridBtn.addEventListener('click', () => {
-            projectsSidebar.classList.add('active');
-            overlay.classList.add('active');
-        });
-        
-        // Close sidebar
-        closeSidebar.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-        
-        // Close projects sidebar
-        closeProjects.addEventListener('click', () => {
-            projectsSidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-        
-        // Close with overlay click
-        overlay.addEventListener('click', () => {
-            sidebar.classList.remove('active');
-            projectsSidebar.classList.remove('active');
-            overlay.classList.remove('active');
-        });
-        
-        // Theme toggle
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-theme');
-            
-            // Save theme preference to localStorage
-            if (body.classList.contains('dark-theme')) {
-                localStorage.setItem('theme', 'dark');
-            } else {
-                localStorage.setItem('theme', 'light');
-            }
-        });
-        
-        // Check for saved theme preference
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            body.classList.add('dark-theme');
-        }
-    </script>
-</body>
-</html>
-
-
-
-
-
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Animated Background</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        .animated-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #f5f7fa 0%, #e4edf9 100%);
-            overflow: auto;
-            z-index: -1;
-        }
-
-        /* Floating Bubbles */
-        .bubble {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(156, 39, 176, 0.05);
-            z-index: 1;
-        }
-
-        .bubble:nth-child(1) {
-            width: 120px;
-            height: 120px;
-            top: 10%;
-            left: 5%;
-            animation: float 15s infinite ease-in-out;
-        }
-
-        .bubble:nth-child(2) {
-            width: 80px;
-            height: 80px;
-            bottom: 15%;
-            right: 8%;
-            animation: float 12s infinite ease-in-out;
-        }
-
-        .bubble:nth-child(3) {
-            width: 60px;
-            height: 60px;
-            top: 40%;
-            right: 15%;
-            animation: float 18s infinite ease-in-out;
-        }
-
-        /* Ripple Pulses */
-        .pulse {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            overflow: auto;
-        }
-
-        .pulse span {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(66, 133, 244, 0.1);
-            animation: ripple 6s linear infinite;
-        }
-
-        .pulse span:nth-child(1) {
-            width: 800px;
-            height: 800px;
-            top: -300px;
-            left: -300px;
-            animation-delay: 0s;
-        }
-
-        .pulse span:nth-child(2) {
-            width: 700px;
-            height: 700px;
-            top: -250px;
-            right: -300px;
-            animation-delay: 1s;
-        }
-
-        .pulse span:nth-child(3) {
-            width: 600px;
-            height: 600px;
-            bottom: -300px;
-            left: -200px;
-            animation-delay: 2s;
-        }
-
-        /* Particles */
-        .particle {
-            position: absolute;
-            background: #4285F4;
-            border-radius: 50%;
-            opacity: 0.3;
-            z-index: 2;
-        }
-
-        /* Animations */
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            25% { transform: translateY(-20px) translateX(15px); }
-            50% { transform: translateY(10px) translateX(-20px); }
-            75% { transform: translateY(-15px) translateX(-10px); }
-        }
-
-        @keyframes ripple {
-            0% { transform: scale(0.8); opacity: 1; }
-            100% { transform: scale(1.4); opacity: 0; }
-        }
-    </style>
-</head>
-<body>
-    <!-- Paste this div where you want the animated background -->
+    <!-- Animated Background -->
     <div class="animated-bg">
         <div class="bubble"></div>
         <div class="bubble"></div>
@@ -1309,12 +230,226 @@
             <span></span>
         </div>
     </div>
-
     
+    <!-- Header -->
+    <header class="header">
+        <div class="left-section">
+            <button class="menu-btn" id="menuBtn">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+        </div>
+        
+        <div class="nav-items">
+            <span>DocuWrite Pro 3.2</span>
+        </div>
+        
+        <div class="right-section" style="margin-left: auto;">
+            <button class="grid-btn" id="gridBtn">
+                <span class="material-symbols-outlined">apps</span>
+            </button>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="main-content">
+        <section class="new-document">
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Start a new document</h2>
+                <div style="display: flex; gap: 10px; align-items: center; cursor: pointer;">
+                    <span class="material-symbols-outlined theme-icon" id="lightModeBtn" title="Light">light_mode</span>
+                    <span class="material-symbols-outlined theme-icon" id="darkModeBtn" title="Dark">dark_mode</span>
+                </div>
+            </div>
 
+            <div class="document-cards-container">
+                <div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/document-writer.html', '_blank')">
+                    <div class="document-icon"><span class="material-symbols-outlined plus-icon">add</span></div>
+                    <div class="document-name">Blank Document</div>
+                </div>
+                <div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/collab-document-editor.html', '_blank')">
+                    <div class="document-icon"><span class="material-symbols-outlined plus-icon">group</span></div>
+                    <div class="document-name">Collab</div>
+                </div>
+                <div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/code-playground.html', '_blank')">
+                    <div class="document-icon"><span class="material-symbols-outlined plus-icon">code</span></div>
+                    <div class="document-name">Code Editor</div>
+                </div>
+                <div class="document-card" onclick="window.open('https://mahi902.github.io/DocuWritePro/image-editor.html', '_blank')">
+                    <div class="document-icon"><span class="material-symbols-outlined plus-icon">collections</span></div>
+                    <div class="document-name">Image Editor</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="popular-tools">
+            <div class="section-header">
+                <h3>Popular Tools</h3>
+                <div class="organize-menu">
+                    <span class="material-symbols-outlined organize-icon" onclick="toggleFilterOptions()">sort</span>
+                    <div class="filter-options" id="filterOptions">
+                        <span onclick="filterTools('All')">All</span>
+                        <span onclick="filterTools('Document Editing')">Document Editing</span>
+                        <span onclick="filterTools('Image Editing')">Image Editing</span>
+                        <span onclick="filterTools('Code Editing')">Code Editing</span>
+                    </div>
+                </div>
+            </div>
+            <div class="tools-container" id="toolsContainer">
+                 <!-- Document Editing Tools -->
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/document-writer.html', '_blank')"><span class="material-symbols-outlined tool-icon">edit</span><div class="tool-name">Editor</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/viewer.html', '_blank')"><span class="material-symbols-outlined tool-icon">visibility</span><div class="tool-name">Document Viewer</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/word-description-finder.html', '_blank')"><span class="material-symbols-outlined tool-icon">menu_book</span><div class="tool-name">Word Finder</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/translator.html', '_blank')"><span class="material-symbols-outlined tool-icon">language</span><div class="tool-name">Translator</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/document-signer.html', '_blank')"><span class="material-symbols-outlined tool-icon">draw</span><div class="tool-name">Document Signer</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/page-number-adder.html', '_blank')"><span class="material-symbols-outlined tool-icon">format_list_numbered</span><div class="tool-name">Page Number Adder</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/chart-maker.html', '_blank')"><span class="material-symbols-outlined tool-icon">bar_chart</span><div class="tool-name">Chart Maker</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/table-maker.html', '_blank')"><span class="material-symbols-outlined tool-icon">table_chart</span><div class="tool-name">Table Maker</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/watermarker.html', '_blank')"><span class="material-symbols-outlined tool-icon">filter_alt</span><div class="tool-name">Watermark Adder</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/email-writer.html', '_blank')"><span class="material-symbols-outlined tool-icon">email</span><div class="tool-name">Email Writer</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/spell-checker.html', '_blank')"><span class="material-symbols-outlined tool-icon">spellcheck</span><div class="tool-name">Spell Checker</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/file-extractor.html', '_blank')"><span class="material-symbols-outlined tool-icon">unarchive</span><div class="tool-name">File Extractor</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/qr-code-maker.html', '_blank')"><span class="material-symbols-outlined tool-icon">qr_code</span><div class="tool-name">QR Maker</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/id-card-maker.html', '_blank')"><span class="material-symbols-outlined tool-icon">badge</span><div class="tool-name">ID Card Maker</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/file-zipper.html', '_blank')"><span class="material-symbols-outlined tool-icon">archive</span><div class="tool-name">File Zipper</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/converters.html', '_blank')"><span class="material-symbols-outlined tool-icon">picture_as_pdf</span><div class="tool-name">PDF Converter</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/context-field.html', '_blank')"><span class="material-symbols-outlined tool-icon">summarize</span><div class="tool-name">Context Field</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/gift-card-maker.html', '_blank')"><span class="material-symbols-outlined tool-icon">card_giftcard</span><div class="tool-name">Gift Card Maker</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/docudrop.html', '_blank')"><span class="material-symbols-outlined tool-icon">file_upload</span><div class="tool-name">Share File</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/text-extractor.html', '_blank')"><span class="material-symbols-outlined tool-icon">document_scanner</span><div class="tool-name">Text Extractor</div></div>
+                <div class="tool-card" data-category="Document Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/keyboard-click-test.html', '_blank')"><span class="material-symbols-outlined tool-icon">keyboard</span><div class="tool-name">Keyboard Click Test</div></div>
+                <!-- Code Editing Tools -->
+                <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/frontend-ide.html', '_blank')"><span class="material-symbols-outlined tool-icon">developer_mode</span><div class="tool-name">Frontend IDE</div></div>
+                <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/code-playground.html', '_blank')"><span class="material-symbols-outlined tool-icon">code</span><div class="tool-name">HTML Editor</div></div>
+                <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/html.html', '_blank')"><span class="material-symbols-outlined tool-icon">html</span><div class="tool-name">HTML Writer</div></div>
+								<div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/mdeditor.html', '_blank')"><span class="material-symbols-outlined tool-icon">Markdown</span><div class="tool-name">Markdown Editor</div></div>
+                <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/button-designer.html', '_blank')"><span class="material-symbols-outlined tool-icon">smart_button</span><div class="tool-name">Button Designer</div></div>
+                <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/html-splitter.html', '_blank')"><span class="material-symbols-outlined tool-icon">integration_instructions</span><div class="tool-name">HTML Splitter</div></div>
+                <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/goto-code.html', '_blank')"><span class="material-symbols-outlined tool-icon">merge</span><div class="tool-name">GoTo Code</div></div>
+                <div class="tool-card" data-category="Code Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/code-snipper.html', '_blank')"><span class="material-symbols-outlined tool-icon">content_cut</span><div class="tool-name">Code Snipper</div></div>
+                <!-- Image Editing Tools -->
+                <div class="tool-card" data-category="Image Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/image-editor.html', '_blank')"><span class="material-symbols-outlined tool-icon">collections</span><div class="tool-name">Image Editor</div></div>
+                <div class="tool-card" data-category="Image Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/image-generator.html', '_blank')"><span class="material-symbols-outlined tool-icon">auto_awesome</span><div class="tool-name">Image Generator</div></div>
+                <div class="tool-card" data-category="Image Editing" onclick="window.open('https://mahi902.github.io/DocuWritePro/draw.html', '_blank')"><span class="material-symbols-outlined tool-icon">brush</span><div class="tool-name">Drawing Board</div></div>
+            </div>
+        </section>
+    </main>
+    
+    <!-- Sidebars and Overlay -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>Menu</h2>
+            <button class="close-btn" id="closeSidebar"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="sidebar-menu">
+            <div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/ci.html', '_blank')"><span class="material-symbols-outlined">attribution</span><span>Creator Info</span></div>
+            <div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/legal-documents.html', '_blank')"><span class="material-symbols-outlined">gavel</span><span>Legal</span></div>
+            <div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/pricing.html', '_blank')"><span class="material-symbols-outlined">payments</span><span>Pricing</span></div>
+            <div class="menu-item" onclick="window.open('https://mahi902.github.io/DocuWritePro/contact.html', '_blank')"><span class="material-symbols-outlined">email</span><span>Contact Us</span></div>
+        </div>
+        <div class="sidebar-footer" onclick="window.open('https://github.com/Mahi902/', '_blank')">Made by mahi902</div>
+    </aside>
+    
+    <aside class="projects-sidebar" id="projectsSidebar">
+        <div class="sidebar-header">
+            <h2>Projects</h2>
+            <button class="close-btn" id="closeProjects"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div class="projects-content">
+            <iframe src="https://662d1c5ead845.site123.me/projects"></iframe>
+        </div>
+    </aside>
+    
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Floating Widgets -->
+    <greeting-bar></greeting-bar>
+    
+    
+    
+    <div id="docuGlassWrapper">
+        <button id="glassButton">Log<span class="material-symbols-outlined">rocket_launch</span></button>
+        <div id="glassPopup">
+            <button class="closeBtn">&times;</button>
+            <h2>DocuWrite Pro | All Releases</h2>
+            <div id="releaseContainer"><p>Fetching releases...</p></div>
+        </div>
+    </div>
+    
     <script>
-        // Generate random particles
+        // --- Greeting Bar Web Component ---
+        class GreetingBar extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.shadowRoot.innerHTML = `
+                    <style>
+                      :host { all: initial; position: fixed; top: 0; left: 0; width: 100vw; display: flex; justify-content: center; z-index: 99999999; font-family: system-ui, sans-serif; user-select: none; }
+                      .bar { position: relative; width: 320px; max-width: 90vw; margin-top: 1.2rem; background: rgba(255 255 255 / 0.65); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 10px; box-shadow: 0 0 8px rgba(255, 255, 255, 0.75), 0 0 15px rgba(0, 123, 255, 0.6); color: #111; font-size: 1rem; font-weight: 600; padding: 0.7rem 1.2rem; display: flex; align-items: center; overflow: hidden; cursor: pointer; transform: translateY(-120%); opacity: 0; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease; user-select: none; }
+                      .bar.show { transform: translateY(0); opacity: 1; }
+                      .glow { position: absolute; top: 0; left: -50%; width: 50%; height: 100%; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.4), transparent); filter: drop-shadow(0 0 6px #007bff); animation: glowMove 1s forwards; will-change: left, opacity; }
+                      @keyframes glowMove { 0% { left: -50%; opacity: 0; } 10% { opacity: 1; } 90% { left: 150%; opacity: 1; } 100% { left: 150%; opacity: 0; } }
+                    </style>
+                    <div class="bar" part="bar" role="alert" tabindex="0" aria-live="polite">
+                      <div class="glow"></div>
+                      <span class="text">Hello!</span>
+                    </div>
+                `;
+                this.bar = this.shadowRoot.querySelector('.bar');
+                this.textSpan = this.shadowRoot.querySelector('.text');
+                this.dismiss = this.dismiss.bind(this);
+            }
+            connectedCallback() { this.setGreeting(); this.showBar(); setTimeout(this.dismiss, 1000); this.bar.addEventListener('click', this.dismiss); }
+            disconnectedCallback() { this.bar.removeEventListener('click', this.dismiss); }
+            setGreeting() { this.textSpan.textContent = "☁︎ Connected"; }
+            showBar() { requestAnimationFrame(() => this.bar.classList.add('show')); }
+            dismiss() { this.bar.style.transition = 'transform 0.4s ease, opacity 0.4s ease'; this.bar.style.transform = 'translateY(-120%)'; this.bar.style.opacity = '0'; setTimeout(() => this.remove(), 400); }
+        }
+        customElements.define('greeting-bar', GreetingBar);
+
+        // --- Main Dashboard Script ---
         document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar Toggles
+            const menuBtn = document.getElementById('menuBtn');
+            const gridBtn = document.getElementById('gridBtn');
+            const sidebar = document.getElementById('sidebar');
+            const projectsSidebar = document.getElementById('projectsSidebar');
+            const closeSidebar = document.getElementById('closeSidebar');
+            const closeProjects = document.getElementById('closeProjects');
+            const overlay = document.getElementById('overlay');
+            
+            menuBtn.addEventListener('click', () => { sidebar.classList.add('active'); overlay.classList.add('active'); });
+            gridBtn.addEventListener('click', () => { projectsSidebar.classList.add('active'); overlay.classList.add('active'); });
+            closeSidebar.addEventListener('click', () => { sidebar.classList.remove('active'); overlay.classList.remove('active'); });
+            closeProjects.addEventListener('click', () => { projectsSidebar.classList.remove('active'); overlay.classList.remove('active'); });
+            overlay.addEventListener('click', () => { sidebar.classList.remove('active'); projectsSidebar.classList.remove('active'); overlay.classList.remove('active'); });
+            
+            // Theme Management
+            const lightModeBtn = document.getElementById('lightModeBtn');
+            const darkModeBtn = document.getElementById('darkModeBtn');
+            const body = document.body;
+
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    body.classList.add('dark-theme');
+                } else {
+                    body.classList.remove('dark-theme');
+                }
+            };
+
+            lightModeBtn.addEventListener('click', () => {
+                localStorage.setItem('theme', 'light');
+                applyTheme('light');
+            });
+            
+            darkModeBtn.addEventListener('click', () => {
+                localStorage.setItem('theme', 'dark');
+                applyTheme('dark');
+            });
+
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+
+            // Animated background particles
             const bg = document.querySelector('.animated-bg');
             for (let i = 0; i < 20; i++) {
                 const particle = document.createElement('div');
@@ -1325,8 +460,6 @@
                 particle.style.top = Math.random() * 100 + 'vh';
                 particle.style.left = Math.random() * 100 + 'vw';
                 bg.appendChild(particle);
-                
-                // Animate particles
                 animateParticle(particle);
             }
             
@@ -1334,488 +467,90 @@
                 const duration = Math.random() * 10 + 10;
                 const xDirection = Math.random() > 0.5 ? 1 : -1;
                 const yDirection = Math.random() > 0.5 ? 1 : -1;
-                
-                const keyframes = [
+                el.animate([
                     { transform: `translate(0, 0)`, opacity: 0.3 },
                     { transform: `translate(${Math.random() * 100 * xDirection}px, ${Math.random() * 50 * yDirection}px)`, opacity: 0 }
-                ];
-                
-                el.animate(keyframes, { duration: duration * 1000, iterations: Infinity });
+                ], { duration: duration * 1000, iterations: Infinity });
             }
+
+            // Water drop click effect
+            document.addEventListener('click', function(e) {
+                const drop = document.createElement('div');
+                drop.classList.add('water-drop');
+                drop.style.left = `${e.clientX - 25}px`;
+                drop.style.top = `${e.clientY - 25}px`;
+                drop.style.width = '50px';
+                drop.style.height = '50px';
+                document.body.appendChild(drop);
+                setTimeout(() => drop.remove(), 1000);
+            });
+
+            // Release Log Fetcher
+            (function(){
+                const btn = document.getElementById('glassButton');
+                const popup = document.getElementById('glassPopup');
+                const closeBtn = popup.querySelector('.closeBtn');
+                const container = document.getElementById('releaseContainer');
+
+                btn.addEventListener('click', () => { popup.style.display = 'flex'; });
+                closeBtn.addEventListener('click', () => popup.style.display = 'none');
+                window.addEventListener('click', (e) => {
+                    if (popup.style.display === 'flex' && !popup.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+                        popup.style.display = 'none';
+                    }
+                });
+
+                fetch("https://api.github.com/repos/mahi902/DocuWritePro/releases")
+                  .then(res => res.json())
+                  .then(data => {
+                      if (!data.length) { container.innerHTML = "<p>No releases found yet.</p>"; return; }
+                      container.innerHTML = "";
+                      data.forEach(release => {
+                          const item = document.createElement("div");
+                          item.className = "release-item";
+                          item.innerHTML = `
+                              <h3>${release.name || "Untitled Release"}</h3>
+                              <small>Published on: ${new Date(release.published_at).toLocaleDateString()}</small>
+                              <p>${release.body ? release.body.replace(/\r\n/g, "<br>") : "No description provided."}</p>
+                              <a href="${release.html_url}" target="_blank">View on GitHub →</a>
+                          `;
+                          container.appendChild(item);
+                      });
+                  })
+                  .catch(err => {
+                      console.error("Error fetching releases:", err);
+                      container.innerHTML = "<p>Unable to fetch release data.</p>";
+                  });
+            })();
         });
+
+        // --- Tool Filtering Logic ---
+        function toggleFilterOptions() {
+            document.getElementById("filterOptions").classList.toggle("show");
+        }
+
+        function filterTools(category) {
+            const toolCards = document.querySelectorAll("#toolsContainer .tool-card");
+            toolCards.forEach(card => {
+                if (category === "All" || card.dataset.category === category) {
+                    card.style.display = "flex";
+                } else {
+                    card.style.display = "none";
+                }
+            });
+            document.getElementById("filterOptions").classList.remove("show");
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.organize-icon')) {
+                const dropdowns = document.getElementsByClassName("filter-options");
+                Array.from(dropdowns).forEach(openDropdown => {
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                });
+            }
+        };
     </script>
-</body>
-</html>
-
-
-
-
-
-
-
-
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Drop Click Animation</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            overflow: auto;
-            background-color: transparent;
-        }
-        
-        .water-drop {
-            position: absolute;
-            border-radius: 50%;
-            background: rgba(173, 216, 230, 0.5);
-            transform: scale(0);
-            pointer-events: none;
-            animation: ripple 1s linear;
-        }
-        
-        @keyframes ripple {
-            to {
-                transform: scale(4);
-                opacity: 0;
-            }
-        }
-    </style>
-</head>
-<body>
-    <script>
-        document.addEventListener('click', function(e) {
-            // Create water drop element
-            const drop = document.createElement('div');
-            drop.classList.add('water-drop');
-            
-            // Position it at click coordinates
-            drop.style.left = `${e.clientX}px`;
-            drop.style.top = `${e.clientY}px`;
-            drop.style.width = '50px';
-            drop.style.height = '50px';
-            
-            // Add to body
-            document.body.appendChild(drop);
-            
-            // Remove element after animation completes
-            setTimeout(() => {
-                drop.remove();
-            }, 1000);
-        });
-    </script>
-</body>
-</html>
-
-
-
-
-
-
-
-
-
-
-<!DOCTYPE html>
-<html lang="en" />
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Top Greeting Bar</title>
-</head>
-<body>
-
-<greeting-bar></greeting-bar>
-
-<script>
-  class GreetingBar extends HTMLElement {
-    constructor() {
-      super();
-      this.attachShadow({ mode: 'open' });
-      this.shadowRoot.innerHTML = `
-        <style>
-          :host {
-            all: initial;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            display: flex;
-            justify-content: center;
-            z-index: 99999999;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-              Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            user-select: none;
-          }
-          .bar {
-            position: relative;
-            width: 320px;
-            max-width: 90vw;
-            margin-top: 1.2rem;
-            background: rgba(255 255 255 / 0.65);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border-radius: 10px;
-            box-shadow:
-              0 0 8px rgba(255, 255, 255, 0.75),
-              0 0 15px rgba(0, 123, 255, 0.6);
-            color: #111;
-            font-size: 1rem;
-            font-weight: 600;
-            padding: 0.7rem 1.2rem;
-            display: flex;
-            align-items: center;
-            overflow: hidden;
-            cursor: pointer;
-            transform: translateY(-120%);
-            opacity: 0;
-            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
-            user-select: none;
-          }
-          .bar.show {
-            transform: translateY(0);
-            opacity: 1;
-          }
-          .glow {
-            position: absolute;
-            top: 0;
-            left: -50%;
-            width: 50%;
-            height: 100%;
-            pointer-events: none;
-            background: linear-gradient(90deg, transparent, rgba(0, 123, 255, 0.4), transparent);
-            filter: drop-shadow(0 0 6px #007bff);
-            animation: glowMove 1s forwards;
-            will-change: left, opacity;
-          }
-          @keyframes glowMove {
-            0% {
-              left: -50%;
-              opacity: 0;
-            }
-            10% {
-              opacity: 1;
-            }
-            90% {
-              left: 150%;
-              opacity: 1;
-            }
-            100% {
-              left: 150%;
-              opacity: 0;
-            }
-          }
-        </style>
-        <div class="bar" part="bar" role="alert" tabindex="0" aria-live="polite">
-          <div class="glow"></div>
-          <span class="text">Hello!</span>
-        </div>
-      `;
-
-      this.bar = this.shadowRoot.querySelector('.bar');
-      this.textSpan = this.shadowRoot.querySelector('.text');
-      this.glow = this.shadowRoot.querySelector('.glow');
-
-      // Swipe vars
-      this.startY = 0;
-      this.currentY = 0;
-      this.isSwiping = false;
-
-      // Bind methods
-      this.onTouchStart = this.onTouchStart.bind(this);
-      this.onTouchMove = this.onTouchMove.bind(this);
-      this.onTouchEnd = this.onTouchEnd.bind(this);
-      this.dismiss = this.dismiss.bind(this);
-    }
-
-    connectedCallback() {
-      this.setGreeting();
-      this.showBar();
-
-      // Auto dismiss after 1 second (matching glow duration)
-      setTimeout(() => {
-        this.dismiss();
-      }, 1000);
-
-      // Attach swipe listeners
-      this.bar.addEventListener('touchstart', this.onTouchStart, { passive: true });
-      this.bar.addEventListener('touchmove', this.onTouchMove, { passive: true });
-      this.bar.addEventListener('touchend', this.onTouchEnd);
-
-      // Click dismiss as well
-      this.bar.addEventListener('click', this.dismiss);
-    }
-
-    disconnectedCallback() {
-      this.bar.removeEventListener('touchstart', this.onTouchStart);
-      this.bar.removeEventListener('touchmove', this.onTouchMove);
-      this.bar.removeEventListener('touchend', this.onTouchEnd);
-      this.bar.removeEventListener('click', this.dismiss);
-    }
-
-    setGreeting() {
-      const now = new Date();
-      const h = now.getHours();
-
-      let greeting = "Connecting";
-
-      if (h >= 0 && h < 4) greeting = "☁︎ Connected";
-      else if (h >= 4 && h < 12) greeting = "☁︎ Connected";
-      else if (h >= 16 && h < 20) greeting = "☁︎ Connected";
-      else if (h >= 20 && h <= 23) greeting = "☁︎ Connected";
-
-      this.textSpan.textContent = greeting;
-    }
-
-    showBar() {
-      requestAnimationFrame(() => {
-        this.bar.classList.add('show');
-      });
-    }
-
-    dismiss() {
-      this.bar.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-      this.bar.style.transform = 'translateY(-120%)';
-      this.bar.style.opacity = '0';
-      setTimeout(() => this.remove(), 400);
-    }
-
-    onTouchStart(e) {
-      this.startY = e.touches[0].clientY;
-      this.currentY = this.startY;
-      this.isSwiping = true;
-      this.bar.style.transition = 'none';
-    }
-
-    onTouchMove(e) {
-      if (!this.isSwiping) return;
-      this.currentY = e.touches[0].clientY;
-      let deltaY = this.currentY - this.startY;
-      if (deltaY < 0) { // swipe up only
-        this.bar.style.transform = `translateY(${deltaY}px)`;
-        this.bar.style.opacity = `${1 + deltaY / window.innerHeight}`;
-      }
-    }
-
-    onTouchEnd() {
-      if (!this.isSwiping) return;
-      let deltaY = this.currentY - this.startY;
-      this.isSwiping = false;
-
-      if (deltaY < -this.bar.offsetHeight / 3) {
-        this.dismiss();
-      } else {
-        this.bar.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
-        this.bar.style.transform = 'translateY(0)';
-        this.bar.style.opacity = '1';
-      }
-    }
-  }
-
-  customElements.define('greeting-bar', GreetingBar);
-</script>
-
-</body>
-</html>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>DocuWrite Pro | Auto Release Log</title>
-<link href="https://fonts.googleapis.com/css2?family=Material+Icons+Outlined" rel="stylesheet">
-<style>
-#docuGlassWrapper {
-    position: fixed;
-    top: 20px;
-    right: 0;
-    z-index: 99999;
-    font-family: 'Arial', sans-serif;
-}
-
-#glassButton {
-    background: rgba(240, 248, 255, 0.6);
-    backdrop-filter: blur(10px);
-    color: #555;
-    border: none;
-    border-radius: 20px 0 0 20px;
-    padding: 12px 18px;
-    cursor: pointer;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-    transition: background 0.3s;
-}
-
-#glassButton:hover { background: rgba(230, 245, 255, 0.6); }
-#glassButton .material-icons-outlined { margin-left: 8px; font-size: 20px; color: #7bc8f6; }
-
-#glassPopup {
-    position: fixed;
-    top: 60px;
-    right: 20px;
-    width: 360px;
-    max-width: 90vw;
-    background: rgba(255,255,255,0.5);
-    backdrop-filter: blur(15px);
-    border-radius: 16px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.18);
-    padding: 22px;
-    display: none;
-    flex-direction: column;
-    color: #333;
-    animation: fadeInGlass 0.3s ease forwards;
-}
-
-@keyframes fadeInGlass {
-    from {opacity: 0; transform: translateY(-10px);}
-    to {opacity: 1; transform: translateY(0);}
-}
-
-#glassPopup .closeBtn {
-    position: absolute;
-    top: 12px;
-    right: 14px;
-    font-size: 18px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #666;
-}
-
-#glassPopup h2 {
-    margin: 0 0 12px 0;
-    font-size: 18px;
-    color: #1a73e8;
-}
-
-#releaseContainer {
-    max-height: 60vh;
-    overflow-y: auto;
-    padding-right: 6px;
-}
-
-.release-item {
-    background: rgba(255,255,255,0.7);
-    border-radius: 12px;
-    padding: 12px 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin-bottom: 14px;
-    transition: transform 0.2s ease;
-}
-.release-item:hover { transform: scale(1.01); }
-
-.release-item h3 {
-    margin: 5px 0;
-    font-size: 15px;
-    font-weight: bold;
-    color: #333;
-}
-
-.release-item small {
-    color: #666;
-    display: block;
-    margin-bottom: 8px;
-}
-
-.release-item p {
-    font-size: 13px;
-    line-height: 1.4;
-    color: #444;
-}
-
-.release-item a {
-    text-decoration: none;
-    color: #1a73e8;
-    font-size: 13px;
-    display: inline-block;
-    margin-top: 6px;
-}
-
-.release-item a:hover { text-decoration: underline; }
-
-/* Scrollbar styling */
-#releaseContainer::-webkit-scrollbar {
-    width: 6px;
-}
-#releaseContainer::-webkit-scrollbar-thumb {
-    background: rgba(100, 100, 100, 0.3);
-    border-radius: 4px;
-}
-#releaseContainer::-webkit-scrollbar-thumb:hover {
-    background: rgba(100, 100, 100, 0.5);
-}
-</style>
-</head>
-<body>
-
-<div id="docuGlassWrapper">
-    <button id="glassButton">
-        Log <span class="material-icons-outlined">rocket_launch</span>
-    </button>
-
-    <div id="glassPopup">
-        <button class="closeBtn">&times;</button>
-        <h2>DocuWrite Pro | All Releases</h2>
-        <div id="releaseContainer">
-            <p>Fetching releases...</p>
-        </div>
-    </div>
-</div>
-
-<script>
-(function(){
-    const btn = document.getElementById('glassButton');
-    const popup = document.getElementById('glassPopup');
-    const closeBtn = popup.querySelector('.closeBtn');
-    const container = document.getElementById('releaseContainer');
-
-    btn.addEventListener('click', () => {
-        popup.style.display = 'flex';
-        popup.style.animation = 'fadeInGlass 0.3s ease forwards';
-    });
-
-    closeBtn.addEventListener('click', () => popup.style.display = 'none');
-
-    window.addEventListener('click', (e) => {
-        if (popup.style.display === 'flex' && !popup.contains(e.target) && e.target !== btn) {
-            popup.style.display = 'none';
-        }
-    });
-
-    // Fetch all GitHub releases dynamically
-    fetch("https://api.github.com/repos/mahi902/DocuWritePro/releases")
-      .then(res => res.json())
-      .then(data => {
-          if (!data.length) {
-              container.innerHTML = "<p>No releases found yet.</p>";
-              return;
-          }
-
-          container.innerHTML = "";
-          data.forEach(release => {
-              const item = document.createElement("div");
-              item.className = "release-item";
-              item.innerHTML = `
-                  <p><b> ${release.name || "Untitled Release"} </b></p>
-                  <small>Published on: ${new Date(release.published_at).toLocaleDateString()}</small>
-                  <p>${release.body ? release.body.replace(/\n/g, "<br>") : "No description provided."}</p>
-                  <a href="${release.html_url}" target="_blank">View on GitHub →</a>
-              `;
-              container.appendChild(item);
-          });
-      })
-      .catch(err => {
-          console.error("Error fetching releases:", err);
-          container.innerHTML = "<p> Unable to fetch release data.</p>";
-      });
-})();
-</script>
 </body>
 </html>

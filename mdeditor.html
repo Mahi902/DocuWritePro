@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Markdown Editor</title>
+    <meta name="description" content="A clean, fast, and free tool to convert rich text into well-formatted Markdown. Paste from anywhere and get clean Markdown instantly." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <style>
+        /* CSS styles from style.css, adapted for a light theme */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #f1f3f5;
+            --bg-hover: #e9ecef;
+            --border-color: #dee2e6;
+            --border-hover: #ced4da;
+            --text-primary: #212529;
+            --text-secondary: #495057;
+            --text-tertiary: #6c757d;
+            --text-muted: #868e96;
+            --text-placeholder: #adb5bd;
+            --accent-primary: #0d6efd;
+            --accent-hover: #0b5ed7;
+            --accent-light: rgba(13, 110, 253, 0.1);
+            --success: #198754;
+            --success-light: rgba(25, 135, 84, 0.1);
+            --error: #dc3545;
+            --error-light: rgba(220, 53, 69, 0.1);
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0d6efd 0%, #6f42c1 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(13, 110, 253, 0.3);
+            padding-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0 16px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-family: inherit;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+            border-color: var(--accent-primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-secondary {
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            border-color: var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-tertiary);
+        }
+
+        .btn-ghost:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-icon {
+            width: 36px;
+            padding: 0;
+        }
+
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .toolbar {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 8px 20px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .toolbar-section {
+            display: flex;
+            gap: 4px;
+            padding-right: 12px;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .toolbar-section:last-child {
+            border-right: none;
+        }
+
+        .tool-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .tool-btn .material-symbols-outlined {
+            font-size: 20px;
+        }
+
+        .tool-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+
+        .tool-btn:active {
+            transform: scale(0.95);
+            background: var(--bg-tertiary);
+        }
+
+        .tool-btn[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: -36px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            font-weight: 500;
+            box-shadow: var(--shadow-md);
+        }
+
+        .main-area {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            flex: 1;
+            background: var(--bg-primary);
+        }
+
+        .panel-header {
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        
+        .panel-stats {
+          display: flex;
+          gap: 16px;
+          font-size: 11px;
+          text-transform: none;
+          letter-spacing: 0;
+          font-weight: 500;
+        }
+        .stat {
+            color: var(--text-placeholder);
+        }
+        .stat-value {
+            color: var(--text-tertiary);
+            font-weight: 600;
+            margin-right: 2px;
+        }
+
+
+        .panel-content {
+            flex: 1;
+            overflow: auto;
+            padding: 32px;
+        }
+        
+        .panel-content::-webkit-scrollbar {
+            width: 10px;
+        }
+        .panel-content::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+        }
+        .panel-content::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+            border: 2px solid var(--bg-tertiary);
+        }
+        .panel-content::-webkit-scrollbar-thumb:hover {
+            background: var(--border-hover);
+        }
+
+
+        .divider {
+            width: 1px;
+            background: var(--border-color);
+            flex-shrink: 0;
+            cursor: col-resize;
+            position: relative;
+            transition: background 0.2s;
+        }
+
+        .divider:hover {
+            background: var(--accent-primary);
+        }
+
+        .divider::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: -2px;
+            right: -2px;
+        }
+
+        #editor {
+            min-height: 100%;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            caret-color: var(--accent-primary);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #editor:empty:before {
+            content: "Start typing or paste your content here...";
+            color: var(--text-placeholder);
+            white-space: pre;
+            pointer-events: none;
+        }
+
+        #editor h1,
+        #editor h2,
+        #editor h3,
+        #editor h4,
+        #editor h5,
+        #editor h6 {
+            margin: 32px 0 16px 0;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.25;
+            letter-spacing: -0.02em;
+        }
+        #editor h1:first-child, #editor h2:first-child, #editor h3:first-child { margin-top: 0; }
+        #editor h1 { font-size: 2.25em; }
+        #editor h2 { font-size: 1.75em; }
+        #editor h3 { font-size: 1.5em; }
+        #editor h4 { font-size: 1.25em; }
+        #editor h5 { font-size: 1.1em; }
+        #editor h6 { font-size: 1em; text-transform: uppercase; letter-spacing: 0.05em; }
+        #editor p { margin: 16px 0; }
+        #editor strong, #editor b { font-weight: 600; color: var(--text-primary); }
+        #editor a { color: var(--accent-primary); text-decoration: none; border-bottom: 1px solid var(--accent-light); transition: all 0.2s; }
+        #editor a:hover { border-bottom-color: var(--accent-primary); background: var(--accent-light); }
+        #editor code {
+            background: var(--bg-tertiary);
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: "SF Mono", "Consolas", "Monaco", monospace;
+            font-size: 0.9em;
+            color: #d63384;
+            border: 1px solid var(--border-color);
+        }
+        #editor pre {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+        }
+        #editor pre code { background: transparent; padding: 0; color: var(--text-secondary); border: none; font-size: 14px; line-height: 1.6; }
+        #editor ul, #editor ol { margin: 16px 0; padding-left: 28px; }
+        #editor li { margin: 8px 0; }
+        #editor blockquote {
+            border-left: 3px solid var(--accent-primary);
+            padding-left: 20px;
+            margin: 24px 0;
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+        #editor hr { border: none; border-top: 1px solid var(--border-color); margin: 48px 0; }
+        #editor table { border-collapse: collapse; width: 100%; margin: 24px 0; border: 1px solid var(--border-color); }
+        #editor table th, #editor table td { border: 1px solid var(--border-color); padding: 12px 16px; text-align: left; }
+        #editor table th { background: var(--bg-secondary); font-weight: 600; color: var(--text-primary); }
+        #editor table tr:nth-child(even) { background: var(--bg-tertiary); }
+        #editor img { max-width: 100%; height: auto; border-radius: 8px; margin: 24px 0; border: 1px solid var(--border-color); }
+
+        #output {
+            min-height: 100%;
+            font-family: "SF Mono", "Consolas", "Monaco", monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-word;
+            tab-size: 2;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 48px;
+        }
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            color: var(--border-hover);
+        }
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-tertiary);
+        }
+        .empty-text {
+            font-size: 14px;
+            color: var(--text-muted);
+            max-width: 320px;
+            line-height: 1.6;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 12px 18px;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: var(--shadow-lg);
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 2000;
+        }
+        
+        .toast.show { display: flex; }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--error); }
+        
+        .toast-icon .material-symbols-outlined {
+            font-size: 22px;
+        }
+        .toast.success .toast-icon { color: var(--success); }
+        .toast.error .toast-icon { color: var(--error); }
+
+
+        @keyframes slideUp { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease;
+        }
+        .modal-overlay.show { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .modal {
+            background: var(--bg-primary);
+            border-radius: 12px;
+            padding: 28px;
+            max-width: 480px;
+            width: 90%;
+            animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+        }
+        
+        @keyframes modalSlideUp { from { transform: translateY(20px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        
+        .modal-header { font-size: 20px; font-weight: 600; margin-bottom: 20px; color: var(--text-primary); }
+        .modal-body { margin-bottom: 24px; }
+        .modal-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-tertiary); margin-bottom: 6px; }
+        .modal-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 16px;
+            outline: none;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .modal-input:focus { border-color: var(--accent-primary); background: var(--bg-primary); box-shadow: 0 0 0 3px var(--accent-light); }
+        .modal-input::placeholder { color: var(--text-placeholder); }
+        .modal-footer { display: flex; gap: 8px; justify-content: flex-end; }
+
+
+        @media (max-width: 768px) {
+            .main-area { flex-direction: column; }
+            .divider { display: none; }
+            .panel { max-height: 50vh; }
+            .toolbar { overflow-x: auto; flex-wrap: nowrap; }
+            .header-actions .btn:not(.btn-primary) { display: none; }
+            .header-actions .btn-icon { display: inline-flex; }
+            .panel-content { padding: 24px 16px; }
+            #editor, #output { max-width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">.md</div>
+                <span>Markdown Editor</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-ghost btn-icon" onclick="undo()" data-tooltip="Undo (Ctrl+Z)">
+                    <span class="material-symbols-outlined">undo</span>
+                </button>
+                <button class="btn btn-ghost btn-icon" onclick="redo()" data-tooltip="Redo (Ctrl+Y)">
+                    <span class="material-symbols-outlined">redo</span>
+                </button>
+                <button class="btn btn-secondary" onclick="downloadMarkdown()">
+                    <span class="material-symbols-outlined">download</span> Download
+                </button>
+                <button class="btn btn-secondary btn-icon" onclick="clearAll()" data-tooltip="Clear All">
+                    <span class="material-symbols-outlined">delete</span>
+                </button>
+                <button class="btn btn-primary" onclick="copyMarkdown()">
+                    <span class="material-symbols-outlined">content_copy</span> Copy
+                </button>
+            </div>
+        </div>
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-section">
+                <button class="tool-btn" onclick="formatText('bold')" data-tooltip="Bold (Ctrl+B)"><span class="material-symbols-outlined">format_bold</span></button>
+                <button class="tool-btn" onclick="formatText('italic')" data-tooltip="Italic (Ctrl+I)"><span class="material-symbols-outlined">format_italic</span></button>
+                <button class="tool-btn" onclick="formatText('underline')" data-tooltip="Underline (Ctrl+U)"><span class="material-symbols-outlined">format_underlined</span></button>
+                <button class="tool-btn" onclick="formatText('strikeThrough')" data-tooltip="Strikethrough"><span class="material-symbols-outlined">strikethrough_s</span></button>
+            </div>
+            <div class="toolbar-section">
+                <button class="tool-btn" onclick="formatHeading(1)" data-tooltip="Heading 1">H1</button>
+                <button class="tool-btn" onclick="formatHeading(2)" data-tooltip="Heading 2">H2</button>
+                <button class="tool-btn" onclick="formatHeading(3)" data-tooltip="Heading 3">H3</button>
+            </div>
+            <div class="toolbar-section">
+                <button class="tool-btn" onclick="formatText('insertUnorderedList')" data-tooltip="Bullet List"><span class="material-symbols-outlined">format_list_bulleted</span></button>
+                <button class="tool-btn" onclick="formatText('insertOrderedList')" data-tooltip="Numbered List"><span class="material-symbols-outlined">format_list_numbered</span></button>
+                <button class="tool-btn" onclick="insertQuote()" data-tooltip="Quote"><span class="material-symbols-outlined">format_quote</span></button>
+            </div>
+            <div class="toolbar-section">
+                <button class="tool-btn" onclick="showLinkModal()" data-tooltip="Insert Link"><span class="material-symbols-outlined">link</span></button>
+                <button class="tool-btn" onclick="showImageModal()" data-tooltip="Insert Image"><span class="material-symbols-outlined">image</span></button>
+                <button class="tool-btn" onclick="insertCode()" data-tooltip="Code Block"><span class="material-symbols-outlined">code_blocks</span></button>
+                <button class="tool-btn" onclick="showTableModal()" data-tooltip="Insert Table"><span class="material-symbols-outlined">table</span></button>
+            </div>
+            <div class="toolbar-section">
+                <button class="tool-btn" onclick="formatText('insertHorizontalRule')" data-tooltip="Divider"><span class="material-symbols-outlined">horizontal_rule</span></button>
+            </div>
+        </div>
+        <!-- Main Content Area -->
+        <div class="main-area">
+            <div class="panel">
+                <div class="panel-header">
+                    <span>Editor</span>
+                    <div class="panel-stats">
+                        <span class="stat"><span class="stat-value" id="charCount">0</span> chars</span>
+                        <span class="stat"><span class="stat-value" id="wordCount">0</span> words</span>
+                        <span class="stat"><span class="stat-value" id="lineCount">1</span> lines</span>
+                    </div>
+                </div>
+                <div class="panel-content">
+                    <div id="editor" contenteditable="true"></div>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="panel">
+                <div class="panel-header">Markdown Output</div>
+                <div class="panel-content" id="outputContainer">
+                    <div class="empty-state">
+                        <div class="empty-icon"><span class="material-symbols-outlined">edit_note</span></div>
+                        <div class="empty-title">No Content Yet</div>
+                        <div class="empty-text">Start typing or paste content to see the Markdown conversion in real-time.</div>
+                    </div>
+                    <div id="output" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <div class="toast-icon"><span class="material-symbols-outlined">check_circle</span></div>
+        <span id="toastMessage">Success</span>
+    </div>
+    <!-- Modals -->
+    <div class="modal-overlay" id="linkModal">
+        <div class="modal">
+            <div class="modal-header">Insert Link</div>
+            <div class="modal-body">
+                <label class="modal-label" for="linkText">Link Text</label>
+                <input type="text" class="modal-input" id="linkText" placeholder="e.g., Google">
+                <label class="modal-label" for="linkUrl">URL</label>
+                <input type="url" class="modal-input" id="linkUrl" placeholder="https://example.com">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLinkModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="insertLink()">Insert Link</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="imageModal">
+        <div class="modal">
+            <div class="modal-header">Insert Image</div>
+            <div class="modal-body">
+                <label class="modal-label" for="imageUrl">Image URL</label>
+                <input type="url" class="modal-input" id="imageUrl" placeholder="https://example.com/image.jpg">
+                <label class="modal-label" for="imageAlt">Alt Text</label>
+                <input type="text" class="modal-input" id="imageAlt" placeholder="Describe the image">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeImageModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="insertImage()">Insert Image</button>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="tableModal">
+        <div class="modal">
+            <div class="modal-header">Insert Table</div>
+            <div class="modal-body">
+                <label class="modal-label" for="tableRows">Rows</label>
+                <input type="number" class="modal-input" id="tableRows" value="3" min="1" max="20">
+                <label class="modal-label" for="tableCols">Columns</label>
+                <input type="number" class="modal-input" id="tableCols" value="3" min="1" max="10">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeTableModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="insertTable()">Insert Table</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal for Clear All -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <div class="modal-header" id="confirmTitle">Confirm Action</div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to proceed? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="confirmCancel">Cancel</button>
+                <button class="btn btn-primary" id="confirmOk">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript from script.js
+        const editor = document.getElementById("editor");
+        const output = document.getElementById("output");
+        const outputContainer = document.getElementById("outputContainer");
+        const emptyState = outputContainer.querySelector(".empty-state");
+        let savedSelection = null;
+
+        // --- Event Listeners ---
+        editor.addEventListener("paste", (e) => {
+            e.preventDefault();
+            const clipboardData = e.clipboardData || window.clipboardData;
+            const htmlData = clipboardData.getData("text/html");
+            const textData = clipboardData.getData("text/plain");
+
+            if (htmlData) {
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = htmlData;
+                cleanPastedHTML(tempDiv);
+                document.execCommand("insertHTML", false, tempDiv.innerHTML);
+            } else {
+                document.execCommand("insertText", false, textData);
+            }
+            setTimeout(updateMarkdown, 10);
+        });
+
+        editor.addEventListener("input", updateMarkdown);
+
+        document.addEventListener("keydown", (e) => {
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const modKey = isMac ? e.metaKey : e.ctrlKey;
+
+            if (modKey) {
+                switch (e.key.toLowerCase()) {
+                    case 's': e.preventDefault(); copyMarkdown(); break;
+                    case 'b': e.preventDefault(); formatText('bold'); break;
+                    case 'i': e.preventDefault(); formatText('italic'); break;
+                    case 'u': e.preventDefault(); formatText('underline'); break;
+                    case 'z': if (!e.shiftKey) { e.preventDefault(); undo(); } else { e.preventDefault(); redo(); } break;
+                    case 'y': e.preventDefault(); redo(); break;
+                }
+            }
+            
+            if (e.key === "Escape") {
+                closeAllModals();
+            }
+            
+            if (e.key === "Enter" && !e.shiftKey) {
+                const activeModal = document.querySelector('.modal-overlay.show');
+                if (activeModal) {
+                    e.preventDefault();
+                    if (activeModal.id === 'linkModal') insertLink();
+                    if (activeModal.id === 'imageModal') insertImage();
+                    if (activeModal.id === 'tableModal') insertTable();
+                }
+            }
+        });
+        
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                   overlay.classList.remove('show');
+                }
+            });
+        });
+
+        // --- Core Functions ---
+        function updateMarkdown() {
+            const htmlContent = editor.innerHTML;
+            const markdownContent = htmlToMarkdown(htmlContent);
+
+            if (markdownContent.trim()) {
+                output.textContent = markdownContent;
+                output.style.display = "block";
+                emptyState.style.display = "none";
+            } else {
+                output.style.display = "none";
+                emptyState.style.display = "flex";
+            }
+            updateStats();
+        }
+        
+        function updateStats() {
+            const text = editor.innerText || editor.textContent;
+            const lines = editor.innerHTML.split(/<br>|<\/div>|<\/p>|<\/h[1-6]>|<\/li>|<\/pre>|<\/blockquote>/).filter(line => line.trim().length > 0);
+            const words = text.trim().split(/\s+/).filter(Boolean);
+            
+            document.getElementById('charCount').textContent = text.length;
+            document.getElementById('wordCount').textContent = text.trim() ? words.length : 0;
+            document.getElementById('lineCount').textContent = Math.max(1, lines.length);
+        }
+
+        function cleanPastedHTML(element) {
+            const allowedTags = ["P", "BR", "STRONG", "B", "EM", "I", "U", "S", "DEL", "STRIKE", "CODE", "PRE", "H1", "H2", "H3", "H4", "H5", "H6", "UL", "OL", "LI", "A", "IMG", "BLOCKQUOTE", "HR", "TABLE", "THEAD", "TBODY", "TR", "TH", "TD", "MARK"];
+            element.querySelectorAll('*').forEach(el => {
+                // Remove disallowed tags
+                if (!allowedTags.includes(el.tagName)) {
+                    el.parentNode.replaceChild(document.createTextNode(el.textContent), el);
+                    return;
+                }
+                // Remove all attributes except for href on <a> and src/alt on <img>
+                for (let i = el.attributes.length - 1; i >= 0; i--) {
+                    const attr = el.attributes[i];
+                    if (el.tagName === 'A' && attr.name === 'href') continue;
+                    if (el.tagName === 'IMG' && (attr.name === 'src' || attr.name === 'alt')) continue;
+                    el.removeAttribute(attr.name);
+                }
+            });
+        }
+        
+        // --- Toolbar Actions ---
+        function formatText(command, value = null) {
+            editor.focus();
+            document.execCommand(command, false, value);
+            updateMarkdown();
+        }
+
+        function formatHeading(level) {
+            formatText('formatBlock', `h${level}`);
+        }
+
+        function insertQuote() {
+            formatText('formatBlock', 'blockquote');
+        }
+
+        function insertCode() {
+            editor.focus();
+            const selectionText = window.getSelection().toString() || "Your code here";
+            document.execCommand("insertHTML", false, `<pre><code>${selectionText}</code></pre>`);
+            updateMarkdown();
+        }
+
+        function undo() { document.execCommand('undo', false, null); updateMarkdown(); }
+        function redo() { document.execCommand('redo', false, null); updateMarkdown(); }
+        
+        // --- Header Actions ---
+        function copyMarkdown() {
+            const markdown = output.textContent;
+            if (markdown.trim()) {
+                navigator.clipboard.writeText(markdown).then(() => {
+                    showToast("Markdown copied to clipboard!", "success");
+                }).catch(() => {
+                    showToast("Failed to copy to clipboard", "error");
+                });
+            } else {
+                showToast("Nothing to copy", "error");
+            }
+        }
+
+        function downloadMarkdown() {
+            const markdown = output.textContent;
+            if (!markdown.trim()) {
+                showToast("Nothing to download", "error");
+                return;
+            }
+            const blob = new Blob([markdown], { type: "text/markdown" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `markdown-export.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Markdown file downloaded!", "success");
+        }
+
+        function clearAll() {
+            if (editor.innerHTML.trim()) {
+                showConfirmation("Clear all content?", "This action cannot be undone.").then(confirmed => {
+                    if (confirmed) {
+                        editor.innerHTML = "";
+                        output.textContent = "";
+                        updateMarkdown();
+                        showToast("Content cleared", "success");
+                    }
+                });
+            } else {
+                showToast("Editor is already empty", "error");
+            }
+        }
+        
+        // --- Modal Handling ---
+        function saveSelection() {
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+                savedSelection = selection.getRangeAt(0);
+            }
+        }
+
+        function restoreSelection() {
+            if (savedSelection) {
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(savedSelection);
+            }
+        }
+
+        function showModal(id) {
+            saveSelection();
+            document.getElementById(id).classList.add('show');
+        }
+        
+        function closeModal(id) {
+             document.getElementById(id).classList.remove('show');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal-overlay').forEach(modal => modal.classList.remove('show'));
+        }
+
+        // Link Modal
+        function showLinkModal() {
+            showModal('linkModal');
+            const selectionText = window.getSelection().toString();
+            document.getElementById('linkText').value = selectionText || '';
+            document.getElementById('linkUrl').value = '';
+            setTimeout(() => document.getElementById('linkUrl').focus(), 50);
+        }
+        function closeLinkModal() { closeModal('linkModal'); }
+        function insertLink() {
+            const text = document.getElementById('linkText').value.trim();
+            const url = document.getElementById('linkUrl').value.trim();
+            if (url) {
+                closeLinkModal();
+                restoreSelection();
+                editor.focus();
+                document.execCommand("insertHTML", false, `<a href="${url}">${text || url}</a>`);
+                updateMarkdown();
+            } else {
+                showToast("Please enter a URL", "error");
+            }
+        }
+        
+        // Image Modal
+        function showImageModal() {
+            showModal('imageModal');
+            document.getElementById('imageUrl').value = '';
+            document.getElementById('imageAlt').value = '';
+            setTimeout(() => document.getElementById('imageUrl').focus(), 50);
+        }
+        function closeImageModal() { closeModal('imageModal'); }
+        function insertImage() {
+            const url = document.getElementById('imageUrl').value.trim();
+            const alt = document.getElementById('imageAlt').value.trim() || "image";
+            if (url) {
+                closeImageModal();
+                restoreSelection();
+                editor.focus();
+                document.execCommand("insertHTML", false, `<img src="${url}" alt="${alt}">`);
+                updateMarkdown();
+            } else {
+                showToast("Please enter an image URL", "error");
+            }
+        }
+
+        // Table Modal
+        function showTableModal() {
+            showModal('tableModal');
+            setTimeout(() => document.getElementById('tableRows').focus(), 50);
+        }
+        function closeTableModal() { closeModal('tableModal'); }
+        function insertTable() {
+            const rows = parseInt(document.getElementById('tableRows').value) || 3;
+            const cols = parseInt(document.getElementById('tableCols').value) || 3;
+            if (rows < 1 || cols < 1 || rows > 20 || cols > 10) {
+                showToast("Please enter valid dimensions (max 20x10)", "error");
+                return;
+            }
+            closeTableModal();
+            restoreSelection();
+            editor.focus();
+            let tableHTML = '<table>';
+            for (let r = 0; r < rows; r++) {
+                tableHTML += '<tr>';
+                for (let c = 0; c < cols; c++) {
+                    const cellType = r === 0 ? 'th' : 'td';
+                    tableHTML += `<${cellType}>Cell</${cellType}>`;
+                }
+                tableHTML += '</tr>';
+            }
+            tableHTML += '</table>';
+            document.execCommand("insertHTML", false, tableHTML + "<p><br></p>"); // Add space after table
+            updateMarkdown();
+        }
+
+        // --- UI Feedback ---
+        function showToast(message, type = "success") {
+            const toast = document.getElementById("toast");
+            const toastMessage = document.getElementById("toastMessage");
+            const toastIcon = toast.querySelector('.toast-icon .material-symbols-outlined');
+            
+            toastMessage.textContent = message;
+            toast.className = `toast ${type} show`;
+            toastIcon.textContent = type === 'success' ? 'check_circle' : 'error';
+            
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+
+        function showConfirmation(title, message) {
+            return new Promise((resolve) => {
+                const confirmModal = document.getElementById('confirmModal');
+                document.getElementById('confirmTitle').textContent = title;
+                document.getElementById('confirmMessage').textContent = message;
+
+                const cancelBtn = document.getElementById('confirmCancel');
+                const okBtn = document.getElementById('confirmOk');
+
+                const cleanup = () => {
+                    confirmModal.classList.remove('show');
+                    cancelBtn.replaceWith(cancelBtn.cloneNode(true));
+                    okBtn.replaceWith(okBtn.cloneNode(true));
+                };
+                
+                cancelBtn.addEventListener('click', () => {
+                    cleanup();
+                    resolve(false);
+                });
+
+                okBtn.addEventListener('click', () => {
+                    cleanup();
+                    resolve(true);
+                });
+
+                confirmModal.classList.add('show');
+            });
+        }
+        
+        // --- HTML to Markdown Conversion Logic ---
+        function htmlToMarkdown(html) {
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = html;
+            let markdown = processNode(tempDiv);
+            return markdown.replace(/\n{3,}/g, "\n\n").trim();
+        }
+
+        function processNode(node) {
+            let markdown = "";
+            for (const child of node.childNodes) {
+                if (child.nodeType === Node.TEXT_NODE) {
+                    markdown += child.textContent;
+                } else if (child.nodeType === Node.ELEMENT_NODE) {
+                    markdown += processElement(child);
+                }
+            }
+            return markdown;
+        }
+
+        function processElement(el) {
+            const tagName = el.tagName.toLowerCase();
+            const content = processNode(el).trim();
+
+            switch (tagName) {
+                case "h1": return `# ${content}\n\n`;
+                case "h2": return `## ${content}\n\n`;
+                case "h3": return `### ${content}\n\n`;
+                case "h4": return `#### ${content}\n\n`;
+                case "h5": return `##### ${content}\n\n`;
+                case "h6": return `###### ${content}\n\n`;
+                case "p": return `${content}\n\n`;
+                case "br": return "  \n";
+                case "strong": case "b": return `**${content}**`;
+                case "em": case "i": return `*${content}*`;
+                case "u": return content; // No standard MD for underline
+                case "del": case "s": case "strike": return `~~${content}~~`;
+                case "code": return `\`${content}\``;
+                case "pre": 
+                    const codeContent = el.querySelector('code')?.textContent || el.textContent;
+                    return `\`\`\`\n${codeContent.trim()}\n\`\`\`\n\n`;
+                case "blockquote": 
+                    return content.split('\n').map(line => `> ${line}`).join('\n') + "\n\n";
+                case "ul": return processList(el, '*') + "\n";
+                case "ol": return processList(el, '1.') + "\n";
+                case "a": return `[${content || el.getAttribute("href")}](${el.getAttribute("href")})`;
+                case "img": return `![${el.getAttribute("alt") || ''}](${el.getAttribute("src") || ''})`;
+                case "hr": return "\n---\n\n";
+                case "table": return processTable(el);
+                default: return processNode(el);
+            }
+        }
+
+        function processList(listEl, marker) {
+            let markdown = "";
+            let counter = 1;
+            for (const item of listEl.children) {
+                if (item.tagName.toLowerCase() === "li") {
+                    const prefix = marker === '1.' ? `${counter++}.` : marker;
+                    markdown += `${prefix} ${processNode(item).trim()}\n`;
+                }
+            }
+            return markdown;
+        }
+
+        function processTable(tableEl) {
+            let markdown = "\n";
+            const rows = Array.from(tableEl.querySelectorAll("tr"));
+            rows.forEach((row, rowIndex) => {
+                const cells = Array.from(row.querySelectorAll("th, td"));
+                const cellContents = cells.map(cell => processNode(cell).trim().replace(/\|/g, '\\|'));
+                markdown += `| ${cellContents.join(" | ")} |\n`;
+
+                if (rowIndex === 0 && row.querySelectorAll('th').length > 0) {
+                    const headerLine = cells.map(() => "---").join(" | ");
+                    markdown += `| ${headerLine} |\n`;
+                }
+            });
+            return markdown + "\n";
+        }
+        
+        // --- Resizable Panels ---
+        let isResizing = false;
+        const divider = document.querySelector('.divider');
+        const mainArea = document.querySelector('.main-area');
+        const panels = document.querySelectorAll('.panel');
+
+        if (divider) {
+             divider.addEventListener('mousedown', (e) => {
+                isResizing = true;
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+            });
+        }
+       
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            const bounds = mainArea.getBoundingClientRect();
+            const percentage = ((e.clientX - bounds.left) / bounds.width) * 100;
+
+            if (percentage > 20 && percentage < 80) {
+                panels[0].style.flex = `0 0 ${percentage}%`;
+                panels[1].style.flex = `1 1 ${100 - percentage}%`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+
+        // --- Initial Load ---
+        updateStats();
+        editor.focus();
+
+    </script>
+</body>
+
+</html>
+

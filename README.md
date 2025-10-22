@@ -27,6 +27,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - **Document Signer**: Electronically signing documents
 - **Page Number Adder**: Adding page numbers to documents
 - **Chart Maker**: Creating data charts
+- **Graph Maker**: Make clear graphs with visualization
 - **Table Maker**: Creating tables
 - **Watermark Adder**: Adding watermarks to files
 - **Email Writer**: Assisting with writing emails
@@ -36,6 +37,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - **ID Card Maker**: Designing and creating ID cards
 - **File Zipper**: Compressing or zipping files
 - **PDF Converter**: Converting files to or from PDF format
+- **Markdown Editor**: Edit or convert plain text to markdown .md
 
 ## Additional Tools
 - **Context Field**: Analyzing text (e.g., word count, frequency)

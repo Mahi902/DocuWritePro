@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find and Replace Tool</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Google Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <!-- Load Inter font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for the app */
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            font-size: 20px; /* Default size */
+        }
+        
+        /* Custom highlight style */
+        .highlight {
+            background-color: #fef08a; /* yellow-200 */
+            border-radius: 3px;
+            color: #713f12; /* amber-900 */
+            cursor: pointer;
+        }
+
+        /* Currently focused highlight */
+        .highlight-focused {
+            background-color: #fbbf24; /* amber-400 */
+            outline: 2px solid #d97706; /* amber-600 */
+        }
+
+        /* Style for the contenteditable editor */
+        #editor {
+            outline: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        #editor:focus {
+            border-color: #3b82f6; /* blue-500 */
+        }
+        
+        /* Custom scrollbar for match list */
+        #match-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        #match-list-container::-webkit-scrollbar-track {
+            background: #f1f5f9; /* slate-100 */
+        }
+        #match-list-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1; /* slate-300 */
+            border-radius: 3px;
+        }
+        #match-list-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; /* slate-400 */
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="flex h-screen">
+        <!-- Left Panel: Controls -->
+        <div class="w-full max-w-xs md:max-w-sm lg:max-w-md bg-white border-r border-slate-200 p-4 md:p-6 flex flex-col shadow-sm">
+            <h1 class="text-2xl font-bold text-slate-900 mb-6 flex items-center">
+                <span class="material-symbols-outlined text-3xl mr-2 text-blue-600">find_replace</span>
+                Find & Replace
+            </h1>
+
+            <!-- Input Fields -->
+            <div class="space-y-4">
+                <div>
+                    <label for="find-input" class="block text-sm font-medium text-slate-700 mb-1">Find</label>
+                    <div class="relative">
+                        <input type="text" id="find-input" placeholder="Enter text to find..." class="w-full p-2 pl-9 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="replace-input" class="block text-sm font-medium text-slate-700 mb-1">Replace with</label>
+                    <div class="relative">
+                        <input type="text" id="replace-input" placeholder="Enter replacement text..." class="w-full p-2 pl-9 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150">
+                        <span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400">edit</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button id="find-btn" class="w-full flex items-center justify-center bg-blue-600 text-white p-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-150 shadow-sm">
+                    <span class="material-symbols-outlined mr-1.5">search</span>
+                    Find
+                </button>
+                <button id="replace-all-btn" class="w-full flex items-center justify-center bg-green-600 text-white p-2 rounded-lg font-semibold hover:bg-green-700 transition duration-150 shadow-sm">
+                    <span class="material-symbols-outlined mr-1.5">find_replace</span>
+                    Replace All
+                </button>
+            </div>
+            
+            <!-- Undo/Redo Buttons -->
+            <div class="flex items-center justify-between mt-4 border-t border-slate-200 pt-4">
+                <span class="text-sm font-medium text-slate-700">History:</span>
+                <div class="flex space-x-2">
+                    <button id="undo-btn" title="Undo (Ctrl+Z)" class="p-2 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition disabled:opacity-50 disabled:hover:bg-transparent" disabled>
+                        <span class="material-symbols-outlined">undo</span>
+                    </button>
+                    <button id="redo-btn" title="Redo (Ctrl+Y)" class="p-2 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition disabled:opacity-50 disabled:hover:bg-transparent" disabled>
+                        <span class="material-symbols-outlined">redo</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Match List -->
+            <div class="flex-1 min-h-0 mt-6 flex flex-col">
+                <h2 class="text-lg font-semibold text-slate-900 mb-2">
+                    Matches <span id="match-count" class="text-sm font-medium bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full ml-1">0</span>
+                </h2>
+                <div id="match-list-container" class="flex-1 overflow-y-auto bg-slate-50 border border-slate-200 rounded-lg p-2">
+                    <ul id="match-list" class="space-y-1">
+                        <!-- Match items will be injected here -->
+                        <li id="no-matches" class="text-slate-500 text-center p-4">No matches found.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Panel: Editor -->
+        <div class="flex-1 h-screen flex flex-col p-4 md:p-8">
+            <div id="editor"
+                 contenteditable="true"
+                 role="textbox"
+                 aria-multiline="true"
+                 class="flex-1 w-full p-4 md:p-6 bg-white border border-slate-300 rounded-lg shadow-inner overflow-y-auto text-base text-slate-900 transition duration-150">
+                <!-- Placeholder Text -->
+                <p>Paste your text here to begin.</p>
+                <p><br></p>
+                <p>This tool allows you to find, highlight, and replace text. You can find all occurrences of a word, and they will appear in the "Matches" list on the left.</p>
+                <p><br></p>
+                <p>Clicking a match in the list will scroll to it in this editor. You can also "ignore" a specific match by clicking the 'x' button next to it, removing it from the replacement list.</p>
+                <p><br></p>
+                <p>"Replace All" will only replace the matches that are still highlighted and listed.</p>
+                <p><br></p>
+                <p>Try finding the word "replace" or "match".</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
+            const findInput = document.getElementById('find-input');
+            const replaceInput = document.getElementById('replace-input');
+            const findBtn = document.getElementById('find-btn');
+            const replaceAllBtn = document.getElementById('replace-all-btn');
+            const undoBtn = document.getElementById('undo-btn');
+            const redoBtn = document.getElementById('redo-btn');
+            const editor = document.getElementById('editor');
+            const matchList = document.getElementById('match-list');
+            const matchListContainer = document.getElementById('match-list-container');
+            const matchCount = document.getElementById('match-count');
+            const noMatchesEl = document.getElementById('no-matches');
+
+            // State
+            let undoStack = [];
+            let redoStack = [];
+            let currentFocusedMatch = null;
+
+            // --- History Management ---
+
+            function saveState() {
+                const currentState = editor.innerHTML;
+                // Only save if the state is different from the last one
+                if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== currentState) {
+                    undoStack.push(currentState);
+                    redoStack = []; // Clear redo stack on new action
+                    updateHistoryButtons();
+                }
+            }
+
+            function undo() {
+                if (undoStack.length > 0) {
+                    const lastState = undoStack.pop();
+                    redoStack.push(editor.innerHTML);
+                    editor.innerHTML = lastState;
+                    updateHistoryButtons();
+                    // Re-run find to update highlights and list
+                    handleFind(false); 
+                }
+            }
+
+            function redo() {
+                if (redoStack.length > 0) {
+                    const nextState = redoStack.pop();
+                    undoStack.push(editor.innerHTML);
+                    editor.innerHTML = nextState;
+                    updateHistoryButtons();
+                    // Re-run find to update highlights and list
+                    handleFind(false);
+                }
+            }
+
+            function updateHistoryButtons() {
+                undoBtn.disabled = undoStack.length === 0;
+                redoBtn.disabled = redoStack.length === 0;
+            }
+
+            // --- Core Functions ---
+
+            function clearHighlights() {
+                // Find all highlight marks
+                const highlights = editor.querySelectorAll('mark.highlight');
+                highlights.forEach(mark => {
+                    // Replace the <mark> tag with its text content
+                    const text = document.createTextNode(mark.textContent);
+                    mark.parentNode.replaceChild(text, mark);
+                });
+
+                // Normalize the editor to merge adjacent text nodes
+                editor.normalize();
+                
+                // Clear the match list
+                matchList.innerHTML = '';
+                matchCount.textContent = '0';
+                noMatchesEl.style.display = 'block';
+                currentFocusedMatch = null;
+            }
+
+            function handleFind(shouldSaveState = true) {
+                if (shouldSaveState) {
+                    saveState();
+                }
+
+                // 1. Clear previous highlights and list
+                clearHighlights();
+
+                const searchTerm = findInput.value;
+                if (!searchTerm) {
+                    return; // Do nothing if search term is empty
+                }
+
+                const regex = new RegExp(escapeRegExp(searchTerm), 'gi');
+                
+                // 3. Use a TreeWalker to find all text nodes
+                const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+                let textNode;
+                const nodesToModify = [];
+
+                while (textNode = walker.nextNode()) {
+                    // Avoid highlighting text within <mark> tags we just added or script/style tags
+                    if (textNode.parentElement.tagName !== 'MARK' && textNode.parentElement.tagName !== 'SCRIPT' && textNode.parentElement.tagName !== 'STYLE') {
+                        if (regex.test(textNode.nodeValue)) {
+                            nodesToModify.push(textNode);
+                        }
+                    }
+                }
+
+                // 4. Modify nodes in reverse to avoid issues with DOM changes
+                nodesToModify.forEach(node => {
+                    const fragment = document.createDocumentFragment();
+                    let lastIndex = 0;
+                    
+                    node.nodeValue.replace(regex, (match, offset) => {
+                        // Add text before the match
+                        const before = node.nodeValue.substring(lastIndex, offset);
+                        if (before) {
+                            fragment.appendChild(document.createTextNode(before));
+                        }
+                        
+                        // Add the highlighted match
+                        const mark = document.createElement('mark');
+                        mark.className = 'highlight';
+                        mark.textContent = match;
+                        fragment.appendChild(mark);
+
+                        lastIndex = offset + match.length;
+                    });
+                    
+                    // Add any remaining text after the last match
+                    const after = node.nodeValue.substring(lastIndex);
+                    if (after) {
+                        fragment.appendChild(document.createTextNode(after));
+                    }
+
+                    // Replace the original text node with the fragment
+                    node.parentNode.replaceChild(fragment, node);
+                });
+
+                // 5. Update the match list
+                updateMatchList();
+            }
+
+            function updateMatchList() {
+                const highlights = editor.querySelectorAll('mark.highlight');
+                matchList.innerHTML = ''; // Clear list
+                matchCount.textContent = highlights.length;
+
+                if (highlights.length === 0) {
+                    noMatchesEl.style.display = 'block';
+                    return;
+                }
+                
+                noMatchesEl.style.display = 'none';
+
+                highlights.forEach((mark, index) => {
+                    const li = document.createElement('li');
+                    li.className = 'flex items-center justify-between p-2 rounded-lg hover:bg-slate-100 cursor-pointer transition';
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.className = 'truncate text-sm text-slate-700';
+                    textSpan.textContent = mark.textContent;
+                    
+                    const ignoreBtn = document.createElement('button');
+                    ignoreBtn.className = 'ml-2 p-1 rounded-full text-slate-400 hover:bg-red-100 hover:text-red-600 transition';
+                    ignoreBtn.title = 'Ignore this match';
+                    ignoreBtn.innerHTML = '<span class="material-symbols-outlined !text-base">close</span>';
+
+                    // Scroll to match on list item click
+                    li.addEventListener('click', () => {
+                        scrollToMark(mark);
+                    });
+
+                    // Ignore match on button click
+                    ignoreBtn.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent li click event
+                        ignoreMatch(mark, li);
+                    });
+                    
+                    li.appendChild(textSpan);
+                    li.appendChild(ignoreBtn);
+                    matchList.appendChild(li);
+                    
+                    // Also make the mark in the editor clickable
+                    mark.addEventListener('click', () => {
+                        scrollToMark(mark);
+                    });
+                });
+            }
+            
+            function scrollToMark(mark) {
+                // Remove focus from old mark
+                if (currentFocusedMatch) {
+                    currentFocusedMatch.classList.remove('highlight-focused');
+                }
+                
+                // Add focus to new mark
+                mark.classList.add('highlight-focused');
+                currentFocusedMatch = mark;
+                
+                mark.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'nearest'
+                });
+                
+                // Remove focus after a short delay
+                setTimeout(() => {
+                    mark.classList.remove('highlight-focused');
+                    currentFocusedMatch = null;
+                }, 1500);
+            }
+
+            function ignoreMatch(mark, listItem) {
+                saveState(); // Save state before ignoring
+
+                // Replace the <mark> with its text content
+                const text = document.createTextNode(mark.textContent);
+                mark.parentNode.replaceChild(text, mark);
+                editor.normalize();
+
+                // Remove from list
+                listItem.remove();
+                
+                // Update count
+                const currentCount = parseInt(matchCount.textContent, 10);
+                matchCount.textContent = currentCount - 1;
+                
+                if (currentCount - 1 === 0) {
+                    noMatchesEl.style.display = 'block';
+                }
+            }
+
+            function handleReplaceAll() {
+                const replaceTerm = replaceInput.value;
+                const highlights = editor.querySelectorAll('mark.highlight');
+
+                if (highlights.length === 0) {
+                    return; // Nothing to replace
+                }
+
+                saveState(); // Save state before replacing
+
+                // Iterate in reverse to avoid DOM issues
+                Array.from(highlights).reverse().forEach(mark => {
+                    const newText = document.createTextNode(replaceTerm);
+                    mark.parentNode.replaceChild(newText, mark);
+                });
+
+                editor.normalize();
+                
+                // Clear highlights and list
+                clearHighlights();
+                // Optionally, re-run find if the replacement text contains the find term
+                // handleFind(false); 
+            }
+
+            // --- Utility ---
+            
+            function escapeRegExp(string) {
+                // $& means the whole matched string
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+
+            // --- Event Listeners ---
+            findBtn.addEventListener('click', () => handleFind(true));
+            replaceAllBtn.addEventListener('click', handleReplaceAll);
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+
+            // Keyboard shortcuts
+            editor.addEventListener('keydown', (e) => {
+                if (e.ctrlKey || e.metaKey) {
+                    if (e.key === 'z') {
+                        e.preventDefault();
+                        undo();
+                    } else if (e.key === 'y') {
+                        e.preventDefault();
+                        redo();
+                    }
+                }
+            });
+            
+            // Handle pasting plain text
+            editor.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                document.execCommand('insertText', false, text);
+            });
+            
+            // Remove placeholder on first focus
+            editor.addEventListener('focus', () => {
+                if(editor.textContent.trim() === "Paste your text here to begin.This tool allows you to find, highlight, and replace text. You can find all occurrences of a word, and they will appear in the \"Matches\" list on the left.Clicking a match in the list will scroll to it in this editor. You can also \"ignore\" a specific match by clicking the 'x' button next to it, removing it from the replacement list.\"Replace All\" will only replace the matches that are still highlighted and listed.Try finding the word \"replace\" or \"match\".") {
+                    editor.innerHTML = '<p><br></p>';
+                }
+            }, { once: true });
+
+            // Initial state update
+            updateHistoryButtons();
+        });
+    </script>
+
+</body>
+</html>

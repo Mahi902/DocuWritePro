@@ -25,6 +25,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - **Word Finder**: Searching for specific words
 - **Translator**: Language translation
 - **Document Signer**: Electronically signing documents
+- **Find & Replacer**: Find and replace specific phrases in a paragraph
 - **Page Number Adder**: Adding page numbers to documents
 - **Chart Maker**: Creating data charts
 - **Graph Maker**: Make clear graphs with visualization

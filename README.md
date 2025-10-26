@@ -69,7 +69,7 @@ The project is under the [MIT](https://choosealicense.com/licenses/mit/) License
 
 ### Notes
 • Commercial Use Allowed: The MIT License permits the use of the software in commercial and proprietary products.
-##### ‎  
+
 • Requirements: The main condition is that the original copyright notice and the license text must be included with any distribution of the software.
 
 

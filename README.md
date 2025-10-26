@@ -10,7 +10,7 @@ _Last updated: October 26, 2025_
 
 ## Intruduction
 
-DocuWrite Pro is a completely client side based online document editor. No need to go to different sites for document editing, get everything in one place using **DocuWrite Pro**.
+DocuWrite Pro is a completely client side based online document editor. No need to go to different sites for document editing, get everything done in one place using **DocuWrite Pro**.
 
 # DocuWrite Pro Tools
 

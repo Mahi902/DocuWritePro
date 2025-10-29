@@ -1280,6 +1280,8 @@ body.dark-mode .instruction-box a {
 </div>
 
 <script>
+document.getElementById('editor').addEventListener('input', checkPageOverflowStrict);
+
 (function(){
   // --- CONFIG ---
   const INTERVAL_MS = 1000; // runs every 1 second
@@ -3728,23 +3730,51 @@ firstPage.appendChild(watermark);
 // Attach input listener to a page
 function attachInputListener(editorPage) {
     editorPage.addEventListener('input', () => {
-        checkPageOverflow(editorPage);
+        checkPageOverflowStrict(editorPage);
     });
 }
 
 // Check if page overflowed
-function checkPageOverflow(editorPage) {
-    if (editorPage.scrollHeight > pageHeightPx) {
-        const newPage = createPage();
+function checkPageOverflowStrict() {
+    const pages = document.querySelectorAll('.page');
+    const pageWidthCm = parseFloat(document.getElementById('page-width').value) || 21;
+    const pageHeightCm = parseFloat(document.getElementById('page-height').value) || 29.7;
+    const pageMarginCm = parseFloat(document.getElementById('page-margin').value) || 2.5;
 
-        // Move last element to new page
-        const lastNode = editorPage.lastChild;
-        newPage.querySelector('.editor-page').appendChild(lastNode);
+    // Convert cm to px (approx 37.8 px per cm for standard 96 DPI)
+    const cmToPx = 37.8;
+    const pageHeightPx = pageHeightCm * cmToPx;
+    const marginPx = pageMarginCm * cmToPx;
+    const usableHeight = pageHeightPx - (marginPx * 2);
 
-        // Move cursor to new page
-        placeCursorAtEnd(newPage.querySelector('.editor-page'));
-    }
+    pages.forEach((page, index) => {
+        const editorArea = page.querySelector('.editor-page') || page;
+        if (!editorArea) return;
+
+        // If content exceeds the usable height (excluding margins)
+        if (editorArea.scrollHeight > usableHeight) {
+            const newPage = createPage();
+            const overflowElements = [];
+
+            // Move overflowing elements to the new page
+            while (editorArea.scrollHeight > usableHeight && editorArea.lastChild) {
+                overflowElements.unshift(editorArea.lastChild);
+                editorArea.removeChild(editorArea.lastChild);
+            }
+
+            overflowElements.forEach(el => {
+                newPage.querySelector('.editor-page').appendChild(el);
+            });
+
+            // Insert the new page right after the current one
+            page.insertAdjacentElement('afterend', newPage);
+
+            // Move the caret to the end of the new page
+            placeCursorAtEnd(newPage.querySelector('.editor-page'));
+        }
+    });
 }
+
 
 // Create new page
 function createPage() {

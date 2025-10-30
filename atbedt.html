@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Attribution Editor</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-light: #e8f0fe;
+            --secondary: #5f6368;
+            --background: #ffffff;
+            --surface: #f8f9fa;
+            --border: #dadce0;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --shadow: 0 1px 2px rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Top Bar Styles */
+        .top-bar {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--background);
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .logo .material-icons {
+            margin-right: 8px;
+        }
+
+        .export-btn {
+            display: flex;
+            align-items: center;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 24px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .export-btn:hover {
+            background-color: #1669d6;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .export-btn:disabled {
+            background-color: #9aa0a6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .export-btn .material-icons {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        /* Main Content Styles */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            transition: var(--transition);
+        }
+
+        .image-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--surface);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .main-image {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: var(--transition);
+            display: none;
+        }
+
+        .image-placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-placeholder .material-icons {
+            font-size: 64px;
+            margin-bottom: 16px;
+            color: var(--border);
+        }
+
+        .image-placeholder h3 {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .image-placeholder p {
+            font-size: 16px;
+        }
+
+        .upload-area {
+            margin-top: 20px;
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .upload-area .material-icons {
+            font-size: 48px;
+            color: var(--secondary);
+            margin-bottom: 16px;
+        }
+
+        .upload-area h4 {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .upload-area p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        /* Bottom Controls Styles */
+        .bottom-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--background);
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 5;
+            transform: translateY(100%);
+            transition: var(--transition);
+        }
+
+        .bottom-controls.active {
+            transform: translateY(0);
+        }
+
+        .controls-tabs {
+            display: flex;
+            overflow-x: auto;
+            padding: 0 16px;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-light) transparent;
+        }
+
+        .controls-tabs::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .controls-tabs::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .controls-tabs::-webkit-scrollbar-thumb {
+            background-color: var(--primary-light);
+            border-radius: 3px;
+        }
+
+        .control-tab {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .control-tab:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .control-tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .control-tab .material-icons {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        .control-panel {
+            padding: 20px 24px;
+            display: none;
+        }
+
+        .control-panel.active {
+            display: block;
+        }
+
+        .control-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .control-title {
+            display: flex;
+            align-items: center;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .control-title .material-icons {
+            margin-right: 8px;
+            color: var(--primary);
+        }
+
+        .close-controls {
+            background: none;
+            border: none;
+            color: var(--secondary);
+            cursor: pointer;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .close-controls:hover {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .slider {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--border);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .slider-value {
+            width: 60px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .slider-value:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .top-bar {
+                padding: 0 16px;
+            }
+            
+            .main-content {
+                padding: 16px;
+            }
+            
+            .controls-tabs {
+                padding: 0 8px;
+            }
+            
+            .control-tab {
+                padding: 10px 12px;
+                font-size: 13px;
+            }
+            
+            .control-tab .material-icons {
+                margin-right: 6px;
+            }
+        }
+
+        /* Canvas for image processing */
+        #imageCanvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <div class="logo">
+            <span class="material-icons">display_settings</span>
+            <span>Attribution Editor</span>
+        </div>
+        <button class="export-btn" id="exportBtn" disabled>
+            <span class="material-icons">download</span>
+            Export Image
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <div class="image-container" id="imageContainer">
+            <div class="image-placeholder" id="imagePlaceholder">
+                <span class="material-icons">image</span>
+                <h3>No Image Loaded</h3>
+                <p>Upload or drag & drop an image to get started</p>
+            </div>
+            <img class="main-image" id="mainImage">
+            
+            <div class="upload-area" id="uploadArea">
+                <span class="material-icons">cloud_upload</span>
+                <h4>Upload Image</h4>
+                <p>Drag & drop or click to browse files</p>
+                <input type="file" id="fileInput" class="file-input" accept="image/*">
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="bottom-controls" id="bottomControls">
+        <div class="controls-tabs" id="controlsTabs">
+            <!-- Basic Adjustments -->
+            <div class="control-tab active" data-panel="exposure">
+                <span class="material-icons">brightness_6</span>
+                <span>Exposure</span>
+            </div>
+            <div class="control-tab" data-panel="brightness">
+                <span class="material-icons">wb_sunny</span>
+                <span>Brightness</span>
+            </div>
+            <div class="control-tab" data-panel="contrast">
+                <span class="material-icons">contrast</span>
+                <span>Contrast</span>
+            </div>
+            <div class="control-tab" data-panel="highlights">
+                <span class="material-icons">highlight</span>
+                <span>Highlights</span>
+            </div>
+            <div class="control-tab" data-panel="shadows">
+                <span class="material-icons">dark_mode</span>
+                <span>Shadows</span>
+            </div>
+            
+            <!-- Color Adjustments -->
+            <div class="control-tab" data-panel="saturation">
+                <span class="material-icons">invert_colors</span>
+                <span>Saturation</span>
+            </div>
+            <div class="control-tab" data-panel="vibrance">
+                <span class="material-icons">palette</span>
+                <span>Vibrance</span>
+            </div>
+            <div class="control-tab" data-panel="warmth">
+                <span class="material-icons">whatshot</span>
+                <span>Warmth</span>
+            </div>
+            <div class="control-tab" data-panel="tint">
+                <span class="material-icons">format_color_fill</span>
+                <span>Tint</span>
+            </div>
+            
+            <!-- Effects -->
+            <div class="control-tab" data-panel="vignette">
+                <span class="material-icons">lens_blur</span>
+                <span>Vignette</span>
+            </div>
+            <div class="control-tab" data-panel="grain">
+                <span class="material-icons">grain</span>
+                <span>Grain</span>
+            </div>
+            <div class="control-tab" data-panel="sharpness">
+                <span class="material-icons">filter_center_focus</span>
+                <span>Sharpness</span>
+            </div>
+            <div class="control-tab" data-panel="clarity">
+                <span class="material-icons">auto_awesome</span>
+                <span>Clarity</span>
+            </div>
+        </div>
+
+        <!-- Control Panels -->
+        <div class="control-panel active" id="exposurePanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">brightness_6</span>
+                    <span>Exposure</span>
+                </div>
+                <button class="close-controls material-icons" id="closeControls">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="exposureSlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="exposureValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="brightnessPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">wb_sunny</span>
+                    <span>Brightness</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="brightnessSlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="brightnessValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="contrastPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">contrast</span>
+                    <span>Contrast</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="contrastSlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="contrastValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="highlightsPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">highlight</span>
+                    <span>Highlights</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="highlightsSlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="highlightsValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="shadowsPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">dark_mode</span>
+                    <span>Shadows</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="shadowsSlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="shadowsValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="saturationPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">invert_colors</span>
+                    <span>Saturation</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="saturationSlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="saturationValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="vibrancePanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">palette</span>
+                    <span>Vibrance</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="vibranceSlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="vibranceValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="warmthPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">whatshot</span>
+                    <span>Warmth</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="warmthSlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="warmthValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="tintPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">format_color_fill</span>
+                    <span>Tint</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="tintSlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="tintValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="vignettePanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">lens_blur</span>
+                    <span>Vignette</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="0" class="slider" id="vignetteSlider">
+                <input type="number" min="0" max="100" value="0" class="slider-value" id="vignetteValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="grainPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">grain</span>
+                    <span>Grain</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="0" class="slider" id="grainSlider">
+                <input type="number" min="0" max="100" value="0" class="slider-value" id="grainValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="sharpnessPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">filter_center_focus</span>
+                    <span>Sharpness</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="0" class="slider" id="sharpnessSlider">
+                <input type="number" min="0" max="100" value="0" class="slider-value" id="sharpnessValue">
+            </div>
+        </div>
+
+        <div class="control-panel" id="clarityPanel">
+            <div class="control-header">
+                <div class="control-title">
+                    <span class="material-icons">auto_awesome</span>
+                    <span>Clarity</span>
+                </div>
+                <button class="close-controls material-icons">close</button>
+            </div>
+            <div class="slider-container">
+                <input type="range" min="-100" max="100" value="0" class="slider" id="claritySlider">
+                <input type="number" min="-100" max="100" value="0" class="slider-value" id="clarityValue">
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas for image processing -->
+    <canvas id="imageCanvas"></canvas>
+
+    <script>
+        // DOM Elements
+        const mainContent = document.getElementById('mainContent');
+        const bottomControls = document.getElementById('bottomControls');
+        const closeControls = document.getElementById('closeControls');
+        const fileInput = document.getElementById('fileInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const mainImage = document.getElementById('mainImage');
+        const imagePlaceholder = document.getElementById('imagePlaceholder');
+        const exportBtn = document.getElementById('exportBtn');
+        const imageContainer = document.getElementById('imageContainer');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const ctx = imageCanvas.getContext('2d');
+
+        // Control tabs and panels
+        const controlTabs = document.querySelectorAll('.control-tab');
+        const controlPanels = document.querySelectorAll('.control-panel');
+        const sliders = document.querySelectorAll('.slider');
+        const sliderValues = document.querySelectorAll('.slider-value');
+
+        // State variables
+        let imageLoaded = false;
+        let originalImage = null;
+        let filterValues = {
+            exposure: 0,
+            brightness: 0,
+            contrast: 0,
+            highlights: 0,
+            shadows: 0,
+            saturation: 0,
+            vibrance: 0,
+            warmth: 0,
+            tint: 0,
+            vignette: 0,
+            grain: 0,
+            sharpness: 0,
+            clarity: 0
+        };
+
+        // Initialize the application
+        function init() {
+            // Set up event listeners
+            closeControls.addEventListener('click', hideBottomControls);
+            
+            controlTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and panels
+                    controlTabs.forEach(t => t.classList.remove('active'));
+                    controlPanels.forEach(p => p.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Show corresponding panel
+                    const panelId = tab.dataset.panel + 'Panel';
+                    document.getElementById(panelId).classList.add('active');
+                    
+                    // Show bottom controls if not already visible
+                    if (!bottomControls.classList.contains('active')) {
+                        showBottomControls();
+                    }
+                });
+            });
+            
+            // Connect sliders and value inputs
+            sliders.forEach((slider, index) => {
+                slider.addEventListener('input', () => {
+                    // Update slider value display
+                    sliderValues[index].value = slider.value;
+                    
+                    // Update filter values
+                    const filterName = slider.id.replace('Slider', '');
+                    filterValues[filterName] = parseInt(slider.value);
+                    
+                    // Apply filters if image is loaded
+                    if (imageLoaded) {
+                        applyFilters();
+                    }
+                });
+            });
+            
+            sliderValues.forEach((valueInput, index) => {
+                valueInput.addEventListener('input', () => {
+                    let value = parseInt(valueInput.value);
+                    const min = parseInt(valueInput.min);
+                    const max = parseInt(valueInput.max);
+                    
+                    // Ensure value is within range
+                    if (value < min) value = min;
+                    if (value > max) value = max;
+                    
+                    valueInput.value = value;
+                    sliders[index].value = value;
+                    
+                    // Update filter values
+                    const filterName = valueInput.id.replace('Value', '');
+                    filterValues[filterName] = value;
+                    
+                    // Apply filters if image is loaded
+                    if (imageLoaded) {
+                        applyFilters();
+                    }
+                });
+            });
+            
+            // File upload handling
+            fileInput.addEventListener('change', handleFileSelect);
+            uploadArea.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', handleDragOver);
+            uploadArea.addEventListener('dragleave', handleDragLeave);
+            uploadArea.addEventListener('drop', handleDrop);
+            
+            // Export button
+            exportBtn.addEventListener('click', exportImage);
+        }
+
+        // Show bottom controls
+        function showBottomControls() {
+            bottomControls.classList.add('active');
+            mainContent.style.paddingBottom = '200px';
+        }
+
+        // Hide bottom controls
+        function hideBottomControls() {
+            bottomControls.classList.remove('active');
+            mainContent.style.paddingBottom = '24px';
+        }
+
+        // Handle file selection
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file && file.type.match('image.*')) {
+                loadImage(file);
+            }
+        }
+
+        // Handle drag over
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.style.borderColor = 'var(--primary)';
+            uploadArea.style.backgroundColor = 'var(--primary-light)';
+        }
+
+        // Handle drag leave
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.style.borderColor = 'var(--border)';
+            uploadArea.style.backgroundColor = 'transparent';
+        }
+
+        // Handle drop
+        function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            uploadArea.style.borderColor = 'var(--border)';
+            uploadArea.style.backgroundColor = 'transparent';
+            
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.match('image.*')) {
+                loadImage(file);
+            }
+        }
+
+        // Load image and display it
+        function loadImage(file) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                originalImage = new Image();
+                originalImage.onload = function() {
+                    // Set canvas dimensions to match image
+                    imageCanvas.width = originalImage.width;
+                    imageCanvas.height = originalImage.height;
+                    
+                    // Draw the original image on canvas
+                    ctx.drawImage(originalImage, 0, 0);
+                    
+                    // Display the image
+                    mainImage.src = e.target.result;
+                    mainImage.style.display = 'block';
+                    imagePlaceholder.style.display = 'none';
+                    uploadArea.style.display = 'none';
+                    exportBtn.disabled = false;
+                    imageLoaded = true;
+                    
+                    // Show the bottom controls automatically
+                    showBottomControls();
+                    
+                    // Reset all filters
+                    resetFilters();
+                    applyFilters();
+                };
+                originalImage.src = e.target.result;
+            };
+            
+            reader.readAsDataURL(file);
+        }
+
+        // Reset all filters to default values
+        function resetFilters() {
+            for (let filter in filterValues) {
+                filterValues[filter] = 0;
+            }
+            
+            // Update UI
+            sliders.forEach(slider => {
+                slider.value = 0;
+            });
+            
+            sliderValues.forEach(valueInput => {
+                valueInput.value = 0;
+            });
+        }
+
+        // Apply all filters to the image
+        function applyFilters() {
+            if (!originalImage || !imageLoaded) return;
+            
+            // Draw the original image
+            ctx.drawImage(originalImage, 0, 0);
+            
+            // Get image data
+            let imageData = ctx.getImageData(0, 0, imageCanvas.width, imageCanvas.height);
+            let data = imageData.data;
+            
+            // Apply filters
+            data = applyExposure(data, filterValues.exposure);
+            data = applyBrightness(data, filterValues.brightness);
+            data = applyContrast(data, filterValues.contrast);
+            data = applyHighlights(data, filterValues.highlights);
+            data = applyShadows(data, filterValues.shadows);
+            data = applySaturation(data, filterValues.saturation);
+            data = applyWarmth(data, filterValues.warmth);
+            data = applyVignette(data, filterValues.vignette);
+            
+            // Put the modified image data back to canvas
+            imageData.data.set(data);
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Update the preview image
+            mainImage.src = imageCanvas.toDataURL();
+        }
+
+        // Filter implementation functions
+        function applyExposure(data, value) {
+            const factor = 1 + (value / 100);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.min(255, data[i] * factor);     // R
+                data[i + 1] = Math.min(255, data[i + 1] * factor); // G
+                data[i + 2] = Math.min(255, data[i + 2] * factor); // B
+            }
+            
+            return data;
+        }
+        
+        function applyBrightness(data, value) {
+            const adjustment = value * 2.55;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.max(0, Math.min(255, data[i] + adjustment));     // R
+                data[i + 1] = Math.max(0, Math.min(255, data[i + 1] + adjustment)); // G
+                data[i + 2] = Math.max(0, Math.min(255, data[i + 2] + adjustment)); // B
+            }
+            
+            return data;
+        }
+        
+        function applyContrast(data, value) {
+            const factor = (259 * (value + 255)) / (255 * (259 - value));
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.max(0, Math.min(255, factor * (data[i] - 128) + 128));     // R
+                data[i + 1] = Math.max(0, Math.min(255, factor * (data[i + 1] - 128) + 128)); // G
+                data[i + 2] = Math.max(0, Math.min(255, factor * (data[i + 2] - 128) + 128)); // B
+            }
+            
+            return data;
+        }
+        
+        function applyHighlights(data, value) {
+            const adjustment = value / 100;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3 / 255;
+                
+                if (brightness > 0.7) {
+                    const factor = 1 + adjustment * (brightness - 0.7) / 0.3;
+                    data[i] = Math.min(255, data[i] * factor);
+                    data[i + 1] = Math.min(255, data[i + 1] * factor);
+                    data[i + 2] = Math.min(255, data[i + 2] * factor);
+                }
+            }
+            
+            return data;
+        }
+        
+        function applyShadows(data, value) {
+            const adjustment = value / 100;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3 / 255;
+                
+                if (brightness < 0.3) {
+                    const factor = 1 + adjustment * (0.3 - brightness) / 0.3;
+                    data[i] = Math.min(255, data[i] * factor);
+                    data[i + 1] = Math.min(255, data[i + 1] * factor);
+                    data[i + 2] = Math.min(255, data[i + 2] * factor);
+                }
+            }
+            
+            return data;
+        }
+        
+        function applySaturation(data, value) {
+            const adjustment = value / 100;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+                
+                const gray = 0.2989 * r + 0.5870 * g + 0.1140 * b;
+                
+                data[i] = Math.max(0, Math.min(255, gray + (r - gray) * (1 + adjustment)));
+                data[i + 1] = Math.max(0, Math.min(255, gray + (g - gray) * (1 + adjustment)));
+                data[i + 2] = Math.max(0, Math.min(255, gray + (b - gray) * (1 + adjustment)));
+            }
+            
+            return data;
+        }
+        
+        function applyWarmth(data, value) {
+            const adjustment = value / 100;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                data[i] = Math.max(0, Math.min(255, data[i] + adjustment * 10));
+                data[i + 2] = Math.max(0, Math.min(255, data[i + 2] - adjustment * 10));
+            }
+            
+            return data;
+        }
+        
+        function applyVignette(data, value) {
+            if (value === 0) return data;
+            
+            const amount = value / 100;
+            const width = imageCanvas.width;
+            const height = imageCanvas.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+            
+            for (let i = 0; i < data.length; i += 4) {
+                const x = (i / 4) % width;
+                const y = Math.floor((i / 4) / width);
+                
+                const distance = Math.sqrt(
+                    Math.pow(x - centerX, 2) + 
+                    Math.pow(y - centerY, 2)
+                );
+                
+                const vignette = 1 - (distance / maxDistance) * amount;
+                
+                data[i] = Math.max(0, data[i] * vignette);
+                data[i+1] = Math.max(0, data[i+1] * vignette);
+                data[i+2] = Math.max(0, data[i+2] * vignette);
+            }
+            
+            return data;
+        }
+
+        // Export image
+        function exportImage() {
+            if (!imageLoaded) return;
+            
+            const link = document.createElement('a');
+            link.download = 'edited-image.png';
+            link.href = imageCanvas.toDataURL();
+            link.click();
+        }
+
+        // Initialize the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

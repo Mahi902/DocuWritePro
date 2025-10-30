@@ -54,6 +54,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - **GoTo Code**: Navigation feature in an IDE/editor
 - **Code Snipper**: Storing or managing code snippets
 - **Image Editor**: Editing images
+- **Attribution Editor**: Edit attribution values of images
 - **Image Generator**: Generating new images
 - **Drawing Board**: A simple drawing or sketching tool
 

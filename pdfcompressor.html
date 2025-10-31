@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Compressor</title>
+    <!-- Tailwind CSS CDN for modern styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-blue': '#1A73E8', // Google Blue
+                        'primary-blue-hover': '#186ADF',
+                        'light-gray': '#F1F3F4', // Light gray background
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- PDF Libraries (Keeping the original algorithm) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <style>
+        /* Custom styles for file input aesthetic */
+        .file-upload-label {
+            display: block;
+            cursor: pointer;
+            border: 2px dashed #D2E3FC;
+            background-color: #F8F9FA;
+            padding: 40px 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .file-upload-label:hover {
+            border-color: #AECBFA;
+            background-color: #EDF5FF;
+        }
+        #pdfUpload {
+            display: none; /* Hide the default input */
+        }
+    </style>
+</head>
+<body class="bg-light-gray min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+
+    <!-- Main Card Container -->
+    <div class="w-full max-w-xl bg-white p-8 md:p-10 rounded-2xl shadow-xl shadow-gray-200/50">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">
+                <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 mr-2 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2-12H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2z" />
+                </svg>
+                PDF Compressor
+            </h1>
+            <p class="text-gray-500 mt-2">Reduce file size while maintaining excellent document quality.</p>
+        </header>
+
+        <!-- File Input Area -->
+        <input type="file" id="pdfUpload" accept="application/pdf">
+        <label for="pdfUpload" class="file-upload-label">
+            <p id="fileStatus" class="text-lg font-medium text-gray-600">
+                Drag & Drop or Click to Upload PDF
+            </p>
+            <p class="text-sm text-gray-400 mt-1">Maximum file size 100MB</p>
+        </label>
+
+        <!-- Action Button -->
+        <button id="compressBtn" disabled class="mt-6 w-full py-3 px-4 text-white font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary-blue/50 disabled:opacity-50 bg-primary-blue hover:bg-primary-blue-hover">
+            Compress PDF
+        </button>
+
+        <!-- Status and Download Area -->
+        <div class="mt-4 flex flex-col items-center">
+            <!-- Progress text for steps -->
+            <div id="progress" class="text-sm font-medium text-gray-600 h-6"></div>
+            
+            <!-- Result metrics (Initially hidden) -->
+            <div id="metrics" class="text-center mt-4 w-full p-4 border rounded-xl bg-light-gray hidden">
+                <p class="text-lg font-semibold text-green-700 mb-2" id="resultMessage"></p>
+                <div class="flex justify-between text-sm text-gray-700">
+                    <span>Original Size: <strong id="oldSize">--</strong></span>
+                    <span>New Size: <strong id="newSize">--</strong></span>
+                    <span>Saved: <strong id="percentage" class="text-primary-blue">--</strong></span>
+                </div>
+            </div>
+
+            <!-- Download Button (Initially hidden) -->
+            <button id="downloadBtn" class="mt-6 py-3 px-6 text-white font-semibold rounded-xl bg-green-600 hover:bg-green-700 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-600/50 hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 11.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v7a1 1 0 11-2 0V3a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                Download Compressed PDF
+            </button>
+        </div>
+    </div>
+
+<script>
+    // --- Utility Function ---
+    // Helper to convert bytes to readable format (KB, MB)
+    const formatBytes = (bytes, decimals = 2) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
+
+    // --- DOM Elements & State ---
+    const fileInput = document.getElementById('pdfUpload');
+    const compressBtn = document.getElementById('compressBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const progressText = document.getElementById('progress');
+    const fileStatus = document.getElementById('fileStatus');
+    const metricsDiv = document.getElementById('metrics');
+    const resultMessageEl = document.getElementById('resultMessage');
+    const oldSizeEl = document.getElementById('oldSize');
+    const newSizeEl = document.getElementById('newSize');
+    const percentageEl = document.getElementById('percentage');
+
+    let pdfData = null;
+    let compressedBlob = null; // Variable to store the resulting blob
+
+    // Function to hide the result/download areas
+    const resetUI = () => {
+        downloadBtn.classList.add('hidden');
+        metricsDiv.classList.add('hidden');
+        progressText.textContent = "";
+        fileStatus.classList.remove('text-primary-blue');
+        fileStatus.classList.add('text-gray-600');
+    }
+
+    // Enable button and update status when file selected
+    fileInput.addEventListener('change', (e) => {
+        pdfData = e.target.files[0];
+        resetUI();
+        if (pdfData) {
+            compressBtn.disabled = false;
+            fileStatus.textContent = `File Selected: ${pdfData.name} (${formatBytes(pdfData.size)})`;
+            fileStatus.classList.remove('text-gray-600');
+            fileStatus.classList.add('text-primary-blue');
+        } else {
+            compressBtn.disabled = true;
+            fileStatus.textContent = "Drag & Drop or Click to Upload PDF";
+        }
+    });
+
+    // Handle manual download when button is clicked
+    downloadBtn.addEventListener('click', () => {
+        if (compressedBlob) {
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(compressedBlob);
+            link.download = "compressed_optimized.pdf";
+            link.click();
+        }
+    });
+
+    // Main Compression Logic
+    compressBtn.addEventListener('click', async () => {
+        if (!pdfData) return;
+        
+        // Setup initial state
+        const originalSize = pdfData.size;
+        compressBtn.disabled = true;
+        compressBtn.textContent = "Working...";
+        progressText.textContent = "Reading file and initializing...";
+        resetUI(); // Clear previous results
+
+        try {
+            const arrayBuffer = await pdfData.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const outputPdf = await PDFLib.PDFDocument.create();
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                progressText.textContent = `Rendering page ${i} of ${pdf.numPages}...`;
+                const page = await pdf.getPage(i);
+                
+                // High quality rendering: scale is set to 2.5
+                const viewport = page.getViewport({ scale: 2.5 }); 
+                
+                const canvas = document.createElement("canvas");
+                const context = canvas.getContext("2d");
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                
+                await page.render({ canvasContext: context, viewport }).promise;
+
+                // Convert canvas content to high-quality JPEG (0.95 quality)
+                const imgData = canvas.toDataURL("image/jpeg", 0.95);
+                const imgBytes = await fetch(imgData).then(r => r.arrayBuffer());
+                
+                const pdfImage = await outputPdf.embedJpg(imgBytes);
+                const pageNew = outputPdf.addPage([viewport.width, viewport.height]);
+                
+                pageNew.drawImage(pdfImage, { 
+                    x: 0, y: 0, width: viewport.width, height: viewport.height 
+                });
+            }
+
+            progressText.textContent = "Finalizing PDF...";
+            const pdfBytes = await outputPdf.save();
+            const newSize = pdfBytes.length;
+
+            // --- Calculation & Metrics Display ---
+            const sizeDifference = originalSize - newSize;
+            const percentage = ((sizeDifference / originalSize) * 100).toFixed(1);
+
+            // Store the blob and update UI
+            compressedBlob = new Blob([pdfBytes], { type: "application/pdf" });
+            
+            // Set metrics
+            oldSizeEl.textContent = formatBytes(originalSize);
+            newSizeEl.textContent = formatBytes(newSize);
+            percentageEl.textContent = `${percentage}%`;
+
+            if (percentage > 0.1) {
+                resultMessageEl.textContent = "Compression Successful!";
+                percentageEl.classList.add('text-green-600');
+            } else {
+                resultMessageEl.textContent = "Compression Complete (Minimal Change)";
+                percentageEl.classList.add('text-yellow-600');
+            }
+            
+            progressText.textContent = "Ready to download your optimized file.";
+            metricsDiv.classList.remove('hidden'); // Show metrics
+            downloadBtn.classList.remove('hidden'); // Show download button
+            fileStatus.textContent = "Compression successful. Ready to download.";
+
+
+        } catch (error) {
+            console.error("Compression failed:", error);
+            progressText.textContent = `❌ Error: Compression failed. Please try a different file. (${error.message})`;
+            metricsDiv.classList.add('hidden'); // Hide metrics on failure
+        } finally {
+            compressBtn.disabled = false;
+            compressBtn.textContent = "Compress PDF";
+            // Do not clear pdfData so user can retry compression if needed
+            fileInput.value = ''; // Reset file input UI
+        }
+    });
+</script>
+</body>
+</html>

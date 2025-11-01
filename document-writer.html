@@ -4760,33 +4760,28 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- Full Markdown-from-URL support -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  const editor = document.getElementById("editor");
-  if (!editor) {
-    console.error("❌ Editor not found on page");
-    return;
+(function() {
+  // Wait until the editor is ready (DocuWrite Pro loads it dynamically)
+  function waitForEditor(callback) {
+    const editor = document.getElementById("editor");
+    if (editor) callback(editor);
+    else setTimeout(() => waitForEditor(callback), 200);
   }
 
-  // Function to safely convert Markdown → HTML
-  function renderMarkdownFromHash() {
-    const raw = decodeURIComponent(location.hash.slice(1)).trim();
-    if (!raw) return;
+  function renderMarkdownFromHash(editor) {
+    const hash = decodeURIComponent(location.hash.slice(1)).trim();
+    if (!hash) return;
 
-    try {
-      const html = marked.parse(raw, { breaks: true, gfm: true });
-      editor.innerHTML = html;
-    } catch (err) {
-      console.error("Markdown parse error:", err);
-      editor.innerText = raw; // fallback plain text
-    }
+    const html = marked.parse(hash, { gfm: true, breaks: true });
+    editor.innerHTML = html;
   }
 
-  // Load markdown from URL hash
-  renderMarkdownFromHash();
-
-  // Re-render if hash changes
-  window.addEventListener("hashchange", renderMarkdownFromHash);
-});
+  // Initialize once editor is ready
+  waitForEditor(editor => {
+    renderMarkdownFromHash(editor);
+    window.addEventListener("hashchange", () => renderMarkdownFromHash(editor));
+  });
+})();
 </script>
 	
 	

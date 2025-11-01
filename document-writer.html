@@ -4756,6 +4756,28 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial sync on page load
   syncWatermarkToAllPages();
 </script>
+<!-- Full Markdown from URL hash -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const editor = document.getElementById("editor");
+  if (!editor) return;
 
+  // Convert Markdown → HTML using marked.js
+  function renderMarkdownFromHash() {
+    const raw = decodeURIComponent(location.hash.slice(1));
+    if (!raw.trim()) return;
+    const html = marked.parse(raw, { breaks: true });
+    editor.innerHTML = html;
+  }
+
+  // Initial render
+  renderMarkdownFromHash();
+
+  // Update instantly when the URL hash changes
+  window.addEventListener("hashchange", renderMarkdownFromHash);
+});
+</script>
+	
 </body>
 </html>

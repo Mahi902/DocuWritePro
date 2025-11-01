@@ -4758,31 +4758,95 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 <!-- Full Markdown from URL hash -->
 <!-- Full Markdown-from-URL support -->
+<!-- Markdown support -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-(function() {
-  // Wait until the editor is ready (DocuWrite Pro loads it dynamically)
-  function waitForEditor(callback) {
-    const editor = document.getElementById("editor");
-    if (editor) callback(editor);
-    else setTimeout(() => waitForEditor(callback), 200);
+document.addEventListener("DOMContentLoaded", function () {
+  const hash = decodeURIComponent(location.hash.slice(1)).trim();
+  if (!hash) return; // no shared canvas content, skip
+
+  // Wait for editor to exist
+  function waitForEditor(cb) {
+    const ed = document.getElementById("editor");
+    if (ed) cb(ed);
+    else setTimeout(() => waitForEditor(cb), 200);
   }
 
-  function renderMarkdownFromHash(editor) {
-    const hash = decodeURIComponent(location.hash.slice(1)).trim();
-    if (!hash) return;
+  // Create popup
+  function showSharedCanvasPopup(editor, markdown) {
+    const overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = "100%";
+    overlay.style.background = "rgba(0,0,0,0.5)";
+    overlay.style.backdropFilter = "blur(6px)";
+    overlay.style.display = "flex";
+    overlay.style.justifyContent = "center";
+    overlay.style.alignItems = "center";
+    overlay.style.zIndex = "9999";
+    overlay.style.animation = "fadeIn 0.3s ease";
 
-    const html = marked.parse(hash, { gfm: true, breaks: true });
-    editor.innerHTML = html;
+    const popup = document.createElement("div");
+    popup.style.background = "white";
+    popup.style.padding = "25px 35px";
+    popup.style.borderRadius = "16px";
+    popup.style.fontFamily = "Inter, system-ui, sans-serif";
+    popup.style.textAlign = "center";
+    popup.style.boxShadow = "0 10px 40px rgba(0,0,0,0.2)";
+    popup.style.maxWidth = "350px";
+    popup.style.animation = "slideUp 0.3s ease";
+
+    popup.innerHTML = `
+      <h2 style="margin-bottom:10px;">🧩 Shared Canvas</h2>
+      <p style="color:#444; font-size:15px; line-height:1.4;">
+        This is a shared canvas.<br>Click <b>Copy Canvas</b> to load it into your editor.
+      </p>
+      <button id="copyCanvasBtn" style="
+        margin-top:15px;
+        padding:10px 20px;
+        background:#2563eb;
+        color:white;
+        border:none;
+        border-radius:8px;
+        font-weight:600;
+        cursor:pointer;
+      ">Copy Canvas</button>
+      <br><br>
+      <button id="closePopupBtn" style="
+        background:none;
+        border:none;
+        color:#555;
+        font-size:13px;
+        cursor:pointer;
+      ">Cancel</button>
+    `;
+
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+
+    // Button events
+    popup.querySelector("#copyCanvasBtn").onclick = () => {
+      const html = marked.parse(markdown, { gfm: true, breaks: true });
+      editor.innerHTML = html;
+      overlay.remove();
+    };
+    popup.querySelector("#closePopupBtn").onclick = () => overlay.remove();
   }
 
-  // Initialize once editor is ready
+  // Load only after editor ready
   waitForEditor(editor => {
-    renderMarkdownFromHash(editor);
-    window.addEventListener("hashchange", () => renderMarkdownFromHash(editor));
+    showSharedCanvasPopup(editor, hash);
   });
-})();
+});
 </script>
+
+<style>
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+</style>
+	
 	
 	
 </body>

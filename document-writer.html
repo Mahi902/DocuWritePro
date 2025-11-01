@@ -4757,27 +4757,38 @@ document.addEventListener("DOMContentLoaded", () => {
   syncWatermarkToAllPages();
 </script>
 <!-- Full Markdown from URL hash -->
+<!-- Full Markdown-from-URL support -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
   const editor = document.getElementById("editor");
-  if (!editor) return;
-
-  // Convert Markdown → HTML using marked.js
-  function renderMarkdownFromHash() {
-    const raw = decodeURIComponent(location.hash.slice(1));
-    if (!raw.trim()) return;
-    const html = marked.parse(raw, { breaks: true });
-    editor.innerHTML = html;
+  if (!editor) {
+    console.error("❌ Editor not found on page");
+    return;
   }
 
-  // Initial render
+  // Function to safely convert Markdown → HTML
+  function renderMarkdownFromHash() {
+    const raw = decodeURIComponent(location.hash.slice(1)).trim();
+    if (!raw) return;
+
+    try {
+      const html = marked.parse(raw, { breaks: true, gfm: true });
+      editor.innerHTML = html;
+    } catch (err) {
+      console.error("Markdown parse error:", err);
+      editor.innerText = raw; // fallback plain text
+    }
+  }
+
+  // Load markdown from URL hash
   renderMarkdownFromHash();
 
-  // Update instantly when the URL hash changes
+  // Re-render if hash changes
   window.addEventListener("hashchange", renderMarkdownFromHash);
 });
 </script>
+	
 	
 </body>
 </html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocuWritePro Share</title>
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    color: #333;
+    font-family: system-ui, sans-serif;
+  }
+  #loading {
+    font-size: 1.1rem;
+    opacity: 0.7;
+    text-align: center;
+  }
+  iframe {
+    width: 100%;
+    height: 100vh;
+    border: none;
+  }
+</style>
+</head>
+<body>
+<div id="loading">Generating PDF from markdown...</div>
+<iframe id="pdfFrame" hidden></iframe>
+
+<!-- Markdown + PDF Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+async function main() {
+  // Read markdown from URL hash (#)
+  const markdownData = decodeURIComponent(location.hash.slice(1)) || "";
+
+  if (!markdownData.trim()) {
+    document.getElementById("loading").textContent = "⚠️ No markdown content found in the URL.";
+    return;
+  }
+
+  // Convert Markdown → HTML
+  const htmlContent = marked.parse(markdownData);
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = htmlContent;
+  tempDiv.style.padding = "20px";
+  tempDiv.style.fontFamily = "Arial, sans-serif";
+  tempDiv.style.lineHeight = "1.6";
+
+  // Convert HTML → PDF (as Blob)
+  const pdfOptions = {
+    margin: 10,
+    filename: "shared_doc.pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+  };
+
+  const pdfBlob = await html2pdf().set(pdfOptions).from(tempDiv).outputPdf('blob');
+  const pdfURL = URL.createObjectURL(pdfBlob);
+
+  // Show PDF
+  const frame = document.getElementById("pdfFrame");
+  frame.src = pdfURL;
+  frame.hidden = false;
+  document.getElementById("loading").remove();
+}
+
+main();
+</script>
+</body>
+</html>

@@ -1,130 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>DocuWritePro Share</title>
-<style>
-  body, html {
-    margin: 0;
-    height: 100%;
-    width: 100%;
-    font-family: Arial, sans-serif;
-    background: #f8fafc;
-  }
-
-  #pdfContainer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 50px; /* leave space for bottom bar */
-  }
-
-  iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-  }
-
-  #bottomBar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 50px;
-    background: #007bff;
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 15px;
-    box-sizing: border-box;
-    font-size: 14px;
-  }
-
-  #downloadBtn {
-    background: white;
-    color: #007bff;
-    border: none;
-    padding: 5px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-
-  #loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #333;
-    font-size: 16px;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuWritePro Share & PDF Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font: Inter -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .document-container {
+            /* Basic styling for the content box before it's converted to PDF */
+            padding: 24px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+            max-width: 8.5in; /* Standard paper width */
+            margin: 0 auto;
+        }
+        /* Style for rendered markdown elements */
+        .document-container h1 { font-size: 2em; margin-bottom: 0.5em; border-bottom: 2px solid #3b82f6; padding-bottom: 0.2em; }
+        .document-container h2 { font-size: 1.5em; margin-bottom: 0.4em; border-bottom: 1px solid #d1d5db; padding-bottom: 0.1em; }
+        .document-container p { margin-bottom: 1em; line-height: 1.6; }
+        .document-container ul, .document-container ol { margin-left: 20px; margin-bottom: 1em; }
+    </style>
+    <!-- Load required libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@13.0.0/lib/marked.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body>
-<div id="pdfContainer">
-  <iframe id="pdfFrame" hidden></iframe>
-</div>
-<div id="bottomBar" hidden>
-  <span>This Document was shared.</span>
-  <button id="downloadBtn">Download PDF</button>
-</div>
-<div id="loading">Generating PDF from markdown...</div>
+<body class="bg-gray-100 p-4 md:p-8 min-h-screen">
 
-<!-- Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Main Application Container -->
+    <div id="app" class="max-w-6xl mx-auto">
+        
+        <!-- Status Panel -->
+        <div id="status-panel" class="bg-blue-500 text-white p-4 rounded-xl shadow-lg mb-8 transition-all duration-300">
+            <h2 class="text-xl font-bold">PDF Status</h2>
+            <p id="status-message" class="mt-2">Waiting for content in URL hash...</p>
+        </div>
 
-<script>
-async function main() {
-  const markdownData = decodeURIComponent(location.hash.slice(1)) || "";
+        <!-- Document Preview Area (where the PDF content is generated from) -->
+        <div id="pdf-container" class="bg-white rounded-xl p-6 shadow-2xl">
+            <h3 class="text-2xl font-semibold mb-4 text-gray-700">Rendered Document Preview</h3>
+            <div id="pdf-content" class="document-container min-h-[300px] text-gray-800">
+                <!-- Content will be inserted here from URL hash or example text -->
+                <p class="text-center text-gray-500 py-16">
+                    No Markdown content loaded yet. Use the tool below to generate a sharable link.
+                </p>
+            </div>
+        </div>
 
-  if (!markdownData.trim()) {
-    document.getElementById("loading").textContent = "⚠️ No markdown content found in the URL.";
-    return;
-  }
+        <!-- Link Generator Tool (for testing and demonstration) -->
+        <div class="mt-8 bg-gray-50 p-6 rounded-xl shadow-lg border border-gray-200">
+            <h3 class="text-2xl font-semibold text-gray-700 mb-4">Sharable Link Generator</h3>
+            <textarea id="markdown-input" rows="6" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500" placeholder="Enter your Markdown content here...">
+# Project Report 2025
 
-  // Convert Markdown → HTML
-  const htmlContent = marked.parse(markdownData);
-  const tempDiv = document.createElement("div");
-  tempDiv.innerHTML = htmlContent;
-  tempDiv.style.padding = "20px";
-  tempDiv.style.fontFamily = "Arial, sans-serif";
-  tempDiv.style.lineHeight = "1.6";
+## Executive Summary
+The project milestone was successfully reached on time, exceeding expectations by 15%.
 
-  // Generate PDF blob
-  const pdfBlob = await html2pdf().from(tempDiv).set({
-    margin: 10,
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).outputPdf('blob');
+* Task A: Completed
+* Task B: Completed
+* Task C: Pending
 
-  const blobUrl = URL.createObjectURL(pdfBlob);
+Generated on: 2025-11-07
+            </textarea>
+            
+            <button onclick="generateShareLink()" 
+                    class="mt-3 w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150 transform hover:scale-[1.01]">
+                Generate Sharable URL
+            </button>
 
-  // Show PDF in iframe
-  const frame = document.getElementById("pdfFrame");
-  frame.src = blobUrl;
-  frame.hidden = false;
+            <div id="share-output" class="mt-4 hidden p-3 bg-white border border-green-300 rounded-lg">
+                <p class="font-medium text-green-700 mb-2">Sharable Link Generated:</p>
+                <input id="share-url" type="text" readonly class="w-full p-2 border border-green-200 bg-green-50 rounded text-sm text-gray-600 truncate" />
+                <button onclick="copyToClipboard('share-url')" 
+                        class="mt-2 px-4 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 transition">
+                    Copy Link
+                </button>
+                <div id="copy-message" class="text-sm text-green-600 mt-2 hidden">Copied!</div>
+            </div>
+        </div>
 
-  // Show bottom bar
-  const bottomBar = document.getElementById("bottomBar");
-  bottomBar.hidden = false;
+    </div>
 
-  // Set download button
-  const downloadBtn = document.getElementById("downloadBtn");
-  downloadBtn.onclick = () => {
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = "shared_document.pdf";
-    a.click();
-  };
+    <script>
+        // --- Utility Functions ---
 
-  // Remove loading
-  document.getElementById("loading").remove();
-}
+        /** Encodes text to Base64 (URL-safe) */
+        function encodeBase64(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
 
-main();
-</script>
+        /** Decodes Base64 to text */
+        function decodeBase64(str) {
+            try {
+                return decodeURIComponent(escape(atob(str)));
+            } catch (e) {
+                console.error("Decoding error:", e);
+                return null;
+            }
+        }
+
+        /** Utility to copy text to clipboard */
+        function copyToClipboard(elementId) {
+            const input = document.getElementById(elementId);
+            input.select();
+            input.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            const message = document.getElementById('copy-message');
+            message.classList.remove('hidden');
+            setTimeout(() => message.classList.add('hidden'), 2000);
+        }
+
+        /** Shows a custom message box instead of alert() */
+        function showMessage(title, message, type = 'blue') {
+            const panel = document.getElementById('status-panel');
+            const statusMessage = document.getElementById('status-message');
+            panel.className = `bg-${type}-500 text-white p-4 rounded-xl shadow-lg mb-8 transition-all duration-300`;
+            panel.querySelector('h2').textContent = title;
+            statusMessage.textContent = message;
+        }
+
+        // --- Core Application Logic ---
+
+        /**
+         * Generates the PDF from the content in the #pdf-content div.
+         */
+        async function generatePdf() {
+            showMessage("Processing...", "Converting HTML content to PDF...", "yellow");
+            const input = document.getElementById('pdf-content');
+            
+            try {
+                // Use html2canvas to render the HTML into a canvas/image
+                const canvas = await html2canvas(input, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+
+                // Initialize jsPDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4'); // Portrait, mm units, A4 size (210mm x 297mm)
+
+                const imgWidth = 210; // A4 width in mm
+                const pageHeight = 297; // A4 height in mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // Add the image to the PDF, handling multiple pages if needed
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                // Finalize and prompt download
+                const docTitle = document.title.replace(' | DocuWritePro Share & PDF Generator', '');
+                pdf.save(`${docTitle || 'document'}_share.pdf`);
+
+                showMessage("Success!", "PDF generated and download initiated. Document shown above.", "green");
+
+            } catch (error) {
+                console.error("PDF Generation Error:", error);
+                showMessage("Error", "Failed to generate PDF. Check console for details.", "red");
+            }
+        }
+
+
+        /**
+         * Checks the URL hash for Markdown content and processes it.
+         */
+        async function loadContentFromUrl() {
+            const contentContainer = document.getElementById('pdf-content');
+            const hashContent = window.location.hash.substring(1); // Get content after #
+
+            if (hashContent) {
+                const markdown = decodeBase64(hashContent);
+                
+                if (markdown) {
+                    showMessage("Content Found", "Markdown content loaded from URL. Preparing for PDF generation...", "blue");
+                    
+                    // 1. Convert Markdown to HTML using marked.js
+                    contentContainer.innerHTML = marked.parse(markdown);
+
+                    // 2. Add title dynamically if an H1 exists
+                    const firstH1 = contentContainer.querySelector('h1');
+                    if (firstH1) {
+                        document.title = `${firstH1.textContent} | DocuWritePro Share & PDF Generator`;
+                    } else {
+                         document.title = `Shared Document | DocuWritePro Share & PDF Generator`;
+                    }
+                    
+                    // 3. Wait a moment for rendering and then generate PDF
+                    setTimeout(generatePdf, 500);
+
+                } else {
+                    showMessage("Error", "Failed to decode content from URL hash.", "red");
+                }
+            } else {
+                showMessage("Ready", "No content found in the URL hash. Use the generator tool below to test.", "gray");
+            }
+        }
+
+        /**
+         * Generates and displays the sharable URL.
+         */
+        function generateShareLink() {
+            const markdownInput = document.getElementById('markdown-input').value;
+            if (markdownInput.trim() === "") {
+                showMessage("Input Required", "Please enter some Markdown content first.", "red");
+                return;
+            }
+
+            // Encode the markdown content to Base64
+            const encodedContent = encodeBase64(markdownInput);
+
+            // Construct the full URL
+            // This simulates the requested URL structure (mahi902.github.io/DocuWritePro/share)
+            // Replace with window.location.origin if deploying
+            const simulatedBaseUrl = 'https://mahi902.github.io/DocuWritePro/share'; 
+            const shareUrl = `${simulatedBaseUrl}#${encodedContent}`;
+
+            const shareOutput = document.getElementById('share-output');
+            const shareUrlInput = document.getElementById('share-url');
+
+            shareUrlInput.value = shareUrl;
+            shareOutput.classList.remove('hidden');
+
+            showMessage("Link Ready", "Sharable link created below! Copy it and paste it into the browser to see the automatic PDF generation.", "green");
+        }
+
+        // Run the main function on page load
+        window.onload = loadContentFromUrl;
+        
+    </script>
 </body>
 </html>

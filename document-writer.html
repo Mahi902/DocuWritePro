@@ -1604,6 +1604,122 @@ document.getElementById('editor').addEventListener('input', checkPageOverflowStr
 
 
 
+<!-- Sidebar Button -->
+<button class="sidebar-btn" id="share-page-btn">
+  <i class="material-icons">share</i>
+  Share Page
+</button>
+
+<!-- Share Page Modal -->
+<div class="modal" id="share-page-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Share Page</h3>
+      <button class="close-modal" id="close-share-page">&times;</button>
+    </div>
+    
+    <p style="font-size:14px; color:#555; margin-bottom:10px;">
+      One Link-share can only consist of one page.  
+      For multiple pages, multiple links will be generated.
+    </p>
+
+    <div id="page-list" style="max-height:220px; overflow-y:auto; border:1px solid #ddd; border-radius:6px; padding:10px; margin-bottom:15px;">
+      <!-- Pages will load here dynamically -->
+    </div>
+
+    <div id="share-output" style="display:none; background:#f8f9fa; padding:10px; border-radius:6px; font-size:13px; margin-bottom:15px;"></div>
+
+    <div class="form-actions">
+      <button class="btn btn-secondary" id="cancel-share-page">Cancel</button>
+      <button class="btn btn-primary" id="generate-share-link">Generate</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const shareBtn = document.getElementById("share-page-btn");
+  const modal = document.getElementById("share-page-modal");
+  const closeBtn = document.getElementById("close-share-page");
+  const cancelBtn = document.getElementById("cancel-share-page");
+  const generateBtn = document.getElementById("generate-share-link");
+  const pageList = document.getElementById("page-list");
+  const shareOutput = document.getElementById("share-output");
+
+  function encodeBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  function getViewerBaseURL() {
+    const domain = "https://mahi902.github.io";
+    const viewerPath = "/DocuWritePro/share";
+    return domain + viewerPath;
+  }
+
+  // Open modal
+  shareBtn.addEventListener("click", () => {
+    modal.classList.add("active");
+    loadPageList();
+  });
+
+  // Close modal
+  [closeBtn, cancelBtn].forEach(btn =>
+    btn.addEventListener("click", () => {
+      modal.classList.remove("active");
+      shareOutput.style.display = "none";
+      shareOutput.innerHTML = "";
+    })
+  );
+
+  // Load pages dynamically
+  function loadPageList() {
+    pageList.innerHTML = "";
+    const pages = document.querySelectorAll(".page");
+    if (pages.length === 0) {
+      pageList.innerHTML = "<p>No pages found in editor.</p>";
+      return;
+    }
+
+    pages.forEach((page, index) => {
+      const div = document.createElement("div");
+      div.style.display = "flex";
+      div.style.alignItems = "center";
+      div.style.gap = "10px";
+      div.style.marginBottom = "6px";
+
+      div.innerHTML = `
+        <input type="checkbox" id="page-${index}" value="${index}">
+        <label for="page-${index}">Page ${index + 1}</label>
+      `;
+      pageList.appendChild(div);
+    });
+  }
+
+  // Generate shareable links
+  generateBtn.addEventListener("click", () => {
+    const selected = [...pageList.querySelectorAll("input[type='checkbox']:checked")];
+    if (selected.length === 0) {
+      alert("Please select at least one page.");
+      return;
+    }
+
+    const base = getViewerBaseURL();
+    let outputHTML = "<strong>Generated Links:</strong><br>";
+
+    selected.forEach((chk, i) => {
+      const pageIndex = parseInt(chk.value);
+      const page = document.querySelectorAll(".page")[pageIndex];
+      const markdown = page.innerHTML.trim() || "(Empty Page)";
+      const encoded = encodeBase64(markdown);
+      const fullURL = `${base}#${encoded}`;
+      outputHTML += `<div style="margin-top:5px;"><a href="${fullURL}" target="_blank">${fullURL}</a></div>`;
+    });
+
+    shareOutput.innerHTML = outputHTML;
+    shareOutput.style.display = "block";
+  });
+});
+</script>
 
 
 

@@ -4759,6 +4759,185 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- Full Markdown from URL hash -->
 <!-- Full Markdown-from-URL support -->
 <!-- Markdown support -->
+<!-- Connection Status Popup -->
+<div id="connection-popup" class="connection-popup">
+  <div class="connection-content">
+    <i id="connection-icon" class="material-icons">wifi_off</i>
+    <span id="connection-text">Disconnected.</span>
+    <button id="export-now" class="btn btn-primary">Export</button>
+  </div>
+</div>
+
+<!-- Slide-Up Instruction Bar -->
+<div id="export-instruction-bar" class="export-instruction-bar">
+  <div class="bar-content">
+    <div class="bar-header">
+      <i class="material-icons">download</i>
+      <h3>How to Export Your Work</h3>
+      <button id="close-export-bar" class="bar-close">
+        <i class="material-icons">close</i>
+      </button>
+    </div>
+    <ol class="export-steps">
+      <li>Click the <b>Export</b> icon at the top toolbar.</li>
+      <li>Select your desired format (PDF, Text, or Image).</li>
+      <li>Wait for the export process to complete fully.</li>
+      <li>Save the downloaded file to a safe location before reconnecting.</li>
+    </ol>
+  </div>
+</div>
+
+<style>
+/* Connection Popup */
+.connection-popup {
+  position: fixed;
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary-color, #1a73e8);
+  color: #fff;
+  border-radius: 10px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  transition: bottom 0.5s ease, background 0.3s ease;
+  z-index: 9999;
+  font-family: 'Roboto', sans-serif;
+}
+.connection-popup.show { bottom: 20px; }
+.connection-popup .connection-content { display: flex; align-items: center; gap: 10px; }
+.connection-popup .material-icons { font-size: 22px; }
+.connection-popup.online { background: #34a853; }
+.connection-popup.online #export-now { display: none; }
+.connection-popup button {
+  background: #fff;
+  color: var(--primary-color, #1a73e8);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+.connection-popup button:hover { background: rgba(255,255,255,0.9); }
+
+/* Export Instruction Bar */
+.export-instruction-bar {
+  position: fixed;
+  bottom: -220px;
+  left: 0;
+  width: 100%;
+  background: var(--toolbar-bg, #f8f9fa);
+  color: var(--text-color, #202124);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
+  transition: bottom 0.4s ease;
+  z-index: 9998;
+  font-family: 'Roboto', sans-serif;
+}
+.export-instruction-bar.show { bottom: 0; }
+.bar-content {
+  padding: 16px 22px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+}
+.bar-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+}
+.bar-header i {
+  color: var(--primary-color, #1a73e8);
+  font-size: 22px;
+}
+.bar-close {
+  background: none;
+  border: none;
+  color: var(--text-color, #202124);
+  cursor: pointer;
+  font-size: 22px;
+  transition: color 0.2s;
+}
+.bar-close:hover { color: var(--primary-color, #1a73e8); }
+
+.export-steps {
+  margin: 0;
+  padding-left: 24px;
+  line-height: 1.6;
+  font-size: 14px;
+}
+.export-steps li {
+  margin-bottom: 4px;
+}
+
+/* Dark Mode Support */
+body.dark-mode .export-instruction-bar {
+  background: var(--dark-toolbar, #1e1e1e);
+  color: var(--dark-text, #e8eaed);
+}
+body.dark-mode .bar-close { color: var(--dark-text, #e8eaed); }
+body.dark-mode .bar-close:hover { color: var(--primary-color, #1a73e8); }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const popup = document.getElementById("connection-popup");
+  const icon = document.getElementById("connection-icon");
+  const text = document.getElementById("connection-text");
+  const exportBtn = document.getElementById("export-now");
+  const bar = document.getElementById("export-instruction-bar");
+  const closeBar = document.getElementById("close-export-bar");
+  let online = navigator.onLine;
+
+  function showPopup(status) {
+    popup.classList.add("show");
+    if (status === "offline") {
+      popup.classList.remove("online");
+      icon.textContent = "wifi_off";
+      text.textContent = "Disconnected.";
+      exportBtn.style.display = "inline-block";
+    } else {
+      popup.classList.add("online");
+      icon.textContent = "wifi";
+      text.textContent = "Back Online";
+      setTimeout(() => popup.classList.remove("show"), 2000);
+    }
+  }
+
+  exportBtn.addEventListener("click", () => {
+    bar.classList.add("show");
+  });
+
+  closeBar.addEventListener("click", () => {
+    bar.classList.remove("show");
+  });
+
+  window.addEventListener("online", () => {
+    if (!online) {
+      online = true;
+      showPopup("online");
+      bar.classList.remove("show");
+    }
+  });
+
+  window.addEventListener("offline", () => {
+    online = false;
+    showPopup("offline");
+  });
+
+  if (!navigator.onLine) showPopup("offline");
+});
+</script>
 
             
 </body>

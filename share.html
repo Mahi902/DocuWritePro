@@ -1,130 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>DocuWritePro Share</title>
-<style>
-  body, html {
-    margin: 0;
-    height: 100%;
-    width: 100%;
-    font-family: Arial, sans-serif;
-    background: #f8fafc;
-    overflow: hidden;
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuWritePro PDF Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Material Symbols Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <!-- Font: Inter -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Ensure the body fills the viewport and enables flex layout */
+        body {
+            background-color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+        }
 
-  #pdfViewer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 50px; /* space for bottom bar */
-  }
+        /* Fixed Top Status Bar */
+        #status-panel {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
 
-  embed {
-    width: 100%;
-    height: 100%;
-  }
+        /* Fixed Bottom Control Bar (Footer) */
+        #control-footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            z-index: 20;
+        }
 
-  #bottomBar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 50px;
-    background: #007bff;
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 15px;
-    box-sizing: border-box;
-    font-size: 14px;
-  }
-
-  #downloadBtn {
-    background: white;
-    color: #007bff;
-    border: none;
-    padding: 5px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
-  }
-
-  #loading {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #333;
-    font-size: 16px;
-  }
-</style>
+        /* Content area to fill remaining space, accommodating fixed bars */
+        #document-wrapper {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-top: 56px; /* Space for fixed status bar */
+            padding-bottom: 72px; /* Space for fixed control footer */
+        }
+        
+        /* Document rendering container styling for PDF preview */
+        .document-container {
+            padding: 32px; /* A bit more padding for a cleaner look */
+            background: white;
+            /* Max width to simulate A4 paper on screen */
+            max-width: 8.5in; 
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); /* Light shadow for definition */
+        }
+        
+        /* Style for rendered markdown elements */
+        .document-container h1 { font-size: 2.5em; margin-bottom: 0.5em; border-bottom: 2px solid #3b82f6; padding-bottom: 0.2em; font-weight: 700; }
+        .document-container h2 { font-size: 1.75em; margin-top: 1.5em; margin-bottom: 0.4em; border-bottom: 1px solid #d1d5db; padding-bottom: 0.1em; font-weight: 600; }
+        .document-container p { margin-bottom: 1em; line-height: 1.6; }
+        .document-container ul, .document-container ol { margin-left: 24px; margin-bottom: 1em; list-style-position: outside; }
+        .document-container ul { list-style-type: disc; }
+        .document-container ol { list-style-type: decimal; }
+    </style>
+    <!-- Load required libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@13.0.0/lib/marked.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-<div id="pdfViewer"></div>
-<div id="bottomBar" hidden>
-  <span>This Document was shared.</span>
-  <button id="downloadBtn">Download PDF</button>
-</div>
-<div id="loading">Generating PDF from markdown...</div>
 
-<!-- Libraries -->
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- 1. Top Status/Progress Panel (Fixed Header) -->
+    <div id="status-panel" class="fixed w-full h-14 flex items-center justify-center text-sm font-medium transition-colors duration-300 shadow-md bg-white border-b border-gray-100">
+        <span id="status-message" class="text-gray-600 flex items-center">
+            <span class="material-symbols-outlined mr-2 text-blue-500">info</span>
+            <span id="status-text">Loading content from URL...</span>
+        </span>
+    </div>
 
-<script>
-async function main() {
-  const markdownData = decodeURIComponent(location.hash.slice(1)) || "";
+    <!-- 2. Main Document Wrapper (Scrollable Content Area) -->
+    <div id="document-wrapper">
+        <div id="pdf-container" class="max-w-4xl mx-auto p-4 md:p-8">
+            <div id="pdf-content" class="document-container text-gray-800 min-h-[500px]">
+                <!-- Content will be dynamically inserted here -->
+                <p class="text-center text-gray-400 py-16">
+                    <span class="material-symbols-outlined text-4xl mb-2">description</span>
+                    <br>Waiting for Markdown content to load from the shared URL.
+                </p>
+            </div>
+        </div>
+    </div>
 
-  if (!markdownData.trim()) {
-    document.getElementById("loading").textContent = "⚠️ No markdown content found in the URL.";
-    return;
-  }
+    <!-- 3. Fixed Bottom Control Bar (Blue Footer) -->
+    <div id="control-footer" class="bg-blue-600 text-white shadow-2xl h-16 flex items-center justify-between px-4 sm:px-8">
+        
+        <!-- Document Name Editor -->
+        <div class="flex items-center space-x-2 w-full max-w-sm">
+            <label for="doc-name" class="sr-only">Document Name</label>
+            <input 
+                id="doc-name" 
+                type="text" 
+                value="Shared_Document"
+                class="bg-blue-700 text-white p-2 rounded-lg text-sm font-medium placeholder-blue-300 focus:ring-2 focus:ring-white focus:outline-none w-full"
+                placeholder="Enter document name"
+                aria-label="Document Filename"
+            />
+        </div>
+        
+        <!-- Download Button -->
+        <button id="download-button" onclick="generatePdf()" 
+                class="flex items-center space-x-2 px-4 py-2 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:bg-blue-50 transition duration-150 transform hover:scale-[1.03]">
+            <span class="material-symbols-outlined">download</span>
+            <span>Download PDF</span>
+        </button>
+    </div>
 
-  // Convert Markdown → HTML
-  const htmlContent = marked.parse(markdownData);
-  const tempDiv = document.createElement("div");
-  tempDiv.innerHTML = htmlContent;
-  tempDiv.style.padding = "20px";
-  tempDiv.style.fontFamily = "Arial, sans-serif";
-  tempDiv.style.lineHeight = "1.6";
+    <script>
+        // --- Utility Functions ---
 
-  // Generate PDF blob
-  const pdfBlob = await html2pdf().from(tempDiv).set({
-    margin: 10,
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  }).outputPdf('blob');
+        /** Encodes text to Base64 (URL-safe) */
+        function encodeBase64(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
 
-  const blobUrl = URL.createObjectURL(pdfBlob);
+        /** Decodes Base64 to text */
+        function decodeBase64(str) {
+            try {
+                return decodeURIComponent(escape(atob(str)));
+            } catch (e) {
+                console.error("Decoding error:", e);
+                return null;
+            }
+        }
 
-  // Show PDF using <embed> for full-page preview
-  const viewer = document.getElementById("pdfViewer");
-  const embed = document.createElement("embed");
-  embed.src = blobUrl;
-  embed.type = "application/pdf";
-  viewer.appendChild(embed);
+        /** Updates the top status bar */
+        function showMessage(type, message) {
+            const panel = document.getElementById('status-panel');
+            const statusIcon = panel.querySelector('.material-symbols-outlined');
+            const statusText = document.getElementById('status-text');
+            
+            let colorClass, iconName;
+            
+            switch (type) {
+                case 'success':
+                    colorClass = 'text-green-600';
+                    iconName = 'check_circle';
+                    break;
+                case 'error':
+                    colorClass = 'text-red-600';
+                    iconName = 'error';
+                    break;
+                case 'progress':
+                    colorClass = 'text-yellow-600';
+                    iconName = 'hourglass_empty';
+                    break;
+                case 'info':
+                default:
+                    colorClass = 'text-blue-500';
+                    iconName = 'info';
+                    break;
+            }
 
-  // Show bottom bar
-  const bottomBar = document.getElementById("bottomBar");
-  bottomBar.hidden = false;
+            // Apply new classes and text
+            panel.querySelector('span:first-child').className = `text-gray-600 flex items-center ${colorClass}`;
+            statusIcon.textContent = iconName;
+            statusText.textContent = message;
+        }
 
-  // Download button
-  const downloadBtn = document.getElementById("downloadBtn");
-  downloadBtn.onclick = () => {
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = "shared_document.pdf";
-    a.click();
-  };
+        // --- Core Application Logic ---
 
-  // Remove loading
-  document.getElementById("loading").remove();
-}
+        /**
+         * Generates the PDF from the content in the #pdf-content div.
+         */
+        async function generatePdf() {
+            showMessage("progress", "Converting document to PDF... Please wait.");
+            
+            const downloadButton = document.getElementById('download-button');
+            downloadButton.disabled = true;
+            downloadButton.classList.add('opacity-50', 'cursor-not-allowed');
 
-main();
-</script>
+            const input = document.getElementById('pdf-content');
+            
+            try {
+                // Use html2canvas to render the HTML into a canvas/image
+                const canvas = await html2canvas(input, { 
+                    scale: 2, 
+                    useCORS: true,
+                    // Ensure full rendering of the document container area only
+                    width: input.offsetWidth,
+                    height: input.offsetHeight,
+                });
+                
+                const imgData = canvas.toDataURL('image/png');
+
+                // Initialize jsPDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4'); // Portrait, mm units, A4 size (210mm x 297mm)
+
+                const imgWidth = 210; // A4 width in mm
+                const pageHeight = 297; // A4 height in mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // Add the image to the PDF, handling multiple pages if needed
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                // Get filename from the input and sanitize it
+                let docTitle = document.getElementById('doc-name').value.trim();
+                if (!docTitle) {
+                    docTitle = 'Shared_Document';
+                }
+                docTitle = docTitle.replace(/[^a-z0-9_]/gi, '_'); // Basic sanitation
+
+                // Finalize and prompt download
+                pdf.save(`${docTitle}.pdf`);
+
+                showMessage("success", "PDF generated and download initiated!");
+
+            } catch (error) {
+                console.error("PDF Generation Error:", error);
+                showMessage("error", "Failed to generate PDF. Check console for details.");
+            } finally {
+                downloadButton.disabled = false;
+                downloadButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+
+        /**
+         * Checks the URL hash for Markdown content and processes it.
+         */
+        async function loadContentFromUrl() {
+            const contentContainer = document.getElementById('pdf-content');
+            const docNameInput = document.getElementById('doc-name');
+            const hashContent = window.location.hash.substring(1); // Get content after #
+
+            if (hashContent) {
+                const markdown = decodeBase64(hashContent);
+                
+                if (markdown) {
+                    showMessage("info", "Content loaded successfully. Ready to download.");
+                    
+                    // 1. Convert Markdown to HTML using marked.js
+                    contentContainer.innerHTML = marked.parse(markdown);
+
+                    // 2. Set document title and the filename input
+                    const firstH1 = contentContainer.querySelector('h1');
+                    let title = "Shared_Document";
+                    if (firstH1) {
+                        title = firstH1.textContent.replace(/[^a-z0-9_ ]/gi, '').trim().replace(/ /g, '_');
+                        document.title = `${firstH1.textContent} | DocuWritePro`;
+                    } else {
+                         document.title = `Shared Document | DocuWritePro`;
+                    }
+                    docNameInput.value = title;
+
+
+                } else {
+                    showMessage("error", "Failed to decode content from URL hash.");
+                    contentContainer.innerHTML = `<p class="text-center text-red-500 py-16">
+                        <span class="material-symbols-outlined text-4xl mb-2">warning</span>
+                        <br>Error: Failed to decode shared content. The link may be corrupted.
+                    </p>`;
+                }
+            } else {
+                showMessage("info", "No content found in URL hash. Share a link to see content here.");
+            }
+        }
+
+        // Run the main function on page load
+        window.onload = loadContentFromUrl;
+        
+    </script>
 </body>
 </html>

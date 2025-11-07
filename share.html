@@ -284,5 +284,86 @@
         // Initialize the page when the window loads
         window.onload = loadContentFromUrl;
     </script>
+<!-- BEGIN DROP-IN WARNING MODAL -->
+<!-- Include Font Awesome 6 CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SJLqZk+Nqozxv0EY0XJ8FL8L8pYl4X9+9HDBvLZ3mO3u5Zy7N1vIoynP+Lq2XJtCzRrYl+U7/3xVgTpLVbJv5w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+<div id="anonymousWarning" style="
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(30px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  box-sizing: border-box;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+">
+
+  <!-- Font Awesome Hand Icon -->
+  <div style="font-size:60px; color:#FF4C4C; margin-bottom:20px;">
+    <i class="fa-solid fa-hand-paper"></i>
+  </div>
+
+  <h1 style="margin:10px 0; font-size:2em; font-weight:600;">Wait!</h1>
+
+  <p style="font-size:1em; color:#333; max-width:400px; margin:15px 0 25px;">
+    This content was generated online anonymously! We don't know who or when this document was created. Click Continue to proceed.
+  </p>
+
+  <button id="continueBtn" style="
+    background-color:#1a73e8;
+    color:white;
+    border:none;
+    padding:12px 25px;
+    border-radius:5px;
+    font-size:1em;
+    font-weight:500;
+    cursor:pointer;
+    transition: background 0.3s;
+  " 
+  onmouseover="this.style.background='#155ab6'" 
+  onmouseout="this.style.background='#1a73e8'">
+    Continue
+  </button>
+
+  <div style="margin-top:15px; font-size:0.9em; color:#555;">
+    <label><input type="checkbox" id="dontShowAgain"> Don't show it again</label>
+  </div>
+</div>
+
+<script>
+(function(){
+  const modal = document.getElementById('anonymousWarning');
+  const btn = document.getElementById('continueBtn');
+  const checkbox = document.getElementById('dontShowAgain');
+
+  // Check if user opted to skip modal
+  if(localStorage.getItem('skipAnonymousWarning') === 'true') {
+    modal.style.display = 'none';
+    return;
+  }
+
+  // Continue button click triggers fade-out
+  btn.addEventListener('click', () => {
+    if(checkbox.checked) {
+      localStorage.setItem('skipAnonymousWarning', 'true');
+    }
+    modal.style.opacity = 0;
+    setTimeout(() => { modal.style.display = 'none'; }, 500); // Wait for fade-out
+  });
+})();
+</script>
+<!-- END DROP-IN WARNING MODAL -->
+    
 </body>
 </html>
+
+

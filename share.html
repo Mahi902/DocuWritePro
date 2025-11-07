@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DocuWritePro Share</title>
 <style>
   body {
@@ -31,13 +31,13 @@
 <div id="loading">Generating PDF from markdown...</div>
 <iframe id="pdfFrame" hidden></iframe>
 
-<!-- Markdown + PDF Libraries -->
+<!-- Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
 async function main() {
-  // Read markdown from URL hash (#)
+  // Get markdown from the URL hash (#)
   const markdownData = decodeURIComponent(location.hash.slice(1)) || "";
 
   if (!markdownData.trim()) {
@@ -53,21 +53,12 @@ async function main() {
   tempDiv.style.fontFamily = "Arial, sans-serif";
   tempDiv.style.lineHeight = "1.6";
 
-  // Convert HTML → PDF (as Blob)
-  const pdfOptions = {
-    margin: 10,
-    filename: "shared_doc.pdf",
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-  };
+  // Convert HTML → PDF binary string
+  const pdfString = await html2pdf().from(tempDiv).outputPdf('datauristring');
 
-  const pdfBlob = await html2pdf().set(pdfOptions).from(tempDiv).outputPdf('blob');
-  const pdfURL = URL.createObjectURL(pdfBlob);
-
-  // Show PDF
+  // Display in iframe
   const frame = document.getElementById("pdfFrame");
-  frame.src = pdfURL;
+  frame.src = pdfString;
   frame.hidden = false;
   document.getElementById("loading").remove();
 }

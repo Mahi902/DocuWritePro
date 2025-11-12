@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebGen</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    overflow: hidden;
+  }
+</style>
+</head>
+<body>
+<script>
+async function generateHTML() {
+  // Get the prompt from URL hash
+  let prompt = decodeURIComponent(location.hash.slice(1));
+  if (!prompt) {
+    document.body.innerHTML = "<h2 style='text-align:center;margin-top:20%;'>No prompt found in URL hash!</h2>";
+    return;
+  }
+
+  try {
+    const response = await fetch("https://text.pollinations.ai/prompt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        prompt: `Generate strictly HTML code only for this prompt: "${prompt}". Do not generate CSS, JS, or anything outside HTML. Wrap output in triple backticks (\`\`\`).`,
+        model: "stable-diffusion-text"
+      })
+    });
+
+    const data = await response.json();
+    let text = data.output || "";
+
+    // Extract HTML inside triple backticks
+    const match = text.match(/```(.*?)```/s);
+    if (match) {
+      document.open();
+      document.write(match[1]); // Replace the whole page with generated HTML
+      document.close();
+    } else {
+      document.body.innerHTML = "<h2 style='text-align:center;margin-top:20%;'>No HTML code detected in the response.</h2>";
+    }
+  } catch (e) {
+    console.error(e);
+    document.body.innerHTML = "<h2 style='text-align:center;margin-top:20%;'>Error generating HTML.</h2>";
+  }
+}
+
+// Run immediately
+generateHTML();
+</script>
+</body>
+</html>

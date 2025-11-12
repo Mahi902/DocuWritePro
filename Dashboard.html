@@ -158,6 +158,96 @@
         animation-play-state: paused !important;
     }
     
+    /* --- NEW: Utility class --- */
+    .hidden {
+        display: none !important;
+    }
+
+    /* --- NEW: Account Page Styles --- */
+    #accountPage {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #ffffff; /* Forced white as requested */
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .account-form-container {
+        background-color: #f9f9f9;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        width: 100%;
+        max-width: 450px;
+        text-align: center;
+    }
+    .account-form-container h2 {
+        color: #333;
+        margin-bottom: 25px;
+        font-weight: 500;
+    }
+    .account-input-group {
+        margin-bottom: 20px;
+        text-align: left;
+    }
+    .account-input-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-size: 14px;
+    }
+    .account-input-group input[type="text"],
+    .account-input-group input[type="email"] {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .account-input-group input[type="text"]:focus,
+    .account-input-group input[type="email"]:focus {
+        outline: none;
+        border-color: var(--theme-primary);
+        box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+    }
+    .account-input-group input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: #fff;
+        font-size: 14px;
+        cursor: pointer;
+    }
+    #createAccountBtn {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 8px;
+        background-color: var(--theme-primary);
+        color: white;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.2s;
+    }
+    #createAccountBtn:hover {
+        background-color: var(--theme-primary-hover);
+        transform: translateY(-2px);
+    }
+    #accountErrorMsg {
+        color: #D32F2F;
+        font-size: 14px;
+        margin-top: 15px;
+        min-height: 1.2em;
+    }
+    /* --- END Account Page Styles --- */
+
 
     /* Animated Background */
     .animated-bg {
@@ -257,6 +347,16 @@
     /* Main Content */
     .main-content { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
     .section-title { font-size: 18px; font-weight: 500; margin-bottom: 20px; color: var(--theme-text); transition: color 0.3s; }
+    /* NEW: Welcome Section */
+    .welcome-section {
+        margin-bottom: 30px;
+    }
+    #welcomeGreeting {
+        font-weight: 500;
+        color: var(--theme-text);
+        transition: color 0.3s;
+        font-size: 24px;
+    }
     .new-document { margin-bottom: 40px; }
     .document-cards-container { display: flex; gap: 20px; flex-wrap: wrap; }
     .document-card { display: flex; flex-direction: column; align-items: center; width: 140px; cursor: pointer; transition: transform 0.2s; }
@@ -497,6 +597,70 @@
         font-size: 14px;
         margin-top: -10px;
     }
+
+    /* --- UPDATED: Account Section Styles --- */
+    #account-details {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    #accountPfpDisplay {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--theme-border);
+    }
+    .account-info {
+        flex-grow: 1;
+    }
+    #accountNameDisplay {
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--theme-text);
+    }
+    #accountEmailDisplay {
+        font-size: 14px;
+        color: var(--theme-text-secondary);
+        word-break: break-all;
+    }
+    .account-buttons {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .account-btn {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        font-size: 15px;
+        transition: background-color 0.2s, opacity 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+    .account-btn.edit {
+        background-color: var(--theme-hover-bg);
+        color: var(--theme-text);
+        border: 1px solid var(--theme-border);
+    }
+    .account-btn.edit:hover {
+        background-color: var(--theme-border);
+    }
+    .account-btn.logout {
+        background-color: #D32F2F;
+        color: white;
+    }
+    .account-btn.logout:hover {
+        background-color: #B71C1C;
+    }
+    /* --- END Account Section Styles --- */
+
 
     /* Logs Section */
     #settings-releaseContainer { 
@@ -741,6 +905,30 @@
 </style>
 </head>
 <body>
+
+    <!-- --- NEW: Account Page --- -->
+    <div id="accountPage">
+        <div class="account-form-container">
+            <h2>Create Your DocuWrite Pro Account</h2>
+            <div class="account-input-group">
+                <label for="accountFullName">Full Name</label>
+                <input type="text" id="accountFullName" placeholder="e.g., Jane Doe" required>
+            </div>
+            <div class="account-input-group">
+                <label for="accountEmail">Email</label>
+                <input type="email" id="accountEmail" placeholder="e.g., jane.doe@example.com" required>
+            </div>
+            <!-- --- UPDATED: PFP Input --- -->
+            <div class="account-input-group">
+                <label for="accountPfpUrl">Profile Picture URL</label>
+                <input type="text" id="accountPfpUrl" placeholder="https://example.com/image.png">
+            </div>
+            <button id="createAccountBtn">Create Account</button>
+            <p id="accountErrorMsg"></p>
+        </div>
+    </div>
+
+
     <!-- Animated Background -->
     <div class="animated-bg">
         <div class="bubble"></div>
@@ -753,8 +941,8 @@
         </div>
     </div>
     
-    <!-- Header -->
-    <header class="header">
+    <!-- Header (Initially hidden) -->
+    <header class="header hidden">
         <div class="left-section">
             <!-- Hamburger menu removed -->
         </div>
@@ -771,8 +959,14 @@
         </div>
     </header>
     
-    <!-- Main Content -->
-    <main class="main-content">
+    <!-- Main Content (Initially hidden) -->
+    <main class="main-content hidden">
+        
+        <!-- --- NEW: Welcome Section --- -->
+        <section class="welcome-section">
+            <h2 id="welcomeGreeting">Welcome</h2>
+        </section>
+
         <section class="new-document">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; margin-bottom: 20px;">
                 <h2 style="margin: 0;">Start a new document</h2>
@@ -861,6 +1055,7 @@
                 <div class="tool-card" data-category="Code Editing" data-href="https://mahi902.github.io/DocuWritePro/code-playground.html" data-tool-id="html-editor" data-tool-name="HTML Editor"><span class="material-symbols-outlined tool-icon">code</span><div class="tool-name">HTML Editor</div><span class="material-symbols-outlined star-icon">star</span></div>
                 <div class="tool-card" data-category="Code Editing" data-href="https://mahi902.github.io/DocuWritePro/html.html" data-tool-id="html-writer" data-tool-name="HTML Writer"><span class="material-symbols-outlined tool-icon">html</span><div class="tool-name">HTML Writer</div><span class="material-symbols-outlined star-icon">star</span></div>
 				<div class="tool-card" data-category="Code Editing" data-href="https://mahi902.github.io/DocuWritePro/mdeditor.html" data-tool-id="md-editor" data-tool-name="Markdown Editor"><span class="material-symbols-outlined tool-icon">Markdown</span><div class="tool-name">Markdown Editor</div><span class="material-symbols-outlined star-icon">star</span></div>
+                <!-- --- NEW: PHP Tool --- -->
                 <div class="tool-card" data-category="Code Editing" data-href="https://mahi902.github.io/DocuWritePro/button-designer.html" data-tool-id="button-designer" data-tool-name="Button Designer"><span class="material-symbols-outlined tool-icon">smart_button</span><div class="tool-name">Button Designer</div><span class="material-symbols-outlined star-icon">star</span></div>
                 <div class="tool-card" data-category="Code Editing" data-href="https://mahi902.github.io/DocuWritePro/html-splitter.html" data-tool-id="html-splitter" data-tool-name="HTML Splitter"><span class="material-symbols-outlined tool-icon">integration_instructions</span><div class="tool-name">HTML Splitter</div><span class="material-symbols-outlined star-icon">star</span></div>
                 <div class="tool-card" data-category="Code Editing" data-href="https://mahi902.github.io/DocuWritePro/goto-code.html" data-tool-id="goto-code" data-tool-name="GoTo Code"><span class="material-symbols-outlined tool-icon">merge</span><div class="tool-name">GoTo Code</div><span class="material-symbols-outlined star-icon">star</span></div>
@@ -897,6 +1092,29 @@
 			</br>
                 <p id="app-version">Version 4.8.9</p>
             </div>
+            
+            <!-- --- UPDATED: Account Section --- -->
+            <div class="settings-section hidden" id="account-section">
+                <h3>Account</h3>
+                <div id="account-details">
+                    <img id="accountPfpDisplay" src="https://placehold.co/50x50/eee/333?text=?" alt="Profile Picture">
+                    <div class="account-info">
+                        <div id="accountNameDisplay">Loading...</div>
+                        <div id="accountEmailDisplay">Loading...</div>
+                    </div>
+                </div>
+                <div class="account-buttons">
+                    <button id="editAccountBtn" class="account-btn edit">
+                        <span class="material-symbols-outlined">edit</span>
+                        Edit Account
+                    </button>
+                    <button id="logoutBtn" class="account-btn logout">
+                        <span class="material-symbols-outlined">logout</span>
+                        Log Out
+                    </button>
+                </div>
+            </div>
+            <!-- --- END: Account Section --- -->
 
             <div class="settings-section">
                 <h3>Release Logs</h3>
@@ -1036,6 +1254,33 @@
         const body = document.body;
         let allToolsData = [];
         let starredTools = [];
+
+        // --- NEW: Cookie Helper Functions ---
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            // Use encodeURIComponent for value
+            document.cookie = name + "=" + (encodeURIComponent(value) || "") + expires + "; path=/; SameSite=Lax";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) {
+                    // Use decodeURIComponent to get the original value
+                    return decodeURIComponent(c.substring(nameEQ.length, c.length));
+                }
+            }
+            return null;
+        }
+
 
         // --- THEME MANAGEMENT ---
         const themeOptions = document.querySelectorAll('.theme-option');
@@ -1343,6 +1588,105 @@
         // --- DOMContentLoaded - Main Setup ---
         document.addEventListener('DOMContentLoaded', function() {
             
+            // --- NEW: Account Management Elements ---
+            const accountPage = document.getElementById('accountPage');
+            const createAccountBtn = document.getElementById('createAccountBtn');
+            const accountFullName = document.getElementById('accountFullName');
+            const accountEmail = document.getElementById('accountEmail');
+            const accountPfpUrl = document.getElementById('accountPfpUrl'); // UPDATED
+            const accountErrorMsg = document.getElementById('accountErrorMsg');
+            
+            const accountSection = document.getElementById('account-section');
+            const accountPfpDisplay = document.getElementById('accountPfpDisplay');
+            const accountNameDisplay = document.getElementById('accountNameDisplay');
+            const accountEmailDisplay = document.getElementById('accountEmailDisplay');
+            const editAccountBtn = document.getElementById('editAccountBtn'); // NEW
+            const logoutBtn = document.getElementById('logoutBtn');
+            
+            const mainContent = document.querySelector('.main-content');
+            const header = document.querySelector('.header');
+            const welcomeGreeting = document.getElementById('welcomeGreeting'); // NEW
+
+            // --- NEW: Account Logic ---
+            function checkLoginState() {
+                const userEmail = getCookie('userEmail');
+                
+                if (userEmail) {
+                    // User is logged in
+                    const userName = getCookie('userName');
+                    const userPfp = getCookie('userPfp');
+
+                    // Populate settings panel
+                    if (userPfp) {
+                        accountPfpDisplay.src = userPfp;
+                        // Add error handler for broken links
+                        accountPfpDisplay.onerror = () => {
+                            accountPfpDisplay.src = 'https://placehold.co/50x50/eee/333?text=X';
+                        };
+                    } else {
+                        accountPfpDisplay.src = 'https://placehold.co/50x50/eee/333?text=?';
+                    }
+                    accountNameDisplay.textContent = userName || 'User';
+                    accountEmailDisplay.textContent = userEmail;
+                    
+                    // NEW: Populate welcome greeting
+                    welcomeGreeting.textContent = `Welcome, ${userName || 'User'}!`;
+
+                    // Show/Hide elements
+                    accountSection.classList.remove('hidden');
+                    accountPage.classList.add('hidden');
+                    mainContent.classList.remove('hidden');
+                    header.classList.remove('hidden');
+                } else {
+                    // User is not logged in
+                    accountSection.classList.add('hidden');
+                    accountPage.classList.remove('hidden');
+                    mainContent.classList.add('hidden');
+                    header.classList.add('hidden');
+                }
+            }
+
+            createAccountBtn.addEventListener('click', () => {
+                const name = accountFullName.value.trim();
+                const email = accountEmail.value.trim();
+                const pfpUrl = accountPfpUrl.value.trim(); // UPDATED
+                
+                if (!name || !email) {
+                    accountErrorMsg.textContent = 'Please enter your name and email.';
+                    return;
+                }
+                
+                // UPDATED: Check for URL instead of file
+                if (!pfpUrl) {
+                    accountErrorMsg.textContent = 'Please enter a profile picture URL.';
+                    return;
+                }
+                
+                accountErrorMsg.textContent = '';
+                
+                // UPDATED: Save URL directly to cookie
+                setCookie('userName', name, 30);
+                setCookie('userEmail', email, 30);
+                setCookie('userPfp', pfpUrl, 30);
+                
+                // Re-run login check to update UI
+                checkLoginState();
+            });
+
+            function handleLogout() {
+                // Expire cookies by setting a past date
+                setCookie('userName', '', -1);
+                setCookie('userEmail', '', -1);
+                setCookie('userPfp', '', -1);
+                
+                // Re-run login check to show account page
+                checkLoginState();
+            }
+
+            logoutBtn.addEventListener('click', handleLogout);
+            editAccountBtn.addEventListener('click', handleLogout); // NEW: Edit button logs out
+
+
             // --- Settings Panel ---
             settingsBtn.addEventListener('click', openSettings);
             settingsCloseBtn.addEventListener('click', closeSettings);
@@ -1447,8 +1791,8 @@
 
             // --- Water drop click effect ---
             document.addEventListener('click', function(e) {
-                // Do not create drop effect if clicking on an interactive icon or inside the settings panel
-                if (e.target.matches('.material-symbols-outlined') || e.target.closest('button') || e.target.closest('#settingsPanel')) {
+                // Do not create drop effect if clicking on an interactive icon or inside the settings panel or account page
+                if (e.target.matches('.material-symbols-outlined') || e.target.closest('button') || e.target.closest('#settingsPanel') || e.target.closest('#accountPage')) {
                     return;
                 }
                 const drop = document.createElement('div');
@@ -1507,6 +1851,10 @@
                     searchContainer.classList.remove('active');
                 }
             });
+
+            // --- NEW: Initial Login Check ---
+            checkLoginState();
+
         });
 
         // --- Tool Filtering Logic (Global) ---

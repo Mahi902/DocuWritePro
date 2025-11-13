@@ -10,9 +10,9 @@
     padding: 0;
     width: 100%;
     height: 100%;
-    background: white;
+    background: #f9f9f9;
     overflow: hidden;
-    font-family: sans-serif;
+    font-family: "Inter", sans-serif;
   }
 
   #loading {
@@ -21,36 +21,54 @@
     left: 50%;
     transform: translate(-50%, -50%);
     font-size: 18px;
-    color: #333;
+    color: #555;
   }
 
-  #bottomMenu {
+  #bottomBar {
     position: fixed;
     bottom: 0;
+    left: 0;
     width: 100%;
-    background: #222;
-    color: white;
+    height: 50px;
+    background: #ffffff;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    gap: 20px;
-    padding: 10px 0;
-    font-size: 16px;
+    padding: 0 15px;
+    box-sizing: border-box;
     z-index: 1000;
   }
 
-  #bottomMenu button {
-    background: #444;
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.2s;
+  #bottomBar .left {
+    font-weight: 600;
+    color: #333;
+    letter-spacing: 0.5px;
   }
 
-  #bottomMenu button:hover {
-    background: #666;
+  #bottomBar .right {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+
+  #bottomBar button {
+    background: none;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 6px;
+    transition: 0.2s ease;
+  }
+
+  #bottomBar button:hover {
+    transform: scale(1.15);
+  }
+
+  #bottomBar svg {
+    width: 22px;
+    height: 22px;
+    fill: #333;
   }
 
   iframe, pre {
@@ -62,27 +80,52 @@
 
   pre {
     margin: 0;
-    padding: 10px;
-    background: #f4f4f4;
-    color: #222;
+    padding: 15px;
+    background: #1e1e1e;
+    color: #f1f1f1;
+    font-family: "Consolas", monospace;
+    font-size: 14px;
     overflow: auto;
-    font-family: monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .fade {
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .show {
+    display: block !important;
+    opacity: 1 !important;
   }
 </style>
 </head>
 <body>
-<div id="loading">Generating...</div>
-<div id="bottomMenu" style="display:none;">
-  <button id="previewBtn">Live Preview</button>
-  <button id="codeBtn">Code</button>
-</div>
+<div id="loading">Generating webpage...</div>
+
 <iframe id="previewFrame"></iframe>
 <pre id="codeView"></pre>
+
+<div id="bottomBar" style="display:none;">
+  <div class="left">WebGen</div>
+  <div class="right">
+    <button id="toggleView" title="Toggle Preview/Code">
+      <svg id="viewIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z"/></svg>
+    </button>
+    <button id="copyCode" title="Copy Code">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v16h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 18H8V7h11v16z"/></svg>
+    </button>
+    <button id="downloadCode" title="Download HTML">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5 20h14v-2H5v2zm7-18L5.33 9h3.67v4h6V9h3.67L12 2z"/></svg>
+    </button>
+  </div>
+</div>
 
 <script>
 async function generateHTML() {
   const loadingDiv = document.getElementById('loading');
-  const bottomMenu = document.getElementById('bottomMenu');
+  const bottomBar = document.getElementById('bottomBar');
   const previewFrame = document.getElementById('previewFrame');
   const codeView = document.getElementById('codeView');
 
@@ -92,33 +135,56 @@ async function generateHTML() {
     return;
   }
 
-  const strictPrompt = `Generate a website in HTML for this prompt: "${prompt}". Wrap all CSS and JS inside the HTML using <style> and <script> tags. Make it clean, modern, and fully functional. Do not add markdown formatting like triple backticks or language labels.`;
+  const strictPrompt = `Generate a complete website in HTML for this prompt: "${prompt}". Include all CSS and JS inline using <style> and <script> tags. Use no markdown formatting like triple backticks or code labels. Make it modern, clean, and responsive.`;
 
   try {
     const urlPrompt = encodeURIComponent(strictPrompt);
     const response = await fetch(`https://text.pollinations.ai/${urlPrompt}`);
     let text = await response.text();
 
-    // Remove markdown-style wrappers like ```html ... ```
+    // Remove ```html or ``` wrappers
     text = text.replace(/```html|```/gi, '').trim();
 
-    // Display both modes
-    previewFrame.style.display = 'block';
-    bottomMenu.style.display = 'flex';
+    // Show UI
+    bottomBar.style.display = 'flex';
     loadingDiv.style.display = 'none';
+    previewFrame.classList.add('show');
     codeView.textContent = text;
 
     const blob = new Blob([text], { type: 'text/html' });
     previewFrame.src = URL.createObjectURL(blob);
 
-    // Button toggling
-    document.getElementById('previewBtn').onclick = () => {
-      previewFrame.style.display = 'block';
-      codeView.style.display = 'none';
+    let isPreview = true;
+    const toggleViewBtn = document.getElementById('toggleView');
+    const copyBtn = document.getElementById('copyCode');
+    const downloadBtn = document.getElementById('downloadCode');
+    const viewIcon = document.getElementById('viewIcon');
+
+    toggleViewBtn.onclick = () => {
+      isPreview = !isPreview;
+      if (isPreview) {
+        previewFrame.style.display = 'block';
+        codeView.style.display = 'none';
+        viewIcon.innerHTML = '<path d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 12c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z"/>';
+      } else {
+        previewFrame.style.display = 'none';
+        codeView.style.display = 'block';
+        viewIcon.innerHTML = '<path d="M3 5v14h17V5H3zm15 12H5V7h13v10z"/>';
+      }
     };
-    document.getElementById('codeBtn').onclick = () => {
-      previewFrame.style.display = 'none';
-      codeView.style.display = 'block';
+
+    copyBtn.onclick = async () => {
+      await navigator.clipboard.writeText(text);
+      copyBtn.style.transform = 'scale(1.2)';
+      setTimeout(() => copyBtn.style.transform = '', 200);
+    };
+
+    downloadBtn.onclick = () => {
+      const blob = new Blob([text], { type: 'text/html' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${prompt.replace(/\s+/g, '_') || 'WebGen'}_page.html`;
+      link.click();
     };
 
   } catch (e) {

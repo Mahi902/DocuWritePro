@@ -1593,6 +1593,98 @@ document.getElementById('editor').addEventListener('input', checkPageOverflowStr
   Insert Table
 </button>
 
+<!-- Sidebar Button -->
+<button class="sidebar-btn" id="word-count-btn">
+  <i class="material-icons">calculate</i>
+  Word Count
+</button>
+
+<!-- Word Count Modal -->
+<div class="modal" id="word-count-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Word Count Details</h3>
+      <button class="close-modal" id="close-word-count">&times;</button>
+    </div>
+    <div id="word-count-details" style="max-height:60vh; overflow-y:auto; font-size:14px; line-height:1.6; padding-right:5px;">
+      <!-- Stats will be injected here -->
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("word-count-btn");
+  const modal = document.getElementById("word-count-modal");
+  const closeBtn = document.getElementById("close-word-count");
+  const details = document.getElementById("word-count-details");
+
+  function calculateStats(text) {
+    const words = text.match(/\b\w+\b/g) || [];
+    const characters = text.replace(/\s/g, '').length;
+    const charactersWithSpaces = text.length;
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim());
+    const paragraphs = text.split(/\n+/).filter(p => p.trim());
+    const readTime = Math.ceil(words.length / 200); // average 200 wpm
+    const wordFrequency = {};
+    const alphabeticalFrequency = {};
+
+    words.forEach(w => {
+      const lower = w.toLowerCase();
+      wordFrequency[lower] = (wordFrequency[lower] || 0) + 1;
+    });
+
+    for(let char of text.replace(/\s/g, '').toLowerCase()) {
+      alphabeticalFrequency[char] = (alphabeticalFrequency[char] || 0) + 1;
+    }
+
+    return { words, characters, charactersWithSpaces, sentences, paragraphs, readTime, wordFrequency, alphabeticalFrequency };
+  }
+
+  function renderStats(stats) {
+    let html = `
+      <ul style="list-style:none; padding:0;">
+        <li><strong>Words:</strong> ${stats.words.length}</li>
+        <li><strong>Characters:</strong> ${stats.characters}</li>
+        <li><strong>Characters (with spaces):</strong> ${stats.charactersWithSpaces}</li>
+        <li><strong>Sentences:</strong> ${stats.sentences.length}</li>
+        <li><strong>Paragraphs:</strong> ${stats.paragraphs.length}</li>
+        <li><strong>Estimated Read Time:</strong> ${stats.readTime} min</li>
+      </ul>
+
+      <details style="margin-top:15px;">
+        <summary style="cursor:pointer; font-weight:bold;">Word Frequency</summary>
+        <ul style="list-style:none; padding-left:10px; margin-top:5px;">
+          ${Object.entries(stats.wordFrequency)
+            .sort((a,b)=>b[1]-a[1])
+            .map(([word, count]) => `<li>${word}: ${count}</li>`).join('')}
+        </ul>
+      </details>
+
+      <details style="margin-top:15px;">
+        <summary style="cursor:pointer; font-weight:bold;">Alphabetical Frequency</summary>
+        <ul style="list-style:none; padding-left:10px; margin-top:5px;">
+          ${Object.entries(stats.alphabeticalFrequency)
+            .sort((a,b)=>b[1]-a[1])
+            .map(([char, count]) => `<li>${char}: ${count}</li>`).join('')}
+        </ul>
+      </details>
+    `;
+    details.innerHTML = html;
+  }
+
+  btn.addEventListener("click", () => {
+    const editorText = Array.from(document.querySelectorAll('.page'))
+      .map(p => p.innerText)
+      .join("\n");
+    const stats = calculateStats(editorText);
+    renderStats(stats);
+    modal.classList.add("active");
+  });
+
+  closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+});
+</script>
 
 
 

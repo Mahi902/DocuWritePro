@@ -50,6 +50,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - **Frontend IDE**: Integrated Development Environment for frontend coding
 - **HTML Editor**: Editing HTML code
 - **HTML Writer**: Writing or generating HTML content
+- **Website Generator**: Generate live websites using AI
 - **Button Designer**: Designing user interface buttons
 - **HTML Splitter**: Splitting HTML files or elements
 - **GoTo Code**: Navigation feature in an IDE/editor

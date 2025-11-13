@@ -12,57 +12,121 @@
     height: 100%;
     background: white;
     overflow: hidden;
+    font-family: sans-serif;
   }
+
   #loading {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-family: sans-serif;
     font-size: 18px;
     color: #333;
+  }
+
+  #bottomMenu {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background: #222;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    padding: 10px 0;
+    font-size: 16px;
+    z-index: 1000;
+  }
+
+  #bottomMenu button {
+    background: #444;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+
+  #bottomMenu button:hover {
+    background: #666;
+  }
+
+  iframe, pre {
+    width: 100%;
+    height: calc(100% - 50px);
+    border: none;
+    display: none;
+  }
+
+  pre {
+    margin: 0;
+    padding: 10px;
+    background: #f4f4f4;
+    color: #222;
+    overflow: auto;
+    font-family: monospace;
   }
 </style>
 </head>
 <body>
 <div id="loading">Generating...</div>
+<div id="bottomMenu" style="display:none;">
+  <button id="previewBtn">Live Preview</button>
+  <button id="codeBtn">Code</button>
+</div>
+<iframe id="previewFrame"></iframe>
+<pre id="codeView"></pre>
+
 <script>
 async function generateHTML() {
   const loadingDiv = document.getElementById('loading');
+  const bottomMenu = document.getElementById('bottomMenu');
+  const previewFrame = document.getElementById('previewFrame');
+  const codeView = document.getElementById('codeView');
 
-  // Get the prompt from URL hash
   let prompt = decodeURIComponent(location.hash.slice(1));
   if (!prompt) {
     loadingDiv.textContent = "No prompt found in URL hash!";
     return;
   }
 
-  // Strict HTML instruction
-  const strictPrompt = `Generate a website in HTML for this promt: "${prompt}", wrap all css and js inside the html using script and style tags. Make beautiful website, clean, perfect. Do not generate anything else but the code itself, wrap your HTML in triple backticks.`;
+  const strictPrompt = `Generate a website in HTML for this prompt: "${prompt}". Wrap all CSS and JS inside the HTML using <style> and <script> tags. Make it clean, modern, and fully functional. Do not add markdown formatting like triple backticks or language labels.`;
 
   try {
     const urlPrompt = encodeURIComponent(strictPrompt);
-
-    // Fetch directly from Pollinations
     const response = await fetch(`https://text.pollinations.ai/${urlPrompt}`);
-    const text = await response.text();
+    let text = await response.text();
 
-    // Extract HTML inside triple backticks
-    const match = text.match(/```(.*?)```/s);
-    if (match) {
-      document.open();
-      document.write(match[1]); // Replace the page with generated HTML
-      document.close();
-    } else {
-      loadingDiv.textContent = "No HTML code detected in the response.";
-    }
+    // Remove markdown-style wrappers like ```html ... ```
+    text = text.replace(/```html|```/gi, '').trim();
+
+    // Display both modes
+    previewFrame.style.display = 'block';
+    bottomMenu.style.display = 'flex';
+    loadingDiv.style.display = 'none';
+    codeView.textContent = text;
+
+    const blob = new Blob([text], { type: 'text/html' });
+    previewFrame.src = URL.createObjectURL(blob);
+
+    // Button toggling
+    document.getElementById('previewBtn').onclick = () => {
+      previewFrame.style.display = 'block';
+      codeView.style.display = 'none';
+    };
+    document.getElementById('codeBtn').onclick = () => {
+      previewFrame.style.display = 'none';
+      codeView.style.display = 'block';
+    };
+
   } catch (e) {
     console.error(e);
     loadingDiv.textContent = "Error generating HTML.";
   }
 }
 
-// Run immediately
 generateHTML();
 </script>
 </body>

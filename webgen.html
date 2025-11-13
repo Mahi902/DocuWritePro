@@ -4,15 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebGen</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 <style>
+  * {
+    box-sizing: border-box;
+  }
   html, body {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
-    background: white;
+    background: #fafafa;
+    font-family: "Inter", "Segoe UI", sans-serif;
+    color: #222;
     overflow: hidden;
-    font-family: sans-serif;
   }
 
   #loading {
@@ -20,37 +25,50 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 18px;
-    color: #333;
+    font-size: 17px;
+    color: #666;
   }
 
   #bottomMenu {
     position: fixed;
     bottom: 0;
     width: 100%;
-    background: #222;
-    color: white;
+    background: #ffffff;
+    border-top: 1px solid #ddd;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 20px;
-    padding: 10px 0;
-    font-size: 16px;
+    gap: 14px;
+    padding: 8px 0;
+    font-size: 15px;
     z-index: 1000;
   }
 
-  #bottomMenu button {
-    background: #444;
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 5px;
+  .menu-btn {
+    background: #f3f3f3;
+    border: 1px solid #ddd;
+    color: #333;
+    padding: 6px 14px;
+    border-radius: 6px;
     cursor: pointer;
-    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+  }
+  .menu-btn:hover {
+    background: #eaeaea;
+  }
+  .menu-btn.active {
+    background: #007aff;
+    color: white;
+    border-color: #007aff;
   }
 
-  #bottomMenu button:hover {
-    background: #666;
+  .menu-icon {
+    font-family: 'Material Symbols Outlined';
+    font-size: 18px;
+    vertical-align: middle;
   }
 
   iframe, pre {
@@ -62,20 +80,32 @@
 
   pre {
     margin: 0;
-    padding: 10px;
-    background: #f4f4f4;
-    color: #222;
+    padding: 16px;
+    background: #f8f9fb;
+    color: #111;
     overflow: auto;
-    font-family: monospace;
+    font-family: "Fira Code", monospace;
+    line-height: 1.5;
+    font-size: 14px;
+    white-space: pre-wrap;
   }
 </style>
 </head>
 <body>
-<div id="loading">Generating...</div>
+<div id="loading">Generating your site...</div>
+
 <div id="bottomMenu" style="display:none;">
-  <button id="previewBtn">Live Preview</button>
-  <button id="codeBtn">Code</button>
+  <button class="menu-btn active" id="toggleViewBtn">
+    <span class="menu-icon">code</span> Show Code
+  </button>
+  <button class="menu-btn" id="copyBtn">
+    <span class="menu-icon">content_copy</span> Copy
+  </button>
+  <button class="menu-btn" id="downloadBtn">
+    <span class="menu-icon">download</span> Download
+  </button>
 </div>
+
 <iframe id="previewFrame"></iframe>
 <pre id="codeView"></pre>
 
@@ -85,6 +115,9 @@ async function generateHTML() {
   const bottomMenu = document.getElementById('bottomMenu');
   const previewFrame = document.getElementById('previewFrame');
   const codeView = document.getElementById('codeView');
+  const toggleViewBtn = document.getElementById('toggleViewBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const downloadBtn = document.getElementById('downloadBtn');
 
   let prompt = decodeURIComponent(location.hash.slice(1));
   if (!prompt) {
@@ -92,33 +125,51 @@ async function generateHTML() {
     return;
   }
 
-  const strictPrompt = `Generate a website in HTML for this prompt: "${prompt}". Wrap all CSS and JS inside the HTML using <style> and <script> tags. Make it clean, modern, and fully functional. Do not add markdown formatting like triple backticks or language labels.`;
+  const strictPrompt = `Generate a full HTML webpage for this prompt: "${prompt}". Wrap all CSS and JS inside the HTML using <style> and <script>. Keep it clean, minimal, and modern. Do not include markdown formatting like triple backticks.`;
 
   try {
     const urlPrompt = encodeURIComponent(strictPrompt);
     const response = await fetch(`https://text.pollinations.ai/${urlPrompt}`);
     let text = await response.text();
 
-    // Remove markdown-style wrappers like ```html ... ```
     text = text.replace(/```html|```/gi, '').trim();
 
-    // Display both modes
-    previewFrame.style.display = 'block';
+    // Set up UI
     bottomMenu.style.display = 'flex';
     loadingDiv.style.display = 'none';
     codeView.textContent = text;
+    previewFrame.style.display = 'block';
 
     const blob = new Blob([text], { type: 'text/html' });
-    previewFrame.src = URL.createObjectURL(blob);
+    const blobUrl = URL.createObjectURL(blob);
+    previewFrame.src = blobUrl;
 
-    // Button toggling
-    document.getElementById('previewBtn').onclick = () => {
-      previewFrame.style.display = 'block';
-      codeView.style.display = 'none';
+    let showingLive = true;
+
+    toggleViewBtn.onclick = () => {
+      showingLive = !showingLive;
+      if (showingLive) {
+        previewFrame.style.display = 'block';
+        codeView.style.display = 'none';
+        toggleViewBtn.innerHTML = '<span class="menu-icon">code</span> Show Code';
+      } else {
+        previewFrame.style.display = 'none';
+        codeView.style.display = 'block';
+        toggleViewBtn.innerHTML = '<span class="menu-icon">play_circle</span> Show Live';
+      }
     };
-    document.getElementById('codeBtn').onclick = () => {
-      previewFrame.style.display = 'none';
-      codeView.style.display = 'block';
+
+    copyBtn.onclick = async () => {
+      await navigator.clipboard.writeText(text);
+      copyBtn.innerHTML = '<span class="menu-icon">check</span> Copied!';
+      setTimeout(() => copyBtn.innerHTML = '<span class="menu-icon">content_copy</span> Copy', 1500);
+    };
+
+    downloadBtn.onclick = () => {
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = 'generated.html';
+      link.click();
     };
 
   } catch (e) {

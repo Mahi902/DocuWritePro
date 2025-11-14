@@ -29,6 +29,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - **Page Number Adder**: Adding page numbers to documents
 - **Chart Maker**: Creating data charts
 - **Graph Maker**: Make clear graphs with visualization
+- **Mind Map Maker**: Make sleek and custom mind maps
 - **Table Maker**: Creating tables
 - **Watermark Adder**: Adding watermarks to files
 - **Email Writer**: Assisting with writing emails

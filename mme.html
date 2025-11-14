@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mind Map Exporter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .node {
+            position: absolute;
+            background-color: white;
+            border-radius: 8px;
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            min-width: 100px;
+            text-align: center;
+            max-width: 200px;
+            word-wrap: break-word;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen py-8">
+    <div class="max-w-2xl mx-auto px-4">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">Mind Map Exporter</h1>
+            <p class="text-slate-600">Upload your mind map JSON file and export it as an image</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="space-y-6">
+                <!-- Upload Section -->
+                <div>
+                    <h2 class="text-xl font-semibold text-slate-800 mb-4">1. Upload JSON File</h2>
+                    <div class="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center">
+                        <input type="file" id="json-upload" accept=".json" class="hidden">
+                        <div class="mb-4">
+                            <span class="material-icons-outlined text-5xl text-slate-400">cloud_upload</span>
+                        </div>
+                        <p class="text-slate-600 mb-4">Click to select your mind map JSON file</p>
+                        <button id="upload-btn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-lg transition-colors">
+                            Select File
+                        </button>
+                        <p id="file-name" class="mt-4 text-sm text-slate-500 hidden"></p>
+                    </div>
+                </div>
+
+                <!-- Export Options -->
+                <div>
+                    <h2 class="text-xl font-semibold text-slate-800 mb-4">2. Export Options</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Image Format</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="format" value="jpg" class="mr-2" checked>
+                                    <span>JPG</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="format" value="png" class="mr-2">
+                                    <span>PNG</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Image Quality</label>
+                            <div class="flex items-center gap-4">
+                                <input type="range" id="quality" min="0.1" max="1" step="0.1" value="0.9" class="w-full">
+                                <span id="quality-value" class="text-sm font-medium text-slate-600 w-12">90%</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Background</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="background" value="light" class="mr-2" checked>
+                                    <span>Light</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="background" value="dark" class="mr-2">
+                                    <span>Dark</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="background" value="transparent" class="mr-2">
+                                    <span>Transparent</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <button id="export-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-3 px-6 rounded-lg transition-colors flex items-center justify-center gap-2" disabled>
+                            <span class="material-icons-outlined">download</span>
+                            Export Mind Map
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const jsonUpload = document.getElementById('json-upload');
+            const uploadBtn = document.getElementById('upload-btn');
+            const fileName = document.getElementById('file-name');
+            const exportBtn = document.getElementById('export-btn');
+            const qualitySlider = document.getElementById('quality');
+            const qualityValue = document.getElementById('quality-value');
+            
+            // Application state
+            let nodes = {};
+            
+            // Event Listeners
+            uploadBtn.addEventListener('click', () => jsonUpload.click());
+            jsonUpload.addEventListener('change', handleFileUpload);
+            qualitySlider.addEventListener('input', updateQualityValue);
+            exportBtn.addEventListener('click', exportMindMap);
+            
+            // Functions
+            function handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                fileName.textContent = file.name;
+                fileName.classList.remove('hidden');
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        nodes = data;
+                        exportBtn.disabled = false;
+                    } catch (error) {
+                        alert('Error parsing JSON file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+            
+            function updateQualityValue() {
+                const value = Math.round(qualitySlider.value * 100);
+                qualityValue.textContent = `${value}%`;
+            }
+            
+            function exportMindMap() {
+                if (Object.keys(nodes).length === 0) {
+                    alert('Please upload a JSON file first.');
+                    return;
+                }
+                
+                const format = document.querySelector('input[name="format"]:checked').value;
+                const quality = parseFloat(qualitySlider.value);
+                const backgroundOption = document.querySelector('input[name="background"]:checked').value;
+                
+                // Set background color based on selection
+                let backgroundColor;
+                switch(backgroundOption) {
+                    case 'dark':
+                        backgroundColor = '#1e293b'; // slate-800
+                        break;
+                    case 'transparent':
+                        backgroundColor = null;
+                        break;
+                    default:
+                        backgroundColor = '#f8fafc'; // slate-50
+                }
+                
+                // Calculate the bounds of all nodes with 50px invisible padding
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                
+                Object.values(nodes).forEach(node => {
+                    minX = Math.min(minX, node.x);
+                    minY = Math.min(minY, node.y);
+                    maxX = Math.max(maxX, node.x + 120); // Approximate node width
+                    maxY = Math.max(maxY, node.y + 50);  // Approximate node height
+                });
+                
+                // Add 50px invisible padding
+                const padding = 50;
+                minX -= padding;
+                minY -= padding;
+                maxX += padding;
+                maxY += padding;
+                
+                // Create a temporary container for export
+                const exportContainer = document.createElement('div');
+                exportContainer.style.position = 'absolute';
+                exportContainer.style.left = '-9999px';
+                exportContainer.style.width = `${maxX - minX}px`;
+                exportContainer.style.height = `${maxY - minY}px`;
+                
+                // No grid lines - removed background styling
+                if (backgroundColor) {
+                    exportContainer.style.backgroundColor = backgroundColor;
+                }
+                
+                document.body.appendChild(exportContainer);
+                
+                // Create SVG for connections
+                const exportSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                exportSvg.setAttribute('width', '100%');
+                exportSvg.setAttribute('height', '100%');
+                exportSvg.style.position = 'absolute';
+                exportSvg.style.top = '0';
+                exportSvg.style.left = '0';
+                exportSvg.style.pointerEvents = 'none';
+                exportContainer.appendChild(exportSvg);
+                
+                // Create nodes container
+                const exportNodesContainer = document.createElement('div');
+                exportNodesContainer.style.position = 'absolute';
+                exportNodesContainer.style.top = '0';
+                exportNodesContainer.style.left = '0';
+                exportNodesContainer.style.width = '100%';
+                exportNodesContainer.style.height = '100%';
+                exportContainer.appendChild(exportNodesContainer);
+                
+                // Render nodes with centered text
+                Object.values(nodes).forEach(node => {
+                    const nodeEl = document.createElement('div');
+                    nodeEl.className = 'node';
+                    nodeEl.style.left = `${node.x - minX}px`;
+                    nodeEl.style.top = `${node.y - minY}px`;
+                    nodeEl.style.backgroundColor = node.color || '#ffffff';
+                    
+                    // Create a span to ensure text is centered properly
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = node.text;
+                    textSpan.style.display = 'flex';
+                    textSpan.style.alignItems = 'center';
+                    textSpan.style.justifyContent = 'center';
+                    textSpan.style.height = '100%';
+                    textSpan.style.width = '100%';
+                    
+                    nodeEl.appendChild(textSpan);
+                    exportNodesContainer.appendChild(nodeEl);
+                });
+                
+                // Render connections
+                Object.values(nodes).forEach(child => {
+                    if (!child.parentId) return;
+                    const parent = nodes[child.parentId];
+                    if (!parent) return;
+                    
+                    const pX = (parent.x - minX) + 60;
+                    const pY = (parent.y - minY) + 25;
+                    const cX = (child.x - minX) + 60;
+                    const cY = (child.y - minY) + 25;
+                    
+                    const d = `M ${pX} ${pY} C ${pX} ${pY + 70}, ${cX} ${cY - 70}, ${cX} ${cY}`;
+                    
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', d);
+                    path.setAttribute('stroke', backgroundOption === 'dark' ? '#94a3b8' : '#64748b');
+                    path.setAttribute('stroke-width', '2');
+                    path.setAttribute('fill', 'none');
+                    exportSvg.appendChild(path);
+                });
+                
+                // Render additional links
+                Object.values(nodes).forEach(node => {
+                    if (!node.linkedNodes || node.linkedNodes.length === 0) return;
+                    
+                    node.linkedNodes.forEach(linkedNodeId => {
+                        const linkedNode = nodes[linkedNodeId];
+                        if (!linkedNode) return;
+                        
+                        const nX = (node.x - minX) + 60;
+                        const nY = (node.y - minY) + 25;
+                        const lX = (linkedNode.x - minX) + 60;
+                        const lY = (linkedNode.y - minY) + 25;
+                        
+                        const d = `M ${nX} ${nY} C ${nX} ${nY + 50}, ${lX} ${lY - 50}, ${lX} ${lY}`;
+                        
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path.setAttribute('d', d);
+                        path.setAttribute('stroke', '#60a5fa');
+                        path.setAttribute('stroke-width', '2');
+                        path.setAttribute('fill', 'none');
+                        exportSvg.appendChild(path);
+                    });
+                });
+                
+                // Use html2canvas to capture the export container
+                html2canvas(exportContainer, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: backgroundColor || 'rgba(0,0,0,0)'
+                }).then(canvas => {
+                    // Convert canvas to image
+                    const mimeType = format === 'jpg' ? 'image/jpeg' : 'image/png';
+                    const dataUrl = canvas.toDataURL(mimeType, quality);
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.download = `mindmap.${format}`;
+                    link.href = dataUrl;
+                    link.click();
+                    
+                    // Clean up
+                    document.body.removeChild(exportContainer);
+                }).catch(error => {
+                    console.error('Error exporting mind map:', error);
+                    alert('Error exporting mind map. Please try again.');
+                    document.body.removeChild(exportContainer);
+                });
+            }
+            
+            // Initialize
+            updateQualityValue();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1051 @@
+<!-- === Edit/Export Toggle + Iframe Overlay (DROP-IN READY) === -->
+
+<style>
+  /* Toggle container top-right */
+  #modeToggle {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: #fff;
+    border-radius: 15px;
+    display: flex;
+    box-shadow: 0 0 8px rgba(0,0,0,0.15);
+    z-index: 99999;
+    overflow: hidden;
+  }
+
+  #modeToggle button {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  #modeToggle button.active {
+    background: #4285f4;
+    color: white;
+  }
+
+  /* Fullscreen iframe overlay (hidden by default) */
+  #exportFrame {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: none;
+    z-index: 9999;
+  }
+</style>
+
+<!-- Toggle Switch (Top Right) -->
+<div id="modeToggle">
+  <button id="editBtn" class="active">Edit</button>
+  <button id="exportBtn">Export</button>
+</div>
+
+<!-- Export Iframe Overlay -->
+<iframe 
+  id="exportFrame"
+  src="https://mahi902.github.io/DocuWritePro/mme.html"
+  frameborder="0">
+</iframe>
+
+<script>
+  const editBtn = document.getElementById("editBtn");
+  const exportBtn = document.getElementById("exportBtn");
+  const exportFrame = document.getElementById("exportFrame");
+
+  // CHANGE THIS to your editor container ID
+  const editorContainer = document.getElementById("editorContainer");
+
+  function activateEdit() {
+    editBtn.classList.add("active");
+    exportBtn.classList.remove("active");
+    exportFrame.style.display = "none";
+    if (editorContainer) editorContainer.style.display = "block";
+  }
+
+  function activateExport() {
+    exportBtn.classList.add("active");
+    editBtn.classList.remove("active");
+    if (editorContainer) editorContainer.style.display = "none";
+    exportFrame.style.display = "block";
+  }
+
+  editBtn.onclick = activateEdit;
+  exportBtn.onclick = activateExport;
+</script>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mind Map Maker</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    
+    <!-- Google Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        html, body {
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none;
+            touch-action: none;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Infinite canvas */
+        #viewport {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 10000px;
+            height: 10000px;
+            background-image: 
+                linear-gradient(#e5e7eb 1px, transparent 1px),
+                linear-gradient(90deg, #e5e7eb 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform-origin: 0 0;
+        }
+
+        /* Node styling */
+        .node {
+            position: absolute;
+            background-color: white;
+            border-radius: 8px;
+            padding: 8px 16px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            cursor: grab;
+            user-select: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            min-width: 100px;
+            text-align: center;
+            max-width: 200px;
+            word-wrap: break-word;
+        }
+
+        .node:hover {
+            border-color: #94a3b8;
+        }
+
+        .node.selected {
+            border-color: #3b82f6;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        
+        .node.linking-source {
+            border-color: #f59e0b;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(245, 158, 11, 0.4);
+        }
+
+        /* Node input */
+        .node input {
+            width: 100%;
+            border: none;
+            outline: none;
+            padding: 0;
+            margin: 0;
+            font-family: inherit;
+            font-size: inherit;
+            text-align: center;
+            background: #f8fafc;
+            border-radius: 4px;
+            user-select: text;
+        }
+        
+        /* Node controls */
+        #node-controls {
+            position: absolute;
+            display: none; 
+            z-index: 20;
+            transform-origin: center center;
+        }
+        
+        /* Linking indicator */
+        #linking-indicator {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #1e293b;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 99px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 50;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Color picker */
+        .color-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin: 2px;
+            cursor: pointer;
+            border: 2px solid #e2e8f0;
+        }
+
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+
+        /* Locate button */
+        #locate-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+            display: none;
+        }
+        
+        /* Undo/Redo buttons */
+        #undo-redo-container {
+            position: fixed;
+            top: 4px;
+            left: 160px;
+            z-index: 10;
+            display: flex;
+            gap: 2px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <!-- Top-left UI controls -->
+    <div class="fixed top-4 left-4 z-10 flex gap-2">
+        <button id="export-json-btn" title="Export as JSON" class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-slate-600 hover:bg-slate-100 transition-all shadow-md">
+            <span class="material-icons-outlined" style="font-size: 22px;">save_alt</span>
+        </button>
+        <button id="import-json-btn" title="Import JSON" class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-slate-600 hover:bg-slate-100 transition-all shadow-md">
+            <span class="material-icons-outlined" style="font-size: 22px;">upload</span>
+        </button>
+        <input type="file" id="import-json-file" accept=".json" class="hidden">
+    </div>
+    
+    <!-- Undo/Redo buttons -->
+    <div id="undo-redo-container">
+        <button id="undo-btn" title="Undo" class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-slate-600 hover:bg-slate-100 transition-all shadow-md">
+            <span class="material-icons-outlined" style="font-size: 22px;">undo</span>
+        </button>
+        <button id="redo-btn" title="Redo" class="w-10 h-10 flex items-center justify-center rounded-full bg-white text-slate-600 hover:bg-slate-100 transition-all shadow-md">
+            <span class="material-icons-outlined" style="font-size: 22px;">redo</span>
+        </button>
+    </div>
+    
+    <!-- Linking mode indicator message -->
+    <div id="linking-indicator">
+        Click nodes to link or unlink...
+    </div>
+
+    <!-- Locate button (appears when zoomed out) -->
+    <button id="locate-btn" class="w-12 h-12 flex items-center justify-center rounded-full bg-white text-slate-600 hover:bg-slate-100 transition-all shadow-md">
+        <span class="material-icons-outlined" style="font-size: 22px;">my_location</span>
+    </button>
+
+    <!-- Main container for the mind map -->
+    <div id="mindmap-container" class="w-screen h-screen relative overflow-hidden cursor-grab">
+        
+        <!-- Infinite viewport -->
+        <div id="viewport">
+            
+            <!-- SVG layer for drawing connector lines -->
+            <svg id="svg-container" class="w-full h-full absolute top-0 left-0" style="pointer-events: none;"></svg>
+            
+            <!-- Container for all the node DOM elements -->
+            <div id="nodes-container" class="absolute top-0 left-0"></div>
+        </div>
+    </div>
+
+    <!-- Controls for the selected node -->
+    <div id="node-controls" class="bg-white p-1 rounded-full shadow-lg flex gap-1">
+        <button id="add-child-btn" title="Add child" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600 transition-all">
+            <span class="material-icons-outlined" style="font-size: 20px;">add</span>
+        </button>
+        <button id="edit-node-btn" title="Edit text" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-green-100 hover:text-green-600 transition-all">
+            <span class="material-icons-outlined" style="font-size: 20px;">edit</span>
+        </button>
+        <button id="change-parent-btn" title="Link/Unlink nodes" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-600 transition-all">
+            <span class="material-icons-outlined" style="font-size: 20px;">link</span>
+        </button>
+        <button id="color-node-btn" title="Change color" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-purple-100 hover:text-purple-600 transition-all">
+            <span class="material-icons-outlined" style="font-size: 20px;">palette</span>
+        </button>
+        <button id="delete-node-btn" title="Delete node" class="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-red-100 hover:text-red-600 transition-all">
+            <span class="material-icons-outlined" style="font-size: 20px;">delete_outline</span>
+        </button>
+    </div>
+
+    <!-- Color picker popup -->
+    <div id="color-picker" class="absolute bg-white p-3 rounded-lg shadow-lg z-30 hidden flex-wrap" style="width: 180px;">
+        <div class="w-full text-sm font-medium text-slate-700 mb-2">Node Color</div>
+        <div class="flex flex-wrap" id="recent-colors-container">
+            <!-- Recent colors will be added here by JavaScript -->
+        </div>
+        <div class="w-full text-sm font-medium text-slate-700 mt-3 mb-2">More Colors</div>
+        <input type="color" id="custom-color" class="w-full h-8 cursor-pointer">
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
+            const container = document.getElementById('mindmap-container');
+            const viewport = document.getElementById('viewport');
+            const nodesContainer = document.getElementById('nodes-container');
+            const svgContainer = document.getElementById('svg-container');
+            const controls = document.getElementById('node-controls');
+            const addChildBtn = document.getElementById('add-child-btn');
+            const deleteNodeBtn = document.getElementById('delete-node-btn');
+            const changeParentBtn = document.getElementById('change-parent-btn');
+            const editNodeBtn = document.getElementById('edit-node-btn');
+            const colorNodeBtn = document.getElementById('color-node-btn');
+            const exportJsonBtn = document.getElementById('export-json-btn');
+            const importJsonBtn = document.getElementById('import-json-btn');
+            const importJsonFile = document.getElementById('import-json-file');
+            const linkingIndicator = document.getElementById('linking-indicator');
+            const locateBtn = document.getElementById('locate-btn');
+            const colorPicker = document.getElementById('color-picker');
+            const customColor = document.getElementById('custom-color');
+            const undoBtn = document.getElementById('undo-btn');
+            const redoBtn = document.getElementById('redo-btn');
+            const recentColorsContainer = document.getElementById('recent-colors-container');
+
+            // --- Application State ---
+            let nodes = {}; 
+            const rootId = 'root';
+            let pan = { x: 0, y: 0 };
+            let zoom = 1;
+            
+            // Interaction state
+            let selectedNodeId = null;
+            let isDraggingNode = false;
+            let isPanning = false;
+            let isLinking = false;
+            let nodeToRelinkId = null;
+            let isEditing = false;
+            let recentColors = ['#ffffff', '#fef3c7', '#dbeafe', '#dcfce7', '#fce7f3'];
+            let isColorPicking = false;
+            
+            // Undo/Redo state
+            let undoStack = [];
+            let redoStack = [];
+            let isUndoRedo = false;
+
+            let dragStart = { x: 0, y: 0 }; 
+            let nodeDragOffset = { x: 0, y: 0 };
+
+            // --- Initialization ---
+            function initialize() {
+                // Load recent colors from localStorage
+                const savedColors = localStorage.getItem('mindmapRecentColors');
+                if (savedColors) {
+                    recentColors = JSON.parse(savedColors);
+                }
+                
+                // Center the view on the root node
+                pan.x = container.clientWidth / 2 - 150;
+                pan.y = container.clientHeight / 2 - 50;
+
+                // Create root node
+                nodes[rootId] = {
+                    id: rootId,
+                    text: 'Central Idea',
+                    x: 150, 
+                    y: 50,
+                    parentId: null,
+                    color: '#ffffff',
+                    linkedNodes: []
+                };
+                
+                selectedNodeId = rootId;
+                saveState(); // Initial state for undo/redo
+                fullRender();
+                
+                // --- Event Listeners ---
+                container.addEventListener('mousedown', onPointerDown);
+                container.addEventListener('wheel', onContainerWheel, { passive: false });
+                
+                // Touch events
+                container.addEventListener('touchstart', onPointerDown, { passive: false });
+                document.addEventListener('touchmove', onPointerMove, { passive: false });
+                document.addEventListener('touchend', onPointerUp);
+
+                // Control buttons
+                addChildBtn.addEventListener('click', onAddChild);
+                deleteNodeBtn.addEventListener('click', onDeleteNode);
+                changeParentBtn.addEventListener('click', onChangeParent);
+                editNodeBtn.addEventListener('click', onEditNode);
+                colorNodeBtn.addEventListener('click', onColorNode);
+                
+                // UI buttons
+                exportJsonBtn.addEventListener('click', exportAsJSON);
+                importJsonBtn.addEventListener('click', () => importJsonFile.click());
+                importJsonFile.addEventListener('change', importJSON);
+                
+                // Locate button
+                locateBtn.addEventListener('click', locateRoot);
+                
+                // Color picker
+                customColor.addEventListener('input', onCustomColorChange);
+                
+                // Undo/Redo buttons
+                undoBtn.addEventListener('click', undo);
+                redoBtn.addEventListener('click', redo);
+                
+                // Close color picker when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (isColorPicking && !colorPicker.contains(e.target) && e.target !== colorNodeBtn) {
+                        colorPicker.classList.add('hidden');
+                        isColorPicking = false;
+                    }
+                });
+            }
+
+            // --- Undo/Redo Functions ---
+            
+            function saveState() {
+                if (isUndoRedo) return;
+                
+                // Save current state to undo stack
+                undoStack.push(JSON.parse(JSON.stringify(nodes)));
+                
+                // Limit undo stack size
+                if (undoStack.length > 50) {
+                    undoStack.shift();
+                }
+                
+                // Clear redo stack when new action is performed
+                redoStack = [];
+                
+                updateUndoRedoButtons();
+            }
+            
+            function undo() {
+                if (undoStack.length === 0) return;
+                
+                isUndoRedo = true;
+                
+                // Save current state to redo stack
+                redoStack.push(JSON.parse(JSON.stringify(nodes)));
+                
+                // Restore previous state
+                nodes = undoStack.pop();
+                
+                fullRender();
+                updateUndoRedoButtons();
+                
+                isUndoRedo = false;
+            }
+            
+            function redo() {
+                if (redoStack.length === 0) return;
+                
+                isUndoRedo = true;
+                
+                // Save current state to undo stack
+                undoStack.push(JSON.parse(JSON.stringify(nodes)));
+                
+                // Restore next state
+                nodes = redoStack.pop();
+                
+                fullRender();
+                updateUndoRedoButtons();
+                
+                isUndoRedo = false;
+            }
+            
+            function updateUndoRedoButtons() {
+                undoBtn.disabled = undoStack.length === 0;
+                undoBtn.style.opacity = undoStack.length === 0 ? '0.5' : '1';
+                
+                redoBtn.disabled = redoStack.length === 0;
+                redoBtn.style.opacity = redoStack.length === 0 ? '0.5' : '1';
+            }
+
+            // --- Core Render Functions ---
+
+            function fullRender() {
+                if (isEditing) return;
+                updateViewport();
+                renderNodes();
+                renderLines();
+                renderControls();
+                renderLinkingIndicator();
+                updateLocateButton();
+            }
+
+            function updateViewport() {
+                viewport.style.transform = `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`;
+            }
+
+            function renderNodes() {
+                nodesContainer.innerHTML = '';
+                Object.values(nodes).forEach(node => {
+                    const nodeEl = document.createElement('div');
+                    nodeEl.id = node.id;
+                    nodeEl.className = 'node';
+                    nodeEl.style.backgroundColor = node.color || '#ffffff';
+                    
+                    if (node.id === selectedNodeId) nodeEl.classList.add('selected');
+                    if (isLinking && node.id === nodeToRelinkId) nodeEl.classList.add('linking-source');
+                    
+                    nodeEl.style.left = `${node.x}px`;
+                    nodeEl.style.top = `${node.y}px`;
+                    nodeEl.textContent = node.text;
+
+                    // Event listeners
+                    nodeEl.addEventListener('mousedown', (e) => onPointerDown(e, node.id));
+                    nodeEl.addEventListener('touchstart', (e) => onPointerDown(e, node.id), { passive: false });
+                    
+                    nodeEl.addEventListener('dblclick', (e) => onEditNode(e));
+                    nodeEl.addEventListener('click', (e) => onNodeClick(e, node.id));
+
+                    nodesContainer.appendChild(nodeEl);
+                });
+            }
+
+            function renderLines() {
+                svgContainer.innerHTML = '';
+                
+                // Render parent-child connections
+                Object.values(nodes).forEach(child => {
+                    if (!child.parentId) return;
+                    const parent = nodes[child.parentId];
+                    if (!parent) return; 
+                    
+                    const pEl = document.getElementById(parent.id);
+                    const cEl = document.getElementById(child.id);
+                    if (!pEl || !cEl) return; 
+
+                    const pX = parent.x + pEl.offsetWidth / 2;
+                    const pY = parent.y + pEl.offsetHeight / 2;
+                    const cX = child.x + cEl.offsetWidth / 2;
+                    const cY = child.y + cEl.offsetHeight / 2;
+
+                    const d = `M ${pX} ${pY} C ${pX} ${pY + 70}, ${cX} ${cY - 70}, ${cX} ${cY}`;
+                    
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    path.setAttribute('d', d);
+                    path.setAttribute('class', 'stroke-slate-400 stroke-2 fill-none');
+                    svgContainer.appendChild(path);
+                });
+                
+                // Render additional links between nodes
+                Object.values(nodes).forEach(node => {
+                    if (!node.linkedNodes || node.linkedNodes.length === 0) return;
+                    
+                    node.linkedNodes.forEach(linkedNodeId => {
+                        const linkedNode = nodes[linkedNodeId];
+                        if (!linkedNode) return;
+                        
+                        const nodeEl = document.getElementById(node.id);
+                        const linkedEl = document.getElementById(linkedNodeId);
+                        if (!nodeEl || !linkedEl) return;
+                        
+                        const nX = node.x + nodeEl.offsetWidth / 2;
+                        const nY = node.y + nodeEl.offsetHeight / 2;
+                        const lX = linkedNode.x + linkedEl.offsetWidth / 2;
+                        const lY = linkedNode.y + linkedEl.offsetHeight / 2;
+                        
+                        const d = `M ${nX} ${nY} C ${nX} ${nY + 50}, ${lX} ${lY - 50}, ${lX} ${lY}`;
+                        
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path.setAttribute('d', d);
+                        path.setAttribute('class', 'stroke-blue-400 stroke-2 fill-none');
+                        svgContainer.appendChild(path);
+                    });
+                });
+            }
+
+            function renderControls() {
+                if (!selectedNodeId || isLinking || isEditing) {
+                    controls.style.display = 'none';
+                    return;
+                }
+
+                const node = nodes[selectedNodeId];
+                const nodeEl = document.getElementById(node.id);
+                if (!nodeEl) {
+                    controls.style.display = 'none';
+                    return;
+                }
+
+                const nodeRect = nodeEl.getBoundingClientRect();
+                const controlsX = nodeRect.right - (controls.offsetWidth / 2);
+                const controlsY = nodeRect.top - (controls.offsetHeight / 2);
+
+                controls.style.display = 'flex';
+                controls.style.left = `${controlsX}px`;
+                controls.style.top = `${controlsY}px`;
+                controls.style.transform = `scale(${1 / zoom})`;
+                
+                const isRoot = node.id === rootId;
+                deleteNodeBtn.disabled = isRoot;
+                deleteNodeBtn.style.opacity = isRoot ? '0.5' : '1';
+                deleteNodeBtn.style.cursor = isRoot ? 'not-allowed' : 'pointer';
+                
+                changeParentBtn.disabled = isRoot;
+                changeParentBtn.style.opacity = isRoot ? '0.5' : '1';
+                changeParentBtn.style.cursor = isRoot ? 'not-allowed' : 'pointer';
+            }
+            
+            function renderLinkingIndicator() {
+                linkingIndicator.style.display = isLinking ? 'block' : 'none';
+                container.style.cursor = isLinking ? 'crosshair' : 'grab';
+            }
+            
+            function updateLocateButton() {
+                // Show locate button when zoomed out too much
+                if (zoom < 0.3) {
+                    locateBtn.style.display = 'flex';
+                } else {
+                    locateBtn.style.display = 'none';
+                }
+            }
+
+            // --- Event Normalization ---
+            
+            function getEventCoords(e) {
+                if (e.touches && e.touches[0]) {
+                    return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+                }
+                return { x: e.clientX, y: e.clientY };
+            }
+            
+            function getWorldCoords(clientX, clientY) {
+                return {
+                    x: (clientX - pan.x) / zoom,
+                    y: (clientY - pan.y) / zoom
+                };
+            }
+
+            // --- Pointer Event Handlers ---
+
+            function onPointerDown(e, nodeId = null) {
+                e.preventDefault();
+                
+                if (isEditing || isColorPicking) return; 
+
+                // Node interaction
+                if (nodeId) {
+                    e.stopPropagation();
+                    
+                    // Linking mode
+                    if (isLinking) {
+                        handleLinkingClick(nodeId);
+                        return;
+                    }
+                    
+                    // Normal node selection and dragging
+                    isDraggingNode = true;
+                    selectedNodeId = nodeId;
+                    const node = nodes[nodeId];
+                    const coords = getEventCoords(e);
+                    const worldCoords = getWorldCoords(coords.x, coords.y);
+                    
+                    nodeDragOffset.x = worldCoords.x - node.x;
+                    nodeDragOffset.y = worldCoords.y - node.y;
+
+                    fullRender();
+                } 
+                // Container panning
+                else if (e.target === container || e.target === viewport) {
+                    if (isLinking) {
+                        isLinking = false;
+                        nodeToRelinkId = null;
+                        fullRender();
+                        return;
+                    }
+                    
+                    isPanning = true;
+                    container.style.cursor = 'grabbing';
+                    const coords = getEventCoords(e);
+                    dragStart.x = coords.x - pan.x;
+                    dragStart.y = coords.y - pan.y;
+
+                    selectedNodeId = null;
+                    fullRender();
+                }
+
+                // Attach move/up listeners
+                document.addEventListener('mousemove', onPointerMove);
+                document.addEventListener('mouseup', onPointerUp);
+            }
+
+            function onPointerMove(e) {
+                e.preventDefault();
+                if (isLinking || isEditing || isColorPicking) return; 
+
+                const coords = getEventCoords(e);
+                const worldMouseX = (coords.x - pan.x) / zoom;
+                const worldMouseY = (coords.y - pan.y) / zoom;
+
+                if (isDraggingNode && selectedNodeId) {
+                    const node = nodes[selectedNodeId];
+                    node.x = worldMouseX - nodeDragOffset.x;
+                    node.y = worldMouseY - nodeDragOffset.y;
+                    
+                    // Partial render for performance
+                    const nodeEl = document.getElementById(node.id);
+                    nodeEl.style.left = `${node.x}px`;
+                    nodeEl.style.top = `${node.y}px`;
+                    renderLines();
+                    renderControls(); 
+                } else if (isPanning) {
+                    pan.x = coords.x - dragStart.x;
+                    pan.y = coords.y - dragStart.y;
+                    updateViewport();
+                    renderControls(); 
+                }
+            }
+
+            function onPointerUp(e) {
+                if (isDraggingNode) {
+                    // Save state after node movement
+                    saveState();
+                }
+                
+                isDraggingNode = false;
+                isPanning = false;
+                
+                if (!isLinking) container.style.cursor = 'grab';
+                
+                document.removeEventListener('mousemove', onPointerMove);
+                document.removeEventListener('mouseup', onPointerUp);
+            }
+            
+            // --- Node Click Handler ---
+
+            function onNodeClick(e, nodeId) {
+                e.stopPropagation();
+                
+                if (isLinking) {
+                    handleLinkingClick(nodeId);
+                } else {
+                    selectedNodeId = nodeId;
+                    fullRender();
+                }
+            }
+            
+            function handleLinkingClick(nodeId) {
+                if (!nodeToRelinkId) {
+                    // Starting linking mode
+                    nodeToRelinkId = nodeId;
+                    linkingIndicator.textContent = 'Click nodes to link with...';
+                } else {
+                    // Linking two nodes
+                    const sourceNode = nodes[nodeToRelinkId];
+                    const targetNode = nodes[nodeId];
+                    
+                    // Check if nodes are already connected
+                    const isAlreadyConnected = sourceNode.parentId === nodeId || 
+                        (sourceNode.linkedNodes && sourceNode.linkedNodes.includes(nodeId));
+                    
+                    if (isAlreadyConnected) {
+                        // Disconnect nodes
+                        if (sourceNode.parentId === nodeId) {
+                            sourceNode.parentId = null;
+                        } else if (sourceNode.linkedNodes) {
+                            const index = sourceNode.linkedNodes.indexOf(nodeId);
+                            if (index > -1) {
+                                sourceNode.linkedNodes.splice(index, 1);
+                            }
+                        }
+                    } else {
+                        // Connect nodes
+                        if (!sourceNode.linkedNodes) {
+                            sourceNode.linkedNodes = [];
+                        }
+                        sourceNode.linkedNodes.push(nodeId);
+                    }
+                    
+                    saveState(); // Save state after linking
+                    isLinking = false;
+                    nodeToRelinkId = null;
+                    selectedNodeId = nodeId;
+                    fullRender();
+                }
+            }
+            
+            // --- Container Wheel Event ---
+            
+            function onContainerWheel(e) {
+                e.preventDefault();
+                
+                const zoomFactor = 0.1;
+                const delta = e.deltaY > 0 ? -zoomFactor : zoomFactor;
+                const newZoom = Math.max(0.01, zoom + delta); // No upper limit for zoom
+
+                const mouseRect = container.getBoundingClientRect();
+                const mouseX = e.clientX - mouseRect.left;
+                const mouseY = e.clientY - mouseRect.top;
+                
+                const worldX = (mouseX - pan.x) / zoom;
+                const worldY = (mouseY - pan.y) / zoom;
+                
+                pan.x = mouseX - worldX * newZoom;
+                pan.y = mouseY - worldY * newZoom;
+                
+                zoom = newZoom;
+
+                fullRender();
+            }
+
+            // --- Control Button Actions ---
+
+            function onAddChild(e) {
+                e.stopPropagation();
+                if (!selectedNodeId) return;
+
+                const parent = nodes[selectedNodeId];
+                
+                const existingChildren = Object.values(nodes).filter(n => n.parentId === selectedNodeId);
+                const childCount = existingChildren.length;
+                
+                const yOffset = 140;
+                const horizontalSpread = 180;
+                
+                let xOffset;
+                if (childCount === 0) {
+                    xOffset = 0;
+                } else if (childCount % 2 === 1) {
+                    xOffset = (Math.ceil(childCount / 2)) * horizontalSpread;
+                } else {
+                    xOffset = (Math.ceil(childCount / 2)) * -horizontalSpread;
+                }
+                
+                const newNodeId = `node_${Date.now()}`;
+                const newNode = {
+                    id: newNodeId,
+                    text: 'New Idea',
+                    x: parent.x + xOffset,
+                    y: parent.y + yOffset,
+                    parentId: selectedNodeId,
+                    color: '#ffffff',
+                    linkedNodes: []
+                };
+                
+                nodes[newNodeId] = newNode;
+                selectedNodeId = newNodeId;
+                isLinking = false; 
+                
+                saveState(); // Save state after adding node
+                fullRender();
+            }
+
+            function onDeleteNode(e) {
+                e.stopPropagation();
+                if (!selectedNodeId || selectedNodeId === rootId) return;
+
+                function deleteNodeAndChildren(id) {
+                    const children = Object.values(nodes).filter(n => n.parentId === id);
+                    children.forEach(child => deleteNodeAndChildren(child.id));
+                    delete nodes[id];
+                }
+                
+                deleteNodeAndChildren(selectedNodeId);
+                selectedNodeId = null; 
+                isLinking = false; 
+                
+                saveState(); // Save state after deleting node
+                fullRender();
+            }
+            
+            function onChangeParent(e) {
+                e.stopPropagation();
+                if (!selectedNodeId || selectedNodeId === rootId) return;
+                
+                isLinking = true;
+                nodeToRelinkId = selectedNodeId; 
+                selectedNodeId = null; 
+                linkingIndicator.textContent = 'Click a node to link with...';
+                fullRender();
+            }
+            
+            function onEditNode(e) {
+                e.stopPropagation();
+                if (!selectedNodeId || isLinking || isEditing) return;
+
+                isEditing = true;
+                const node = nodes[selectedNodeId];
+                const nodeEl = document.getElementById(selectedNodeId);
+                
+                controls.style.display = 'none';
+
+                const oldText = node.text;
+                nodeEl.textContent = '';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = oldText;
+                
+                input.addEventListener('mousedown', e => e.stopPropagation());
+                input.addEventListener('touchstart', e => e.stopPropagation());
+                input.addEventListener('click', e => e.stopPropagation());
+                
+                const finishEditing = () => {
+                    const newText = input.value.trim();
+                    node.text = newText || oldText;
+                    
+                    isEditing = false;
+                    
+                    // Save state if text changed
+                    if (newText !== oldText) {
+                        saveState();
+                    }
+                    
+                    fullRender();
+                };
+
+                input.addEventListener('blur', finishEditing);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') input.blur();
+                    if (e.key === 'Escape') {
+                        input.value = oldText;
+                        input.blur();
+                    }
+                });
+                
+                nodeEl.appendChild(input);
+                input.focus();
+                input.select();
+            }
+            
+            function onColorNode(e) {
+                e.stopPropagation();
+                if (!selectedNodeId || isLinking || isEditing) return;
+                
+                // Position color picker near the button
+                const controlsRect = controls.getBoundingClientRect();
+                colorPicker.style.left = `${controlsRect.left}px`;
+                colorPicker.style.top = `${controlsRect.bottom + 5}px`;
+                
+                // Render recent colors
+                recentColorsContainer.innerHTML = '';
+                
+                recentColors.forEach(color => {
+                    const colorOption = document.createElement('div');
+                    colorOption.className = 'color-option';
+                    colorOption.style.backgroundColor = color;
+                    colorOption.addEventListener('click', () => applyColorToNode(color));
+                    recentColorsContainer.appendChild(colorOption);
+                });
+                
+                colorPicker.classList.remove('hidden');
+                isColorPicking = true;
+            }
+            
+            function onCustomColorChange(e) {
+                const color = e.target.value;
+                applyColorToNode(color);
+                colorPicker.classList.add('hidden');
+                isColorPicking = false;
+            }
+            
+            function applyColorToNode(color) {
+                if (selectedNodeId) {
+                    nodes[selectedNodeId].color = color;
+                    
+                    // Add to recent colors if not already there
+                    if (!recentColors.includes(color)) {
+                        recentColors.unshift(color);
+                        if (recentColors.length > 5) {
+                            recentColors.pop();
+                        }
+                        // Save to localStorage
+                        localStorage.setItem('mindmapRecentColors', JSON.stringify(recentColors));
+                    }
+                    
+                    saveState(); // Save state after changing color
+                    fullRender();
+                }
+            }
+            
+            // --- Export Functions ---
+            
+            function exportAsJSON() {
+                const dataStr = JSON.stringify(nodes, null, 2); 
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = 'mindmap.json';
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+            }
+            
+            function importJSON(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedNodes = JSON.parse(e.target.result);
+                        nodes = importedNodes;
+                        selectedNodeId = rootId;
+                        
+                        saveState(); // Save state after import
+                        fullRender();
+                    } catch (error) {
+                        alert('Error importing JSON file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+                
+                // Reset file input
+                e.target.value = '';
+            }
+            
+            // --- Utility Functions ---
+            
+            function locateRoot() {
+                // Center the root node and reset zoom
+                const root = nodes[rootId];
+                if (root) {
+                    pan.x = container.clientWidth / 2 - root.x * 1;
+                    pan.y = container.clientHeight / 2 - root.y * 1;
+                    zoom = 1;
+                    fullRender();
+                }
+            }
+            
+            function isDescendant(childId, parentId) {
+                let currentNode = nodes[childId];
+                while (currentNode && currentNode.parentId) {
+                    if (currentNode.parentId === parentId) return true;
+                    currentNode = nodes[currentNode.parentId];
+                }
+                return false;
+            }
+            
+            function isValidNewParent(childId, newParentId) {
+                if (!childId || !newParentId) return false;
+                if (childId === newParentId) return false;
+                if (isDescendant(newParentId, childId)) return false;
+                return true;
+            }
+
+            // --- Start the app ---
+            initialize();
+        });
+    </script>
+</body>
+</html>

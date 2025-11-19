@@ -30,6 +30,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - **Reorder & Merge**: Reorder and merge pages from different PDFs
 - **Chart Maker**: Creating data charts
 - **Graph Maker**: Make clear graphs with visualization
+- **Whiteboard**: Create and place jams in your very own workplace
 - **Mind Map Maker**: Make sleek and custom mind maps
 - **Table Maker**: Creating tables
 - **Watermark Adder**: Adding watermarks to files

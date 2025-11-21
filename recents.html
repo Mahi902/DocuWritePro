@@ -3,740 +3,549 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <!-- Load Tailwind CSS for modern, responsive styling -->
+    <title>DocuWrite Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7f9fc;
+            background-color: #f8fafc;
+            color: #334155;
+            -webkit-tap-highlight-color: transparent;
         }
-        /* Custom CSS for soft blue animated background */
-        @keyframes soft-blue-shift {
-            0% { background-color: #e0f2fe; } /* Light blue 100 */
-            50% { background-color: #bae6fd; } /* Light blue 200 */
-            100% { background-color: #e0f2fe; }
-        }
-        .animated-bg {
-            animation: soft-blue-shift 10s ease-in-out infinite alternate;
-        }
-        /* Fullscreen Layout: The main container takes up the whole screen */
-        .full-app-container {
-            width: 100%;
-            height: 100vh;
+        .tool-card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
-            background-color: white;
-            overflow: hidden; /* Prevent body scroll */
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            height: 110px;
         }
-        /* Hide scrollbar for a cleaner mobile aesthetic */
-        .file-list-container::-webkit-scrollbar {
-            display: none;
+        .tool-card:active {
+            transform: scale(0.97);
+            background-color: #f1f5f9;
         }
-        /* Style for editable content */
-        #editable-file-content {
-            min-height: 200px;
+        .tool-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
         }
-        #editable-file-content:focus {
-            outline: 2px solid theme('colors.blue.500');
-            box-shadow: 0 0 0 2px theme('colors.blue.200');
+        .tool-icon {
+            font-size: 32px;
+            color: #3b82f6;
+            margin-bottom: 8px;
+        }
+        .tool-name {
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.2;
+            color: #475569;
+        }
+        /* Star Icon Styling */
+        .star-icon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 20px;
+            color: #cbd5e1;
+            transition: all 0.2s;
+            z-index: 10; /* Ensure it sits above the card click area */
+            padding: 4px; /* Increase click target area */
+            border-radius: 50%;
+        }
+        .star-icon:hover {
+            background-color: rgba(0,0,0,0.05);
+            color: #94a3b8;
+        }
+        .star-icon.active {
+            color: #fbbf24;
+            font-variation-settings: 'FILL' 1;
+            transform: scale(1.1);
+        }
+        
+        /* Banner Animation */
+        #adBanner {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 500px;
+            opacity: 1;
+            overflow: hidden;
+        }
+        #adBanner.hidden-banner {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+        }
+
+        /* Hide scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #cbd5e1;
+            border-radius: 3px;
         }
     </style>
 </head>
-<body class="h-screen overflow-hidden">
+<body class="min-h-screen flex flex-col w-full bg-white text-slate-800">
 
-    <!-- Fullscreen Application Container -->
-    <div class="full-app-container">
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col p-4 md:p-6 space-y-6 w-full">
 
-        <!-- DASHBOARD AREA (Thin Animated Blue Background) -->
-        <div id="dashboard-header" class="py-4 px-6 text-gray-800 flex-shrink-0 animated-bg shadow-lg">
-            <h1 class="text-3xl font-extrabold mb-4 text-blue-900">Dashboard</h1>
-            
-            <!-- REMOVED: To see your files, click "Select Folder Access" below. -->
+        <!-- Top Header -->
+        <div class="flex justify-between items-center py-1">
+            <h1 class="text-2xl md:text-3xl font-bold text-slate-800 tracking-tight">DocuWrite <span class="text-blue-500">Pro</span></h1>
+            <button class="p-2 rounded-full hover:bg-slate-100 transition-colors" onclick="location.reload()">
+                <span class="material-symbols-outlined text-slate-500">refresh</span>
+            </button>
+        </div>
 
-            <div class="space-y-3">
-                
-                <!-- NEW DOCUMENT BUTTON (Toggle) - Light and subtle -->
-                <button id="newDocument-toggle" onclick="toggleMenu('newDocument')" 
-                        class="w-full flex items-center justify-between p-3 bg-white text-blue-700 rounded-xl shadow-md border border-gray-200 
-                               hover:bg-blue-50 transition transform hover:scale-[1.01] font-semibold text-lg">
-                    New Document
-                    <!-- Plus Icon (now text-blue-700) -->
-                    <svg id="newDocument-icon" class="w-6 h-6 transform transition-transform text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+        <!-- Ad Banner -->
+        <div id="adBanner" class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 md:p-8 border border-blue-200 shadow-sm relative group cursor-pointer" onclick="window.location.href='https://mahi902.github.io/Aurora/pollinatedai.html'">
+            <!-- Close Button -->
+            <button onclick="dismissBanner(event)" class="absolute top-2 right-2 p-2 rounded-full bg-white/50 hover:bg-white text-blue-800 z-20 transition-all hover:shadow-sm">
+                <span class="material-symbols-outlined text-lg font-bold">close</span>
+            </button>
+
+            <div class="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-blue-200 rounded-full opacity-50 blur-3xl"></div>
+            <h2 class="text-xl md:text-2xl font-bold text-blue-900 mb-2 relative z-10">Try Pollinated AI</h2>
+            <p class="text-base text-blue-700 leading-relaxed relative z-10 max-w-2xl">Try the new Pollinated AI. Generate text, images and webpages with the power of next-gen generative models.</p>
+            <span class="material-symbols-outlined absolute bottom-6 right-6 text-blue-300 text-5xl group-hover:text-blue-400 transition-colors">auto_awesome</span>
+        </div>
+
+        <!-- Dynamic Main Buttons -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Row 1 -->
+            <div id="row-1-container" class="w-full">
+                <button onclick="transformRow1()" class="w-full bg-blue-600 text-white font-semibold py-5 rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-[0.99] transition-all flex items-center justify-center gap-2 h-20">
+                    <span class="material-symbols-outlined text-3xl">add</span> 
+                    <span class="text-lg">New Document</span>
                 </button>
-
-                <!-- New Document Sub-Menu (Lighter blue background) -->
-                <div id="newDocument-menu" class="hidden pl-4 space-y-2">
-                    <a href="https://mahi902.github.io/DocuWritePro/document-writer.html" 
-                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">Document Editor</a>
-                    <a href="https://mahi902.github.io/DocuWritePro/collab-document-editor.html" 
-                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">Collab Editor</a>
+            </div>
+            <!-- Row 2 -->
+            <div id="row-2-container" class="flex w-full h-20 rounded-xl overflow-hidden shadow-md cursor-pointer">
+                <div onclick="transformRow2('image')" class="w-1/2 bg-sky-100 hover:bg-sky-200 text-sky-700 flex items-center justify-center gap-2 transition-colors relative group">
+                    <span class="material-symbols-outlined text-2xl">image</span> 
+                    <span class="font-medium text-base">Image Editing</span>
                 </div>
-
-                <!-- EDIT IMAGE & EDIT CODE BUTTONS (One Line) - Light and subtle -->
-                <div class="flex gap-4">
-                    <!-- Edit Image Button (Direct Link) - Light/Subtle Style -->
-                    <a href="https://mahi902.github.io/DocuWritePro/image-editor.html" 
-                       class="flex-1 flex flex-col items-center justify-center p-3 bg-white text-blue-700 rounded-xl shadow-md border border-gray-200 
-                              hover:bg-blue-50 transition transform hover:scale-[1.01] font-semibold text-base">
-                        <!-- Icon (now text-blue-700) -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mb-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L15 15m0 0l4.586-4.586a2 2 0 012.828 0L21 17m-9.757-4.243V12m0 0a2.25 2.25 0 00-.757 1.621v.571m0 0a2.25 2.25 0 00.757 1.621m-.757-1.621h.007" /></svg>
-                        Edit Image
-                    </a>
-
-                    <!-- Edit Code Button (Toggle) - Light/Subtle Style -->
-                    <button id="editCode-toggle" onclick="toggleMenu('editCode')" 
-                            class="flex-1 flex flex-col items-center justify-center p-3 bg-white text-blue-700 rounded-xl shadow-md border border-gray-200 
-                                   hover:bg-blue-50 transition transform hover:scale-[1.01] font-semibold text-base">
-                        <!-- Icon (now text-blue-700) -->
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 mb-1 text-blue-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
-                        Edit Code
-                    </button>
-                </div>
-                
-                <!-- Edit Code Sub-Menu (Lighter blue background) -->
-                <div id="editCode-menu" class="hidden pl-4 space-y-2">
-                    <a href="https://mahi902.github.io/DocuWritePro/frontend-ide.html" 
-                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">Frontend IDE (HTML, CSS, JS)</a>
-                    <a href="https://mahi902.github.io/DocuWritePro/code-playground.html" 
-                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">Code Launcher (HTML)</a>
-                    <a href="https://mahi902.github.io/DocuWritePro/html.html" 
-                       class="block p-3 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition font-medium">HTML Editor (HTML)</a>
+                <div onclick="transformRow2('code')" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 opacity-90 flex items-center justify-center gap-2 transition-colors">
+                    <span class="material-symbols-outlined text-2xl">code</span>
+                    <span class="font-medium text-base">Code Editing</span>
                 </div>
             </div>
         </div>
-        <!-- END DASHBOARD AREA -->
 
-
-        <!-- RECENTS HEADER & CONTROLS -->
-        <header class="p-4 bg-white border-b border-gray-100 flex-shrink-0">
-            <h2 class="text-xl font-bold text-gray-800 mb-4">Recents</h2>
-            <!-- Sort and Control Section -->
-            <div id="controls" class="flex flex-wrap gap-2 text-sm">
-                <!-- Sorting buttons remain blue/gray for functional contrast -->
-                <button id="sort-name" onclick="sortFiles('name')" class="sort-btn bg-blue-500 text-white px-3 py-1 rounded-full shadow-md hover:bg-blue-600 transition">
-                    Sort Alphabetically
-                </button>
-                <button id="sort-date-asc" onclick="sortFiles('dateModified', 'asc')" class="sort-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">
-                    Sort By Date
-                </button>
-                <button id="sort-date-desc" onclick="sortFiles('dateModified', 'desc')" class="sort-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-300 transition">
-                    Recently Created
-                </button>
+        <!-- Secondary Banner -->
+        <div class="pt-2">
+            <div class="flex items-center gap-2 mb-4 px-1">
+                <span class="material-symbols-outlined text-purple-500 text-2xl">auto_awesome</span>
+                <h3 class="font-bold text-xl text-slate-700">AI Powered Tools</h3>
             </div>
-        </header>
-
-        <!-- File List Container - Takes up remaining height and scrolls -->
-        <main class="file-list-container p-4 flex-grow overflow-y-auto">
-            
-            <!-- INITIAL PROMPT - Now a direct child of main and safe from renderFiles() -->
-            <div id="initial-prompt" class="p-8 text-center text-gray-500 max-w-3xl mx-auto">
-                <button onclick="selectFolder()" class="mt-6 bg-blue-500 text-white p-3 rounded-xl font-semibold shadow-lg hover:bg-blue-600 transition min-w-[200px]">
-                    Select Folder Access
-                </button>
-            </div>
-
-            <!-- File List - This is the only element cleared by renderFiles() -->
-            <div id="file-list" class="space-y-3 max-w-3xl mx-auto">
-                <!-- File items are rendered here -->
-            </div>
-
-            <!-- Loading Spinner -->
-            <div id="loading" class="hidden text-center p-8">
-                <svg class="animate-spin mx-auto h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p class="mt-3 text-gray-500">Loading files...</p>
-            </div>
-        </main>
-
-        <!-- Modal/Message Box (Used for Preview and Confirmation) -->
-        <div id="message-box" class="fixed inset-0 bg-gray-900 bg-opacity-70 hidden items-center justify-center p-4 z-50 overflow-y-auto">
-            <div id="message-content" class="bg-white p-6 rounded-xl shadow-2xl max-w-4xl w-full transform transition-all duration-300 scale-95 opacity-0 m-4">
-                <h3 id="message-title" class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Action</h3>
-                <div id="message-body" class="text-gray-600 mb-4"></div> 
+            <div class="grid grid-cols-3 md:grid-cols-6 gap-4">
+                <a href="https://mahi902.github.io/Aurora/pollinatedai.html" class="flex flex-col items-center justify-center p-4 bg-purple-50 rounded-xl border border-purple-100 hover:bg-purple-100 transition-colors text-center h-28">
+                    <span class="material-symbols-outlined text-purple-600 mb-2 text-3xl">psychology</span>
+                    <span class="text-sm font-semibold text-purple-800">Pollinated AI</span>
+                </a>
+                <a href="https://mahi902.github.io/DocuWritePro/image-generator.html" class="flex flex-col items-center justify-center p-4 bg-pink-50 rounded-xl border border-pink-100 hover:bg-pink-100 transition-colors text-center h-28">
+                    <span class="material-symbols-outlined text-pink-600 mb-2 text-3xl">photo_library</span>
+                    <span class="text-sm font-semibold text-pink-800">Image Gen</span>
+                </a>
+                <a href="https://mahi902.github.io/DocuWritePro/wawm.html" class="flex flex-col items-center justify-center p-4 bg-indigo-50 rounded-xl border border-indigo-100 hover:bg-indigo-100 transition-colors text-center h-28">
+                    <span class="material-symbols-outlined text-indigo-600 mb-2 text-3xl">web</span>
+                    <span class="text-sm font-semibold text-indigo-800">WebGen</span>
+                </a>
             </div>
         </div>
 
+        <!-- Tools Section -->
+        <div class="pt-6" id="tools-section">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4">
+                <h3 class="font-bold text-slate-800 text-xl px-1">Tools</h3>
+                <div class="relative w-full md:w-96">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400">search</span>
+                    <input type="text" id="toolSearch" placeholder="Search tools..." class="w-full bg-slate-100 border-none rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none text-slate-700 placeholder-slate-400">
+                </div>
+            </div>
+
+            <div class="tools-container grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4" id="toolsContainer">
+                <!-- NOTE: Added onclick="toggleStar(event, this)" to stars and preventDefault to card clicks via JS -->
+                
+                <!-- Document Editing Tools -->
+                <div class="tool-card" data-tool-name="Editor" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/document-writer.html')">
+                    <span class="material-symbols-outlined tool-icon">edit</span><div class="tool-name">Editor</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Document Viewer" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/viewer.html')">
+                    <span class="material-symbols-outlined tool-icon">visibility</span><div class="tool-name">Document Viewer</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Word Finder" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/word-description-finder.html')">
+                    <span class="material-symbols-outlined tool-icon">menu_book</span><div class="tool-name">Word Finder</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Translator" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/translator.html')">
+                    <span class="material-symbols-outlined tool-icon">language</span><div class="tool-name">Translator</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Document Signer" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/document-signer.html')">
+                    <span class="material-symbols-outlined tool-icon">draw</span><div class="tool-name">Document Signer</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Find & Replacer" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/findandreplacer.html')">
+                    <span class="material-symbols-outlined tool-icon">find_replace</span><div class="tool-name">Find & Replacer</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Page Number Adder" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/page-number-adder.html')">
+                    <span class="material-symbols-outlined tool-icon">format_list_numbered</span><div class="tool-name">Page Number Adder</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Reorder & Merge" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/rm.html')">
+                    <span class="material-symbols-outlined tool-icon">layers</span><div class="tool-name">Reorder & Merge</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Chart Maker" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/chart-maker.html')">
+                    <span class="material-symbols-outlined tool-icon">bar_chart</span><div class="tool-name">Chart Maker</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Graph Maker" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/graphmaker.html')">
+                    <span class="material-symbols-outlined tool-icon">query_stats</span><div class="tool-name">Graph Maker</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Whiteboard" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/whiteboard.html')">
+                    <span class="material-symbols-outlined tool-icon">ad</span><div class="tool-name">Whiteboard</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Mind Map Maker" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/mmm.html')">
+                    <span class="material-symbols-outlined tool-icon">graph_2</span><div class="tool-name">Mind Map Maker</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Table Maker" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/table-maker.html')">
+                    <span class="material-symbols-outlined tool-icon">table_chart</span><div class="tool-name">Table Maker</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Watermark Adder" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/watermarker.html')">
+                    <span class="material-symbols-outlined tool-icon">filter_alt</span><div class="tool-name">Watermark Adder</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Email Writer" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/email-writer.html')">
+                    <span class="material-symbols-outlined tool-icon">email</span><div class="tool-name">Email Writer</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Spell Checker" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/spell-checker.html')">
+                    <span class="material-symbols-outlined tool-icon">spellcheck</span><div class="tool-name">Spell Checker</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="File Extractor" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/file-extractor.html')">
+                    <span class="material-symbols-outlined tool-icon">unarchive</span><div class="tool-name">File Extractor</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="QR Maker" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/qr-code-maker.html')">
+                    <span class="material-symbols-outlined tool-icon">qr_code</span><div class="tool-name">QR Maker</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="ID Card Maker" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/id-card-maker.html')">
+                    <span class="material-symbols-outlined tool-icon">badge</span><div class="tool-name">ID Card Maker</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="File Zipper" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/file-zipper.html')">
+                    <span class="material-symbols-outlined tool-icon">archive</span><div class="tool-name">File Zipper</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="PDF Converter" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/converters.html')">
+                    <span class="material-symbols-outlined tool-icon">picture_as_pdf</span><div class="tool-name">PDF Converter</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="PDF Compressor" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/pdfcompressor.html')">
+                    <span class="material-symbols-outlined tool-icon">compress</span><div class="tool-name">PDF Compressor</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Context Field" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/context-field.html')">
+                    <span class="material-symbols-outlined tool-icon">summarize</span><div class="tool-name">Context Field</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Gift Card Maker" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/gift-card-maker.html')">
+                    <span class="material-symbols-outlined tool-icon">card_giftcard</span><div class="tool-name">Gift Card Maker</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Share File" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/docudrop.html')">
+                    <span class="material-symbols-outlined tool-icon">file_upload</span><div class="tool-name">Share File</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Text Extractor" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/text-extractor.html')">
+                    <span class="material-symbols-outlined tool-icon">document_scanner</span><div class="tool-name">Text Extractor</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Keyboard Click Test" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/keyboard-click-test.html')">
+                    <span class="material-symbols-outlined tool-icon">keyboard</span><div class="tool-name">Keyboard Click Test</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+
+                <!-- Code Editing Tools -->
+                <div class="tool-card" data-tool-name="Frontend IDE" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/frontend-ide.html')">
+                    <span class="material-symbols-outlined tool-icon">developer_mode</span><div class="tool-name">Frontend IDE</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="HTML Editor" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/code-playground.html')">
+                    <span class="material-symbols-outlined tool-icon">code</span><div class="tool-name">HTML Editor</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="HTML Writer" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/html.html')">
+                    <span class="material-symbols-outlined tool-icon">html</span><div class="tool-name">HTML Writer</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Website Generator" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/wawm.html')">
+                    <span class="material-symbols-outlined tool-icon">web</span><div class="tool-name">Website Generator</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Markdown Editor" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/mdeditor.html')">
+                    <span class="material-symbols-outlined tool-icon">markdown</span><div class="tool-name">Markdown Editor</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Button Designer" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/button-designer.html')">
+                    <span class="material-symbols-outlined tool-icon">smart_button</span><div class="tool-name">Button Designer</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="HTML Splitter" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/html-splitter.html')">
+                    <span class="material-symbols-outlined tool-icon">integration_instructions</span><div class="tool-name">HTML Splitter</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="GoTo Code" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/goto-code.html')">
+                    <span class="material-symbols-outlined tool-icon">merge</span><div class="tool-name">GoTo Code</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Code Snipper" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/code-snipper.html')">
+                    <span class="material-symbols-outlined tool-icon">content_cut</span><div class="tool-name">Code Snipper</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+
+                <!-- Image Editing Tools -->
+                <div class="tool-card" data-tool-name="Image Editor" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/image-editor.html')">
+                    <span class="material-symbols-outlined tool-icon">collections</span><div class="tool-name">Image Editor</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Attribution Editor" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/atbedt.html')">
+                    <span class="material-symbols-outlined tool-icon">display_settings</span><div class="tool-name">Attribution Editor</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Image Generator" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/image-generator.html')">
+                    <span class="material-symbols-outlined tool-icon">auto_awesome</span><div class="tool-name">Image Generator</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+                <div class="tool-card" data-tool-name="Drawing Board" onclick="handleToolClick('https://mahi902.github.io/DocuWritePro/draw.html')">
+                    <span class="material-symbols-outlined tool-icon">brush</span><div class="tool-name">Drawing Board</div>
+                    <span class="material-symbols-outlined star-icon" onclick="toggleStar(event, this)">star</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        let directoryHandle = null;
-        let files = [];
-        const fileListElement = document.getElementById('file-list');
-        const loadingElement = document.getElementById('loading');
-        const initialPrompt = document.getElementById('initial-prompt');
-        let currentSortKey = 'name';
-        let currentSortDirection = 'asc';
-        let currentFileIndex = -1; 
-        
-        let activeMenu = null; // State to track which dashboard menu is open
+        // --- Local Storage Keys ---
+        const STORAGE_KEY_STARS = 'docuwrite_starred_tools';
+        const STORAGE_KEY_BANNER = 'docuwrite_banner_hidden_until';
 
-        // ---------------------------------------------------------------------
-        // DASHBOARD TOGGLE LOGIC
-        // ---------------------------------------------------------------------
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            checkBannerStatus();
+            initializeStars();
+        });
 
-        window.toggleMenu = (menuId) => {
-            const menuElement = document.getElementById(menuId + '-menu');
-            const toggleButton = document.getElementById(menuId + '-toggle');
+        // --- Banner Logic ---
+        function checkBannerStatus() {
+            const hiddenUntil = localStorage.getItem(STORAGE_KEY_BANNER);
+            const banner = document.getElementById('adBanner');
             
-            // Check if the button element exists
-            if (!toggleButton) return; 
-
-            // Look for the icon inside the button
-            const iconElement = toggleButton.querySelector('svg');
-
-            // If the clicked menu is already open, close it.
-            if (activeMenu === menuId) {
-                if (menuElement) menuElement.classList.add('hidden');
-                if (iconElement) {
-                    iconElement.classList.remove('rotate-45');
-                }
-                activeMenu = null;
-                return;
-            }
-
-            // Close the currently active menu if one is open
-            if (activeMenu) {
-                const prevMenu = document.getElementById(activeMenu + '-menu');
-                const prevButton = document.getElementById(activeMenu + '-toggle');
-                
-                if (prevMenu) prevMenu.classList.add('hidden');
-                
-                const prevIcon = prevButton ? prevButton.querySelector('svg') : null;
-                
-                if (prevIcon) {
-                    prevIcon.classList.remove('rotate-45');
-                }
-            }
-
-            // Open the new menu
-            if (menuElement) menuElement.classList.remove('hidden');
-            if (iconElement) {
-                iconElement.classList.add('rotate-45');
-            }
-            activeMenu = menuId;
-        };
-
-
-        // ---------------------------------------------------------------------
-        // Message Box Functions
-        // ---------------------------------------------------------------------
-
-        const showMessage = (title, messageHtml) => {
-            document.getElementById('message-title').textContent = title;
-            document.getElementById('message-body').innerHTML = messageHtml;
-            const messageBox = document.getElementById('message-box');
-            const messageContent = document.getElementById('message-content');
-            
-            if (messageBox.classList.contains('hidden')) {
-                messageBox.classList.remove('hidden');
-                messageBox.classList.add('flex');
-                setTimeout(() => {
-                    messageContent.classList.remove('opacity-0', 'scale-95');
-                    messageContent.classList.add('opacity-100', 'scale-100');
-                }, 10);
-            }
-        };
-
-        window.closeMessage = () => {
-            const messageBox = document.getElementById('message-box');
-            const messageContent = document.getElementById('message-content');
-            messageContent.classList.remove('opacity-100', 'scale-100');
-            messageContent.classList.add('opacity-0', 'scale-95');
-            currentFileIndex = -1;
-            setTimeout(() => {
-                messageBox.classList.remove('flex');
-                messageBox.classList.add('hidden');
-            }, 300);
-        };
-
-        // ---------------------------------------------------------------------
-        // File System Helpers (Recents)
-        // ---------------------------------------------------------------------
-
-        const getMimeTypeFromExtension = (filename) => {
-            const ext = filename.split('.').pop().toLowerCase();
-            switch (ext) {
-                case 'png': case 'jpg': case 'jpeg': case 'gif': return `image/${ext}`;
-                case 'mp4': case 'webm': case 'ogg': return `video/${ext}`;
-                case 'txt': case 'md': case 'log': case 'css': case 'js': case 'html': return 'text/plain';
-                case 'pdf': return 'application/pdf'; 
-                case 'json': return 'application/json';
-                default: return 'application/octet-stream';
-            }
-        };
-
-        const formatDate = (timestamp) => {
-            const date = new Date(timestamp);
-            return date.toLocaleDateString(undefined, {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        };
-        
-        // ---------------------------------------------------------------------
-        // File I/O and Core Logic (Recents)
-        // ---------------------------------------------------------------------
-
-        window.selectFolder = async () => {
-            if (typeof window.showDirectoryPicker !== 'function') {
-                showMessage("Error", `Your browser does not support the File System Access API.
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-                return;
-            }
-
-            try {
-                // Request readwrite permissions for the selected directory
-                directoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-                initialPrompt.classList.add('hidden');
-                await loadFiles(directoryHandle);
-
-            } catch (error) {
-                if (error.name === 'AbortError') {
-                    showMessage("Access Canceled", `Folder selection was canceled.
-                        <div class="flex justify-end pt-2">
-                            <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                        </div>`);
-                } else {
-                    console.error("Error selecting directory:", error);
-                    showMessage("Error", `Failed to access directory: ${error.message}
-                        <div class="flex justify-end pt-2">
-                            <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                        </div>`);
-                }
-            }
-        };
-
-        const loadFiles = async (dirHandle) => {
-            files = [];
-            fileListElement.innerHTML = '';
-            loadingElement.classList.remove('hidden');
-            initialPrompt.classList.add('hidden'); // Ensure prompt is hidden on successful load
-
-            try {
-                const filePromises = [];
-                for await (const entry of dirHandle.values()) {
-                    if (entry.kind === 'file') {
-                        // Request a new file handle (important for updated timestamps/references)
-                        const fileHandle = await dirHandle.getFileHandle(entry.name);
-                        
-                        filePromises.push(fileHandle.getFile().then(file => {
-                            const mimeType = file.type || getMimeTypeFromExtension(file.name);
-                            return {
-                                name: file.name,
-                                size: file.size,
-                                lastModified: file.lastModified,
-                                handle: fileHandle, // Store the up-to-date file handle
-                                mimeType: mimeType,
-                                thumbnailUrl: mimeType.startsWith('image/') ? URL.createObjectURL(file) : null 
-                            };
-                        }));
-                    }
-                }
-                files = await Promise.all(filePromises);
-                
-                sortFiles(currentSortKey, currentSortDirection);
-
-            } catch (error) {
-                console.error("Error loading files:", error);
-                showMessage("File Loading Error", `Could not read files from the directory: ${error.message}
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-            } finally {
-                loadingElement.classList.add('hidden');
-                if (files.length === 0 && directoryHandle) {
-                     fileListElement.innerHTML = '<p class="text-center text-gray-500 p-8">No files found in the selected folder.</p>';
-                }
-            }
-        };
-
-        window.sortFiles = (key, direction = 'asc') => {
-            // Only attempt to sort if a folder has been selected
-            if (!directoryHandle) {
-                // Initial prompt is a sibling of fileListElement now, so it's not accidentally cleared.
-                // We just stop the sorting and do nothing.
-                return;
-            }
-            
-            currentSortKey = key;
-            currentSortDirection = direction;
-            const isDesc = direction === 'desc';
-
-            files.sort((a, b) => {
-                let valA, valB;
-
-                if (key === 'name') {
-                    valA = a.name.toLowerCase();
-                    valB = b.name.toLowerCase();
-                    if (valA < valB) return isDesc ? 1 : -1;
-                    if (valA > valB) return isDesc ? -1 : 1;
-                    return 0;
-                }
-
-                if (key === 'dateModified') {
-                    valA = a.lastModified;
-                    valB = b.lastModified;
-                    return isDesc ? valB - valA : valA - valB; 
-                }
-                return 0;
-            });
-
-            document.querySelectorAll('.sort-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-500', 'text-white');
-                btn.classList.add('bg-gray-200', 'text-gray-700');
-            });
-            
-            let activeId = '';
-            if (key === 'name') activeId = 'sort-name';
-            else if (key === 'dateModified' && direction === 'asc') activeId = 'sort-date-asc';
-            else if (key === 'dateModified' && direction === 'desc') activeId = 'sort-date-desc';
-
-            const activeBtn = document.getElementById(activeId);
-            if(activeBtn) {
-                activeBtn.classList.remove('bg-gray-200', 'text-gray-700');
-                activeBtn.classList.add('bg-blue-500', 'text-white');
-            }
-
-            renderFiles();
-        };
-
-        const renderFiles = () => {
-            fileListElement.innerHTML = ''; 
-
-            files.forEach((file, index) => {
-                const fileItem = document.createElement('div');
-                fileItem.className = "flex items-center p-3 bg-gray-50 rounded-xl shadow-sm transition";
-                
-                const dateString = formatDate(file.lastModified);
-                let previewHtml = '';
-                const fileType = file.mimeType.split('/').pop().toUpperCase() || 'FILE';
-
-                if (file.thumbnailUrl) {
-                    previewHtml = `<img src="${file.thumbnailUrl}" class="w-full h-full object-cover" alt="Preview of ${file.name}">`;
-                } else {
-                    const icon = file.mimeType.startsWith('video/') ? 
-                        `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>` : 
-                        `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>`;
-
-                    previewHtml = `
-                        <div class="flex flex-col items-center justify-center w-full h-full text-xs font-semibold text-gray-500 bg-gray-200 p-1">
-                            ${icon}
-                            <span class="mt-1">${fileType}</span>
-                        </div>
-                    `;
-                }
-
-
-                fileItem.innerHTML = `
-                    <!-- Preview Area: Clicking here opens the document preview -->
-                    <div onclick="previewDocument(${index})" class="flex-grow flex items-center min-w-0 cursor-pointer p-1 hover:bg-blue-100/30 rounded-lg">
-                        
-                        <!-- File Thumbnail/Frame (48x48) -->
-                        <div class="flex-shrink-0 w-12 h-12 bg-gray-200 rounded-lg overflow-hidden">
-                            ${previewHtml}
-                        </div>
-
-                        <!-- File Details -->
-                        <div class="ml-4 min-w-0">
-                            <div class="font-medium text-gray-800 truncate">${file.name}</div>
-                            <div class="text-xs text-gray-500 mt-1">Modified: ${dateString}</div>
-                        </div>
-                    </div>
-
-                    <!-- Options Button: Clicking here opens the action menu -->
-                    <div class="flex-shrink-0 ml-3 relative">
-                        <button onclick="showActionMenu(${index})" 
-                                class="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition focus:outline-none">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                            </svg>
-                        </button>
-                    </div>
-                `;
-                fileListElement.appendChild(fileItem);
-            });
-        };
-
-        window.previewDocument = async (index) => {
-            const file = files[index];
-            currentFileIndex = index; 
-            const fileHandle = file.handle;
-            const sizeKB = (file.size / 1024).toFixed(2);
-            let previewContent = '';
-            const title = `Preview: ${file.name}`;
-            const mimeType = file.mimeType;
-            let isEditable = false;
-
-            showMessage(title, `<p class="text-center py-8"><svg class="animate-spin mx-auto h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2">Reading file...</p></p>`);
-            
-            try {
-                const fileContent = await fileHandle.getFile();
-
-                if (mimeType.startsWith('image/')) {
-                    const url = URL.createObjectURL(fileContent);
-                    previewContent = `<img src="${url}" class="max-w-full max-h-[70vh] rounded-lg mx-auto" alt="${file.name}">`;
-                } else if (mimeType.startsWith('video/')) {
-                    const url = URL.createObjectURL(fileContent);
-                    previewContent = `<video controls src="${url}" class="max-w-full max-h-[70vh] rounded-lg mx-auto"></video>`;
-                } else if (mimeType.startsWith('text/') || mimeType === 'application/json') {
-                    const content = await fileContent.text();
-                    isEditable = true;
-                    previewContent = `<pre id="editable-file-content" contenteditable="true" spellcheck="false"
-                              class="whitespace-pre-wrap max-h-[70vh] overflow-y-auto p-4 bg-gray-100 rounded-lg text-sm text-gray-800 border border-gray-300 focus:ring-blue-500 focus:border-blue-500">${content}</pre>`;
-                } else {
-                    previewContent = `<p class="text-center text-lg text-gray-700 p-8">Preview not supported for this file type (<strong>${mimeType}</strong>). Please download the file to view it.</p>`;
-                }
-
-                let editSaveButton = '';
-                if (isEditable) {
-                    editSaveButton = `
-                        <button id="save-file-button" onclick="handleSaveAction(${index})" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-600 transition mr-3">
-                            Save Changes
-                        </button>
-                    `;
-                }
-
-                showMessage(
-                    title,
-                    `<div class="text-left">${previewContent}</div>
-                    <p class="text-xs text-gray-500 mt-4 text-center">Type: ${mimeType} | Size: ${sizeKB} KB</p>
-                    <div class="flex justify-end pt-2">
-                        ${editSaveButton}
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">
-                            Close Preview
-                        </button>
-                    </div>`
-                );
-
-                if(isEditable) {
-                    document.getElementById('editable-file-content').focus();
-                }
-
-            } catch(e) {
-                console.error("Error reading file for preview:", e);
-                showMessage(
-                    "Preview Error",
-                    `<p>Could not read the file for preview. Error: ${e.message}</p>
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`
-                );
-            }
-        };
-
-        window.handleSaveAction = async (index) => {
-            const file = files[index];
-            const newContent = document.getElementById('editable-file-content')?.textContent;
-
-            if (newContent === undefined || newContent === null) {
-                showMessage("Save Error", `Could not find the content to save.
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-                return;
-            }
-            
-            if (!directoryHandle) {
-                showMessage("Permission Error", `Directory handle is missing. Please re-select the folder.
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-                return;
-            }
-
-            try {
-                // Get a writable stream from the file handle
-                const writable = await file.handle.createWritable();
-                
-                await writable.write(newContent);
-                await writable.close();
-
-                closeMessage(); 
-                showMessage("Save Successful", `Changes to <strong>${file.name}</strong> have been saved to disk!
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-
-                // Update the local list entry with new metadata
-                const updatedFile = await file.handle.getFile();
-                file.size = updatedFile.size;
-                file.lastModified = updatedFile.lastModified;
-                
-                renderFiles();
-
-
-            } catch (e) {
-                console.error("Error saving file content:", e);
-                showMessage("Save Failed", `Failed to save changes to ${file.name}. Error: ${e.message}
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-            }
-        };
-
-
-        window.showActionMenu = (index) => {
-            const file = files[index];
-            currentFileIndex = index;
-            showMessage(
-                `File Actions: ${file.name}`,
-                `<p class="text-lg mb-4">What would you like to do with <strong>${file.name}</strong>?</p>
-                <div class="flex flex-col gap-3">
-                    <button onclick="handleRenamePrompt(${index}, '${file.name}')" class="w-full bg-blue-500 text-white px-4 py-3 rounded-xl font-semibold hover:bg-blue-600 transition text-left">
-                        Rename <span class="text-sm opacity-80 float-right">Change filename</span>
-                    </button>
-                    <button onclick="handleDeletePrompt(${index}, '${file.name}')" class="w-full bg-red-500 text-white px-4 py-3 rounded-xl font-semibold hover:bg-red-600 transition text-left">
-                        Delete <span class="text-sm opacity-80 float-right">Permanently remove</span>
-                    </button>
-                </div>
-                <div class="flex justify-end pt-6">
-                    <button onclick="closeMessage()" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 transition">
-                        Cancel
-                    </button>
-                </div>`
-            );
-        };
-
-        window.handleRenamePrompt = (index, currentName) => {
-            
-            showMessage(
-                `Rename File: ${currentName}`,
-                `<p class="text-lg mb-4">Enter a new name for <strong>${currentName}</strong>:</p>
-                <input type="text" id="new-filename-input" value="${currentName}" class="w-full p-2 border border-gray-300 rounded-lg mb-4 text-gray-800 focus:ring-blue-500 focus:border-blue-500">
-                <div class="mt-4 flex justify-end gap-3">
-                    <button onclick="showActionMenu(${index})" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 transition">
-                        Back to Menu
-                    </button>
-                    <button onclick="handleRenameAction(${index})" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">
-                        Confirm Rename
-                    </button>
-                </div>`
-            );
-            setTimeout(() => {
-                document.getElementById('new-filename-input')?.focus();
-            }, 350);
-        };
-
-        window.handleRenameAction = async (index) => {
-            const file = files[index];
-            const oldName = file.name;
-            const newName = document.getElementById('new-filename-input').value.trim();
-
-            if (!newName || newName === oldName) {
-                showMessage("Rename Canceled", `The new filename is invalid or the same as the old one.
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-                return;
-            }
-            if (!directoryHandle) {
-                 showMessage("Error", `Directory access is lost. Please re-select the folder.
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-                return;
-            }
-
-            // Show loading message while renaming
-            showMessage("Renaming...", `<p class="text-center py-8"><svg class="animate-spin mx-auto h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2">Performing rename (read, create, write, delete)...</p></p>`);
-
-
-            try {
-                // 1. Get content of the old file
-                const oldFileContent = await file.handle.getFile();
-                // NOTE: Using text() here assumes the file is text-based (most common case). For binary files, this would need updating.
-                const content = await oldFileContent.text(); 
-
-                // 2. Create new file handle and writable stream
-                const newFileHandle = await directoryHandle.getFileHandle(newName, { create: true });
-                const newWritable = await newFileHandle.createWritable();
-
-                // 3. Write content to the new file
-                await newWritable.write(content);
-                await newWritable.close();
-
-                // 4. Delete the old file
-                await directoryHandle.removeEntry(oldName, { recursive: false });
-                
-                // 5. Update local state and UI
-                closeMessage();
-                // Re-load all files to get the new file handle and update the list
-                await loadFiles(directoryHandle); 
-
-                showMessage("Rename Successful", `<strong>${oldName}</strong> successfully renamed to <strong>${newName}</strong>.`);
-
-            } catch (e) {
-                console.error("Error renaming file:", e);
-                closeMessage();
-                showMessage("Rename Failed", `Failed to rename ${oldName}. Error: ${e.message}
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-            }
-        };
-
-        window.handleDeletePrompt = (index, fileName) => {
-            
-            showMessage(
-                `Confirm Deletion`,
-                `<p class="text-lg mb-4">Are you **ABSOLUTELY** sure you want to permanently delete <strong>${fileName}</strong>? This action cannot be undone.</p>
-                <div class="mt-4 flex justify-end gap-3">
-                    <button onclick="showActionMenu(${index})" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-400 transition">
-                        Back to Menu
-                    </button>
-                    <button onclick="handleDeleteAction(${index}, '${fileName}')" class="bg-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-600 transition">
-                        Delete Permanently
-                    </button>
-                </div>`
-            );
-        };
-
-        window.handleDeleteAction = async (index, fileName) => {
-            closeMessage();
-            if (!directoryHandle) {
-                 showMessage("Error", `Directory access is lost. Please re-select the folder.
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
-                return;
-            }
-
-            // Show loading message
-            showMessage("Deleting...", `<p class="text-center py-8"><svg class="animate-spin mx-auto h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><p class="mt-2">Deleting file from disk...</p></p>`);
-
-            try {
-                // 1. Delete the file from the disk using the directory handle
-                await directoryHandle.removeEntry(fileName, { recursive: false });
-
-                // 2. Update local list only after successful disk deletion
-                const fileToRemove = files[index];
-                if (fileToRemove.thumbnailUrl) {
-                    URL.revokeObjectURL(fileToRemove.thumbnailUrl);
-                }
-                files.splice(index, 1);
-                sortFiles(currentSortKey, currentSortDirection);
-                
-                closeMessage();
-                showMessage("Delete Successful", `<strong>${fileName}</strong> has been permanently deleted.`);
-
-            } catch (e) {
-                console.error("Error deleting file:", e);
-                closeMessage();
-                showMessage("Deletion Failed", `Could not delete ${fileName}. Error: ${e.message}
-                    <div class="flex justify-end pt-2">
-                        <button onclick="closeMessage()" class="bg-blue-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-600 transition">Close</button>
-                    </div>`);
+            if (hiddenUntil && Date.now() < parseInt(hiddenUntil)) {
+                // If hidden time hasn't passed yet, keep it hidden (no animation on load)
+                banner.style.display = 'none';
             }
         }
+
+        function dismissBanner(event) {
+            event.stopPropagation(); // Prevent ad click
+            const banner = document.getElementById('adBanner');
+            
+            // Animate Close
+            banner.classList.add('hidden-banner');
+            
+            // Set timer for 5 minutes (5 * 60 * 1000 ms)
+            const fiveMinutesFromNow = Date.now() + (5 * 60 * 1000);
+            localStorage.setItem(STORAGE_KEY_BANNER, fiveMinutesFromNow.toString());
+            
+            // Remove from flow after animation
+            setTimeout(() => {
+                banner.style.display = 'none';
+            }, 500);
+        }
+
+        // --- Starred Tools Logic ---
+        function getStarredTools() {
+            const stars = localStorage.getItem(STORAGE_KEY_STARS);
+            return stars ? JSON.parse(stars) : [];
+        }
+
+        function initializeStars() {
+            const starredTools = getStarredTools();
+            const toolsContainer = document.getElementById('toolsContainer');
+            const allTools = Array.from(toolsContainer.children);
+
+            // Update visual state
+            allTools.forEach(card => {
+                const toolName = card.getAttribute('data-tool-name');
+                const starIcon = card.querySelector('.star-icon');
+                if (starredTools.includes(toolName)) {
+                    starIcon.classList.add('active');
+                }
+            });
+
+            sortTools();
+        }
+
+        function toggleStar(event, element) {
+            event.stopPropagation(); // CRITICAL: Prevents triggering the tool card click
+            
+            const card = element.closest('.tool-card');
+            const toolName = card.getAttribute('data-tool-name');
+            let starredTools = getStarredTools();
+
+            // Toggle state
+            if (starredTools.includes(toolName)) {
+                starredTools = starredTools.filter(name => name !== toolName);
+                element.classList.remove('active');
+            } else {
+                starredTools.push(toolName);
+                element.classList.add('active');
+            }
+
+            // Save
+            localStorage.setItem(STORAGE_KEY_STARS, JSON.stringify(starredTools));
+
+            // Re-sort
+            sortTools();
+        }
+
+        function sortTools() {
+            const toolsContainer = document.getElementById('toolsContainer');
+            const allTools = Array.from(toolsContainer.children);
+            const starredTools = getStarredTools();
+
+            // Separate starred and unstarred
+            const starredElements = [];
+            const unstarredElements = [];
+
+            allTools.forEach(card => {
+                const toolName = card.getAttribute('data-tool-name');
+                if (starredTools.includes(toolName)) {
+                    starredElements.push(card);
+                } else {
+                    unstarredElements.push(card);
+                }
+            });
+
+            // Clear container
+            toolsContainer.innerHTML = '';
+
+            // Re-append in order: Starred first, then unstarred
+            // (Preserve internal relative order for both groups)
+            starredElements.forEach(card => toolsContainer.appendChild(card));
+            unstarredElements.forEach(card => toolsContainer.appendChild(card));
+        }
+
+        // --- Navigation Handler ---
+        function handleToolClick(url) {
+            window.location.href = url;
+        }
+
+        // --- Existing Button Logic ---
+        const row1Container = document.getElementById('row-1-container');
+        const row2Container = document.getElementById('row-2-container');
+
+        function transformRow1() {
+            row1Container.innerHTML = `
+                <div class="flex gap-4 w-full animate-fade-in h-20">
+                    <a href="https://mahi902.github.io/DocuWritePro/document-writer.html" class="flex-1 bg-blue-50 border border-blue-200 text-blue-700 font-medium py-4 rounded-xl shadow-sm hover:bg-blue-100 transition-colors flex flex-col items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-2xl">edit_document</span>
+                        <span class="text-base">Default Editor</span>
+                    </a>
+                    <a href="https://mahi902.github.io/DocuWritePro/collab-document-editor.html" class="flex-1 bg-blue-50 border border-blue-200 text-blue-700 font-medium py-4 rounded-xl shadow-sm hover:bg-blue-100 transition-colors flex flex-col items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-2xl">group</span>
+                        <span class="text-base">Collab Editor</span>
+                    </a>
+                </div>
+            `;
+        }
+
+        function transformRow2(type) {
+            if (type === 'image') {
+                row2Container.outerHTML = `
+                    <div id="row-2-container" class="flex gap-4 w-full animate-fade-in h-20">
+                        <a href="https://mahi902.github.io/DocuWritePro/image-editor.html" class="flex-1 bg-sky-50 border border-sky-200 text-sky-700 font-medium py-4 rounded-xl shadow-sm hover:bg-sky-100 transition-colors flex flex-col items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-2xl">photo_size_select_large</span>
+                            <span class="text-base">Image Editor</span>
+                        </a>
+                        <a href="https://mahi902.github.io/DocuWritePro/atbedt.html" class="flex-1 bg-sky-50 border border-sky-200 text-sky-700 font-medium py-4 rounded-xl shadow-sm hover:bg-sky-100 transition-colors flex flex-col items-center justify-center gap-1">
+                            <span class="material-symbols-outlined text-2xl">attribution</span>
+                            <span class="text-base">Attribution</span>
+                        </a>
+                    </div>
+                `;
+            } else if (type === 'code') {
+                row2Container.outerHTML = `
+                    <div id="row-2-container" class="flex gap-2 w-full animate-fade-in h-20">
+                        <a href="https://mahi902.github.io/DocuWritePro/code-playground.html" class="flex-1 bg-slate-800 text-slate-200 font-medium rounded-xl shadow-sm hover:bg-slate-700 transition-colors flex flex-col items-center justify-center gap-1 text-center p-1">
+                            <span class="material-symbols-outlined text-xl">code</span>
+                            <span class="text-xs">HTML Editor</span>
+                        </a>
+                        <a href="https://mahi902.github.io/DocuWritePro/html.html" class="flex-1 bg-slate-800 text-slate-200 font-medium rounded-xl shadow-sm hover:bg-slate-700 transition-colors flex flex-col items-center justify-center gap-1 text-center p-1">
+                            <span class="material-symbols-outlined text-xl">smart_toy</span>
+                            <span class="text-xs">HTML AI</span>
+                        </a>
+                        <a href="https://mahi902.github.io/DocuWritePro/frontend-ide.html" class="flex-1 bg-slate-800 text-slate-200 font-medium rounded-xl shadow-sm hover:bg-slate-700 transition-colors flex flex-col items-center justify-center gap-1 text-center p-1">
+                            <span class="material-symbols-outlined text-xl">terminal</span>
+                            <span class="text-xs">Frontend IDE</span>
+                        </a>
+                    </div>
+                `;
+            }
+        }
+
+        const searchInput = document.getElementById('toolSearch');
+        const toolsCont = document.getElementById('toolsContainer');
+        
+        searchInput.addEventListener('keyup', (e) => {
+            const term = e.target.value.toLowerCase();
+            const cards = toolsCont.querySelectorAll('.tool-card'); // Get dynamic list
+            
+            cards.forEach(card => {
+                const toolName = card.getAttribute('data-tool-name').toLowerCase();
+                if (toolName.includes(term)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
     </script>
+
+    <style>
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </body>
 </html>

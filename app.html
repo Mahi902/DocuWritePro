@@ -90,6 +90,68 @@
             transform: scale(1.1);
         }
         
+/* New style for offline/unvisited tools */
+.tool-card.offline-unvisited {
+    filter: grayscale(10%) brightness(95%) sepia(20%) hue-rotate(-10deg) saturate(200%);
+    opacity: 0.7;
+    position: relative;
+    cursor: not-allowed;
+    /* Ensure the card click area is not affected by z-index issues */
+    z-index: 1; 
+}
+
+.tool-card.offline-unvisited::after {
+    content: "Offline Lock";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 0, 0, 0.15); /* Subtle red overlay */
+    color: #b91c1c;
+    font-weight: 700;
+    font-size: 10px;
+    border-radius: 12px;
+    opacity: 0; 
+    transition: opacity 0.3s;
+    pointer-events: none; /* Crucial: Allows click to pass through to the card itself */
+    z-index: 10;
+}
+
+.tool-card.offline-unvisited:hover::after {
+    opacity: 1; 
+}
+
+/* Base style for the popup */
+#offline-popup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: none; /* Initially hidden */
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+#offline-popup-content {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 300px;
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+#offline-popup.show #offline-popup-content {
+    transform: scale(1);
+}
         /* Banner Animation */
         #adBanner {
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
@@ -128,7 +190,15 @@
                 <span class="material-symbols-outlined text-slate-500">refresh</span>
             </button>
         </div>
-
+<div id="offline-popup">
+    <div id="offline-popup-content">
+        <h3 class="text-xl font-bold text-red-600 mb-3">🔒 Offline Tool</h3>
+        <p class="text-slate-700">This tool is not available offline. Visit it when online once to download it for future offline use.</p>
+        <button onclick="document.getElementById('offline-popup').classList.remove('show'); document.getElementById('offline-popup').style.display = 'none';" class="mt-4 bg-blue-500 text-white px-5 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+            Got It
+        </button>
+    </div>
+</div>
         <!-- Ad Banner -->
         <div id="adBanner" class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 md:p-8 border border-blue-200 shadow-sm relative group cursor-pointer" onclick="window.location.href='https://mahi902.github.io/Aurora/pollinatedai.html'">
             <!-- Close Button -->
@@ -1014,6 +1084,132 @@
     };
   }
 </script>
+<script>
+// =========================================================================
+// OFFLINE VISITED CHECK & OVERRIDE LOGIC
+// =========================================================================
 
+const STORAGE_KEY_VISITED_TOOLS = 'docuwrite_visited_tools_v2'; // New key to prevent conflicts
+
+// --- Tool State Management ---
+
+function getVisitedTools() {
+    const visited = localStorage.getItem(STORAGE_KEY_VISITED_TOOLS);
+    return visited ? JSON.parse(visited) : [];
+}
+
+function markToolAsVisited(toolName) {
+    let visitedTools = getVisitedTools();
+    if (!visitedTools.includes(toolName)) {
+        visitedTools.push(toolName);
+        localStorage.setItem(STORAGE_KEY_VISITED_TOOLS, JSON.stringify(visitedTools));
+        // Remove the tint immediately after marking as visited
+        const card = document.querySelector(`.tool-card[data-tool-name="${toolName}"]`);
+        if (card) {
+            card.classList.remove('offline-unvisited');
+        }
+    }
+}
+
+// --- Visual Tining Logic ---
+
+function applyOfflineTint() {
+    // Only apply the tint if the device is currently offline
+    if (navigator.onLine) {
+        document.querySelectorAll('.tool-card').forEach(card => {
+            card.classList.remove('offline-unvisited');
+        });
+        return;
+    }
+
+    const visitedTools = getVisitedTools();
+    const allTools = document.querySelectorAll('.tool-card');
+
+    allTools.forEach(card => {
+        const toolName = card.getAttribute('data-tool-name');
+        if (!visitedTools.includes(toolName)) {
+            card.classList.add('offline-unvisited');
+        } else {
+            card.classList.remove('offline-unvisited');
+        }
+    });
+}
+
+function showOfflinePopup() {
+    const popup = document.getElementById('offline-popup');
+    if (popup) {
+        popup.style.display = 'flex';
+        // Use a short delay to trigger the transition/scale-in effect (if CSS is applied)
+        setTimeout(() => popup.classList.add('show'), 10); 
+    }
+}
+
+// --- Event Delegation Override ---
+
+function attachOfflineProtection() {
+    const toolsContainer = document.getElementById('toolsContainer');
+    if (!toolsContainer) return;
+
+    // Attach the main click listener to the container (Event Delegation)
+    toolsContainer.addEventListener('click', (event) => {
+        const card = event.target.closest('.tool-card');
+        
+        // 1. Basic checks
+        if (!card) return;
+        
+        const toolName = card.getAttribute('data-tool-name');
+        if (!toolName) return; // Must have a name to track state
+
+        const isOffline = !navigator.onLine;
+        const isVisited = getVisitedTools().includes(toolName);
+
+        if (isOffline && !isVisited) {
+            // 2. Case: Offline AND unvisited -> BLOCK navigation
+            event.stopPropagation(); // Stop the click event from propagating up (e.g., to the body)
+            event.preventDefault();  // Although not strictly needed since it's a <div>, it's good practice
+            
+            // Override the existing onclick handler by replacing it temporarily
+            // This is the tricky part since we cannot remove the original handler easily.
+            // However, by stopping propagation and preventing default, we rely on the
+            // original handleToolClick to *not* run if we successfully override the flow.
+            
+            showOfflinePopup();
+            return;
+        }
+
+        // 3. Case: Online OR Offline AND visited -> ALLOW navigation
+
+        // The card is about to be clicked, which means navigation will happen (via existing onclick).
+        // Mark it as visited BEFORE the navigation occurs.
+        markToolAsVisited(toolName);
+        
+        // Allow the existing 'onclick' handler on the card to fire normally.
+        // Since we are NOT calling 'handleToolClick' directly, the existing HTML MUST be left intact.
+    });
+}
+
+// --- Initialization Updates ---
+
+// Hook the logic into the DOMContentLoaded event
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (Keep existing DOMContentLoaded logic: checkBannerStatus(), initializeStars())
+    
+    // NEW: Apply visual state on initial load
+    applyOfflineTint(); 
+    
+    // NEW: Set up the click override
+    attachOfflineProtection();
+});
+
+// NEW: Add listeners for online/offline events for live tint update
+window.addEventListener('online', applyOfflineTint);
+window.addEventListener('offline', applyOfflineTint);
+
+// =========================================================================
+// END OF OFFLINE VISITED CHECK & OVERRIDE LOGIC
+// =========================================================================
+</script>
+<script>
+document.addEventListener('click', e => { const card = e.target.closest('.tool-card'); if (card && card.classList.contains('offline-unvisited')) { e.stopImmediatePropagation(); showOfflinePopup(); } else if (card) { const toolName = card.getAttribute('data-tool-name'); if (toolName) markToolAsVisited(toolName); } }, true);</script>
 </body>
 </html>

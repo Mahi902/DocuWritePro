@@ -38,19 +38,46 @@ const urlsToCache = [
   '/DocuWritePro/drawing-board.html'
 ];
 
-// Install SW and cache all pages
+// Install
 self.addEventListener('install', event => {
+  self.skipWaiting(); // make new SW active immediately
+
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      return Promise.all(
+        urlsToCache.map(url =>
+          cache.add(url).catch(err => {
+            console.warn("Failed to cache", url, err);
+          })
+        )
+      );
+    })
   );
 });
 
-// Fetch from cache first, then network
+// Activate
+self.addEventListener('activate', event => {
+  self.clients.claim();
+
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(key => key !== CACHE_NAME ? caches.delete(key) : null))
+    )
+  );
+});
+
+// Fetch
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+
+      return fetch(event.request).catch(() => {
+        // If it's a navigation request, fall back to your main page
+        if (event.request.mode === 'navigate') {
+          return caches.match('/DocuWritePro/index.html');
+        }
+      });
     })
   );
 });

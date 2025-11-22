@@ -957,18 +957,18 @@
 
     document.addEventListener('DOMContentLoaded', fetchReleases);
 </script>
+
 <style>
-  /* Fade + scale popup */
-  @keyframes popupIn {
-    0% { opacity: 0; transform: scale(0.92); }
-    100% { opacity: 1; transform: scale(1); }
+  /* Slide animations */
+  @keyframes slideIn {
+    0% { opacity: 0; transform: translateX(35px); }
+    100% { opacity: 1; transform: translateX(0); }
   }
-  @keyframes popupOut {
-    0% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(0.92); }
+  @keyframes slideOut {
+    0% { opacity: 1; transform: translateX(0); }
+    100% { opacity: 0; transform: translateX(-35px); }
   }
 
-  /* Fullscreen gradient overlay */
   #onboardOverlay {
     position: fixed;
     inset: 0;
@@ -981,8 +981,8 @@
     font-family: Arial, sans-serif;
     z-index: 999999;
     padding: 40px;
+    animation: slideIn 0.45s ease forwards;
     text-align: justify;
-    animation: popupIn 0.4s ease forwards;
   }
 
   #onboardOverlay h1 {
@@ -990,6 +990,7 @@
     margin: 0;
     text-align: center;
     width: 80%;
+    animation: slideIn 0.45s ease forwards;
   }
 
   #onboardOverlay p {
@@ -998,9 +999,10 @@
     opacity: 0.95;
     width: 80%;
     line-height: 1.55;
+    animation: slideIn 0.45s ease forwards;
   }
 
-  /* Rounded next button */
+  /* Next button */
   #onboardNextBtn {
     position: fixed;
     bottom: 25px;
@@ -1022,11 +1024,11 @@
     box-shadow: 0 6px 22px rgba(0,0,0,0.2);
   }
 
-  /* White highlight area bottom-right */
+  /* Bottom-right highlight */
   #highlightBox {
     position: fixed;
-    width: 0px;
-    height: 0px;
+    width: 0;
+    height: 0;
     bottom: 0;
     right: 0;
     background: transparent;
@@ -1038,11 +1040,10 @@
 
 <div id="onboardOverlay" style="display:none;">
   <h1 id="onboardTitle">Welcome to DocuWrite Pro</h1>
-  <p id="onboardSubtitle">DocuWrite Pro is a self hosted online service provided by mahi902 (https://mahi902.github.io). All the fonts and icons used in this app are provided by Google Fonts. All the AI related features in this app are provided from free pollinations.ai API. The product is not associated with Google or pollinations.ai</p>
+  <p id="onboardSubtitle">Your very own Premium Document Editing Suite.</p>
 </div>
 
 <div id="highlightBox"></div>
-
 <button id="onboardNextBtn" style="display:none;">Next</button>
 
 <script>
@@ -1058,32 +1059,74 @@
 
     let step = 1;
 
+    function animateChange() {
+      title.style.animation = "slideOut 0.3s ease forwards";
+      subtitle.style.animation = "slideOut 0.3s ease forwards";
+
+      setTimeout(() => {
+        title.style.animation = "slideIn 0.45s ease forwards";
+        subtitle.style.animation = "slideIn 0.45s ease forwards";
+      }, 300);
+    }
+
     nextBtn.onclick = () => {
-      if (step === 1) {
-        highlight.style.background = "white";
+      animateChange();
 
-        title.textContent =
-          "This is the official DocuWrite Pro mobile, tablet and desktop app. Here you can edit documents, images and code using the latest advanced features powered by AI. To open the App Info menu, just double-tap the bottom-right corner.";
+      switch (step) {
 
-        subtitle.style.display = "none";
-        nextBtn.textContent = "Got it";
-        step = 2;
+        case 1:
+          title.textContent = "Disclaimer";
+          subtitle.textContent = "By continuing you acknowledge you have read all the information before and will read all the information after, provided in this set of slides.";
+          step++;
+          break;
 
-      } else {
-        localStorage.setItem("dwpOnboardDone", "true");
+        case 2:
+          title.style.display = "none";
+          subtitle.textContent =
+            "This is the official DocuWrite Pro mobile and desktop app. Edit documents, images and code. Use the latest features with the help of AI!";
+          step++;
+          break;
 
-        // Smooth fade-out
-        overlay.style.animation = "popupOut 0.35s ease forwards";
+        case 3:
+          subtitle.textContent =
+            "All the icons, symbols and text fonts used in this app are provided by Google Fonts. The project is not affiliated or managed by Google. All the AI related services in this app are provided by pollinations.ai. This project is not affiliated with any AI model or industry.";
+          step++;
+          break;
 
-        setTimeout(() => {
-          overlay.remove();
-          nextBtn.remove();
-          highlight.remove();
-        }, 350);
+        case 4:
+          subtitle.textContent =
+            "This app is purely hosted on GitHub Pages. The creator and manager of this app is github.com/Mahi902. Official project homepage at mahi902.github.io";
+          step++;
+          break;
+
+        case 5:
+          highlight.style.background = "white";
+          subtitle.innerHTML =
+            `This app is built on HTML, CSS & JS. It is a PWA. To open app settings, double click the bottom-right corner. 
+             Auto updates are supported. Click the update icon on top-right. Data is saved using cookies; clearing cookies may remove data. 
+             Offline tools work only after being opened online once. Updates may arrive slightly later than web version. 
+             By using DocuWrite Pro mobile app, you agree to our 
+             <a href="https://mahi902.github.io/DocuWritePro/legal-documents.html" target="_blank" style="color:white; text-decoration:underline;">Legal Documentation</a>.`;
+          nextBtn.textContent = "Finish & Launch Dashboard";
+          step++;
+          break;
+
+        case 6:
+          localStorage.setItem("dwpOnboardDone", "true");
+
+          overlay.style.animation = "slideOut 0.35s ease forwards";
+
+          setTimeout(() => {
+            overlay.remove();
+            nextBtn.remove();
+            highlight.remove();
+          }, 350);
+          break;
       }
     };
   }
 </script>
+    
 <script>
 // =========================================================================
 // OFFLINE VISITED CHECK & OVERRIDE LOGIC

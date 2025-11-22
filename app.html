@@ -1254,5 +1254,36 @@ window.addEventListener('offline', applyOfflineTint);
 </script>
 <script>
 document.addEventListener('click', e => { const card = e.target.closest('.tool-card'); if (card && card.classList.contains('offline-unvisited')) { e.stopImmediatePropagation(); showOfflinePopup(); } else if (card) { const toolName = card.getAttribute('data-tool-name'); if (toolName) markToolAsVisited(toolName); } }, true);</script>
+    <!-- Drop-in fullscreen hotspot -->
+<div id="fullscreenHotspot"></div>
+
+<style>
+  #fullscreenHotspot {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    z-index: 9999;
+    /* optional: for visibility during dev, remove later */
+    background: rgba(0,0,0,0.1);
+  }
+</style>
+
+<script>
+  const hotspot = document.getElementById('fullscreenHotspot');
+
+  hotspot.addEventListener('dblclick', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  });
+</script>
+    
 </body>
 </html>

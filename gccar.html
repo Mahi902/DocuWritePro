@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Runner Evolution</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        body {
+            background-color: #050510;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Press Start 2P', cursive;
+            touch-action: none;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #000000, #1a0b2e);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.3));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .hud-top {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .stats-box {
+            color: #0ff;
+            text-shadow: 2px 2px #00f;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .lives-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .heart {
+            color: #ff0055;
+            font-size: 24px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .heart.broken {
+            animation: breakHeart 0.5s forwards;
+            filter: grayscale(100%);
+            opacity: 0.3;
+        }
+
+        @keyframes breakHeart {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.4) rotate(15deg); }
+            100% { transform: scale(0) rotate(-45deg); opacity: 0; }
+        }
+
+        .speedometer-container {
+            position: relative;
+            width: 200px;
+            height: 20px;
+            background: #222;
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .speed-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #0ff, #f0f);
+            transition: width 0.1s;
+        }
+
+        .controls {
+            pointer-events: auto;
+            padding: 20px;
+            padding-bottom: 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+        }
+
+        .game-btn {
+            background: rgba(0, 20, 40, 0.6);
+            border: 2px solid #0ff;
+            color: #0ff;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .game-btn:active, .game-btn.pressed {
+            background: #0ff;
+            color: #000;
+            transform: scale(0.95);
+        }
+
+        .btn-jump {
+            border-color: #f0f;
+            color: #f0f;
+            width: 90px;
+            height: 90px;
+            font-size: 12px;
+        }
+
+        .btn-jump:active, .btn-jump.pressed {
+            background: #f0f;
+            color: #fff;
+        }
+
+        #start-screen, #game-over-screen, #pause-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 16, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            color: #fff;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+
+        h1 {
+            color: #0ff;
+            text-shadow: 0 0 10px #0ff;
+            margin-bottom: 20px;
+            font-size: 2rem;
+            line-height: 1.5;
+        }
+
+        .start-btn {
+            background: transparent;
+            color: #f0f;
+            border: 2px solid #f0f;
+            padding: 15px 30px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 0 15px #f0f;
+            transition: 0.2s;
+        }
+
+        .start-btn:hover {
+            background: #f0f;
+            color: #fff;
+        }
+
+        .msg-pop {
+            position: absolute;
+            left: 50%;
+            top: 30%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: yellow;
+            text-shadow: 2px 2px red;
+            pointer-events: none;
+            animation: floatUp 1s forwards;
+            z-index: 25;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -100px); }
+        }
+
+        .pause-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 20, 40, 0.6);
+            border: 2px solid #0ff;
+            color: #0ff;
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+            z-index: 40;
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .pause-btn:hover {
+            background: #0ff;
+            color: #000;
+        }
+
+        .countdown-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 16, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 35;
+            font-size: 100px;
+            color: #0ff;
+            text-shadow: 0 0 20px #0ff;
+        }
+
+        .material-icons-round {
+            font-size: 32px;
+        }
+
+        .btn-jump .material-icons-round {
+            font-size: 40px;
+        }
+
+        .music-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            color: #0ff;
+            font-size: 12px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #222;
+            transition: .4s;
+            border-radius: 24px;
+            border: 2px solid #0ff;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 2px;
+            background-color: #0ff;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #0ff;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+            background-color: #000;
+        }
+
+        .game-logo {
+            width: 200px;
+            height: 80px;
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .skull-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            color: #ff3333;
+            text-shadow: 0 0 10px red;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div class="scanlines"></div>
+
+    <!-- Start Screen -->
+    <div id="start-screen">
+        <div class="game-logo" id="car-logo"></div>
+        <p class="mb-8 text-xs text-blue-300">AVOID OBSTACLES • COLLECT ITEMS</p>
+        <button class="start-btn" onclick="startGame()">PLAY</button>
+        <p class="mt-8 text-[10px] text-gray-500">Enable Sound for Music</p>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen" class="hidden">
+        <div class="skull-icon">
+            <span class="material-icons-round">skull</span>
+        </div>
+        <h1 style="color: #ff3333; text-shadow: 0 0 10px red;">Crash!</h1>
+        </br>
+        <p class="mb-4">DISTANCE: <span id="final-score">0</span>m</p>
+        <p class="mb-4">BEST: <span id="final-best-score">0</span>m</p>
+        <button class="start-btn" onclick="location.reload()">Play Again</button>
+    </div>
+
+    <!-- Pause Screen -->
+    <div id="pause-screen" class="hidden">
+        <h1 style="color: #ffff00;">GAME PAUSED</h1>
+        <button class="start-btn" onclick="resumeGame()">RESUME</button>
+        <div class="music-toggle">
+            <span>MUSIC</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="music-toggle" checked>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- UI Layer -->
+    <div class="ui-layer" id="game-ui">
+        <div class="hud-top">
+            <div class="stats-box">
+                <div class="lives-container" id="lives-display">
+                    <span class="heart">♥</span><span class="heart">♥</span><span class="heart">♥</span>
+                </div>
+                <div>SCORE: <span id="score">0</span></div>
+                <div>BEST: <span id="best-score">0</span></div>
+            </div>
+            <div class="stats-box" style="align-items: flex-end; margin-right: 70px;">
+                <div>SPEED</div>
+                <div class="speedometer-container">
+                    <div class="speed-bar" id="speed-bar"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="btn-group">
+                <div class="game-btn" id="btn-brake" data-key="ArrowLeft">
+                    <span class="material-icons-round">stop</span>
+                </div>
+                <div class="game-btn" id="btn-go" data-key="ArrowRight">
+                    <span class="material-icons-round">play_arrow</span>
+                </div>
+            </div>
+            <div class="game-btn btn-jump" id="btn-jump" data-key="Space">
+                <span class="material-icons-round">arrow_upward</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pause Button -->
+    <button class="pause-btn hidden" id="pause-btn" onclick="togglePause()">
+        <span class="material-icons-round">pause</span>
+    </button>
+
+    <!-- Countdown Overlay -->
+    <div id="countdown-overlay" class="countdown-overlay hidden"></div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Game State
+    let isPlaying = false;
+    let isPaused = false;
+    let frame = 0;
+    let score = 0;
+    let bestScore = localStorage.getItem('neonRunnerBestScore') || 0;
+    let lives = 3;
+    
+    // Physics & World - FIXED VALUES
+    let gravity = 0.3;
+    let speed = 0;
+    let maxSpeed = 25;
+    
+    // Fixed acceleration values
+    let acceleration = 0.03; // Changed from 0.02 to 0.03
+    let friction = 0.03;
+    let brakeForce = 0.3;
+    let groundHeight = 100;
+    
+    // Jump physics variables
+    let jumpPower = 0;
+    let maxJumpPower = 15;
+    let isJumping = false;
+    let jumpHoldTime = 0;
+    let maxJumpHoldTime = 20;
+    
+    // Powerup States
+    let isInvincible = false;
+    let invincibilityTimer = 0;
+
+    // Audio Context
+    let audioCtx = null;
+    let nextNoteTime = 0;
+    let beatCount = 0;
+    let musicAnimationId = null;
+    let isMusicEnabled = true;
+
+    // Inputs
+    const keys = { brake: false, go: false, jump: false };
+
+    // Entities
+    const car = {
+        x: 50,
+        y: 0,
+        baseX: 50, // Base position
+        width: 70,
+        height: 25,
+        vy: 0,
+        jumpStrength: -14,
+        grounded: true,
+        flashTimer: 0
+    };
+
+    let obstacles = [];
+    let items = [];
+    let particles = [];
+    let shootingStars = [];
+
+    // Sky movement tracking
+    let skyOffset = 0;
+
+    // Resize
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        groundHeight = canvas.height - 150; 
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Draw car logo for start screen
+    function drawCarLogo() {
+        const logoCanvas = document.createElement('canvas');
+        const logoCtx = logoCanvas.getContext('2d');
+        logoCanvas.width = 200;
+        logoCanvas.height = 80;
+        
+        // Draw car body
+        logoCtx.fillStyle = '#00aaff';
+        logoCtx.shadowColor = '#00aaff';
+        logoCtx.shadowBlur = 10;
+        
+        logoCtx.beginPath();
+        logoCtx.moveTo(30, 40);
+        logoCtx.lineTo(170, 45);
+        logoCtx.lineTo(170, 65);
+        logoCtx.lineTo(30, 65);
+        logoCtx.fill();
+
+        logoCtx.fillStyle = '#000';
+        logoCtx.beginPath();
+        logoCtx.moveTo(50, 40);
+        logoCtx.lineTo(70, 25);
+        logoCtx.lineTo(110, 45);
+        logoCtx.lineTo(50, 45);
+        logoCtx.fill();
+
+        logoCtx.fillStyle = '#111';
+        logoCtx.shadowBlur = 0;
+        logoCtx.beginPath();
+        logoCtx.arc(45, 65, 8, 0, Math.PI*2);
+        logoCtx.arc(155, 65, 8, 0, Math.PI*2);
+        logoCtx.fill();
+        
+        logoCtx.strokeStyle = '#0ff';
+        logoCtx.lineWidth = 2;
+        logoCtx.beginPath();
+        logoCtx.arc(45, 65, 4, 0, Math.PI*2);
+        logoCtx.stroke();
+        logoCtx.beginPath();
+        logoCtx.arc(155, 65, 4, 0, Math.PI*2);
+        logoCtx.stroke();
+
+        // Add game title text
+        logoCtx.fillStyle = '#0ff';
+        logoCtx.font = '14px "Press Start 2P"';
+        logoCtx.textAlign = 'center';
+        logoCtx.fillText('NEON RUNNER', 100, 20);
+        
+        document.getElementById('car-logo').style.backgroundImage = `url(${logoCanvas.toDataURL()})`;
+        document.getElementById('car-logo').style.backgroundSize = 'contain';
+        document.getElementById('car-logo').style.backgroundRepeat = 'no-repeat';
+        document.getElementById('car-logo').style.backgroundPosition = 'center';
+    }
+
+    // Initialize car logo
+    drawCarLogo();
+
+    // --- AUDIO ENGINE ---
+    function initAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type) {
+        if (!audioCtx || !isMusicEnabled) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'jump') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.linearRampToValueAtTime(300, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } else if (type === 'crash') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(100, now);
+            osc.frequency.exponentialRampToValueAtTime(10, now + 0.4);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'powerup') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.linearRampToValueAtTime(800, now + 0.2);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.2);
+            osc.start(now);
+            osc.stop(now + 0.2);
+        }
+    }
+
+    // Background Music Scheduler - Smoother and more fun
+    function scheduleMusic() {
+        if (!isPlaying || isPaused || !audioCtx || !isMusicEnabled) return;
+        
+        const tempo = 0.2; // seconds per beat
+        const lookahead = 0.1;
+
+        while (nextNoteTime < audioCtx.currentTime + lookahead) {
+            playBeat(nextNoteTime, beatCount);
+            nextNoteTime += tempo;
+            beatCount++;
+        }
+        musicAnimationId = requestAnimationFrame(scheduleMusic);
+    }
+
+    function playBeat(time, beat) {
+        // More fun and varied melody
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        // More interesting chord progression
+        const freqs = [55, 65, 73, 82, 98, 110, 123, 130]; 
+        const freq = freqs[(beat >> 2) % 8] * (1 + (beat % 4) * 0.1);
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, time);
+        gain.gain.setValueAtTime(0.03, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+        
+        osc.start(time);
+        osc.stop(time + 0.2);
+
+        // More interesting rhythm
+        if (beat % 4 === 0) {
+            const hat = audioCtx.createOscillator();
+            const hatGain = audioCtx.createGain();
+            hat.connect(hatGain);
+            hatGain.connect(audioCtx.destination);
+            hat.type = 'square';
+            hat.frequency.value = 1200 + Math.random() * 300; 
+            hatGain.gain.setValueAtTime(0.03, time);
+            hatGain.gain.exponentialRampToValueAtTime(0.001, time + 0.1);
+            hat.start(time);
+            hat.stop(time + 0.1);
+        }
+
+        // Add bass on every other beat
+        if (beat % 2 === 0) {
+            const bass = audioCtx.createOscillator();
+            const bassGain = audioCtx.createGain();
+            bass.connect(bassGain);
+            bassGain.connect(audioCtx.destination);
+            bass.type = 'sine';
+            bass.frequency.value = freqs[(beat >> 3) % 4] * 0.5;
+            bassGain.gain.setValueAtTime(0.02, time);
+            bassGain.gain.exponentialRampToValueAtTime(0.001, time + 0.3);
+            bass.start(time);
+            bass.stop(time + 0.3);
+        }
+    }
+
+    // --- CONTROLS ---
+    function setKey(key, state) {
+        if (key === 'ArrowLeft' || key === 'a') keys.brake = state;
+        if (key === 'ArrowRight' || key === 'd') keys.go = state;
+        if (key === ' ' || key === 'ArrowUp' || key === 'w') {
+            keys.jump = state;
+            
+            if (state && !isJumping && isPlaying && !isPaused && car.grounded) {
+                isJumping = true;
+                jumpHoldTime = 0;
+                jumpPower = 0;
+                playSound('jump');
+            }
+        }
+    }
+    window.addEventListener('keydown', (e) => setKey(e.key, true));
+    window.addEventListener('keyup', (e) => setKey(e.key, false));
+
+    // Pause with 'p' key
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'p' || e.key === 'P') {
+            togglePause();
+        }
+    });
+
+    const buttons = [
+        { id: 'btn-brake', key: 'ArrowLeft' },
+        { id: 'btn-go', key: 'ArrowRight' },
+        { id: 'btn-jump', key: 'Space' }
+    ];
+    buttons.forEach(btn => {
+        const el = document.getElementById(btn.id);
+        const start = (e) => { e.preventDefault(); el.classList.add('pressed'); setKey(btn.key==='Space'?' ':btn.key, true); };
+        const end = (e) => { e.preventDefault(); el.classList.remove('pressed'); setKey(btn.key==='Space'?' ':btn.key, false); };
+        el.addEventListener('mousedown', start); el.addEventListener('mouseup', end); el.addEventListener('mouseleave', end);
+        el.addEventListener('touchstart', start, {passive:false}); el.addEventListener('touchend', end, {passive:false});
+    });
+
+    // Music toggle
+    document.getElementById('music-toggle').addEventListener('change', function() {
+        isMusicEnabled = this.checked;
+        if (!isMusicEnabled && musicAnimationId) {
+            cancelAnimationFrame(musicAnimationId);
+        } else if (isMusicEnabled && isPlaying && !isPaused) {
+            scheduleMusic();
+        }
+    });
+
+    // --- SHOOTING STARS ---
+    function createShootingStar() {
+        if (Math.random() < 0.01) { // 1% chance each frame
+            shootingStars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * (canvas.height / 3),
+                vx: (Math.random() * 10) + 5,
+                vy: (Math.random() * 3) + 1,
+                length: (Math.random() * 20) + 10,
+                life: 1.0,
+                color: `hsl(${Math.random() * 60 + 180}, 100%, 80%)` // Blue-cyan colors
+            });
+        }
+    }
+
+    function updateShootingStars() {
+        for (let i = shootingStars.length - 1; i >= 0; i--) {
+            let star = shootingStars[i];
+            star.x += star.vx;
+            star.y += star.vy;
+            star.life -= 0.02;
+            
+            if (star.x > canvas.width || star.y > canvas.height || star.life <= 0) {
+                shootingStars.splice(i, 1);
+            }
+        }
+    }
+
+    function drawShootingStars() {
+        shootingStars.forEach(star => {
+            ctx.save();
+            ctx.globalAlpha = star.life;
+            ctx.strokeStyle = star.color;
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = star.color;
+            
+            ctx.beginPath();
+            ctx.moveTo(star.x, star.y);
+            ctx.lineTo(star.x - star.length, star.y - star.length/2);
+            ctx.stroke();
+            
+            ctx.restore();
+        });
+    }
+
+    // --- ENTITY HELPERS ---
+    function spawnMessage(text) {
+        const msg = document.createElement('div');
+        msg.className = 'msg-pop';
+        msg.innerText = text;
+        document.body.appendChild(msg);
+        setTimeout(() => msg.remove(), 1000);
+    }
+
+    function createParticles(x, y, count, color) {
+        for (let i = 0; i < count; i++) {
+            particles.push({
+                x: x, y: y,
+                vx: (Math.random() - 0.5) * 6,
+                vy: (Math.random() - 0.5) * 6,
+                life: 1.0, color: color
+            });
+        }
+    }
+
+    // --- COUNTDOWN FUNCTION ---
+    function startCountdown(callback) {
+        const countdownOverlay = document.getElementById('countdown-overlay');
+        countdownOverlay.classList.remove('hidden');
+        
+        let count = 3;
+        countdownOverlay.textContent = count;
+        
+        const countdownInterval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                countdownOverlay.textContent = count;
+            } else {
+                countdownOverlay.textContent = "GO!";
+                setTimeout(() => {
+                    countdownOverlay.classList.add('hidden');
+                    clearInterval(countdownInterval);
+                    if (callback) callback();
+                }, 500);
+            }
+        }, 1000);
+    }
+
+    // --- PAUSE FUNCTIONALITY ---
+    function togglePause() {
+        if (!isPlaying || document.getElementById('countdown-overlay').classList.contains('hidden') === false) return;
+        
+        isPaused = !isPaused;
+        
+        if (isPaused) {
+            document.getElementById('pause-screen').classList.remove('hidden');
+            cancelAnimationFrame(musicAnimationId);
+        } else {
+            document.getElementById('pause-screen').classList.add('hidden');
+            startCountdown(() => {
+                if (isMusicEnabled) scheduleMusic();
+            });
+        }
+    }
+
+    function resumeGame() {
+        isPaused = false;
+        document.getElementById('pause-screen').classList.add('hidden');
+        startCountdown(() => {
+            if (isMusicEnabled) scheduleMusic();
+        });
+    }
+
+    // --- MAIN LOOP ---
+    function spawnEntities() {
+        if (speed < 1) return; 
+        
+        if (Math.random() < 0.02) {
+            let obs = { x: canvas.width + 100, y: groundHeight, width: 40, height: 40, type: 'block' };
+            const r = Math.random();
+            if (r < 0.4) { obs.color = '#ff0055'; obs.height=40; obs.y = groundHeight - 40; } 
+            else if (r < 0.7) { obs.color = '#aa00ff'; obs.width=20; obs.height=80; obs.y = groundHeight - 80; } 
+            else { obs.color = '#ffff00'; obs.height=20; obs.y = groundHeight - 100; } 
+            
+            const last = obstacles[obstacles.length-1];
+            if (!last || (canvas.width - last.x > 300)) obstacles.push(obs);
+        }
+
+        if (Math.random() < 0.005) {
+            let itemType = 'shield';
+            const r = Math.random();
+            if (r < 0.7) itemType = 'shield';
+            else itemType = 'heart';
+
+            items.push({
+                x: canvas.width + 100,
+                y: groundHeight - 60 - (Math.random() * 60), 
+                type: itemType,
+                width: 30, height: 30,
+                pulse: 0
+            });
+        }
+    }
+
+    function update() {
+        if (!isPlaying || isPaused) return;
+        frame++;
+
+        // Update sky offset based on car speed
+        skyOffset += speed * 0.1;
+
+        // 1. Velocity Logic with adjusted acceleration
+        let currentMaxSpeed = maxSpeed;
+        let currentAccel = acceleration;
+
+        if (keys.go) {
+            speed += currentAccel;
+        } else {
+            speed -= friction;
+        }
+
+        if (keys.brake) {
+            speed -= brakeForce;
+        }
+
+        // Clamp Speed
+        if (speed < 0) speed = 0;
+        if (speed > currentMaxSpeed) speed = currentMaxSpeed;
+
+        // Dynamic Car X Position
+        const targetX = car.baseX + (speed * 8); 
+        car.x += (targetX - car.x) * 0.1;
+
+        // 2. Improved Jump Physics
+        if (isJumping) {
+            if (keys.jump && jumpHoldTime < maxJumpHoldTime) {
+                jumpHoldTime++;
+                // Gradually increase jump power while holding jump
+                jumpPower = Math.min(maxJumpPower, jumpPower + 0.8);
+                car.vy = -jumpPower;
+            } else {
+                // Release jump - start falling
+                isJumping = false;
+            }
+        } else {
+            // Apply gravity when not jumping
+            car.vy += gravity;
+        }
+
+        car.y += car.vy;
+        
+        // Landing
+        if (car.y + car.height >= groundHeight) {
+            car.y = groundHeight - car.height;
+            car.vy = 0;
+            car.grounded = true;
+            isJumping = false;
+            jumpPower = 0;
+        } else {
+            car.grounded = false;
+        }
+
+        // Invincibility Timer
+        if (isInvincible) {
+            invincibilityTimer--;
+            if (invincibilityTimer <= 0) isInvincible = false;
+        }
+
+        // 3. Update World
+        spawnEntities();
+        createShootingStar();
+        updateShootingStars();
+
+        // Update Obstacles
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            obs.x -= speed;
+
+            // Collision
+            if (!isInvincible && 
+                car.x < obs.x + obs.width && car.x + car.width > obs.x &&
+                car.y < obs.y + obs.height && car.y + car.height > obs.y) {
+                
+                loseLife();
+                obstacles.splice(i, 1);
+                continue;
+            }
+
+            if (obs.x + obs.width < -100) obstacles.splice(i, 1);
+        }
+
+        // Update Items
+        for (let i = items.length - 1; i >= 0; i--) {
+            let item = items[i];
+            item.x -= speed;
+            item.pulse += 0.1;
+
+            if (car.x < item.x + item.width && car.x + car.width > item.x &&
+                car.y < item.y + item.height && car.y + car.height > item.y) {
+                
+                collectItem(item.type);
+                items.splice(i, 1);
+                continue;
+            }
+            if (item.x < -100) items.splice(i, 1);
+        }
+
+        // Particles
+        for (let i = particles.length - 1; i >= 0; i--) {
+            let p = particles[i];
+            p.x += p.vx - (speed * 0.5); 
+            p.y += p.vy;
+            p.life -= 0.05;
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        // Score
+        score += Math.floor(speed / 5);
+        document.getElementById('score').innerText = Math.floor(score/10);
+        
+        // Update best score
+        if (score > bestScore) {
+            bestScore = score;
+            localStorage.setItem('neonRunnerBestScore', bestScore);
+            document.getElementById('best-score').innerText = Math.floor(bestScore/10);
+        }
+        
+        // Speed Bar
+        const speedPct = (speed / maxSpeed) * 100;
+        document.getElementById('speed-bar').style.width = `${speedPct}%`;
+    }
+
+    function loseLife() {
+        if (isInvincible) return;
+
+        playSound('crash');
+        isInvincible = true;
+        invincibilityTimer = 60; 
+        
+        const hearts = document.querySelectorAll('.heart');
+        for (let i = hearts.length - 1; i >= 0; i--) {
+            if (!hearts[i].classList.contains('broken')) {
+                hearts[i].classList.add('broken');
+                break;
+            }
+        }
+
+        lives--;
+        speed = speed * 0.5;
+        createParticles(car.x + car.width/2, car.y + car.height/2, 15, '#f00');
+
+        if (lives <= 0) {
+            gameOver();
+        }
+    }
+
+    function collectItem(type) {
+        playSound('powerup');
+        if (type === 'shield') {
+            isInvincible = true;
+            invincibilityTimer = 300; 
+            spawnMessage("SHIELD!");
+        } else if (type === 'heart') {
+            if (lives < 3) {
+                lives++;
+                const hearts = document.querySelectorAll('.heart');
+                for (let i = 0; i < hearts.length; i++) {
+                    if (hearts[i].classList.contains('broken')) {
+                        hearts[i].classList.remove('broken');
+                        break;
+                    }
+                }
+                spawnMessage("REPAIRED!");
+            } else {
+                score += 500;
+                spawnMessage("+500 PTS");
+            }
+        }
+    }
+
+    function draw() {
+        // Clear
+        ctx.fillStyle = '#050510';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Draw shooting stars
+        drawShootingStars();
+
+        // Background Parallax Stars - now synchronized with car speed
+        ctx.fillStyle = '#fff';
+        for(let i=0; i<50; i++) {
+            // Use skyOffset instead of frame for continuous movement based on speed
+            let sx = (i * 137 + skyOffset) % canvas.width; 
+            sx = (canvas.width - sx + (i * 100)) % canvas.width; 
+            let sy = (i * 73) % (groundHeight/2);
+            ctx.globalAlpha = 0.5;
+            ctx.fillRect(sx, sy, 2, 2);
+        }
+        ctx.globalAlpha = 1;
+
+        // Ground Grid
+        ctx.strokeStyle = '#0ff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, groundHeight);
+        ctx.lineTo(canvas.width, groundHeight);
+        ctx.stroke();
+
+        // Grid lines - now synchronized with car speed
+        let gridOffset = skyOffset % 100;
+        ctx.beginPath();
+        for (let x = 0; x < canvas.width + 100; x += 100) {
+            let drawX = x - gridOffset;
+            ctx.moveTo(drawX, groundHeight);
+            ctx.lineTo(drawX - 150, canvas.height); 
+        }
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.2)';
+        ctx.stroke();
+
+        // Draw Obstacles
+        obstacles.forEach(obs => {
+            ctx.fillStyle = obs.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = obs.color;
+            ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = '#fff';
+            ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+        });
+
+        // Draw Items
+        items.forEach(item => {
+            const yOffset = Math.sin(item.pulse) * 5;
+            ctx.shadowBlur = 15;
+            if (item.type === 'shield') {
+                ctx.fillStyle = '#00ffff';
+                ctx.shadowColor = '#00ffff';
+                ctx.beginPath();
+                ctx.arc(item.x + 15, item.y + 15 + yOffset, 12, 0, Math.PI*2);
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else if (item.type === 'heart') {
+                ctx.fillStyle = '#ff0055';
+                ctx.shadowColor = '#ff0055';
+                ctx.font = '20px Arial';
+                ctx.fillText('♥', item.x + 5, item.y + 20 + yOffset);
+            }
+            ctx.shadowBlur = 0;
+        });
+
+        // Draw Car
+        ctx.save();
+        ctx.translate(car.x + car.width/2, car.y + car.height/2);
+        
+        let rot = 0;
+        if (!car.grounded) rot = -0.15;
+        else if (keys.go) rot = -0.05;
+        else if (keys.brake) rot = 0.05;
+        ctx.rotate(rot);
+
+        ctx.translate(-(car.x + car.width/2), -(car.y + car.height/2));
+
+        if (isInvincible) {
+            car.flashTimer++;
+            if (Math.floor(car.flashTimer / 4) % 2 === 0) {
+                ctx.globalAlpha = 0.5;
+            }
+            if (invincibilityTimer > 60) { 
+                ctx.strokeStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(car.x + car.width/2, car.y + car.height/2, 50, 0, Math.PI*2);
+                ctx.stroke();
+            }
+        }
+
+        // Car Body
+        ctx.fillStyle = '#00aaff'; 
+        ctx.shadowColor = '#00aaff';
+        ctx.shadowBlur = 10;
+        
+        ctx.beginPath();
+        ctx.moveTo(car.x, car.y + 10);
+        ctx.lineTo(car.x + car.width, car.y + 15);
+        ctx.lineTo(car.x + car.width, car.y + 25);
+        ctx.lineTo(car.x, car.y + 25);
+        ctx.fill();
+
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.moveTo(car.x + 20, car.y + 10);
+        ctx.lineTo(car.x + 40, car.y - 5);
+        ctx.lineTo(car.x + 60, car.y + 15);
+        ctx.lineTo(car.x + 20, car.y + 15);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.beginPath();
+        ctx.moveTo(car.x + 35, car.y);
+        ctx.lineTo(car.x + 45, car.y + 10);
+        ctx.stroke();
+
+        ctx.fillStyle = '#111';
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(car.x + 15, car.y + 25, 8, 0, Math.PI*2);
+        ctx.arc(car.x + car.width - 15, car.y + 25, 8, 0, Math.PI*2);
+        ctx.fill();
+        
+        ctx.strokeStyle = '#0ff';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(car.x + 15, car.y + 25, 4, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(car.x + car.width - 15, car.y + 25, 4, 0, Math.PI*2);
+        ctx.stroke();
+
+        ctx.restore();
+        ctx.globalAlpha = 1;
+
+        particles.forEach(p => {
+            ctx.fillStyle = p.color;
+            ctx.globalAlpha = p.life;
+            ctx.fillRect(p.x, p.y, 4, 4);
+        });
+        ctx.globalAlpha = 1;
+    }
+
+    function gameLoop() {
+        if(isPlaying && !isInvincible && lives <= 0) {
+            gameOver();
+            return;
+        }
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-over-screen').classList.add('hidden');
+        document.getElementById('pause-btn').classList.remove('hidden');
+        
+        initAudio();
+        nextNoteTime = audioCtx.currentTime;
+
+        // FIXED: Properly reset all game variables
+        score = 0;
+        speed = 0;
+        lives = 3;
+        frame = 0;
+        obstacles = [];
+        items = [];
+        particles = [];
+        shootingStars = [];
+        skyOffset = 0;
+        isJumping = false;
+        jumpHoldTime = 0;
+        jumpPower = 0;
+        isInvincible = false;
+        invincibilityTimer = 0;
+        
+        // Reset car position
+        car.x = 50;
+        car.y = groundHeight - car.height;
+        car.vy = 0;
+        car.grounded = true;
+        car.flashTimer = 0;
+        
+        document.querySelectorAll('.heart').forEach(h => h.classList.remove('broken'));
+        document.getElementById('best-score').innerText = Math.floor(bestScore/10);
+
+        isPlaying = true;
+        isPaused = false;
+        
+        startCountdown(() => {
+            if (isMusicEnabled) scheduleMusic();
+            gameLoop();
+        });
+    }
+
+    function gameOver() {
+        isPlaying = false;
+        document.getElementById('final-score').innerText = Math.floor(score/10);
+        document.getElementById('final-best-score').innerText = Math.floor(bestScore/10);
+        document.getElementById('game-over-screen').classList.remove('hidden');
+        document.getElementById('pause-btn').classList.add('hidden');
+        
+        // Stop music
+        if (musicAnimationId) {
+            cancelAnimationFrame(musicAnimationId);
+        }
+    }
+
+</script>
+</body>
+</html>

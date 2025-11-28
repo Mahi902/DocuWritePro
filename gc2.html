@@ -80,6 +80,7 @@
 </body>
 </html>
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -414,8 +415,9 @@ let spawnTimer = 0;
 const CONSTANTS = {
     MAX_HEARTS: 3,
     MAX_AMMO: 3,
-    BASE_COOLDOWN: 1300, // Slightly slower (was 1000)
-    PLAYER_SIZE: 20
+    BASE_COOLDOWN: 3000, // Changed to 3 seconds base reload time
+    PLAYER_SIZE: 20,
+    MAX_BOXES_PER_WAVE: 20 // Maximum boxes per wave
 };
 
 /**
@@ -482,8 +484,11 @@ class Enemy {
         this.size = 25;
         this.x = W + 50;
         this.y = Math.random() * (H - 100) + 50;
-        this.speed = 2 + (score * 0.05); 
-        if (this.speed > 8) this.speed = 8;
+        
+        // Make boxes faster based on points
+        const speedScaling = 1 + (score * 0.001);
+        this.speed = (2 + (score * 0.05)) * speedScaling; 
+        if (this.speed > 10) this.speed = 10;
         
         this.angle = 0;
         this.rotationSpeed = Math.random() * 0.1 - 0.05;
@@ -582,8 +587,9 @@ class Player {
             this.ammo--;
             audio.playShoot(1.0 + power); 
 
-            let cdTime = CONSTANTS.BASE_COOLDOWN - (score * 5);
-            if (cdTime < 300) cdTime = 300; 
+            // Calculate cooldown time - base 3 seconds, reduced by score, min 0.5 seconds
+            let cdTime = CONSTANTS.BASE_COOLDOWN - (score * 10);
+            if (cdTime < 500) cdTime = 500; // Minimum 0.5 seconds
             
             this.startReload(cdTime);
         }
@@ -735,11 +741,11 @@ function update() {
     spawnTimer++;
     
     // Difficulty Scaling Logic
-    // 1. Frequency (Frames between spawns): Decreases as score rises, caps at 20 frames.
-    const spawnRate = Math.max(20, 100 - (score / 4)); 
+    // 1. Frequency (Frames between spawns): Decreases as score rises, caps at 10 frames.
+    const spawnRate = Math.max(10, 100 - (score / 3)); 
 
-    // 2. Batch Size (How many appear at once): Increases by 1 every ~200 points
-    const spawnBatch = 1 + Math.floor(score / 200);
+    // 2. Batch Size (How many appear at once): Increases by 1 every 400 points, max 20
+    const spawnBatch = Math.min(1 + Math.floor(score / 400), CONSTANTS.MAX_BOXES_PER_WAVE);
 
     if (spawnTimer > spawnRate) {
         for(let i=0; i<spawnBatch; i++) {

@@ -53,6 +53,9 @@ const urlsToCache = [
   'https://mahi902.github.io/DocuWritePro/atbedt.html',
   'https://mahi902.github.io/DocuWritePro/image-generator.html',
   'https://mahi902.github.io/DocuWritePro/draw.html'
+  'https://mahi902.github.io/DocuWritePro/gc.html'
+  'https://mahi902.github.io/DocuWritePro/gc1.html'
+  'https://mahi902.github.io/DocuWritePro/gc2.html'
 ];
 
 // Install Service Worker and cache files

@@ -80,7 +80,6 @@
 </body>
 </html>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -485,10 +484,12 @@ class Enemy {
         this.x = W + 50;
         this.y = Math.random() * (H - 100) + 50;
         
-        // Make boxes faster based on points
-        const speedScaling = 1 + (score * 0.001);
-        this.speed = (2 + (score * 0.05)) * speedScaling; 
-        if (this.speed > 10) this.speed = 10;
+        // Make boxes speed increase with score - more aggressive scaling
+        const baseSpeed = 2;
+        const speedIncrease = score * 0.0005; // Speed increases by 0.0005 per point
+        const maxSpeed = 10; // Maximum speed cap
+        
+        this.speed = Math.min(baseSpeed + speedIncrease, maxSpeed);
         
         this.angle = 0;
         this.rotationSpeed = Math.random() * 0.1 - 0.05;
@@ -513,7 +514,10 @@ class Enemy {
         this.y += dy * 0.01; 
         this.angle += this.rotationSpeed;
 
-        if (this.x < -50) this.active = false;
+        // Remove boxes when they leave the screen completely (not just x < -50)
+        if (this.x < -100 || this.x > W + 100 || this.y < -100 || this.y > H + 100) {
+            this.active = false;
+        }
     }
 
     draw(ctx) {
@@ -744,8 +748,8 @@ function update() {
     // 1. Frequency (Frames between spawns): Decreases as score rises, caps at 10 frames.
     const spawnRate = Math.max(10, 100 - (score / 3)); 
 
-    // 2. Batch Size (How many appear at once): Increases by 1 every 400 points, max 20
-    const spawnBatch = Math.min(1 + Math.floor(score / 400), CONSTANTS.MAX_BOXES_PER_WAVE);
+    // 2. Batch Size (How many appear at once): Increases by 1 every 800 points, max 20
+    const spawnBatch = Math.min(1 + Math.floor(score / 800), CONSTANTS.MAX_BOXES_PER_WAVE);
 
     if (spawnTimer > spawnRate) {
         for(let i=0; i<spawnBatch; i++) {
@@ -821,6 +825,8 @@ function update() {
             }
         });
     });
+    
+    // Clean up enemies that are no longer active or have left the screen
     enemies = enemies.filter(e => e.active);
 
     particles.forEach(p => p.update());

@@ -1,94 +1,86 @@
 const CACHE_NAME = 'docuwrite-pro-cache-v1';
+
 const urlsToCache = [
   '/app.html',
   '/manifest.json',
 
-  // Tailwind CSS
-  'https://cdn.tailwindcss.com',
-
-  // Google Fonts
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
-  'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0',
-
-  // Main Tools & Pages
-  'https://mahi902.github.io/Aurora/pollinatedai.html',
-  'https://mahi902.github.io/DocuWritePro/document-writer.html',
-  'https://mahi902.github.io/DocuWritePro/collab-document-editor.html',
-  'https://mahi902.github.io/DocuWritePro/viewer.html',
-  'https://mahi902.github.io/DocuWritePro/word-description-finder.html',
-  'https://mahi902.github.io/DocuWritePro/translator.html',
-  'https://mahi902.github.io/DocuWritePro/document-signer.html',
-  'https://mahi902.github.io/DocuWritePro/findandreplacer.html',
-  'https://mahi902.github.io/DocuWritePro/page-number-adder.html',
-  'https://mahi902.github.io/DocuWritePro/rm.html',
-  'https://mahi902.github.io/DocuWritePro/chart-maker.html',
-  'https://mahi902.github.io/DocuWritePro/graphmaker.html',
-  'https://mahi902.github.io/DocuWritePro/whiteboard.html',
-  'https://mahi902.github.io/DocuWritePro/mmm.html',
-  'https://mahi902.github.io/DocuWritePro/table-maker.html',
-  'https://mahi902.github.io/DocuWritePro/watermarker.html',
-  'https://mahi902.github.io/DocuWritePro/email-writer.html',
-  'https://mahi902.github.io/DocuWritePro/spell-checker.html',
-  'https://mahi902.github.io/DocuWritePro/file-extractor.html',
-  'https://mahi902.github.io/DocuWritePro/qr-code-maker.html',
-  'https://mahi902.github.io/DocuWritePro/id-card-maker.html',
-  'https://mahi902.github.io/DocuWritePro/file-zipper.html',
-  'https://mahi902.github.io/DocuWritePro/converters.html',
-  'https://mahi902.github.io/DocuWritePro/pdfcompressor.html',
-  'https://mahi902.github.io/DocuWritePro/context-field.html',
-  'https://mahi902.github.io/DocuWritePro/gift-card-maker.html',
-  'https://mahi902.github.io/DocuWritePro/docudrop.html',
-  'https://mahi902.github.io/DocuWritePro/text-extractor.html',
-  'https://mahi902.github.io/DocuWritePro/keyboard-click-test.html',
-  'https://mahi902.github.io/DocuWritePro/frontend-ide.html',
-  'https://mahi902.github.io/DocuWritePro/code-playground.html',
-  'https://mahi902.github.io/DocuWritePro/html.html',
-  'https://mahi902.github.io/DocuWritePro/wawm.html',
-  'https://mahi902.github.io/DocuWritePro/mdeditor.html',
-  'https://mahi902.github.io/DocuWritePro/button-designer.html',
-  'https://mahi902.github.io/DocuWritePro/html-splitter.html',
-  'https://mahi902.github.io/DocuWritePro/goto-code.html',
-  'https://mahi902.github.io/DocuWritePro/code-snipper.html',
-  'https://mahi902.github.io/DocuWritePro/image-editor.html',
-  'https://mahi902.github.io/DocuWritePro/atbedt.html',
-  'https://mahi902.github.io/DocuWritePro/image-generator.html',
-  'https://mahi902.github.io/DocuWritePro/draw.html'
-  'https://mahi902.github.io/DocuWritePro/gc.html'
-  'https://mahi902.github.io/DocuWritePro/gc1.html'
-  'https://mahi902.github.io/DocuWritePro/gc2.html'
+  // Only same-origin files!
+  '/document-writer.html',
+  '/collab-document-editor.html',
+  '/viewer.html',
+  '/word-description-finder.html',
+  '/translator.html',
+  '/document-signer.html',
+  '/findandreplacer.html',
+  '/page-number-adder.html',
+  '/rm.html',
+  '/chart-maker.html',
+  '/graphmaker.html',
+  '/whiteboard.html',
+  '/mmm.html',
+  '/table-maker.html',
+  '/watermarker.html',
+  '/email-writer.html',
+  '/spell-checker.html',
+  '/file-extractor.html',
+  '/qr-code-maker.html',
+  '/id-card-maker.html',
+  '/file-zipper.html',
+  '/converters.html',
+  '/pdfcompressor.html',
+  '/context-field.html',
+  '/gift-card-maker.html',
+  '/docudrop.html',
+  '/text-extractor.html',
+  '/keyboard-click-test.html',
+  '/frontend-ide.html',
+  '/code-playground.html',
+  '/html.html',
+  '/wawm.html',
+  '/mdeditor.html',
+  '/button-designer.html',
+  '/html-splitter.html',
+  '/goto-code.html',
+  '/code-snipper.html',
+  '/image-editor.html',
+  '/atbedt.html',
+  '/image-generator.html',
+  '/draw.html'
 ];
 
-// Install Service Worker and cache files
+// Install
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+      .then(cache => {
+        return Promise.all(
+          urlsToCache.map(url =>
+            fetch(url).then(res => cache.put(url, res))
+          )
+        );
+      })
       .then(() => self.skipWaiting())
+      .catch(err => console.error('SW install error:', err))
   );
 });
 
-// Activate SW and clean old caches
+// Activate
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys => 
-      Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      )
+    caches.keys().then(keys =>
+      Promise.all(keys.map(key => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }))
     )
   );
   self.clients.claim();
 });
 
-// Fetch handler to serve cached content first
+// Fetch
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(cachedResponse => {
-      return cachedResponse || fetch(event.request).catch(() => {
-        // Optionally return a fallback page here if offline
-        return new Response("You are offline. Page not cached.");
-      });
-    })
+    caches.match(event.request)
+      .then(cached => cached || fetch(event.request))
+      .catch(() => new Response("Offline and not cached"))
   );
 });

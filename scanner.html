@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Scanner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load OpenCV.js -->
+    <script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+    <!-- Load jsPDF for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { touch-action: none; overscroll-behavior: none; background-color: #f3f4f6; color: #1f2937; font-family: sans-serif; }
+        
+        /* Canvas Container */
+        #canvas-container { 
+            position: relative; 
+            width: 100%; 
+            height: 75vh; 
+            overflow: hidden; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: #e5e7eb; 
+            border-bottom: 1px solid #d1d5db;
+        }
+        
+        canvas { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: all 0.3s ease-in-out;}
+
+        /* Loading Spinner */
+        .loader { border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="h-screen flex flex-col">
+
+    <!-- Header -->
+    <div class="px-4 py-3 bg-white shadow-sm flex justify-between items-center shrink-0 z-30">
+        <h1 class="text-xl font-bold text-gray-800 tracking-tight">Scanner</h1>
+        <div id="status" class="text-xs font-medium text-orange-500">Loading Engine...</div>
+    </div>
+
+    <!-- Main Viewport -->
+    <div id="canvas-container" class="flex-grow relative">
+        <!-- Loading Overlay -->
+        <div id="loading" class="absolute inset-0 flex flex-col items-center justify-center z-50 bg-gray-50">
+            <div class="loader mb-4"></div>
+            <p class="text-gray-500 text-sm">Initializing Vision Engine...</p>
+        </div>
+
+        <!-- Video Source (Hidden) -->
+        <video id="videoInput" class="hidden" playsinline></video>
+
+        <!-- Display Canvas -->
+        <canvas id="displayCanvas"></canvas> 
+    </div>
+
+    <!-- Controls Area -->
+    <div class="p-6 bg-white shrink-0 flex flex-col justify-center items-center gap-4 z-30 min-h-[120px] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        
+        <!-- Camera Mode (Primary and only capture state) -->
+        <div id="camera-controls" class="flex flex-col items-center w-full gap-2">
+            <p class="text-xs text-gray-400 mb-2">Align document in view and snap</p>
+            <button id="snapBtn" class="w-16 h-16 bg-white rounded-full border-[6px] border-blue-500 shadow-lg active:bg-blue-50 active:scale-95 transition-transform disabled:opacity-50 disabled:border-gray-300" disabled></button>
+        </div>
+
+        <!-- Result Mode (After processing) -->
+        <div id="result-controls" class="hidden w-full max-w-lg flex flex-col gap-3">
+            <div class="flex justify-center gap-3">
+                <button id="colorBtn" onclick="toggleFilter('color')" class="px-4 py-2 rounded-full font-semibold transition-colors border">Color Photo</button>
+                <button id="bwBtn" onclick="toggleFilter('bw')" class="px-4 py-2 rounded-full font-semibold transition-colors border bg-blue-600 text-white border-blue-600">B&W Document</button>
+            </div>
+
+             <div class="flex gap-3 w-full">
+                <button onclick="retake()" class="flex-1 py-3 border border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-50">New Scan</button>
+                <a id="downloadLink" download="scan.png" class="flex-1 py-3 bg-gray-800 hover:bg-gray-900 rounded-lg text-white font-medium text-center shadow-lg cursor-pointer">Save Img</a>
+            </div>
+            <button onclick="savePDF()" class="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium shadow-lg shadow-red-100 transition-colors">Save as PDF</button>
+        </div>
+    </div>
+
+<script>
+    // --- Variables ---
+    let video = document.getElementById('videoInput');
+    let displayCanvas = document.getElementById('displayCanvas');
+    let ctx = displayCanvas.getContext('2d');
+    let statusDiv = document.getElementById('status');
+    let snapBtn = document.getElementById('snapBtn');
+    let canvasContainer = document.getElementById('canvas-container');
+
+    let stream = null;
+    let isStreaming = false;
+    let isOpenCvReady = false;
+    let mode = 'camera'; 
+    let animationId = null;
+
+    // --- Core Data Storage ---
+    // A hidden canvas to store the raw captured frame for re-processing
+    let snappedCanvas = document.createElement('canvas');
+    snappedCanvas.style.display = 'none';
+    document.body.appendChild(snappedCanvas);
+    let snappedCtx = snappedCanvas.getContext('2d');
+
+    // OpenCV Mat to hold the color, perspective-corrected image (base image)
+    let warpedColorMat = null; 
+    let currentFilter = 'bw'; // State: 'bw' or 'color'
+
+    // Detected Corners (normalized 0-1 relative to the internal canvas resolution)
+    let corners = [{x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}];
+
+    // --- Init ---
+    function onOpenCvReady() {
+        isOpenCvReady = true;
+        document.getElementById('loading').classList.add('hidden');
+        statusDiv.innerText = "Camera Ready";
+        statusDiv.className = "text-xs font-medium text-green-600";
+        startCamera();
+    }
+
+    // Displays temporary message
+    function displayMessage(message, isError = false) {
+        statusDiv.innerText = message;
+        statusDiv.className = `text-xs font-medium ${isError ? 'text-red-600' : 'text-blue-600'}`;
+        setTimeout(() => {
+            if (mode === 'camera') {
+                statusDiv.innerText = "Align document in view";
+                statusDiv.className = "text-xs font-medium text-green-600";
+            } else if (mode === 'result') {
+                statusDiv.innerText = (currentFilter === 'bw' ? "B&W Document" : "Color Photo") + " Ready";
+                statusDiv.className = "text-xs font-medium text-blue-600";
+            }
+        }, 3000);
+    }
+
+    async function startCamera() {
+        if (!isOpenCvReady) return;
+        
+        try {
+            // Request back camera
+            stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' }, 
+                audio: false 
+            });
+            video.srcObject = stream;
+            video.play();
+            
+            video.onloadedmetadata = () => {
+                isStreaming = true;
+                resizeCanvasToFitVideo();
+                snapBtn.disabled = false;
+                requestAnimationFrame(scanLoop);
+            };
+        } catch (err) {
+            console.error(err);
+            statusDiv.innerText = "Error: Camera Access Denied";
+            statusDiv.className = "text-xs font-bold text-red-500";
+            displayMessage("Please allow camera access to use the scanner.", true);
+        }
+    }
+
+    function stopCamera() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            isStreaming = false;
+        }
+        cancelAnimationFrame(animationId);
+    }
+
+    // Resize canvas to fit container while maintaining video aspect ratio
+    function resizeCanvasToFitVideo() {
+        if (!isStreaming && mode !== 'camera') return;
+        
+        const containerW = canvasContainer.clientWidth;
+        const containerH = canvasContainer.clientHeight;
+        const videoW = video.videoWidth;
+        const videoH = video.videoHeight;
+        
+        const scale = Math.min(containerW / videoW, containerH / videoH);
+        
+        const w = videoW * scale;
+        const h = videoH * scale;
+
+        // Internal resolution matches video resolution for quality
+        displayCanvas.width = videoW;
+        displayCanvas.height = videoH;
+        
+        // CSS size fits the screen
+        displayCanvas.style.width = w + "px";
+        displayCanvas.style.height = h + "px";
+    }
+
+    // --- Detection Loop ---
+    function scanLoop() {
+        if (!isStreaming || mode !== 'camera') return;
+
+        // Draw video frame
+        ctx.drawImage(video, 0, 0, displayCanvas.width, displayCanvas.height);
+
+        try {
+            let src = cv.imread(displayCanvas);
+            let gray = new cv.Mat();
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+            
+            cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
+            cv.Canny(gray, gray, 75, 200);
+
+            let contours = new cv.MatVector();
+            let hierarchy = new cv.Mat();
+            cv.findContours(gray, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+            let maxArea = 0;
+            let currentPoints = null;
+
+            for (let i = 0; i < contours.size(); ++i) {
+                let cnt = contours.get(i);
+                let area = cv.contourArea(cnt);
+                if (area < (displayCanvas.width * displayCanvas.height * 0.1)) continue; 
+
+                let peri = cv.arcLength(cnt, true);
+                let approx = new cv.Mat();
+                cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+
+                if (approx.rows === 4 && area > maxArea) {
+                    maxArea = area;
+                    currentPoints = [];
+                    for(let j=0; j<4; j++) {
+                        currentPoints.push({
+                            x: approx.intPtr(j, 0)[0],
+                            y: approx.intPtr(j, 0)[1]
+                        });
+                    }
+                }
+                approx.delete();
+            }
+
+            // Draw Visual Feedback
+            if (currentPoints) {
+                ctx.beginPath();
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)'; // Blue
+                
+                const orderedPts = orderPoints(currentPoints);
+                ctx.moveTo(orderedPts[0].x, orderedPts[0].y);
+                for(let i=1; i<4; i++) ctx.lineTo(orderedPts[i].x, orderedPts[i].y);
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            src.delete(); gray.delete(); contours.delete(); hierarchy.delete();
+
+        } catch (e) {
+            console.error("OpenCV loop error:", e);
+        }
+
+        animationId = requestAnimationFrame(scanLoop);
+    }
+
+    // --- Capture & Process ---
+    snapBtn.addEventListener('click', () => {
+        // 1. Snapshot the current video frame into the hidden canvas
+        snappedCanvas.width = video.videoWidth;
+        snappedCanvas.height = video.videoHeight;
+        snappedCtx.drawImage(video, 0, 0, snappedCanvas.width, snappedCanvas.height);
+        
+        stopCamera();
+        
+        // 2. Detect corners on the snapshot
+        detectForCapture(); 
+        
+        // 3. Perform Perspective Warp (creates the base color Mat)
+        captureAndWarp(); 
+        
+        // 4. Set UI to Result Mode
+        mode = 'result';
+        document.getElementById('camera-controls').classList.add('hidden');
+        document.getElementById('result-controls').classList.remove('hidden');
+        
+        // 5. Display the default filter (B&W)
+        toggleFilter('bw');
+    });
+
+    function detectForCapture() {
+        // Detect corners on the *snapped* canvas
+        let src = cv.imread(snappedCanvas);
+        let gray = new cv.Mat();
+        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+        cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
+        cv.Canny(gray, gray, 75, 200);
+
+        let contours = new cv.MatVector();
+        let hierarchy = new cv.Mat();
+        cv.findContours(gray, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+        let maxArea = 0;
+        let bestPoints = null;
+
+        for (let i = 0; i < contours.size(); ++i) {
+            let cnt = contours.get(i);
+            let area = cv.contourArea(cnt);
+            if (area < (snappedCanvas.width * snappedCanvas.height * 0.05)) continue; 
+            
+            let peri = cv.arcLength(cnt, true);
+            let approx = new cv.Mat();
+            cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+
+            if (approx.rows === 4 && area > maxArea) {
+                maxArea = area;
+                bestPoints = [];
+                for(let j=0; j<4; j++) {
+                    bestPoints.push({
+                        x: approx.intPtr(j, 0)[0],
+                        y: approx.intPtr(j, 0)[1]
+                    });
+                }
+            }
+            approx.delete();
+        }
+
+        src.delete(); gray.delete(); contours.delete(); hierarchy.delete();
+
+        if (bestPoints) {
+            corners = orderPoints(bestPoints);
+            displayMessage("Document detected. Scanning...", false);
+        } else {
+            // Fallback: 80% inset
+            let w = snappedCanvas.width;
+            let h = snappedCanvas.height;
+            let px = w * 0.1;
+            let py = h * 0.1;
+            corners = [
+                {x: px, y: py},
+                {x: w - px, y: py},
+                {x: w - px, y: h - py},
+                {x: px, y: h - py}
+            ];
+            displayMessage("No clear document detected. Scanning full frame...", true);
+        }
+    }
+
+    function orderPoints(pts) {
+        // Standardize: TL (Top-Left), TR, BR, BL
+        let sum = (p) => p.x + p.y;
+        let diff = (p) => p.y - p.x;
+        
+        let tl = pts.reduce((prev, curr) => sum(curr) < sum(prev) ? curr : prev);
+        let br = pts.reduce((prev, curr) => sum(curr) > sum(prev) ? curr : prev);
+        
+        let remaining = pts.filter(p => p !== tl && p !== br);
+        
+        let tr = remaining.reduce((prev, curr) => diff(curr) < diff(prev) ? curr : prev);
+        let bl = remaining.reduce((prev, curr) => diff(curr) > diff(prev) ? curr : prev);
+        
+        return [tl, tr, br, bl];
+    }
+
+    function captureAndWarp() {
+        if (warpedColorMat) warpedColorMat.delete();
+        
+        try {
+            // 1. Source Points from corners
+            let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+                corners[0].x, corners[0].y, // TL
+                corners[1].x, corners[1].y, // TR
+                corners[2].x, corners[2].y, // BR
+                corners[3].x, corners[3].y  // BL
+            ]);
+
+            // 2. Calculate Destination Size (Natural Aspect Ratio)
+            let widthTop = Math.hypot(corners[0].x - corners[1].x, corners[0].y - corners[1].y);
+            let widthBottom = Math.hypot(corners[2].x - corners[3].x, corners[2].y - corners[3].y);
+            let maxWidth = Math.round(Math.max(widthTop, widthBottom));
+
+            let heightLeft = Math.hypot(corners[0].x - corners[3].x, corners[0].y - corners[3].y);
+            let heightRight = Math.hypot(corners[1].x - corners[2].x, corners[1].y - corners[2].y);
+            let maxHeight = Math.round(Math.max(heightLeft, heightRight));
+
+            // 3. Destination Matrix
+            let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+                0, 0,
+                maxWidth, 0,
+                maxWidth, maxHeight,
+                0, maxHeight
+            ]);
+
+            // 4. Warp
+            let M = cv.getPerspectiveTransform(srcTri, dstTri);
+            let src = cv.imread(snappedCanvas);
+            warpedColorMat = new cv.Mat();
+            let dsize = new cv.Size(maxWidth, maxHeight);
+            
+            // Perform the perspective warp (this result is the color base image)
+            cv.warpPerspective(src, warpedColorMat, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+            // Cleanup
+            src.delete(); M.delete(); srcTri.delete(); dstTri.delete();
+
+        } catch (e) {
+            console.error("Warping Error:", e);
+            displayMessage("An error occurred during scanning. Please try again.", true);
+            retake(); 
+        }
+    }
+
+    // --- Filter Toggle and Display ---
+    function toggleFilter(filterType) {
+        if (!warpedColorMat) return;
+        
+        currentFilter = filterType;
+        let dst = new cv.Mat();
+
+        if (filterType === 'bw') {
+            // Apply B&W filter to a copy of the color mat
+            cv.cvtColor(warpedColorMat, dst, cv.COLOR_RGBA2GRAY);
+            cv.adaptiveThreshold(dst, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 15, 10);
+        } else {
+            // Display the original warped color image
+            dst = warpedColorMat.clone(); // Clone to avoid issues with cv.imshow managing the Mat
+        }
+
+        const maxWidth = dst.cols;
+        const maxHeight = dst.rows;
+
+        // 1. Update display canvas internal size
+        displayCanvas.width = maxWidth;
+        displayCanvas.height = maxHeight;
+        
+        // 2. Update CSS size to fit the container
+        let containerW = canvasContainer.clientWidth;
+        let containerH = canvasContainer.clientHeight;
+        let scale = Math.min(containerW / maxWidth, containerH / maxHeight) * 0.95;
+        displayCanvas.style.width = (maxWidth * scale) + "px";
+        displayCanvas.style.height = (maxHeight * scale) + "px";
+
+        // 3. Show result
+        cv.imshow('displayCanvas', dst);
+        dst.delete(); // Delete the temporary Mat created for display
+
+        // 4. Update UI buttons and download link
+        const isBW = filterType === 'bw';
+        document.getElementById('colorBtn').className = `px-4 py-2 rounded-full font-semibold transition-colors border ${!isBW ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-600 border-gray-300 hover:bg-gray-100'}`;
+        document.getElementById('bwBtn').className = `px-4 py-2 rounded-full font-semibold transition-colors border ${isBW ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-600 border-gray-300 hover:bg-gray-100'}`;
+        
+        let dataURL = displayCanvas.toDataURL('image/png');
+        document.getElementById('downloadLink').href = dataURL;
+        document.getElementById('downloadLink').download = `${isBW ? 'document_bw' : 'document_color'}.png`;
+        statusDiv.innerText = (isBW ? "B&W Document" : "Color Photo") + " Ready";
+        statusDiv.className = "text-xs font-medium text-blue-600";
+    }
+
+
+    // --- PDF Export ---
+    function savePDF() {
+        const { jsPDF } = window.jspdf;
+        
+        let imgData = displayCanvas.toDataURL("image/jpeg", 0.9); // Use JPEG for smaller PDF size
+        let w = displayCanvas.width;
+        let h = displayCanvas.height;
+        
+        let orientation = w > h ? 'l' : 'p';
+        
+        const pdf = new jsPDF({
+            orientation: orientation,
+            unit: 'px',
+            format: [w, h]
+        });
+
+        pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
+        pdf.save(`document-scan-${currentFilter}.pdf`);
+    }
+
+    function retake() {
+        mode = 'camera';
+        
+        // Cleanup Mat memory
+        if (warpedColorMat) {
+            warpedColorMat.delete();
+            warpedColorMat = null;
+        }
+
+        document.getElementById('result-controls').classList.add('hidden');
+        document.getElementById('camera-controls').classList.remove('hidden');
+        statusDiv.innerText = "Camera Ready";
+        
+        startCamera();
+    }
+    
+    window.addEventListener('resize', () => {
+        if (mode === 'camera') {
+            resizeCanvasToFitVideo();
+        } else if (mode === 'result') {
+            // Re-render the result to adjust CSS size on window resize
+            toggleFilter(currentFilter);
+        }
+    });
+</script>
+</body>
+</html>

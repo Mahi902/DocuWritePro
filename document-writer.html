@@ -1645,10 +1645,267 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
 
-<button class="sidebar-btn" id="edit-image-btn">
-    <i class="material-icons">edit</i>
-    Edit Images
+<!-- Sidebar Button -->
+<button class="sidebar-btn" id="rearrange-pages-btn">
+    <i class="material-icons">format_list_bulleted</i>
+    Rearrange Pages
 </button>
+
+<!-- Rearrange Pages Modal -->
+<div class="modal" id="rearrange-pages-modal">
+  <div class="modal-content" style="width:460px; max-height:80vh; overflow-y:auto;">
+    <div class="modal-header">
+      <h3 class="modal-title">Rearrange Pages</h3>
+      <button class="close-modal" id="close-rearrange-modal">
+        <i class="material-icons">close</i>
+      </button>
+    </div>
+
+    <div id="rearrange-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+
+    <div style="display:flex; justify-content:space-between; margin-top:20px;">
+      <button class="btn btn-secondary" id="undo-rearrange">Undo</button>
+      <button class="btn btn-primary" id="done-rearrange">Done</button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Rearrange items styling */
+.rearr-item {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px 14px;
+  border-radius:8px;
+  background:#f1f3f4;
+  border:1px solid #dadce0;
+  transition: background 0.3s, border 0.3s;
+}
+
+body.dark-mode .rearr-item {
+  background-color: #2d2e30;
+  border:1px solid #3a3a3a;
+}
+
+.rearr-item .title {
+  font-weight:500;
+  max-width:230px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  color: #202124;
+}
+
+body.dark-mode .rearr-item .title {
+  color: #e8eaed;
+}
+
+.rearr-item .actions {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.rearr-item button {
+  background:none;
+  border:none;
+  cursor:pointer;
+  color:#444;
+  transition: color 0.3s;
+}
+
+body.dark-mode .rearr-item button {
+  color:#e8eaed;
+}
+
+.rearr-item button:hover:not([disabled]) {
+  color: var(--primary-color);
+}
+
+.rearr-item button[disabled] {
+  opacity:0.3;
+  cursor:not-allowed;
+}
+
+.rearr-item .delete {
+  color:#d93025;
+}
+
+body.dark-mode .rearr-item .delete {
+  color:#f28b82;
+}
+
+/* Modal styles consistent with other modals */
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+body.dark-mode .modal-content {
+  background-color: #242526;
+  border: 1px solid #3a3a3a;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #5f6368;
+  transition: color 0.3s;
+}
+
+body.dark-mode .close-modal {
+  color: #9aa0a6;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #f1f3f4;
+  color: #202124;
+}
+
+body.dark-mode .btn-secondary {
+  background-color: #3c4043;
+  color: #e8eaed;
+}
+
+.btn {
+  border-radius: 4px;
+  padding: 10px 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.3s, color 0.3s;
+}
+
+.btn:hover:not([disabled]) {
+  opacity:0.9;
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const openBtn = document.getElementById("rearrange-pages-btn");
+  const modal = document.getElementById("rearrange-pages-modal");
+  const closeBtn = document.getElementById("close-rearrange-modal");
+  const list = document.getElementById("rearrange-list");
+  const undoBtn = document.getElementById("undo-rearrange");
+  const doneBtn = document.getElementById("done-rearrange");
+
+  let undoStack = [];
+
+  function saveState() {
+    const pages = [...document.querySelectorAll(".page")].map(p => p.outerHTML);
+    undoStack.push(pages);
+  }
+
+  function getPageTitle(pageElement) {
+    const text = pageElement.innerText.trim().replace(/\s+/g, " ");
+    return text.length === 0
+      ? "Empty Page"
+      : text.split(" ").slice(0, 5).join(" ");
+  }
+
+  function loadModal() {
+    list.innerHTML = "";
+    const pages = document.querySelectorAll(".page");
+
+    pages.forEach((p, index) => {
+      const title = getPageTitle(p);
+
+      const item = document.createElement("div");
+      item.className = "rearr-item";
+
+      item.innerHTML = `
+        <span class="title">Page ${index+1}: ${title}</span>
+        <div class="actions">
+          <button class="up" data-index="${index}">
+            <i class="material-icons">arrow_upward</i>
+          </button>
+          <button class="down" data-index="${index}">
+            <i class="material-icons">arrow_downward</i>
+          </button>
+          <button class="delete" data-index="${index}">
+            <i class="material-icons">delete</i>
+          </button>
+        </div>
+      `;
+
+      const delBtn = item.querySelector(".delete");
+      if (pages.length === 1) delBtn.disabled = true;
+
+      list.appendChild(item);
+    });
+  }
+
+  function movePage(index, direction) {
+    const pages = document.querySelectorAll(".page");
+    const parent = pages[0].parentElement;
+
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= pages.length) return;
+
+    saveState();
+
+    const page = pages[index];
+    const target = pages[newIndex];
+
+    if (direction === -1) {
+      parent.insertBefore(page, target);
+    } else {
+      parent.insertBefore(target, page);
+    }
+
+    loadModal();
+  }
+
+  function deletePage(index) {
+    const pages = document.querySelectorAll(".page");
+    if (pages.length === 1) return;
+
+    saveState();
+    pages[index].remove();
+    loadModal();
+  }
+
+  undoBtn.addEventListener("click", () => {
+    if (undoStack.length === 0) return alert("Nothing to undo.");
+    const last = undoStack.pop();
+    const parent = document.querySelector(".document-container");
+    parent.innerHTML = last.join("");
+    loadModal();
+  });
+
+  list.addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn || !btn.dataset.index) return;
+
+    const idx = parseInt(btn.dataset.index);
+
+    if (btn.classList.contains("up")) movePage(idx, -1);
+    if (btn.classList.contains("down")) movePage(idx, 1);
+    if (btn.classList.contains("delete")) deletePage(idx);
+  });
+
+  openBtn.addEventListener("click", () => {
+    loadModal();
+    modal.classList.add("active");
+  });
+
+  closeBtn.addEventListener("click", () => modal.classList.remove("active"));
+  doneBtn.addEventListener("click", () => modal.classList.remove("active"));
+});
+</script>
+
 
 
 <button class="sidebar-btn" id="insert-table">

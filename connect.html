@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Connect</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PeerJS -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <!-- Google Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    
+    <style>
+        body {
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+            background-color: #f8f9fa;
+            overflow: hidden; /* Prevent scrolling during call */
+        }
+        
+        /* Video Container Utilities */
+        .video-container {
+            transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        }
+
+        /* The "Main" view (full screen) */
+        .view-main {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            object-fit: cover;
+        }
+        /* Mobile adjustment for main view to ensure coverage */
+        @media (max-width: 640px) {
+            .view-main {
+                object-fit: cover;
+            }
+        }
+
+        /* The "Pip" view (Picture in Picture - floating) */
+        .view-pip {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 180px;
+            height: 120px;
+            z-index: 10;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: #202124;
+            transition: all 0.3s ease;
+        }
+
+        .view-pip:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Controls Bar */
+        .controls-bar {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* Button Animations */
+        .btn-control {
+            transition: all 0.2s;
+        }
+        .btn-control:active {
+            transform: scale(0.92);
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #1a73e8;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Hide scrollbars */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col relative text-gray-800">
+
+    <!-- Notifications / Toasts -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-full text-sm opacity-0 transition-opacity duration-300 pointer-events-none z-50 shadow-lg flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">info</span>
+        <span id="toast-msg">Notification</span>
+    </div>
+
+    <!-- 1. LOBBY SCREEN -->
+    <div id="lobby-screen" class="absolute inset-0 z-20 flex flex-col bg-white">
+        <!-- Header -->
+        <div class="flex items-center justify-between p-4 border-b">
+            <div class="flex items-center gap-2 text-[#1a73e8]">
+                <span class="material-symbols-outlined text-3xl">videocam</span>
+                <h1 class="text-xl font-medium tracking-tight">Connect</h1>
+            </div>
+            <div class="text-sm text-gray-500" id="clock">12:00 PM</div>
+        </div>
+
+        <div class="flex-1 flex flex-col md:flex-row items-center justify-center p-6 gap-8 overflow-y-auto">
+            
+            <!-- Left: Hero/Intro -->
+            <div class="max-w-md text-center md:text-left space-y-4">
+                <h2 class="text-4xl md:text-5xl font-normal text-gray-900 leading-tight">Connect while you work</h2>
+                <p class="text-lg text-gray-600">Connect with others seamlessly using Connect.</p>
+                
+                <!-- My ID Display -->
+                <div class="mt-8 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <p class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-1">Your Call ID</p>
+                    <div class="flex items-center gap-2">
+                        <code id="my-id-display" class="text-lg font-mono text-gray-800 select-all">Connecting...</code>
+                        <button onclick="copyId()" class="p-2 hover:bg-blue-100 rounded-full text-blue-600 transition-colors" title="Copy ID">
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Call Actions -->
+            <div class="w-full max-w-sm bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
+                <div class="space-y-4">
+                    <label class="block text-sm font-medium text-gray-700">Call a Friend</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3 text-gray-400">
+                            <span class="material-symbols-outlined">keyboard</span>
+                        </span>
+                        <input type="text" id="remote-id-input" placeholder="Enter code or link" class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all">
+                    </div>
+                    
+                    <button onclick="startCall()" id="btn-call" class="w-full py-3 px-4 bg-[#1a73e8] hover:bg-[#1557b0] text-white rounded-lg font-medium shadow-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="material-symbols-outlined">video_call</span>
+                        Start Call
+                    </button>
+                    
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-gray-200"></div>
+                        <span class="flex-shrink-0 mx-4 text-gray-400 text-xs">READY TO CALL</span>
+                        <div class="flex-grow border-t border-gray-200"></div>
+                    </div>
+
+                    <div class="text-center">
+                        <p id="status-text" class="text-sm text-gray-500 italic">Initializing ID...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CALL SCREEN (Hidden by default) -->
+    <div id="call-screen" class="hidden absolute inset-0 bg-gray-900 z-10 overflow-hidden">
+        
+        <!-- Video Layer -->
+        <div id="video-wrapper" class="relative w-full h-full">
+            <!-- Remote Video (Usually Main) -->
+            <video id="remote-video" class="view-main bg-black" autoplay playsinline></video>
+            
+            <!-- Local Video (Usually PiP) -->
+            <video id="local-video" class="view-pip bg-gray-800" autoplay playsinline muted></video>
+            
+            <!-- Remote Placeholder (When video off or loading) -->
+            <div id="remote-placeholder" class="absolute inset-0 flex items-center justify-center z-[1] bg-gray-800 text-white hidden">
+                <div class="flex flex-col items-center">
+                    <div class="w-24 h-24 rounded-full bg-orange-500 flex items-center justify-center text-4xl font-bold mb-4 shadow-lg">
+                        <span class="material-symbols-outlined text-5xl">person</span>
+                    </div>
+                    <span class="text-lg">Waiting for video...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Right Info -->
+        <div class="absolute top-4 left-4 z-20 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-lg text-white text-xs flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+            <span id="call-timer">00:00</span>
+        </div>
+
+        <!-- Call Controls -->
+        <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-30 flex items-center gap-4">
+            
+            <!-- Toggle Mic -->
+            <button onclick="toggleAudio()" id="btn-audio" class="btn-control w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white flex items-center justify-center">
+                <span class="material-symbols-outlined">mic</span>
+            </button>
+
+            <!-- Toggle Video -->
+            <button onclick="toggleVideo()" id="btn-video" class="btn-control w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white flex items-center justify-center">
+                <span class="material-symbols-outlined">videocam</span>
+            </button>
+
+            <!-- Hang Up -->
+            <button onclick="endCall()" class="btn-control w-16 h-12 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center shadow-lg mx-2">
+                <span class="material-symbols-outlined text-2xl">call_end</span>
+            </button>
+
+            <!-- Switch Camera -->
+            <button onclick="switchCamera()" id="btn-cam-switch" class="btn-control w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white flex items-center justify-center">
+                <span class="material-symbols-outlined">cameraswitch</span>
+            </button>
+
+             <!-- Swap Views (Manual) -->
+             <button onclick="swapViews()" class="btn-control w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white flex items-center justify-center md:hidden">
+                <span class="material-symbols-outlined">branding_watermark</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. INCOMING CALL MODAL -->
+    <div id="incoming-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-8 max-w-sm w-full mx-4 shadow-2xl text-center transform scale-100 transition-transform">
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                <span class="material-symbols-outlined text-4xl text-blue-600">ring_volume</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Incoming Call...</h3>
+            <p class="text-gray-500 mb-8" id="caller-id-display">Unknown ID</p>
+            
+            <div class="flex gap-4 justify-center">
+                <button onclick="declineCall()" class="flex-1 py-3 px-4 rounded-full bg-red-100 text-red-700 hover:bg-red-200 font-medium flex items-center justify-center gap-2 transition-colors">
+                    <span class="material-symbols-outlined">call_end</span> Decline
+                </button>
+                <button onclick="acceptCall()" class="flex-1 py-3 px-4 rounded-full bg-green-600 text-white hover:bg-green-700 font-medium flex items-center justify-center gap-2 shadow-lg transition-colors">
+                    <span class="material-symbols-outlined">call</span> Accept
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. OUTGOING CALL OVERLAY (When calling someone) -->
+    <div id="outgoing-overlay" class="hidden fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900 text-white">
+        <div class="w-24 h-24 rounded-full bg-gray-700 flex items-center justify-center mb-6 relative">
+            <span class="material-symbols-outlined text-4xl">person</span>
+            <div class="absolute inset-0 border-4 border-blue-500 rounded-full animate-ping opacity-75"></div>
+        </div>
+        <h3 class="text-xl font-medium mb-8">Calling...</h3>
+        <button onclick="endCall()" class="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-lg transition-all transform hover:scale-110">
+            <span class="material-symbols-outlined text-2xl">call_end</span>
+        </button>
+    </div>
+
+    <script>
+        // --- State Management ---
+        let peer = null;
+        let myId = null;
+        let currentCall = null;
+        let localStream = null;
+        let remoteStream = null;
+        let isAudioEnabled = true;
+        let isVideoEnabled = true;
+        let isFrontCamera = true;
+        let isSwapped = false; // View swap state
+        let ringtoneOscillator = null;
+        let ringtoneInterval = null;
+        let callTimerInterval = null;
+        let audioContext = null;
+
+        // --- DOM Elements ---
+        const els = {
+            lobby: document.getElementById('lobby-screen'),
+            callScreen: document.getElementById('call-screen'),
+            incomingModal: document.getElementById('incoming-modal'),
+            outgoingOverlay: document.getElementById('outgoing-overlay'),
+            myIdDisplay: document.getElementById('my-id-display'),
+            remoteIdInput: document.getElementById('remote-id-input'),
+            statusText: document.getElementById('status-text'),
+            localVideo: document.getElementById('local-video'),
+            remoteVideo: document.getElementById('remote-video'),
+            remotePlaceholder: document.getElementById('remote-placeholder'),
+            btnCall: document.getElementById('btn-call'),
+            clock: document.getElementById('clock'),
+            callTimer: document.getElementById('call-timer'),
+            btnAudio: document.getElementById('btn-audio'),
+            btnVideo: document.getElementById('btn-video'),
+            toast: document.getElementById('toast'),
+            toastMsg: document.getElementById('toast-msg')
+        };
+
+        // --- Initialization ---
+        window.onload = () => {
+            initPeer();
+            updateClock();
+            setInterval(updateClock, 60000);
+            
+            // Allow view swapping by clicking the small video
+            els.localVideo.addEventListener('click', swapViews);
+            els.remoteVideo.addEventListener('click', () => {
+               if(isSwapped) swapViews(); // Only swap back if remote is currently small
+            });
+        };
+
+        function updateClock() {
+            const now = new Date();
+            els.clock.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function showToast(msg) {
+            els.toastMsg.innerText = msg;
+            els.toast.classList.remove('opacity-0');
+            setTimeout(() => els.toast.classList.add('opacity-0'), 3000);
+        }
+
+        // --- PeerJS Setup ---
+        function initPeer() {
+            // Using default PeerJS cloud server (free tier)
+            peer = new Peer(null, {
+                debug: 2
+            });
+
+            peer.on('open', (id) => {
+                myId = id;
+                els.myIdDisplay.innerText = id;
+                els.statusText.innerText = "Ready to connect";
+                els.btnCall.disabled = false;
+            });
+
+            peer.on('call', (call) => {
+                // Incoming call
+                currentCall = call;
+                document.getElementById('caller-id-display').innerText = call.peer;
+                playRingtone();
+                els.incomingModal.classList.remove('hidden');
+            });
+
+            peer.on('error', (err) => {
+                console.error(err);
+                els.statusText.innerText = "Error: " + err.type;
+                showToast("Connection Error: " + err.type);
+            });
+        }
+
+        // --- Media Handling ---
+        async function getLocalStream() {
+            try {
+                const constraints = {
+                    video: { facingMode: isFrontCamera ? "user" : "environment" },
+                    audio: true
+                };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                localStream = stream;
+                
+                // Set to local video element
+                els.localVideo.srcObject = stream;
+                return stream;
+            } catch (err) {
+                console.error("Failed to get local stream", err);
+                showToast("Camera/Mic access denied!");
+                throw err;
+            }
+        }
+
+        // --- Call Logic ---
+
+        async function startCall() {
+            const remoteId = els.remoteIdInput.value.trim();
+            if (!remoteId) {
+                showToast("Please enter a valid ID");
+                return;
+            }
+            if (remoteId === myId) {
+                showToast("You cannot call yourself!");
+                return;
+            }
+
+            try {
+                els.btnCall.disabled = true;
+                els.statusText.innerText = "Getting camera...";
+                
+                await getLocalStream(); // Get media first
+                
+                els.outgoingOverlay.classList.remove('hidden');
+                
+                // Initiate call
+                const call = peer.call(remoteId, localStream);
+                setupCallEventHandlers(call);
+                currentCall = call;
+
+            } catch (err) {
+                els.btnCall.disabled = false;
+                els.statusText.innerText = "Failed to start media.";
+            }
+        }
+
+        async function acceptCall() {
+            stopRingtone();
+            els.incomingModal.classList.add('hidden');
+            
+            try {
+                await getLocalStream();
+                currentCall.answer(localStream);
+                setupCallEventHandlers(currentCall);
+                transitionToCallScreen();
+            } catch (err) {
+                showToast("Could not access camera for call.");
+                declineCall();
+            }
+        }
+
+        function declineCall() {
+            stopRingtone();
+            els.incomingModal.classList.add('hidden');
+            if (currentCall) {
+                currentCall.close();
+                currentCall = null;
+            }
+        }
+
+        function endCall() {
+            if (currentCall) {
+                currentCall.close();
+            }
+            // Trigger cleanup immediately for local user
+            handleCallClose();
+        }
+
+        function setupCallEventHandlers(call) {
+            call.on('stream', (stream) => {
+                remoteStream = stream;
+                els.remoteVideo.srcObject = remoteStream;
+                els.remotePlaceholder.classList.add('hidden');
+                
+                // If we were calling out, hide the overlay now that we have connection
+                els.outgoingOverlay.classList.add('hidden');
+                transitionToCallScreen();
+            });
+
+            call.on('close', handleCallClose);
+            call.on('error', (err) => {
+                console.error(err);
+                handleCallClose();
+            });
+        }
+
+        function transitionToCallScreen() {
+            els.lobby.classList.add('hidden');
+            els.callScreen.classList.remove('hidden');
+            startCallTimer();
+        }
+
+        function handleCallClose() {
+            // Stop tracks
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            els.localVideo.srcObject = null;
+            els.remoteVideo.srcObject = null;
+            
+            // Reset UI
+            els.callScreen.classList.add('hidden');
+            els.outgoingOverlay.classList.add('hidden');
+            els.lobby.classList.remove('hidden');
+            els.btnCall.disabled = false;
+            els.remotePlaceholder.classList.add('hidden');
+            
+            stopCallTimer();
+            currentCall = null;
+            localStream = null;
+            
+            // Reset View Swap
+            if (isSwapped) swapViews();
+        }
+
+        // --- In-Call Features ---
+
+        function toggleAudio() {
+            if (localStream) {
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) {
+                    isAudioEnabled = !isAudioEnabled;
+                    audioTrack.enabled = isAudioEnabled;
+                    
+                    const icon = els.btnAudio.querySelector('span');
+                    icon.innerText = isAudioEnabled ? 'mic' : 'mic_off';
+                    els.btnAudio.classList.toggle('bg-red-600', !isAudioEnabled);
+                    els.btnAudio.classList.toggle('bg-white/10', isAudioEnabled);
+                    els.btnAudio.classList.toggle('border-transparent', !isAudioEnabled);
+                }
+            }
+        }
+
+        function toggleVideo() {
+            if (localStream) {
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) {
+                    isVideoEnabled = !isVideoEnabled;
+                    videoTrack.enabled = isVideoEnabled;
+                    
+                    const icon = els.btnVideo.querySelector('span');
+                    icon.innerText = isVideoEnabled ? 'videocam' : 'videocam_off';
+                    els.btnVideo.classList.toggle('bg-red-600', !isVideoEnabled);
+                    els.btnVideo.classList.toggle('bg-white/10', isVideoEnabled);
+                    els.btnVideo.classList.toggle('border-transparent', !isVideoEnabled);
+                }
+            }
+        }
+
+        async function switchCamera() {
+            if (!localStream) return;
+            
+            // Toggle mode
+            isFrontCamera = !isFrontCamera;
+            
+            try {
+                // Get new stream
+                const constraints = {
+                    video: { facingMode: isFrontCamera ? "user" : "environment" },
+                    audio: true // keep audio
+                };
+                const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Replace video track in PeerConnection
+                if (currentCall && currentCall.peerConnection) {
+                    const videoTrack = newStream.getVideoTracks()[0];
+                    const sender = currentCall.peerConnection.getSenders().find(s => s.track.kind === 'video');
+                    if (sender) {
+                        sender.replaceTrack(videoTrack);
+                    }
+                }
+                
+                // Update local video element
+                localStream = newStream;
+                els.localVideo.srcObject = newStream;
+                
+                // Ensure mute state persists
+                const audioTrack = localStream.getAudioTracks()[0];
+                if (audioTrack) audioTrack.enabled = isAudioEnabled;
+
+                const videoTrack = localStream.getVideoTracks()[0];
+                if (videoTrack) videoTrack.enabled = isVideoEnabled;
+
+            } catch (err) {
+                console.error("Error switching camera:", err);
+                showToast("Unable to switch camera");
+                isFrontCamera = !isFrontCamera; // revert
+            }
+        }
+
+        function swapViews() {
+            isSwapped = !isSwapped;
+            
+            // We swap classes to animate the transition
+            if (isSwapped) {
+                // Local becomes Main, Remote becomes Pip
+                els.localVideo.classList.remove('view-pip');
+                els.localVideo.classList.add('view-main');
+                
+                els.remoteVideo.classList.remove('view-main');
+                els.remoteVideo.classList.add('view-pip');
+                
+                // z-index adjustment handled by class order usually, but explicit logic helps
+                els.localVideo.style.zIndex = "0";
+                els.remoteVideo.style.zIndex = "10";
+            } else {
+                // Return to normal
+                els.localVideo.classList.add('view-pip');
+                els.localVideo.classList.remove('view-main');
+                
+                els.remoteVideo.classList.add('view-main');
+                els.remoteVideo.classList.remove('view-pip');
+                
+                els.localVideo.style.zIndex = "10";
+                els.remoteVideo.style.zIndex = "0";
+            }
+        }
+
+        function copyId() {
+            if (myId) {
+                // Use new clipboard API if available, fallback to execCommand
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(myId).then(() => showToast("ID Copied!"));
+                } else {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = myId;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast("ID Copied!");
+                }
+            }
+        }
+
+        // --- Ringtone Logic (Web Audio API) ---
+        function playRingtone() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return; // Not supported
+                
+                audioContext = new AudioContext();
+                const gainNode = audioContext.createGain();
+                gainNode.connect(audioContext.destination);
+                gainNode.gain.value = 0.1; // Volume
+
+                // Play a pattern: beep-beep ... beep-beep
+                const playBeep = () => {
+                    const osc = audioContext.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, audioContext.currentTime); // A4
+                    osc.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                    osc.connect(gainNode);
+                    osc.start();
+                    osc.stop(audioContext.currentTime + 0.4);
+                };
+
+                playBeep();
+                ringtoneInterval = setInterval(() => {
+                    playBeep();
+                }, 2000);
+
+            } catch (e) {
+                console.warn("Audio Context blocked or failed", e);
+            }
+        }
+
+        function stopRingtone() {
+            if (ringtoneInterval) clearInterval(ringtoneInterval);
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+        }
+
+        // --- Timer Utility ---
+        function startCallTimer() {
+            let seconds = 0;
+            els.callTimer.innerText = "00:00";
+            callTimerInterval = setInterval(() => {
+                seconds++;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                els.callTimer.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopCallTimer() {
+            if (callTimerInterval) clearInterval(callTimerInterval);
+            els.callTimer.innerText = "00:00";
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Connect | Text Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.3s ease-out;
+    }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .message-hover { 
+      display: none; 
+      position: absolute; 
+      top: 50%; 
+      transform: translateY(-50%); 
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 6px 12px; 
+      border-radius: 20px; 
+      font-size: 12px; 
+      white-space: nowrap; 
+      color: #1f2937;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      z-index: 10;
+    }
+    .message-container:hover .message-hover { display: flex; align-items: center; gap: 4px; }
+    
+    .user-profile-card {
+      animation: slideIn 0.2s ease-out;
+      max-width: 300px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Mobile Drawer Transition */
+    .drawer-transition {
+      transition: transform 0.3s ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-white h-screen w-screen overflow-hidden font-sans text-gray-900">
+  
+  <!-- Root Layout: Flex Row -->
+  <div class="flex h-full w-full bg-white">
+
+    <!-- Left Column: Main Chat Area (Flex-1) -->
+    <div class="flex flex-col flex-1 relative min-w-0 bg-white">
+      
+      <!-- Topbar -->
+      <header class="h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-gray-100 shrink-0 z-20">
+        <div class="text-gray-900 text-lg sm:text-xl font-bold tracking-tight truncate mr-2">Connect</div>
+        
+        <div class="flex items-center gap-2 sm:gap-4">
+          <span id="current-peer-id" class="text-xs text-gray-400 hidden sm:inline-block font-mono bg-gray-50 px-2 py-1 rounded"></span>
+          
+          <!-- Connect Input Group -->
+          <div class="flex items-center bg-gray-50 rounded-full pl-3 pr-1 py-1 border border-gray-100 focus-within:ring-2 focus-within:ring-blue-100 transition-all w-auto max-w-[200px] sm:max-w-none">
+             <input id="peer-id-input" class="text-xs sm:text-sm bg-transparent placeholder:text-gray-400 text-gray-900 focus:outline-none w-24 sm:w-40" placeholder="Enter Peer ID"/>
+             <button id="connect-btn" class="ml-1 bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-full w-7 h-7 flex items-center justify-center transition-colors">
+               <i class="fas fa-arrow-right text-xs"></i>
+             </button>
+          </div>
+
+          <!-- Mobile Sidebar Toggle -->
+          <button id="mobile-menu-btn" class="md:hidden w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-full transition-colors ml-1">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Chat Messages Area -->
+      <div class="flex-1 overflow-hidden relative bg-white">
+        <main id="chat-box" class="h-full overflow-y-auto p-4 sm:p-6 space-y-6 scrollbar-hide">
+          <div class="text-center text-gray-400 mt-20 flex flex-col items-center">
+            <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4 text-2xl animate-bounce">👋</div>
+            <h2 class="text-xl font-bold mb-2 text-gray-800">Welcome to Connect</h2>
+            <p class="text-gray-500 text-sm max-w-xs mx-auto">Share your ID with friends to start chatting securely.</p>
+          </div>
+        </main>
+      </div>
+
+      <!-- Reply Preview (Absolute positioned over footer) -->
+      <div id="reply-preview" class="hidden absolute bottom-20 left-4 right-4 bg-white/90 backdrop-blur-sm text-gray-900 text-sm px-4 py-3 border-l-4 border-blue-500 shadow-lg rounded-r-lg z-30 flex justify-between items-center transition-all">
+        <div class="flex flex-col">
+            <span class="text-xs text-blue-600 font-bold mb-0.5">Replying to...</span>
+            <span id="reply-text-content" class="text-gray-600 truncate max-w-xs sm:max-w-md"></span>
+        </div>
+        <button onclick="cancelReply()" class="text-gray-400 hover:text-red-500 p-2"><i class="fas fa-times"></i></button>
+      </div>
+      
+      <!-- Footer / Input Area -->
+      <footer class="p-3 sm:px-6 sm:py-4 bg-white border-t border-gray-100 shrink-0 z-30">
+        <div class="flex items-end gap-2 relative max-w-4xl mx-auto">
+          <div class="flex-1 bg-gray-100 rounded-2xl flex items-center relative transition-colors focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-200 border border-transparent">
+             <button id="emoji-btn" class="p-3 text-gray-400 hover:text-yellow-500 transition-colors"><i class="fas fa-smile"></i></button>
+             <input id="message-input" placeholder="Type a message..." class="flex-1 bg-transparent p-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none max-h-32" autocomplete="off" />
+             <label for="file-upload" class="p-3 text-gray-400 hover:text-blue-500 cursor-pointer transition-colors">
+                <i class="fas fa-paperclip"></i>
+                <input type="file" id="file-upload" class="hidden" onchange="handleFileUpload(this)">
+             </label>
+          </div>
+          <button id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-md transition-transform active:scale-95 flex-shrink-0">
+            <i class="fas fa-paper-plane text-sm ml-0.5"></i>
+          </button>
+        </div>
+        <emoji-picker id="emoji-picker" class="absolute bottom-20 left-4 z-50 hidden shadow-2xl rounded-xl border border-gray-100"></emoji-picker>
+      </footer>
+    </div>
+
+    <!-- Right Column: Sidebar (Desktop) - Full Height -->
+    <aside class="hidden md:flex flex-col w-80 bg-gray-50 border-l border-gray-200 shrink-0 h-full">
+      <!-- Sidebar Header -->
+      <div class="p-4 border-b border-gray-200 bg-gray-50">
+        <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider">Connections <span id="peer-count-badge" class="ml-1 bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full text-[10px]">0</span></h3>
+      </div>
+      
+      <!-- List -->
+      <div class="flex-1 overflow-y-auto p-2 space-y-1" id="peer-list-desktop">
+        <!-- Peers injected here -->
+      </div>
+
+      <!-- User Profile (Bottom) -->
+      <div class="p-4 border-t border-gray-200 bg-white mt-auto">
+        <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors duration-200 group" onclick="toggleProfilePanel()">
+          <div class="relative">
+            <img class="current-user-avatar w-10 h-10 rounded-full object-cover border border-gray-200 group-hover:border-gray-300 transition-colors" src="https://i.ibb.co.com/Cs3vDh96/360-F-553796090-XHr-E6-R9jwm-BJUMo9-HKl41hy-HJ5gqt9oz.jpg" />
+            <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="current-user-name text-sm font-semibold text-gray-900 truncate">User</div>
+            <div class="text-[10px] text-green-600 font-medium">Online</div>
+          </div>
+          <i class="fas fa-cog text-gray-300 group-hover:text-gray-500"></i>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Sidebar Drawer (Overlay) -->
+    <div id="mobile-drawer-overlay" class="fixed inset-0 bg-black/20 z-40 hidden md:hidden backdrop-blur-sm transition-opacity opacity-0" onclick="closeMobileSidebar()"></div>
+    <div id="mobile-drawer" class="fixed inset-y-0 right-0 w-[85vw] max-w-sm bg-white z-50 shadow-2xl transform translate-x-full drawer-transition md:hidden flex flex-col">
+      <!-- Drawer Header -->
+      <div class="flex items-center justify-between p-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900">Menu</h2>
+        <button onclick="closeMobileSidebar()" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:text-gray-900">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Drawer Content -->
+      <div class="flex-1 overflow-y-auto p-4">
+        <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-4">Connections</h3>
+        <div id="peer-list-mobile" class="space-y-2">
+            <!-- Peers injected here -->
+        </div>
+      </div>
+
+      <!-- User Profile & ID (Mobile Bottom) -->
+      <div class="p-4 border-t border-gray-100 bg-gray-50">
+        
+        <!-- ID Display -->
+        <div class="mb-3 bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+            <div class="text-[10px] text-blue-500 font-bold uppercase tracking-wider mb-1">My ID</div>
+            <div id="mobile-peer-id-display" class="font-mono text-sm font-bold text-gray-800 select-all break-all">Connecting...</div>
+        </div>
+
+        <!-- Profile Card -->
+        <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleProfilePanel()">
+            <div class="relative">
+              <img class="current-user-avatar w-10 h-10 rounded-full object-cover" src="https://i.ibb.co.com/Cs3vDh96/360-F-553796090-XHr-E6-R9jwm-BJUMo9-HKl41hy-HJ5gqt9oz.jpg" />
+              <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="current-user-name text-sm font-semibold text-gray-900 truncate">User</div>
+              <div class="text-xs text-gray-500">Tap to edit profile</div>
+            </div>
+            <i class="fas fa-chevron-right text-gray-300"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Settings Modal (Shared) -->
+    <div id="profile-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="toggleProfilePanel()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs relative z-10 overflow-hidden transform transition-all scale-100">
+            <div class="h-24 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+            <div class="px-6 pb-6 relative">
+                <div class="relative -mt-10 mb-4 flex justify-center">
+                    <div class="relative group">
+                        <img id="modal-avatar-preview" src="" class="w-20 h-20 rounded-full border-4 border-white object-cover shadow-md bg-white" />
+                        <label for="modal-avatar-upload" class="absolute bottom-0 right-0 bg-gray-900 text-white p-1.5 rounded-full cursor-pointer hover:bg-black transition-colors shadow-sm">
+                            <i class="fas fa-camera text-xs"></i>
+                        </label>
+                        <input type="file" id="modal-avatar-upload" accept="image/*" class="hidden" onchange="previewAvatar(this)" />
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Display Name</label>
+                        <input id="modal-nickname-input" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-center font-semibold" />
+                    </div>
+                    <button onclick="saveProfile()" class="w-full bg-gray-900 hover:bg-black text-white py-2.5 rounded-xl text-sm font-medium transition-colors shadow-lg shadow-gray-200">Save Changes</button>
+                </div>
+            </div>
+            <button onclick="toggleProfilePanel()" class="absolute top-2 right-2 text-white/70 hover:text-white p-2"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+  </div>
+
+  <div id="connectivity-status-bar" class="fixed top-0 left-0 w-full p-1 text-center text-[10px] hidden z-[70] transition-all duration-300 bg-gray-200">
+    <span class="material-symbols-outlined mr-1 align-middle text-sm"></span>
+    <span id="status-text" class="align-middle font-medium"></span>
+  </div>
+
+  <script>
+    // --- Utilities ---
+    const getEl = (id) => document.getElementById(id);
+    const getEls = (sel) => document.querySelectorAll(sel);
+    
+    // --- State ---
+    const peer = new Peer();
+    const connections = {};
+    let localUsername = `User ${Math.floor(1000 + Math.random() * 9000)}`;
+    let localAvatar = "https://i.ibb.co.com/Cs3vDh96/360-F-553796090-XHr-E6-R9jwm-BJUMo9-HKl41hy-HJ5gqt9oz.jpg";
+    let peerDetails = {};
+    let replyingTo = null;
+    let isMobileSidebarOpen = false;
+
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', () => {
+        setupConnectivityStatus();
+        updateProfileUI(); // Set initial local user UI
+    });
+
+    // --- Connectivity UI ---
+    function setupConnectivityStatus() {
+      const statusDiv = getEl('connectivity-status-bar');
+      const statusText = getEl('status-text');
+
+      function showStatus(msg, className) {
+        if(!statusDiv) return;
+        statusText.textContent = msg;
+        statusDiv.className = `fixed top-0 left-0 w-full p-1 text-center text-[10px] z-[70] transition-all duration-300 ${className}`;
+        statusDiv.style.display = 'block';
+      }
+
+      window.addEventListener('offline', () => showStatus('Offline', 'bg-red-500 text-white'));
+      window.addEventListener('online', () => {
+        showStatus('Back Online', 'bg-green-500 text-white');
+        setTimeout(() => { if(statusDiv) statusDiv.style.display = 'none'; }, 2000);
+      });
+    }
+
+    // --- Mobile Sidebar Logic ---
+    const mobileMenuBtn = getEl('mobile-menu-btn');
+    const mobileDrawer = getEl('mobile-drawer');
+    const mobileOverlay = getEl('mobile-drawer-overlay');
+
+    mobileMenuBtn.addEventListener('click', () => {
+        isMobileSidebarOpen = true;
+        mobileOverlay.classList.remove('hidden');
+        // Small delay to allow display:block to apply before opacity transition
+        setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
+        mobileDrawer.classList.remove('translate-x-full');
+    });
+
+    window.closeMobileSidebar = () => {
+        isMobileSidebarOpen = false;
+        mobileDrawer.classList.add('translate-x-full');
+        mobileOverlay.classList.add('opacity-0');
+        setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
+    };
+
+    // --- PeerJS Logic ---
+    peer.on("open", id => {
+      showToast("Ready to connect");
+      getEl("peer-id-input").placeholder = "Enter ID";
+      
+      // Update Desktop ID
+      getEl("current-peer-id").textContent = `ID: ${id}`;
+      
+      // Update Mobile ID
+      const mobileIdDisplay = getEl("mobile-peer-id-display");
+      if(mobileIdDisplay) mobileIdDisplay.textContent = id;
+      
+      // Init self in details
+      peerDetails[id] = {
+        joined: new Date(), messages: 0, files: 0, active: true,
+        username: localUsername, avatar: localAvatar
+      };
+
+      // Auto-connect from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const remoteId = urlParams.get('id');
+      if (remoteId) connectToPeer(remoteId);
+    });
+
+    peer.on("connection", conn => setupConnection(conn));
+
+    getEl("connect-btn").onclick = () => connectToPeer(getEl("peer-id-input").value.trim());
+
+    function connectToPeer(id) {
+        if (id && !connections[id] && id !== peer.id) {
+            const conn = peer.connect(id);
+            setupConnection(conn);
+        }
+    }
+
+    function setupConnection(conn) {
+      connections[conn.peer] = conn;
+      // Init placeholder details
+      if(!peerDetails[conn.peer]) {
+          peerDetails[conn.peer] = {
+            joined: new Date(), messages: 0, files: 0, active: true,
+            username: conn.peer, avatar: "https://via.placeholder.com/40"
+          };
+      } else {
+          peerDetails[conn.peer].active = true;
+      }
+      
+      updateAllPeerLists();
+
+      conn.on("open", () => {
+        showToast(`Connected to ${conn.peer}`);
+        // Exchange profiles
+        conn.send({ type: 'profile', username: localUsername, avatar: localAvatar });
+      });
+
+      conn.on("data", data => {
+        if (data.type === 'profile') {
+          peerDetails[conn.peer].username = data.username;
+          peerDetails[conn.peer].avatar = data.avatar;
+          updateAllPeerLists();
+        } else {
+          displayMessage(data.username, data.message, data.avatar, data.fileType, data.fileData, data.fileName, conn.peer, data.replyTo);
+          peerDetails[conn.peer].messages++;
+          if (data.fileType) peerDetails[conn.peer].files++;
+          updateAllPeerLists();
+        }
+      });
+
+      conn.on("close", () => {
+        showToast(`Disconnected: ${peerDetails[conn.peer].username || conn.peer}`);
+        peerDetails[conn.peer].active = false;
+        updateAllPeerLists();
+        delete connections[conn.peer];
+      });
+    }
+
+    // --- Messaging ---
+    const messageInput = getEl("message-input");
+    const chatBox = getEl("chat-box");
+    const replyPreview = getEl("reply-preview");
+
+    function sendMessage() {
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+      const payload = { type: 'text', message: msg, replyTo: replyingTo };
+      broadcast(payload);
+      displayMessage(localUsername, msg, localAvatar, null, null, null, peer.id, replyingTo);
+      messageInput.value = "";
+      cancelReply();
+      if(peerDetails[peer.id]) peerDetails[peer.id].messages++;
+      updateAllPeerLists();
+    }
+
+    getEl("send-btn").onclick = sendMessage;
+    messageInput.addEventListener("keypress", e => e.key === "Enter" && sendMessage());
+
+    function broadcast(data) {
+      Object.values(connections).forEach(conn => {
+        if (conn.open) conn.send({ ...data, username: localUsername, avatar: localAvatar });
+      });
+    }
+
+    function displayMessage(sender, message = '', avatar = '', fileType = '', fileData = '', fileName = '', peerId = null, replyTo = null) {
+      const isMe = peerId === peer.id;
+      const container = document.createElement("div");
+      container.className = `message-container flex gap-2 sm:gap-3 relative group w-full ${isMe ? 'flex-row-reverse' : ''}`;
+      container.dataset.peerId = peerId || peer.id;
+
+      const img = document.createElement("img");
+      img.src = avatar || "https://via.placeholder.com/40";
+      img.className = "w-8 h-8 rounded-full avatar object-cover mt-1 flex-shrink-0 shadow-sm border border-white cursor-pointer";
+      img.dataset.peerId = peerId || peer.id;
+
+      const content = document.createElement("div");
+      content.className = `flex flex-col max-w-[75%] sm:max-w-[65%] ${isMe ? 'items-end' : 'items-start'}`;
+
+      if (replyTo) {
+        const reply = document.createElement("div");
+        reply.className = "text-[10px] sm:text-xs text-gray-500 bg-gray-50 p-1.5 px-2 rounded-lg mb-1 border-l-2 border-blue-400 opacity-80 cursor-pointer hover:opacity-100 transition-opacity truncate max-w-full";
+        reply.textContent = `Reply: ${replyTo.message.slice(0, 40)}`;
+        content.appendChild(reply);
+      }
+
+      const messageWrapper = document.createElement("div");
+      messageWrapper.className = `p-2.5 sm:p-3 px-3 sm:px-4 rounded-2xl shadow-sm text-sm break-words relative ${
+        isMe 
+          ? 'bg-blue-600 text-white rounded-tr-sm' 
+          : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
+      }`;
+
+      // Name label for others
+      if (!isMe) {
+          const header = document.createElement("div");
+          header.className = "flex items-center mb-0.5 gap-2";
+          header.innerHTML = `<span class="font-bold text-[10px] sm:text-xs text-blue-600 truncate">${sender}</span> <span class="text-[9px] text-gray-300">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+          messageWrapper.appendChild(header);
+      }
+
+      const body = document.createElement("div");
+      
+      const mentionRegex = new RegExp(`@${localUsername}\\b`, 'gi');
+      if (message) {
+        let cleanMsg = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if (!isMe && message.match(mentionRegex)) {
+            cleanMsg = cleanMsg.replace(mentionRegex, `<span class="bg-yellow-200 text-yellow-900 px-1 rounded font-bold">@${localUsername}</span>`);
+            messageWrapper.classList.add('ring-2', 'ring-yellow-300');
+        }
+        body.innerHTML = cleanMsg;
+      } else if (fileType && fileData) {
+        if (fileType.startsWith("image/")) {
+          const imgEl = document.createElement("img");
+          imgEl.src = fileData;
+          imgEl.className = "max-w-full rounded-lg mt-1 cursor-pointer hover:opacity-90 transition-opacity";
+          imgEl.onclick = () => window.open(fileData);
+          body.appendChild(imgEl);
+        } else {
+             const fileEl = document.createElement("a");
+             fileEl.href = fileData;
+             fileEl.download = fileName;
+             fileEl.className = `flex items-center gap-2 ${isMe ? 'text-white' : 'text-blue-600'} underline decoration-dotted mt-1`;
+             fileEl.innerHTML = `<i class="fas fa-file"></i> <span class="truncate">${fileName}</span>`;
+             body.appendChild(fileEl);
+        }
+      }
+
+      messageWrapper.appendChild(body);
+      
+      // Timestamp for me
+      if(isMe) {
+          const ts = document.createElement("div");
+          ts.className = "text-[9px] text-gray-300 mt-0.5 mr-0.5 opacity-0 group-hover:opacity-100 transition-opacity";
+          ts.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          content.appendChild(messageWrapper);
+          content.appendChild(ts);
+      } else {
+          content.appendChild(messageWrapper);
+      }
+
+      // Hover Action
+      const hover = document.createElement("div");
+      hover.className = "message-hover";
+      hover.innerHTML = '<i class="fas fa-reply"></i> Reply';
+      if(isMe) hover.style.right = "100%"; 
+      else hover.style.left = "100%";
+      if(isMe) hover.style.marginRight = "8px";
+      else hover.style.marginLeft = "8px";
+      
+      hover.addEventListener("click", () => {
+        replyingTo = { sender, message: message || '[File]', timestamp: new Date() };
+        getEl("reply-text-content").textContent = message || `File: ${fileName}`;
+        replyPreview.classList.remove("hidden");
+        messageInput.focus();
+      });
+
+      container.appendChild(img);
+      container.appendChild(content);
+      container.appendChild(hover);
+      chatBox.appendChild(container);
+      
+      // Smart scroll
+      const isScrolledNearBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
+      if (isScrolledNearBottom) chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    window.cancelReply = () => {
+        replyingTo = null;
+        replyPreview.classList.add("hidden");
+    }
+
+    // --- File Handling ---
+    window.handleFileUpload = (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = e.target.result;
+            const payload = { type: 'file', fileType: file.type, fileData: data, fileName: file.name, replyTo: replyingTo };
+            broadcast(payload);
+            displayMessage(localUsername, '', localAvatar, file.type, data, file.name, peer.id, replyingTo);
+            cancelReply();
+            if(peerDetails[peer.id]) { peerDetails[peer.id].messages++; peerDetails[peer.id].files++; }
+            updateAllPeerLists();
+        };
+        reader.readAsDataURL(file);
+        input.value = ''; // reset
+    }
+
+    // --- Profile & UI ---
+    window.toggleProfilePanel = () => {
+        const modal = getEl('profile-modal');
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            getEl('modal-nickname-input').value = localUsername;
+            getEl('modal-avatar-preview').src = localAvatar;
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    window.previewAvatar = (input) => {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => getEl('modal-avatar-preview').src = e.target.result;
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    window.saveProfile = () => {
+        const newName = getEl('modal-nickname-input').value.trim();
+        if (newName) localUsername = newName;
+        
+        const previewSrc = getEl('modal-avatar-preview').src;
+        if(previewSrc) localAvatar = previewSrc;
+
+        updateProfileUI();
+        broadcast({ type: 'profile', username: localUsername, avatar: localAvatar });
+        
+        if(peerDetails[peer.id]) {
+            peerDetails[peer.id].username = localUsername;
+            peerDetails[peer.id].avatar = localAvatar;
+        }
+        updateAllPeerLists();
+        toggleProfilePanel();
+    }
+
+    function updateProfileUI() {
+        getEls('.current-user-name').forEach(el => el.textContent = localUsername);
+        getEls('.current-user-avatar').forEach(el => el.src = localAvatar);
+    }
+
+    function updateAllPeerLists() {
+        const desktopList = getEl('peer-list-desktop');
+        const mobileList = getEl('peer-list-mobile');
+        
+        const html = generatePeerListHTML();
+        if(desktopList) desktopList.innerHTML = html;
+        if(mobileList) mobileList.innerHTML = html;
+        
+        const activeCount = Object.values(peerDetails).filter(p => p.active && p.username !== localUsername).length;
+        const badge = getEl('peer-count-badge');
+        if(badge) badge.textContent = activeCount;
+    }
+
+    function generatePeerListHTML() {
+        let html = '';
+        Object.entries(peerDetails).forEach(([id, p]) => {
+            if (id === peer.id) return; // Hide self
+            html += `
+              <div class="flex items-center gap-3 p-2 hover:bg-white hover:shadow-sm rounded-lg cursor-pointer transition-all duration-200 group border border-transparent hover:border-gray-100" onclick="mentionUser('${p.username}')">
+                <div class="relative">
+                  <img src="${p.avatar || 'https://via.placeholder.com/40'}" class="w-9 h-9 rounded-full object-cover bg-gray-200" />
+                  <span class="absolute bottom-0 right-0 w-2.5 h-2.5 ${p.active ? 'bg-green-500' : 'bg-gray-400'} border-2 border-white rounded-full"></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                   <div class="flex justify-between items-baseline">
+                      <div class="text-sm font-medium text-gray-800 truncate">${p.username}</div>
+                      <div class="text-[10px] text-gray-400 font-mono">${id.slice(0,4)}</div>
+                   </div>
+                   <div class="text-[10px] text-gray-400 truncate flex gap-2">
+                      <span><i class="fas fa-comment text-[8px] mr-0.5"></i> ${p.messages}</span>
+                      <span><i class="fas fa-file text-[8px] mr-0.5"></i> ${p.files}</span>
+                   </div>
+                </div>
+              </div>
+            `;
+        });
+        if(!html) html = `<div class="p-4 text-center text-xs text-gray-400 italic">No active connections</div>`;
+        return html;
+    }
+
+    window.mentionUser = (username) => {
+        messageInput.value += `@${username} `;
+        messageInput.focus();
+        closeMobileSidebar();
+    }
+
+    // --- Emoji ---
+    const emojiBtn = getEl("emoji-btn");
+    const emojiPicker = getEl("emoji-picker");
+    emojiBtn.addEventListener("click", () => emojiPicker.classList.toggle("hidden"));
+    emojiPicker.addEventListener("emoji-click", event => {
+      messageInput.value += event.detail.unicode;
+      messageInput.focus();
+    });
+    
+    // Close things when clicking outside
+    document.addEventListener("click", (e) => {
+        if (!emojiPicker.classList.contains("hidden") && !emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) {
+            emojiPicker.classList.add("hidden");
+        }
+    });
+
+    function showToast(message) {
+      const toast = document.createElement("div");
+      toast.textContent = message;
+      toast.className = "fixed top-20 right-4 bg-gray-900 text-white text-sm px-4 py-3 rounded-lg shadow-xl z-[80] animate-fade-in";
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+  </script>
+</body>
+</html>

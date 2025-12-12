@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Connect | Text & Video Chat</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fade-in 0.3s ease-out;
+    }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .message-hover { 
+      display: none; 
+      position: absolute; 
+      top: 50%; 
+      transform: translateY(-50%); 
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      padding: 6px 12px; 
+      border-radius: 20px; 
+      font-size: 12px; 
+      white-space: nowrap; 
+      color: #1f2937;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      z-index: 10;
+    }
+    .message-container:hover .message-hover { display: flex; align-items: center; gap: 4px; }
+    
+    .user-profile-card {
+      animation: slideIn 0.2s ease-out;
+      max-width: 300px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    /* Mobile Drawer Transition */
+    .drawer-transition {
+      transition: transform 0.3s ease-in-out;
+    }
+
+    /* File Icon Style */
+    .file-icon-box {
+        width: 48px; 
+        height: 48px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    /* Video Call Styles */
+    .video-member-container {
+        aspect-ratio: 16 / 9;
+        transition: all 0.3s ease;
+        border: 4px solid transparent;
+        box-sizing: border-box;
+    }
+    .video-member-container.ring-blue-500 {
+        border-color: transparent; /* Override Tailwind border for ring effect */
+        /* Tailwind ring classes provide the blue outline when talking */
+    }
+  </style>
+</head>
+<body class="bg-white h-screen w-screen overflow-hidden font-sans text-gray-900">
+  
+  <div class="flex h-full w-full bg-white min-h-screen"> 
+    <div class="flex flex-col flex-1 relative min-w-0 bg-white">
+      
+      <header class="h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-gray-100 shrink-0 z-20">
+        <div class="text-gray-900 text-lg sm:text-xl font-bold tracking-tight truncate mr-2">Connect</div>
+        
+        <div class="flex items-center gap-2 sm:gap-4">
+          <span id="current-peer-id" class="text-xs text-gray-400 hidden sm:inline-block font-mono bg-gray-50 px-2 py-1 rounded"></span>
+          
+          <!-- New Call Button -->
+          <button id="call-btn" class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-green-600 hover:bg-gray-50 rounded-full transition-colors" title="Start Group Call">
+            <i class="fas fa-video"></i>
+          </button>
+          
+          <div class="flex items-center bg-gray-50 rounded-full pl-3 pr-1 py-1 border border-gray-100 focus-within:ring-2 focus-within:ring-blue-100 transition-all w-auto max-w-[200px] sm:max-w-none">
+             <input id="peer-id-input" class="text-xs sm:text-sm bg-transparent placeholder:text-gray-400 text-gray-900 focus:outline-none w-24 sm:w-40" placeholder="Enter Peer ID"/>
+             <button id="connect-btn" class="ml-1 bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-full w-7 h-7 flex items-center justify-center transition-colors">
+               <i class="fas fa-arrow-right text-xs"></i>
+             </button>
+          </div>
+
+          <button id="mobile-menu-btn" class="md:hidden w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-full transition-colors ml-1">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="flex-1 overflow-hidden relative bg-white">
+        <main id="chat-box" class="h-full overflow-y-auto p-4 sm:p-6 space-y-6 scrollbar-hide">
+          <div class="text-center text-gray-400 mt-20 flex flex-col items-center">
+            <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4 text-2xl animate-bounce">👋</div>
+            <h2 class="text-xl font-bold mb-2 text-gray-800">Welcome to Connect</h2>
+            <p class="text-gray-500 text-sm max-w-xs mx-auto">Share your ID with friends to start chatting securely.</p>
+          </div>
+        </main>
+      </div>
+
+      <div id="reply-preview" class="hidden absolute bottom-[72px] sm:bottom-20 left-4 right-4 bg-white/90 backdrop-blur-sm text-gray-900 text-sm px-4 py-3 border-l-4 border-blue-500 shadow-lg rounded-r-lg z-30 flex justify-between items-center transition-all">
+        <div class="flex flex-col">
+            <span class="text-xs text-blue-600 font-bold mb-0.5">Replying to...</span>
+            <span id="reply-text-content" class="text-gray-600 truncate max-w-xs sm:max-w-md"></span>
+        </div>
+        <button onclick="cancelReply()" class="text-gray-400 hover:text-red-500 p-2"><i class="fas fa-times"></i></button>
+      </div>
+      
+      <footer class="p-3 sm:px-6 sm:py-4 bg-white border-t border-gray-100 shrink-0 z-30">
+        <div class="flex items-end gap-2 relative max-w-4xl mx-auto">
+          <div class="flex-1 bg-gray-100 rounded-2xl flex items-center relative transition-colors focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-200 border border-transparent">
+             <button id="emoji-btn" class="p-3 text-gray-400 hover:text-yellow-500 transition-colors"><i class="fas fa-smile"></i></button>
+             <input id="message-input" placeholder="Type a message..." class="flex-1 bg-transparent p-3 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none max-h-32" autocomplete="off" />
+             <label for="file-upload" class="p-3 text-gray-400 hover:text-blue-500 cursor-pointer transition-colors">
+                <i class="fas fa-paperclip"></i>
+                <input type="file" id="file-upload" class="hidden" onchange="handleFileUpload(this)">
+             </label>
+          </div>
+          <button id="send-btn" class="bg-blue-600 hover:bg-blue-700 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-md transition-transform active:scale-95 flex-shrink-0">
+            <i class="fas fa-paper-plane text-sm ml-0.5"></i>
+          </button>
+        </div>
+        <emoji-picker id="emoji-picker" class="absolute bottom-20 left-4 z-50 hidden shadow-2xl rounded-xl border border-gray-100"></emoji-picker>
+      </footer>
+    </div>
+
+    <aside class="hidden md:flex flex-col w-80 bg-gray-50 border-l border-gray-200 shrink-0 h-full">
+      <div class="p-4 border-b border-gray-200 bg-gray-50">
+        <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider">Connections <span id="peer-count-badge" class="ml-1 bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full text-[10px]">0</span></h3>
+      </div>
+      
+      <div class="flex-1 overflow-y-auto p-2 space-y-1" id="peer-list-desktop">
+        </div>
+
+      <div class="p-4 border-t border-gray-200 bg-white mt-auto">
+        <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors duration-200 group" onclick="toggleProfilePanel()">
+          <div class="relative">
+            <img class="current-user-avatar w-10 h-10 rounded-full object-cover border border-gray-200 group-hover:border-gray-300 transition-colors" src="https://i.ibb.co.com/Cs3vDh96/360-F-553796090-XHr-E6-R9jwm-BJUMo9-HKl41hy-HJ5gqt9oz.jpg" />
+            <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="current-user-name text-sm font-semibold text-gray-900 truncate">User</div>
+            <div class="text-[10px] text-green-600 font-medium">Online</div>
+          </div>
+          <i class="fas fa-cog text-gray-300 group-hover:text-gray-500"></i>
+        </div>
+      </div>
+    </aside>
+
+    <div id="mobile-drawer-overlay" class="fixed inset-0 bg-black/20 z-40 hidden md:hidden backdrop-blur-sm transition-opacity opacity-0" onclick="closeMobileSidebar()"></div>
+    <div id="mobile-drawer" class="fixed inset-y-0 right-0 w-[85vw] max-w-sm bg-white z-50 shadow-2xl transform translate-x-full drawer-transition md:hidden flex flex-col">
+      <div class="flex items-center justify-between p-4 border-b border-gray-100">
+        <h2 class="text-lg font-bold text-gray-900">Menu</h2>
+        <button onclick="closeMobileSidebar()" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:text-gray-900">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4">
+        <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-4">Connections</h3>
+        <div id="peer-list-mobile" class="space-y-2">
+            </div>
+      </div>
+
+      <div class="p-4 border-t border-gray-100 bg-gray-50">
+        
+        <div class="mb-3 bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
+            <div class="text-[10px] text-blue-500 font-bold uppercase tracking-wider mb-1">My ID</div>
+            <div id="mobile-peer-id-display" class="font-mono text-sm font-bold text-gray-800 select-all break-all">Connecting...</div>
+        </div>
+
+        <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleProfilePanel()">
+            <div class="relative">
+              <img class="current-user-avatar w-10 h-10 rounded-full object-cover" src="https://i.ibb.co.com/Cs3vDh96/360-F-553796090-XHr-E6-R9jwm-BJUMo9-HKl41hy-HJ5gqt9oz.jpg" />
+              <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="current-user-name text-sm font-semibold text-gray-900 truncate">User</div>
+              <div class="text-xs text-gray-500">Tap to edit profile</div>
+            </div>
+            <i class="fas fa-chevron-right text-gray-300"></i>
+        </div>
+      </div>
+    </div>
+
+    <div id="profile-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="toggleProfilePanel()"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs relative z-10 overflow-hidden transform transition-all scale-100">
+            <div class="h-24 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+            <div class="px-6 pb-6 relative">
+                <div class="relative -mt-10 mb-4 flex justify-center">
+                    <div class="relative group">
+                        <img id="modal-avatar-preview" src="" class="w-20 h-20 rounded-full border-4 border-white object-cover shadow-md bg-white" />
+                        <label for="modal-avatar-upload" class="absolute bottom-0 right-0 bg-gray-900 text-white p-1.5 rounded-full cursor-pointer hover:bg-black transition-colors shadow-sm">
+                            <i class="fas fa-camera text-xs"></i>
+                        </label>
+                        <input type="file" id="modal-avatar-upload" accept="image/*" class="hidden" onchange="previewAvatar(this)" />
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase tracking-wide">Display Name</label>
+                        <input id="modal-nickname-input" class="w-full mt-1 p-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-center font-semibold" />
+                    </div>
+                    <button onclick="saveProfile()" class="w-full bg-gray-900 hover:bg-black text-white py-2.5 rounded-xl text-sm font-medium transition-colors shadow-lg shadow-gray-200">Save Changes</button>
+                </div>
+            </div>
+            <button onclick="toggleProfilePanel()" class="absolute top-2 right-2 text-white/70 hover:text-white p-2"><i class="fas fa-times"></i></button>
+        </div>
+    </div>
+
+    <!-- Video Call Modal -->
+    <div id="video-call-modal" class="fixed inset-0 z-[100] hidden bg-gray-900/95 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black opacity-80"></div>
+        
+        <div class="flex flex-col h-full w-full max-w-7xl relative z-10">
+          
+          <!-- Video Grid -->
+          <div id="video-grid" class="flex-1 grid gap-3 p-2 overflow-y-auto" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+            <!-- Videos will be injected here -->
+          </div>
+
+          <!-- Call Status and Member Info -->
+          <div class="flex items-center justify-between p-4 bg-gray-900/80 rounded-t-xl mt-2">
+              <div class="flex items-center gap-3">
+                  <span id="call-timer" class="text-white text-lg font-mono">00:00</span>
+                  <button id="member-list-btn" class="text-white/70 hover:text-white transition-colors text-sm px-2 py-1 rounded-full bg-gray-700/50">
+                      <i class="fas fa-users mr-1"></i> Members (<span id="member-count">1</span>)
+                  </button>
+              </div>
+              <div id="call-status-display" class="text-lg font-semibold text-green-400">Ongoing Call</div>
+          </div>
+          
+          <!-- Call Controls -->
+          <div class="flex justify-center gap-6 p-4 bg-gray-900/80 rounded-b-xl shadow-lg">
+            
+            <button id="toggle-mic-btn" class="call-control-btn bg-white/10 text-white p-3 rounded-full hover:bg-white/20 transition-colors" title="Toggle Microphone">
+              <i class="fas fa-microphone text-xl" data-icon="mic"></i>
+            </button>
+            
+            <button id="toggle-cam-btn" class="call-control-btn bg-white/10 text-white p-3 rounded-full hover:bg-white/20 transition-colors" title="Toggle Camera">
+              <i class="fas fa-video text-xl" data-icon="cam"></i>
+            </button>
+            
+            <button id="switch-cam-btn" class="call-control-btn bg-white/10 text-white p-3 rounded-full hover:bg-white/20 transition-colors" title="Switch Camera">
+              <i class="fas fa-camera-rotate text-xl"></i>
+            </button>
+
+            <button id="end-call-btn" class="call-control-btn bg-red-600 text-white p-4 rounded-full hover:bg-red-700 transition-colors shadow-xl active:scale-95" title="End Call">
+              <i class="fas fa-phone-slash text-2xl"></i>
+            </button>
+          </div>
+        </div>
+    </div>
+
+    <!-- Member List Modal (Hidden) -->
+    <div id="member-list-modal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeMemberListModal()"></div>
+      <div class="bg-gray-800 rounded-xl shadow-2xl w-full max-w-xs relative z-10 p-5">
+          <h3 class="text-xl font-bold text-white mb-4">Call Members</h3>
+          <div id="call-member-list" class="space-y-3 text-white">
+              <!-- Members will be dynamically added here -->
+          </div>
+          <button onclick="closeMemberListModal()" class="absolute top-3 right-3 text-gray-400 hover:text-white p-2"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="connectivity-status-bar" class="fixed top-0 left-0 w-full p-1 text-center text-[10px] hidden z-[70] transition-all duration-300 bg-gray-200">
+    <span class="material-symbols-outlined mr-1 align-middle text-sm"></span>
+    <span id="status-text" class="align-middle font-medium"></span>
+  </div>
+
+  <script>
+    // --- Utilities ---
+    const getEl = (id) => document.getElementById(id);
+    const getEls = (sel) => document.querySelectorAll(sel);
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+    const getFileIcon = (fileType, fileName) => {
+        const extension = fileName.split('.').pop().toLowerCase();
+        let icon = 'fas fa-file';
+        let color = 'text-gray-500';
+
+        if (fileType.startsWith("image/")) { icon = 'fas fa-file-image'; color = 'text-purple-500'; }
+        else if (fileType.startsWith("audio/")) { icon = 'fas fa-file-audio'; color = 'text-yellow-500'; }
+        else if (fileType.startsWith("video/")) { icon = 'fas fa-file-video'; color = 'text-red-500'; }
+        else if (fileType.includes("pdf")) { icon = 'fas fa-file-pdf'; color = 'text-red-600'; }
+        else if (fileType.includes("word") || extension === 'doc' || extension === 'docx') { icon = 'fas fa-file-word'; color = 'text-blue-600'; }
+        else if (fileType.includes("excel") || extension === 'xls' || extension === 'xlsx') { icon = 'fas fa-file-excel'; color = 'text-green-600'; }
+        else if (fileType.includes("powerpoint") || extension === 'ppt' || extension === 'pptx') { icon = 'fas fa-file-powerpoint'; color = 'text-orange-600'; }
+        else if (fileType.includes("zip") || fileType.includes("rar")) { icon = 'fas fa-file-archive'; color = 'text-indigo-600'; }
+        else if (extension === 'js' || extension === 'json' || extension === 'html' || extension === 'css' || extension === 'py') { icon = 'fas fa-file-code'; color = 'text-cyan-600'; }
+        else if (extension === 'txt') { icon = 'fas fa-file-alt'; color = 'text-gray-400'; }
+
+        return { icon, color, fileExtension: extension.toUpperCase() };
+    };
+    
+    // --- State ---
+    const peer = new Peer();
+    const connections = {};
+    let localUsername = `User ${Math.floor(1000 + Math.random() * 9000)}`;
+    let localAvatar = "https://i.ibb.co.com/Cs3vDh96/360-F-553796090-XHr-E6-R9jwm-BJUMo9-HKl41hy-HJ5gqt9oz.jpg";
+    let peerDetails = {};
+    let replyingTo = null;
+    let isMobileSidebarOpen = false;
+
+    // --- VIDEO CALL STATE ---
+    let localStream = null;
+    let currentCall = null; // { id: string, status: 'ringing'|'ongoing'|'ended', callerId: string, members: { [peerId]: { username, stream, micOn, camOn, talking } } }
+    const mediaConnections = {}; // Stores all PeerJS MediaConnection objects
+    let callTimerInterval = null;
+    let callStartTime = null;
+    let currentCameraDeviceId = 'user'; // 'user' (front) or 'environment' (back)
+    
+    // Audio analysis for talking indicator
+    let audioContext = null;
+    let analyser = null;
+    let microphoneSource = null;
+    let audioCheckInterval = null;
+    
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', () => {
+        setupConnectivityStatus();
+        updateProfileUI(); // Set initial local user UI
+    });
+
+    // --- Connectivity UI ---
+    function setupConnectivityStatus() {
+      const statusDiv = getEl('connectivity-status-bar');
+      const statusText = getEl('status-text');
+
+      function showStatus(msg, className) {
+        if(!statusDiv) return;
+        statusText.textContent = msg;
+        statusDiv.className = `fixed top-0 left-0 w-full p-1 text-center text-[10px] z-[70] transition-all duration-300 ${className}`;
+        statusDiv.style.display = 'block';
+      }
+
+      window.addEventListener('offline', () => showStatus('Offline', 'bg-red-500 text-white'));
+      window.addEventListener('online', () => {
+        showStatus('Back Online', 'bg-green-500 text-white');
+        setTimeout(() => { if(statusDiv) statusDiv.style.display = 'none'; }, 2000);
+      });
+    }
+
+    // --- Mobile Sidebar Logic ---
+    const mobileMenuBtn = getEl('mobile-menu-btn');
+    const mobileDrawer = getEl('mobile-drawer');
+    const mobileOverlay = getEl('mobile-drawer-overlay');
+
+    mobileMenuBtn.addEventListener('click', () => {
+        isMobileSidebarOpen = true;
+        mobileOverlay.classList.remove('hidden');
+        // Small delay to allow display:block to apply before opacity transition
+        setTimeout(() => mobileOverlay.classList.remove('opacity-0'), 10);
+        mobileDrawer.classList.remove('translate-x-full');
+    });
+
+    window.closeMobileSidebar = () => {
+        isMobileSidebarOpen = false;
+        mobileDrawer.classList.add('translate-x-full');
+        mobileOverlay.classList.add('opacity-0');
+        setTimeout(() => mobileOverlay.classList.add('hidden'), 300);
+    };
+
+    // --- PeerJS Logic ---
+    peer.on("open", id => {
+      showToast("Ready to connect");
+      getEl("peer-id-input").placeholder = "Enter ID";
+      
+      // Update Desktop ID
+      getEl("current-peer-id").textContent = `ID: ${id}`;
+      
+      // Update Mobile ID
+      const mobileIdDisplay = getEl("mobile-peer-id-display");
+      if(mobileIdDisplay) mobileIdDisplay.textContent = id;
+      
+      // Init self in details
+      peerDetails[id] = {
+        joined: new Date(), messages: 0, files: 0, active: true,
+        username: localUsername, avatar: localAvatar
+      };
+
+      // Auto-connect from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const remoteId = urlParams.get('id');
+      if (remoteId) connectToPeer(remoteId);
+    });
+
+    peer.on("connection", conn => setupConnection(conn));
+
+    // NEW: Handle incoming media calls
+    peer.on('call', incomingCall => {
+        // Only accept a call if not already in one or if it's from the current caller
+        if (!currentCall || currentCall.callerId === incomingCall.peer) {
+            handleIncomingCall(incomingCall);
+        } else {
+            console.log("Rejecting incoming call: Already in a different call.");
+            incomingCall.close();
+        }
+    });
+
+    getEl("connect-btn").onclick = () => connectToPeer(getEl("peer-id-input").value.trim());
+
+    function connectToPeer(id) {
+        if (id && !connections[id] && id !== peer.id) {
+            const conn = peer.connect(id);
+            setupConnection(conn);
+        }
+    }
+
+    function setupConnection(conn) {
+      connections[conn.peer] = conn;
+      // Init placeholder details
+      if(!peerDetails[conn.peer]) {
+          peerDetails[conn.peer] = {
+            joined: new Date(), messages: 0, files: 0, active: true,
+            username: conn.peer, avatar: "https://via.placeholder.com/40"
+          };
+      } else {
+          peerDetails[conn.peer].active = true;
+      }
+      
+      updateAllPeerLists();
+
+      conn.on("open", () => {
+        showToast(`Connected to ${conn.peer}`);
+        // Exchange profiles
+        conn.send({ type: 'profile', username: localUsername, avatar: localAvatar });
+        // NEW: If I'm already in an ongoing call, tell the new peer about it
+        if (currentCall && currentCall.status === 'ongoing') {
+            conn.send({ type: 'CALL_STATUS', status: 'ongoing', callId: currentCall.id, callerId: currentCall.callerId, memberCount: Object.keys(currentCall.members).length, senderUsername: localUsername });
+        }
+      });
+
+      conn.on("data", data => {
+        if (data.type === 'profile') {
+          peerDetails[conn.peer].username = data.username;
+          peerDetails[conn.peer].avatar = data.avatar;
+          updateAllPeerLists();
+        } else if (data.type === 'CALL_INIT') {
+            handleCallInit(data);
+        } else if (data.type === 'CALL_ACCEPT') {
+            handleCallAccept(data);
+        } else if (data.type === 'CALL_END') {
+            handleCallEndSignal(data);
+        } else if (data.type === 'MEDIA_TOGGLE') {
+            handleMediaUpdate(data);
+        } else if (data.type === 'CALL_JOINED_STATUS') {
+            handleCallJoinedStatus(data);
+        } else if (data.type === 'CALL_STATUS') {
+             displayCallStatus(data.callerId, data.senderUsername, data.status, data.memberCount);
+        } else {
+          displayMessage(data.username, data.message, data.avatar, data.fileType, data.fileData, data.fileName, data.fileSize, conn.peer, data.replyTo);
+          peerDetails[conn.peer].messages++;
+          if (data.fileType) peerDetails[conn.peer].files++;
+          updateAllPeerLists();
+        }
+      });
+
+      conn.on("close", () => {
+        showToast(`Disconnected: ${peerDetails[conn.peer].username || conn.peer}`);
+        peerDetails[conn.peer].active = false;
+        updateAllPeerLists();
+        delete connections[conn.peer];
+        // NEW: If a connected peer leaves, update call members
+        if (currentCall && currentCall.members[conn.peer]) {
+            delete currentCall.members[conn.peer];
+            removeVideo(conn.peer);
+            updateCallUI();
+        }
+      });
+    }
+
+    // --- Call Signaling Functions ---
+    function broadcastCallSignal(data) {
+        Object.values(connections).forEach(conn => {
+            if (conn.open) conn.send({ ...data, senderId: peer.id, senderUsername: localUsername });
+        });
+    }
+
+    // --- Call Core Logic ---
+    
+    async function getMedia(video = true, audio = true, cameraDeviceId = 'user') {
+        try {
+            const constraints = {
+                video: video ? { facingMode: cameraDeviceId } : false,
+                audio: audio
+            };
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            localStream = stream;
+            // Add local user to call state
+            if (currentCall) {
+                currentCall.members[peer.id] = { 
+                    username: localUsername, 
+                    stream, 
+                    micOn: audio, 
+                    camOn: video, 
+                    talking: false 
+                };
+            }
+            return stream;
+        } catch (error) {
+            console.error("Error accessing media devices:", error);
+            showToast("Error accessing camera/mic. Check permissions.");
+            return null;
+        }
+    }
+
+    window.startCall = async () => {
+        if (currentCall) return showToast("You are already in a call.");
+        
+        const stream = await getMedia(true, true, currentCameraDeviceId);
+        if (!stream) return;
+
+        const callId = `${peer.id}-${Date.now()}`;
+        currentCall = {
+            id: callId,
+            status: 'ringing',
+            callerId: peer.id,
+            members: {
+                [peer.id]: { username: localUsername, stream, micOn: true, camOn: true, talking: false }
+            }
+        };
+
+        getEl('video-call-modal').classList.remove('hidden');
+        renderVideo(stream, peer.id, localUsername, true, true);
+        
+        broadcastCallSignal({ type: 'CALL_INIT', callId, callerId: peer.id, initialMembers: { [peer.id]: { username: localUsername, camOn: true, micOn: true } } });
+        displayCallStatus(peer.id, localUsername, 'ringing');
+        
+        Object.values(connections).forEach(conn => {
+             if (conn.peer !== peer.id) {
+                 const mediaConn = peer.call(conn.peer, stream);
+                 mediaConnections[conn.peer] = mediaConn;
+                 setupMediaConnection(mediaConn, conn.peer);
+             }
+        });
+
+        updateCallUI();
+        startAudioAnalysis();
+    }
+
+    function handleCallInit(data) {
+        if (currentCall) {
+            // Signal busy (or just ignore for simplicity)
+            return;
+        }
+
+        currentCall = {
+            id: data.callId,
+            status: 'ringing',
+            callerId: data.callerId,
+            members: data.initialMembers || {}
+        };
+        
+        // Add everyone to the member list (for mesh later)
+        Object.keys(connections).forEach(id => {
+            currentCall.members[id] = { 
+                username: peerDetails[id]?.username || id, 
+                stream: null, camOn: true, micOn: true, talking: false 
+            };
+        });
+        currentCall.members[peer.id] = { username: localUsername, stream: null, camOn: true, micOn: true, talking: false };
+
+
+        displayCallStatus(data.callerId, data.senderUsername, 'ringing');
+        showToast(`${data.senderUsername} is calling!`);
+
+        updateCallUI(); 
+    }
+    
+    function handleIncomingCall(incomingCall) {
+        if (!currentCall) {
+             incomingCall.close();
+             return;
+        }
+        
+        // If I am not in the call, I must have joined from the chat message (which calls joinCall first)
+        // If I am in the call (currentCall.members[peer.id]), I must answer
+        
+        let stream = localStream;
+        if (!stream) {
+            // Should not happen if joinCall was called, but if this is an early call:
+            incomingCall.close();
+            return;
+        }
+        
+        incomingCall.answer(stream);
+        mediaConnections[incomingCall.peer] = incomingCall;
+        setupMediaConnection(incomingCall, incomingCall.peer);
+        
+        if (currentCall.status !== 'ongoing') {
+            currentCall.status = 'ongoing';
+            updateCallUI();
+            startAudioAnalysis();
+        }
+    }
+    
+    function setupMediaConnection(mediaConn, remotePeerId) {
+        mediaConn.on('stream', remoteStream => {
+            const member = currentCall.members[remotePeerId];
+            if (!member) return;
+
+            member.stream = remoteStream;
+            member.camOn = remoteStream.getVideoTracks().length > 0 ? remoteStream.getVideoTracks()[0].enabled : false;
+            member.micOn = remoteStream.getAudioTracks().length > 0 ? remoteStream.getAudioTracks()[0].enabled : false;
+
+            renderVideo(remoteStream, remotePeerId, member.username, member.micOn, member.camOn);
+        });
+
+        mediaConn.on('close', () => {
+            if(currentCall && currentCall.members[remotePeerId]) {
+                 delete currentCall.members[remotePeerId];
+                 updateCallUI();
+            }
+            removeVideo(remotePeerId);
+            delete mediaConnections[remotePeerId];
+        });
+        
+        mediaConn.on('error', (err) => {
+            console.error(`Media connection error with ${remotePeerId}:`, err);
+            mediaConn.close();
+        });
+    }
+
+    window.joinCall = async (callerId, callId) => {
+        if (currentCall) return showToast("You are already in a call.");
+        
+        const stream = await getMedia(true, true, currentCameraDeviceId);
+        if (!stream) return;
+
+        currentCall = {
+            id: callId,
+            status: 'ongoing',
+            callerId: callerId,
+            members: {
+                [peer.id]: { username: localUsername, stream, micOn: true, camOn: true, talking: false }
+            }
+        };
+
+        getEl('video-call-modal').classList.remove('hidden');
+        renderVideo(stream, peer.id, localUsername, true, true);
+        
+        // 1. Initiate the media connection to the caller
+        const callerConn = peer.call(callerId, stream);
+        mediaConnections[callerId] = callerConn;
+        setupMediaConnection(callerConn, callerId);
+        
+        // 2. Signal to everyone that I have joined
+        broadcastCallSignal({ 
+            type: 'CALL_ACCEPT', 
+            callId, 
+            memberData: { username: localUsername, camOn: true, micOn: true } 
+        });
+        
+        updateCallUI();
+        startAudioAnalysis();
+    }
+    
+    function handleCallAccept(data) {
+        if (!currentCall || currentCall.id !== data.callId || currentCall.callerId !== peer.id) return;
+        
+        // Add the new member to the local member list
+        currentCall.members[data.senderId] = { 
+            username: data.memberData.username, 
+            stream: null, 
+            micOn: data.memberData.micOn, 
+            camOn: data.memberData.camOn, 
+            talking: false 
+        };
+        currentCall.status = 'ongoing';
+        showToast(`${data.memberData.username} joined the call.`);
+        
+        // Inform everyone else about the new member
+        broadcastCallSignal({ 
+            type: 'CALL_JOINED_STATUS', 
+            callId: currentCall.id, 
+            memberId: data.senderId, 
+            memberData: data.memberData, 
+            currentMemberIds: Object.keys(currentCall.members)
+        });
+
+        updateCallUI();
+        displayCallStatus(currentCall.callerId, currentCall.members[currentCall.callerId].username, 'ongoing', Object.keys(currentCall.members).length);
+    }
+    
+    function handleCallJoinedStatus(data) {
+        if (!currentCall || currentCall.id !== data.callId) return;
+        
+        const memberId = data.memberId;
+        const memberData = data.memberData;
+
+        // Update the member list from the caller's broadcast
+        currentCall.members[memberId] = { 
+            ...memberData, 
+            stream: null, 
+            talking: false 
+        };
+        
+        // If I am NOT the caller, I need to call the new member's stream too (for mesh)
+        if (currentCall.callerId !== peer.id && memberId !== peer.id && !mediaConnections[memberId] && localStream) {
+             const mediaConn = peer.call(memberId, localStream);
+             mediaConnections[memberId] = mediaConn;
+             setupMediaConnection(mediaConn, memberId);
+        }
+        
+        currentCall.status = 'ongoing';
+        updateCallUI();
+        displayCallStatus(currentCall.callerId, currentCall.members[currentCall.callerId].username, 'ongoing', Object.keys(currentCall.members).length);
+        
+        // Remove members who are no longer in the list (sync fix)
+        Object.keys(currentCall.members).forEach(id => {
+            if (!data.currentMemberIds.includes(id) && id !== peer.id) {
+                delete currentCall.members[id];
+                removeVideo(id);
+            }
+        });
+    }
+
+    window.endCall = () => {
+        if (!currentCall) return;
+        
+        Object.values(mediaConnections).forEach(conn => conn.close());
+        
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+
+        broadcastCallSignal({ type: 'CALL_END', callId: currentCall.id });
+
+        handleCallEndSignal({ callId: currentCall.id, senderUsername: localUsername });
+    }
+
+    function handleCallEndSignal(data) {
+        if (!currentCall || currentCall.id !== data.callId) return;
+        
+        Object.values(mediaConnections).forEach(conn => conn.close());
+        
+        if (localStream) {
+             localStream.getTracks().forEach(track => track.stop());
+             localStream = null;
+        }
+
+        clearInterval(callTimerInterval);
+        stopAudioAnalysis();
+        
+        currentCall.status = 'ended';
+        showToast(`Call ended by ${data.senderUsername || 'someone'}.`);
+
+        getEl('video-call-modal').classList.add('hidden');
+        getEl('video-grid').innerHTML = ''; 
+        
+        displayCallStatus(currentCall.callerId, data.senderUsername, 'ended', Object.keys(currentCall.members).length);
+        
+        currentCall = null;
+        Object.keys(mediaConnections).forEach(k => delete mediaConnections[k]);
+        if (audioContext) audioContext.close();
+        audioContext = null;
+        
+        updateCallUI();
+    }
+    
+    // --- Media Controls ---
+    window.toggleMic = (forceState) => {
+        if (!localStream) return;
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (!audioTrack) return;
+        
+        const micOn = typeof forceState === 'boolean' ? forceState : !audioTrack.enabled;
+        audioTrack.enabled = micOn;
+
+        const icon = getEl('toggle-mic-btn').querySelector('[data-icon="mic"]');
+        if (micOn) {
+            icon.classList.remove('fa-microphone-slash', 'text-red-500');
+            icon.classList.add('fa-microphone');
+            getEl('toggle-mic-btn').classList.remove('bg-red-600/50');
+            getEl('toggle-mic-btn').classList.add('bg-white/10');
+            startAudioAnalysis();
+        } else {
+            icon.classList.remove('fa-microphone');
+            icon.classList.add('fa-microphone-slash', 'text-red-500');
+            getEl('toggle-mic-btn').classList.remove('bg-white/10');
+            getEl('toggle-mic-btn').classList.add('bg-red-600/50');
+            stopAudioAnalysis();
+        }
+        
+        if (currentCall && currentCall.members[peer.id]) {
+            currentCall.members[peer.id].micOn = micOn;
+            broadcastCallSignal({ type: 'MEDIA_TOGGLE', memberId: peer.id, media: 'mic', state: micOn, callId: currentCall.id });
+        }
+        updateCallUI();
+    }
+    
+    window.toggleCam = (forceState) => {
+        if (!localStream) return;
+        const videoTrack = localStream.getVideoTracks()[0];
+        if (!videoTrack) return;
+        
+        const camOn = typeof forceState === 'boolean' ? forceState : !videoTrack.enabled;
+        videoTrack.enabled = camOn;
+
+        const icon = getEl('toggle-cam-btn').querySelector('[data-icon="cam"]');
+        if (camOn) {
+            icon.classList.remove('fa-video-slash', 'text-red-500');
+            icon.classList.add('fa-video');
+            getEl('toggle-cam-btn').classList.remove('bg-red-600/50');
+            getEl('toggle-cam-btn').classList.add('bg-white/10');
+        } else {
+            icon.classList.remove('fa-video');
+            icon.classList.add('fa-video-slash', 'text-red-500');
+            getEl('toggle-cam-btn').classList.remove('bg-white/10');
+            getEl('toggle-cam-btn').classList.add('bg-red-600/50');
+        }
+        
+        if (currentCall && currentCall.members[peer.id]) {
+            currentCall.members[peer.id].camOn = camOn;
+            broadcastCallSignal({ type: 'MEDIA_TOGGLE', memberId: peer.id, media: 'cam', state: camOn, callId: currentCall.id });
+        }
+        updateCallUI();
+    }
+
+    window.switchCamera = async () => {
+        if (!localStream) return;
+        if(localStream.getVideoTracks().length === 0) return showToast("Camera is off. Turn it on first.");
+
+        localStream.getVideoTracks().forEach(track => track.stop());
+
+        currentCameraDeviceId = currentCameraDeviceId === 'user' ? 'environment' : 'user';
+
+        const newStream = await getMedia(true, currentCall.members[peer.id].micOn, currentCameraDeviceId);
+        if (!newStream) return;
+        
+        const videoTrack = newStream.getVideoTracks()[0];
+        Object.values(mediaConnections).forEach(conn => {
+            const sender = conn.peerConnection.getSenders().find(s => s.track.kind === 'video');
+            if (sender) {
+                sender.replaceTrack(videoTrack);
+            }
+        });
+        
+        const localVideoEl = getEl(`video-${peer.id}`);
+        if(localVideoEl) localVideoEl.srcObject = newStream;
+        
+        localStream = newStream;
+        currentCall.members[peer.id].stream = newStream;
+    }
+    
+    function handleMediaUpdate(data) {
+        if (!currentCall || currentCall.id !== data.callId) return;
+        
+        const member = currentCall.members[data.memberId];
+        if (!member) return;
+        
+        if (data.media === 'mic') member.micOn = data.state;
+        if (data.media === 'cam') member.camOn = data.state;
+        if (data.media === 'talking') member.talking = data.state;
+        
+        updateCallUI();
+    }
+
+    // --- UI Update Functions (Video/Call Status) ---
+    
+    function updateCallUI() {
+        const statusMessageEl = getEl('call-status-message');
+        const videoModal = getEl('video-call-modal');
+        const memberCountEl = getEl('member-count');
+        const callStatusDisplay = getEl('call-status-display');
+        const videoModalActive = !videoModal.classList.contains('hidden');
+        
+        // 1. Update the chat status message (Join/End button visibility)
+        getEls('.call-action-btn').forEach(btn => btn.remove());
+        if (currentCall && currentCall.status !== 'ended') {
+             if (!currentCall.members[peer.id]) {
+                // Not in call, show join button
+                const callMsgContainer = getEl(`call-msg-${currentCall.callerId}`); 
+                if (callMsgContainer) {
+                    const joinBtn = document.createElement('div');
+                    joinBtn.className = 'call-action-btn mt-2 w-full';
+                    joinBtn.innerHTML = `
+                         <button onclick="joinCall('${currentCall.callerId}', '${currentCall.id}')" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-semibold transition-colors shadow-md">
+                             <i class="fas fa-video mr-1"></i> Join Call
+                         </button>
+                    `;
+                    callMsgContainer.querySelector('div').appendChild(joinBtn);
+                }
+             }
+        }
+        
+        // 2. Update Member Count and Video Grid
+        if (currentCall) {
+            const memberCount = Object.keys(currentCall.members).length;
+            if (memberCountEl) memberCountEl.textContent = memberCount;
+
+            Object.entries(currentCall.members).forEach(([id, member]) => {
+                const videoContainer = getEl(`video-container-${id}`);
+                const isMe = id === peer.id;
+                
+                if (member.stream && !videoContainer && videoModalActive) {
+                    renderVideo(member.stream, id, member.username, member.micOn, member.camOn);
+                }
+
+                if (videoContainer) {
+                    // Update speaking status (blue outline)
+                    if(member.talking) {
+                        videoContainer.classList.add('ring-4', 'ring-blue-500', 'ring-offset-2', 'ring-offset-gray-900');
+                    } else {
+                        videoContainer.classList.remove('ring-4', 'ring-blue-500', 'ring-offset-2', 'ring-offset-gray-900');
+                    }
+                    
+                    // Update camera/mic status placeholder
+                    const placeholder = videoContainer.querySelector('.video-placeholder');
+                    const camIcon = placeholder ? placeholder.querySelector('[data-type="cam-icon"]') : null;
+                    const micIcon = placeholder ? placeholder.querySelector('[data-type="mic-icon"]') : null;
+                    const videoEl = videoContainer.querySelector('video');
+
+                    if (videoEl) videoEl.style.display = member.camOn ? 'block' : 'none';
+                    if (placeholder) placeholder.style.display = member.camOn ? 'none' : 'flex';
+
+                    if (camIcon) camIcon.className = `fas ${member.camOn ? 'fa-video text-green-500' : 'fa-video-slash text-red-500'}`;
+                    if (micIcon) micIcon.className = `fas ${member.micOn ? 'fa-microphone text-green-500' : 'fa-microphone-slash text-red-500'}`;
+                }
+            });
+            
+            // Remove videos for members who left
+            getEls('.video-member-container').forEach(container => {
+                const id = container.id.replace('video-container-', '');
+                if (!currentCall.members[id]) container.remove();
+            });
+            
+            // 3. Update Call Status Display & Timer
+            if (currentCall.status === 'ongoing') {
+                callStatusDisplay.textContent = 'Ongoing Call';
+                callStatusDisplay.classList.remove('text-red-500', 'text-yellow-400');
+                callStatusDisplay.classList.add('text-green-400');
+                if(!callTimerInterval && Object.keys(currentCall.members).length > 1) startTimer();
+            } else if (currentCall.status === 'ringing') {
+                 callStatusDisplay.textContent = 'Ringing...';
+                 callStatusDisplay.classList.remove('text-green-400', 'text-red-500');
+                 callStatusDisplay.classList.add('text-yellow-400');
+            }
+            
+            // 4. Update local controls state
+            if (currentCall.members[peer.id]) {
+                window.toggleMic(currentCall.members[peer.id].micOn); // Force update button state
+                window.toggleCam(currentCall.members[peer.id].camOn); // Force update button state
+            }
+            
+        } else {
+            // No current call
+            if (memberCountEl) memberCountEl.textContent = 0;
+            getEl('video-grid').innerHTML = '';
+            videoModal.classList.add('hidden');
+        }
+        
+        updateMemberListModal();
+    }
+    
+    function renderVideo(stream, id, username, micOn = true, camOn = true) {
+        const videoGrid = getEl('video-grid');
+        const isLocal = id === peer.id;
+
+        const container = document.createElement('div');
+        container.id = `video-container-${id}`;
+        container.className = `video-member-container relative bg-gray-700 rounded-xl overflow-hidden shadow-xl aspect-video transition-all duration-300 transform ${isLocal ? 'order-first' : ''}`;
+        
+        const video = document.createElement('video');
+        video.id = `video-${id}`;
+        video.srcObject = stream;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.muted = isLocal;
+        video.className = 'w-full h-full object-cover transform scaleX(-1) transition-opacity duration-300';
+        video.style.display = camOn ? 'block' : 'none';
+
+        const placeholder = document.createElement('div');
+        placeholder.className = 'video-placeholder absolute inset-0 flex flex-col items-center justify-center p-4 text-white text-center transition-all duration-300';
+        placeholder.style.display = camOn ? 'none' : 'flex';
+        placeholder.innerHTML = `
+             <img src="${peerDetails[id]?.avatar || 'https://via.placeholder.com/64'}" class="w-16 h-16 rounded-full object-cover mb-2 border-2 border-white/50" />
+             <div class="font-bold text-sm truncate max-w-full">${username} ${isLocal ? '(You)' : ''}</div>
+             <div class="flex gap-3 mt-2 text-xl">
+                 <i class="fas ${camOn ? 'fa-video text-green-500' : 'fa-video-slash text-red-500'}" data-type="cam-icon"></i>
+                 <i class="fas ${micOn ? 'fa-microphone text-green-500' : 'fa-microphone-slash text-red-500'}" data-type="mic-icon"></i>
+             </div>
+        `;
+
+        const nameTag = document.createElement('div');
+        nameTag.className = 'absolute bottom-2 left-2 bg-black/50 text-white text-xs font-semibold px-2 py-0.5 rounded-lg';
+        nameTag.textContent = username + (isLocal ? ' (You)' : '');
+        
+        container.appendChild(video);
+        container.appendChild(placeholder);
+        container.appendChild(nameTag);
+        videoGrid.appendChild(container);
+    }
+    
+    function removeVideo(id) {
+        const container = getEl(`video-container-${id}`);
+        if(container) container.remove();
+    }
+
+    // Chat Status Message Renderer
+    function displayCallStatus(callerId, callerUsername, status, memberCount = 0) {
+        const chatBox = getEl("chat-box");
+        const container = document.createElement("div");
+        const isMe = callerId === peer.id;
+        
+        let bgColor, icon, message;
+
+        if (status === 'ringing') {
+            bgColor = 'bg-blue-100 text-blue-800';
+            icon = 'fas fa-phone-volume';
+            message = isMe ? 
+                `You started a call. Waiting for others to join...` : 
+                `${callerUsername} is calling.`;
+        } else if (status === 'ongoing') {
+            bgColor = 'bg-blue-500 text-white';
+            icon = 'fas fa-headset';
+            message = `Call ongoing. Members: ${memberCount}.`;
+        } else if (status === 'ended') {
+            bgColor = 'bg-red-100 text-red-800';
+            icon = 'fas fa-phone-slash';
+            message = `Call ended by ${callerUsername || 'someone'}.`;
+        }
+        
+        // Remove old status message containers to prevent duplicates
+        getEls('.call-status-container').forEach(el => el.remove());
+
+        container.className = "flex justify-center items-center w-full call-status-container";
+        container.innerHTML = `
+            <div id="call-msg-${callerId}" class="max-w-xs sm:max-w-sm w-full p-3 rounded-xl ${bgColor} text-center shadow-md animate-fade-in my-2">
+                <div class="flex items-center justify-center gap-2">
+                    <i class="${icon} text-sm"></i>
+                    <span id="call-status-message" class="text-sm font-medium">${message}</span>
+                </div>
+            </div>
+        `;
+        
+        chatBox.appendChild(container);
+        chatBox.scrollTop = chatBox.scrollHeight;
+        updateCallUI(); // To add the join button if needed
+    }
+    
+    // Timer
+    function startTimer() {
+        if (callTimerInterval) clearInterval(callTimerInterval);
+        callStartTime = Date.now();
+        const callTimerEl = getEl('call-timer');
+        
+        callTimerInterval = setInterval(() => {
+            const elapsed = Date.now() - callStartTime;
+            const totalSeconds = Math.floor(elapsed / 1000);
+            const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+            if(callTimerEl) callTimerEl.textContent = `${minutes}:${seconds}`;
+        }, 1000);
+    }
+
+    // Member List Modal
+    window.openMemberListModal = () => updateMemberListModal() && getEl('member-list-modal').classList.remove('hidden');
+    window.closeMemberListModal = () => getEl('member-list-modal').classList.add('hidden');
+    
+    function updateMemberListModal() {
+        const listEl = getEl('call-member-list');
+        if (!listEl || !currentCall) return true; // true means success/no error
+
+        let html = '';
+        Object.entries(currentCall.members).forEach(([id, member]) => {
+            const isMe = id === peer.id;
+            
+            html += `
+                <div class="flex items-center gap-3 p-2 bg-gray-700/50 rounded-lg border-l-4 ${member.talking ? 'border-blue-400' : 'border-transparent'}">
+                    <img src="${peerDetails[id]?.avatar || 'https://via.placeholder.com/40'}" class="w-8 h-8 rounded-full object-cover" />
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-semibold text-white truncate">${member.username} ${isMe ? '(You)' : ''}</div>
+                        <div class="text-xs flex gap-2">
+                            <i class="fas ${member.camOn ? 'fa-video text-green-400' : 'fa-video-slash text-red-400'}"></i>
+                            <i class="fas ${member.micOn ? 'fa-microphone text-green-400' : 'fa-microphone-slash text-red-400'}"></i>
+                        </div>
+                    </div>
+                    <div class="text-sm text-white/70">
+                        ${member.talking ? '<i class="fas fa-dot-circle animate-pulse text-blue-400 mr-1"></i> Talking' : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        listEl.innerHTML = html || '<div class="text-white/50 text-center text-sm italic">No members in call.</div>';
+        return true;
+    }
+    
+    // --- Audio Analysis (Talking Indicator) ---
+    
+    function startAudioAnalysis() {
+        if (!localStream || audioCheckInterval) return;
+
+        const audioTrack = localStream.getAudioTracks()[0];
+        if (!audioTrack || !audioTrack.enabled) return;
+
+        if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (!analyser) analyser = audioContext.createAnalyser();
+        
+        try {
+            if (!microphoneSource) microphoneSource = audioContext.createMediaStreamSource(localStream);
+            microphoneSource.connect(analyser);
+        } catch(e) {
+            console.warn("Could not connect audio stream source. Audio analysis disabled.", e);
+            return;
+        }
+
+        analyser.fftSize = 256;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        const threshold = 100; // Volume threshold to detect talking
+
+        audioCheckInterval = setInterval(() => {
+            analyser.getByteFrequencyData(dataArray);
+            let sum = 0;
+            for(let i = 0; i < bufferLength; i++) {
+                sum += dataArray[i];
+            }
+            const averageVolume = sum / bufferLength;
+
+            const isTalking = averageVolume > threshold;
+            
+            if (currentCall && currentCall.members[peer.id]) {
+                const wasTalking = currentCall.members[peer.id].talking;
+                if (isTalking !== wasTalking) {
+                    currentCall.members[peer.id].talking = isTalking;
+                    updateCallUI();
+                    
+                    broadcastCallSignal({ 
+                        type: 'MEDIA_TOGGLE', 
+                        memberId: peer.id, 
+                        media: 'talking', 
+                        state: isTalking,
+                        callId: currentCall.id 
+                    });
+                }
+            }
+        }, 100);
+    }
+    
+    function stopAudioAnalysis() {
+        if (audioCheckInterval) clearInterval(audioCheckInterval);
+        audioCheckInterval = null;
+        if (microphoneSource) {
+            microphoneSource.disconnect();
+            microphoneSource = null;
+        }
+    }
+
+    // --- Messaging ---
+    const messageInput = getEl("message-input");
+    const chatBox = getEl("chat-box");
+    const replyPreview = getEl("reply-preview");
+
+    function sendMessage() {
+      const msg = messageInput.value.trim();
+      if (!msg) return;
+      const payload = { type: 'text', message: msg, replyTo: replyingTo };
+      broadcast(payload);
+      displayMessage(localUsername, msg, localAvatar, null, null, null, null, peer.id, replyingTo);
+      messageInput.value = "";
+      cancelReply();
+      if(peerDetails[peer.id]) peerDetails[peer.id].messages++;
+      updateAllPeerLists();
+    }
+
+    getEl("send-btn").onclick = sendMessage;
+    messageInput.addEventListener("keypress", e => e.key === "Enter" && sendMessage());
+
+    function broadcast(data) {
+      Object.values(connections).forEach(conn => {
+        if (conn.open) conn.send({ ...data, username: localUsername, avatar: localAvatar });
+      });
+    }
+
+    function displayMessage(sender, message = '', avatar = '', fileType = '', fileData = '', fileName = '', fileSize = null, peerId = null, replyTo = null) {
+      const isMe = peerId === peer.id;
+      const container = document.createElement("div");
+      container.className = `message-container flex gap-2 sm:gap-3 relative group w-full ${isMe ? 'flex-row-reverse' : ''}`;
+      container.dataset.peerId = peerId || peer.id;
+
+      const img = document.createElement("img");
+      img.src = avatar || "https://via.placeholder.com/40";
+      img.className = "w-8 h-8 rounded-full avatar object-cover mt-1 flex-shrink-0 shadow-sm border border-white cursor-pointer";
+      img.dataset.peerId = peerId || peer.id;
+
+      const content = document.createElement("div");
+      content.className = `flex flex-col max-w-[75%] sm:max-w-[65%] ${isMe ? 'items-end' : 'items-start'}`;
+
+      if (replyTo) {
+        const reply = document.createElement("div");
+        reply.className = "text-[10px] sm:text-xs text-gray-500 bg-gray-50 p-1.5 px-2 rounded-lg mb-1 border-l-2 border-blue-400 opacity-80 cursor-pointer hover:opacity-100 transition-opacity truncate max-w-full";
+        reply.textContent = `Reply: ${replyTo.message.slice(0, 40)}`;
+        content.appendChild(reply);
+      }
+
+      const messageWrapper = document.createElement("div");
+      messageWrapper.className = `p-2.5 sm:p-3 px-3 sm:px-4 rounded-2xl shadow-sm text-sm break-words relative ${
+        isMe 
+          ? 'bg-blue-600 text-white rounded-tr-sm' 
+          : 'bg-white border border-gray-100 text-gray-800 rounded-tl-sm'
+      }`;
+
+      // Name label for others
+      if (!isMe) {
+          const header = document.createElement("div");
+          header.className = "flex items-center mb-0.5 gap-2";
+          header.innerHTML = `<span class="font-bold text-[10px] sm:text-xs text-blue-600 truncate">${sender}</span> <span class="text-[9px] text-gray-300">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>`;
+          messageWrapper.appendChild(header);
+      }
+
+      const body = document.createElement("div");
+      
+      const mentionRegex = new RegExp(`@${localUsername}\\b`, 'gi');
+      if (message) {
+        let cleanMsg = message.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if (!isMe && message.match(mentionRegex)) {
+            cleanMsg = cleanMsg.replace(mentionRegex, `<span class="bg-yellow-200 text-yellow-900 px-1 rounded font-bold">@${localUsername}</span>`);
+            messageWrapper.classList.add('ring-2', 'ring-yellow-300');
+        }
+        body.innerHTML = cleanMsg;
+      } else if (fileType && fileData) {
+        if (fileType.startsWith("image/")) {
+          // IMAGE PREVIEW
+          const imgEl = document.createElement("img");
+          imgEl.src = fileData;
+          imgEl.className = "max-w-full rounded-lg mt-1 cursor-pointer hover:opacity-90 transition-opacity";
+          imgEl.onclick = () => window.open(fileData);
+          body.appendChild(imgEl);
+        } else if (fileType.startsWith("audio/") || fileType.startsWith("video/")) {
+          // MEDIA PREVIEW (Audio/Video)
+          const mediaType = fileType.split('/')[0];
+          const mediaEl = document.createElement(mediaType);
+          mediaEl.src = fileData;
+          mediaEl.controls = true;
+          mediaEl.className = "max-w-full rounded-lg mt-1";
+          mediaEl.style.minWidth = '200px';
+          
+          body.appendChild(mediaEl);
+
+        } else {
+             // GENERAL FILE PREVIEW
+             const { icon, color, fileExtension } = getFileIcon(fileType, fileName);
+             
+             const filePreview = document.createElement("div");
+             filePreview.className = `flex flex-col gap-2 p-3 ${isMe ? 'bg-blue-700/70 text-white' : 'bg-gray-50 border border-gray-200 text-gray-800'} rounded-lg mt-1`;
+             filePreview.innerHTML = `
+                 <div class="flex items-center gap-3">
+                    <div class="file-icon-box ${color} bg-white/50 rounded-lg text-xl">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-sm truncate">${fileName}</div>
+                        <div class="text-[10px] opacity-80">${fileExtension} File</div>
+                    </div>
+                 </div>
+                 <div class="grid grid-cols-2 gap-2 text-xs opacity-90 border-t ${isMe ? 'border-blue-600/50' : 'border-gray-200'} pt-2">
+                    <div>
+                        <span class="font-bold">Size:</span> ${fileSize ? formatFileSize(fileSize) : 'N/A'}
+                    </div>
+                    <div>
+                        <span class="font-bold">Type:</span> ${fileType.split('/').pop()}
+                    </div>
+                 </div>
+                 <a href="${fileData}" download="${fileName}" class="w-full text-center py-1.5 mt-2 rounded-lg text-xs font-bold transition-colors ${isMe ? 'bg-white text-blue-600 hover:bg-gray-100' : 'bg-blue-600 text-white hover:bg-blue-700'}">
+                    <i class="fas fa-download mr-1"></i> Download
+                 </a>
+             `;
+             body.appendChild(filePreview);
+        }
+      }
+
+      messageWrapper.appendChild(body);
+      
+      // Timestamp for me
+      if(isMe) {
+          const ts = document.createElement("div");
+          ts.className = "text-[9px] text-gray-300 mt-0.5 mr-0.5 opacity-0 group-hover:opacity-100 transition-opacity";
+          ts.textContent = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+          content.appendChild(messageWrapper);
+          content.appendChild(ts);
+      } else {
+          content.appendChild(messageWrapper);
+      }
+
+      // Hover Action
+      const hover = document.createElement("div");
+      hover.className = "message-hover";
+      hover.innerHTML = '<i class="fas fa-reply"></i> Reply';
+      if(isMe) hover.style.right = "100%"; 
+      else hover.style.left = "100%";
+      if(isMe) hover.style.marginRight = "8px";
+      else hover.style.marginLeft = "8px";
+      
+      hover.addEventListener("click", () => {
+        replyingTo = { sender, message: message || (fileName ? `[File: ${fileName}]` : '[File]'), timestamp: new Date() };
+        getEl("reply-text-content").textContent = message || `File: ${fileName}`;
+        replyPreview.classList.remove("hidden");
+        messageInput.focus();
+      });
+
+      container.appendChild(img);
+      container.appendChild(content);
+      container.appendChild(hover);
+      chatBox.appendChild(container);
+      
+      // Smart scroll
+      const isScrolledNearBottom = chatBox.scrollHeight - chatBox.scrollTop <= chatBox.clientHeight + 100;
+      if (isScrolledNearBottom) chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    window.cancelReply = () => {
+        replyingTo = null;
+        replyPreview.classList.add("hidden");
+    }
+
+    // --- File Handling ---
+    window.handleFileUpload = (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const data = e.target.result;
+            const payload = { 
+                type: 'file', 
+                fileType: file.type, 
+                fileData: data, 
+                fileName: file.name, 
+                fileSize: file.size, // Added file size
+                replyTo: replyingTo 
+            };
+            broadcast(payload);
+            displayMessage(localUsername, '', localAvatar, file.type, data, file.name, file.size, peer.id, replyingTo);
+            cancelReply();
+            if(peerDetails[peer.id]) { peerDetails[peer.id].messages++; peerDetails[peer.id].files++; }
+            updateAllPeerLists();
+        };
+        reader.readAsDataURL(file);
+        input.value = ''; // reset
+    }
+
+    // --- Profile & UI ---
+    window.toggleProfilePanel = () => {
+        const modal = getEl('profile-modal');
+        if (modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+            getEl('modal-nickname-input').value = localUsername;
+            getEl('modal-avatar-preview').src = localAvatar;
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    window.previewAvatar = (input) => {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => getEl('modal-avatar-preview').src = e.target.result;
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    window.saveProfile = () => {
+        const newName = getEl('modal-nickname-input').value.trim();
+        if (newName) localUsername = newName;
+        
+        const previewSrc = getEl('modal-avatar-preview').src;
+        if(previewSrc) localAvatar = previewSrc;
+
+        updateProfileUI();
+        broadcast({ type: 'profile', username: localUsername, avatar: localAvatar });
+        
+        if(peerDetails[peer.id]) {
+            peerDetails[peer.id].username = localUsername;
+            peerDetails[peer.id].avatar = localAvatar;
+        }
+        updateAllPeerLists();
+        toggleProfilePanel();
+    }
+
+    function updateProfileUI() {
+        getEls('.current-user-name').forEach(el => el.textContent = localUsername);
+        getEls('.current-user-avatar').forEach(el => el.src = localAvatar);
+    }
+
+    function updateAllPeerLists() {
+        const desktopList = getEl('peer-list-desktop');
+        const mobileList = getEl('peer-list-mobile');
+        
+        const html = generatePeerListHTML();
+        if(desktopList) desktopList.innerHTML = html;
+        if(mobileList) mobileList.innerHTML = html;
+        
+        const activeCount = Object.values(peerDetails).filter(p => p.active && p.username !== localUsername).length;
+        const badge = getEl('peer-count-badge');
+        if(badge) badge.textContent = activeCount;
+    }
+
+    function generatePeerListHTML() {
+        let html = '';
+        Object.entries(peerDetails).forEach(([id, p]) => {
+            if (id === peer.id) return; // Hide self
+            html += `
+              <div class="flex items-center gap-3 p-2 hover:bg-white hover:shadow-sm rounded-lg cursor-pointer transition-all duration-200 group border border-transparent hover:border-gray-100" onclick="mentionUser('${p.username}')">
+                <div class="relative">
+                  <img src="${p.avatar || 'https://via.placeholder.com/40'}" class="w-9 h-9 rounded-full object-cover bg-gray-200" />
+                  <span class="absolute bottom-0 right-0 w-2.5 h-2.5 ${p.active ? 'bg-green-500' : 'bg-gray-400'} border-2 border-white rounded-full"></span>
+                </div>
+                <div class="flex-1 min-w-0">
+                   <div class="flex justify-between items-baseline">
+                      <div class="text-sm font-medium text-gray-800 truncate">${p.username}</div>
+                      <div class="text-[10px] text-gray-400 font-mono">${id.slice(0,4)}</div>
+                   </div>
+                   <div class="text-[10px] text-gray-400 truncate flex gap-2">
+                      <span><i class="fas fa-comment text-[8px] mr-0.5"></i> ${p.messages}</span>
+                      <span><i class="fas fa-file text-[8px] mr-0.5"></i> ${p.files}</span>
+                   </div>
+                </div>
+              </div>
+            `;
+        });
+        if(!html) html = `<div class="p-4 text-center text-xs text-gray-400 italic">No active connections</div>`;
+        return html;
+    }
+
+    window.mentionUser = (username) => {
+        messageInput.value += `@${username} `;
+        messageInput.focus();
+        closeMobileSidebar();
+    }
+
+    // --- Emoji ---
+    const emojiBtn = getEl("emoji-btn");
+    const emojiPicker = getEl("emoji-picker");
+    emojiBtn.addEventListener("click", () => emojiPicker.classList.toggle("hidden"));
+    emojiPicker.addEventListener("emoji-click", event => {
+      messageInput.value += event.detail.unicode;
+      messageInput.focus();
+    });
+    
+    // Close things when clicking outside
+    document.addEventListener("click", (e) => {
+        if (!emojiPicker.classList.contains("hidden") && !emojiPicker.contains(e.target) && !emojiBtn.contains(e.target)) {
+            emojiPicker.classList.add("hidden");
+        }
+    });
+
+    function showToast(message) {
+      const toast = document.createElement("div");
+      toast.textContent = message;
+      toast.className = "fixed top-20 right-4 bg-gray-900 text-white text-sm px-4 py-3 rounded-lg shadow-xl z-[80] animate-fade-in";
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // --- Attach event listeners to new buttons ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const callBtn = getEl('call-btn');
+        if(callBtn) callBtn.onclick = window.startCall;
+        
+        const endCallBtn = getEl('end-call-btn');
+        if(endCallBtn) endCallBtn.onclick = window.endCall;
+        
+        const toggleMicBtn = getEl('toggle-mic-btn');
+        if(toggleMicBtn) toggleMicBtn.onclick = window.toggleMic;
+        
+        const toggleCamBtn = getEl('toggle-cam-btn');
+        if(toggleCamBtn) toggleCamBtn.onclick = window.toggleCam;
+        
+        const switchCamBtn = getEl('switch-cam-btn');
+        if(switchCamBtn) switchCamBtn.onclick = window.switchCamera;
+        
+        const memberListBtn = getEl('member-list-btn');
+        if(memberListBtn) memberListBtn.onclick = window.openMemberListModal;
+    });
+  </script>
+</body>
+</html>

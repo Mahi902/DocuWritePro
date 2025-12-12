@@ -50,24 +50,28 @@
     .drawer-transition {
       transition: transform 0.3s ease-in-out;
     }
+
+    /* File Icon Style */
+    .file-icon-box {
+        width: 48px; 
+        height: 48px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        flex-shrink: 0;
+    }
   </style>
 </head>
 <body class="bg-white h-screen w-screen overflow-hidden font-sans text-gray-900">
   
-  <!-- Root Layout: Flex Row -->
-  <div class="flex h-full w-full bg-white">
-
-    <!-- Left Column: Main Chat Area (Flex-1) -->
-    <div class="flex flex-col flex-1 relative min-w-0 bg-white">
+  <div class="flex h-full w-full bg-white min-h-screen"> <div class="flex flex-col flex-1 relative min-w-0 bg-white">
       
-      <!-- Topbar -->
       <header class="h-16 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-gray-100 shrink-0 z-20">
         <div class="text-gray-900 text-lg sm:text-xl font-bold tracking-tight truncate mr-2">Connect</div>
         
         <div class="flex items-center gap-2 sm:gap-4">
           <span id="current-peer-id" class="text-xs text-gray-400 hidden sm:inline-block font-mono bg-gray-50 px-2 py-1 rounded"></span>
           
-          <!-- Connect Input Group -->
           <div class="flex items-center bg-gray-50 rounded-full pl-3 pr-1 py-1 border border-gray-100 focus-within:ring-2 focus-within:ring-blue-100 transition-all w-auto max-w-[200px] sm:max-w-none">
              <input id="peer-id-input" class="text-xs sm:text-sm bg-transparent placeholder:text-gray-400 text-gray-900 focus:outline-none w-24 sm:w-40" placeholder="Enter Peer ID"/>
              <button id="connect-btn" class="ml-1 bg-blue-600 hover:bg-blue-700 text-white p-1.5 rounded-full w-7 h-7 flex items-center justify-center transition-colors">
@@ -75,14 +79,12 @@
              </button>
           </div>
 
-          <!-- Mobile Sidebar Toggle -->
           <button id="mobile-menu-btn" class="md:hidden w-8 h-8 flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-full transition-colors ml-1">
             <i class="fas fa-bars"></i>
           </button>
         </div>
       </header>
 
-      <!-- Chat Messages Area -->
       <div class="flex-1 overflow-hidden relative bg-white">
         <main id="chat-box" class="h-full overflow-y-auto p-4 sm:p-6 space-y-6 scrollbar-hide">
           <div class="text-center text-gray-400 mt-20 flex flex-col items-center">
@@ -93,8 +95,7 @@
         </main>
       </div>
 
-      <!-- Reply Preview (Absolute positioned over footer) -->
-      <div id="reply-preview" class="hidden absolute bottom-20 left-4 right-4 bg-white/90 backdrop-blur-sm text-gray-900 text-sm px-4 py-3 border-l-4 border-blue-500 shadow-lg rounded-r-lg z-30 flex justify-between items-center transition-all">
+      <div id="reply-preview" class="hidden absolute bottom-[72px] sm:bottom-20 left-4 right-4 bg-white/90 backdrop-blur-sm text-gray-900 text-sm px-4 py-3 border-l-4 border-blue-500 shadow-lg rounded-r-lg z-30 flex justify-between items-center transition-all">
         <div class="flex flex-col">
             <span class="text-xs text-blue-600 font-bold mb-0.5">Replying to...</span>
             <span id="reply-text-content" class="text-gray-600 truncate max-w-xs sm:max-w-md"></span>
@@ -102,7 +103,6 @@
         <button onclick="cancelReply()" class="text-gray-400 hover:text-red-500 p-2"><i class="fas fa-times"></i></button>
       </div>
       
-      <!-- Footer / Input Area -->
       <footer class="p-3 sm:px-6 sm:py-4 bg-white border-t border-gray-100 shrink-0 z-30">
         <div class="flex items-end gap-2 relative max-w-4xl mx-auto">
           <div class="flex-1 bg-gray-100 rounded-2xl flex items-center relative transition-colors focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-100 focus-within:border-blue-200 border border-transparent">
@@ -121,19 +121,14 @@
       </footer>
     </div>
 
-    <!-- Right Column: Sidebar (Desktop) - Full Height -->
     <aside class="hidden md:flex flex-col w-80 bg-gray-50 border-l border-gray-200 shrink-0 h-full">
-      <!-- Sidebar Header -->
       <div class="p-4 border-b border-gray-200 bg-gray-50">
         <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider">Connections <span id="peer-count-badge" class="ml-1 bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full text-[10px]">0</span></h3>
       </div>
       
-      <!-- List -->
       <div class="flex-1 overflow-y-auto p-2 space-y-1" id="peer-list-desktop">
-        <!-- Peers injected here -->
-      </div>
+        </div>
 
-      <!-- User Profile (Bottom) -->
       <div class="p-4 border-t border-gray-200 bg-white mt-auto">
         <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors duration-200 group" onclick="toggleProfilePanel()">
           <div class="relative">
@@ -149,10 +144,8 @@
       </div>
     </aside>
 
-    <!-- Mobile Sidebar Drawer (Overlay) -->
     <div id="mobile-drawer-overlay" class="fixed inset-0 bg-black/20 z-40 hidden md:hidden backdrop-blur-sm transition-opacity opacity-0" onclick="closeMobileSidebar()"></div>
     <div id="mobile-drawer" class="fixed inset-y-0 right-0 w-[85vw] max-w-sm bg-white z-50 shadow-2xl transform translate-x-full drawer-transition md:hidden flex flex-col">
-      <!-- Drawer Header -->
       <div class="flex items-center justify-between p-4 border-b border-gray-100">
         <h2 class="text-lg font-bold text-gray-900">Menu</h2>
         <button onclick="closeMobileSidebar()" class="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-500 hover:text-gray-900">
@@ -160,24 +153,19 @@
         </button>
       </div>
 
-      <!-- Drawer Content -->
       <div class="flex-1 overflow-y-auto p-4">
         <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-4">Connections</h3>
         <div id="peer-list-mobile" class="space-y-2">
-            <!-- Peers injected here -->
-        </div>
+            </div>
       </div>
 
-      <!-- User Profile & ID (Mobile Bottom) -->
       <div class="p-4 border-t border-gray-100 bg-gray-50">
         
-        <!-- ID Display -->
         <div class="mb-3 bg-blue-50 border border-blue-100 rounded-xl p-3 text-center">
             <div class="text-[10px] text-blue-500 font-bold uppercase tracking-wider mb-1">My ID</div>
             <div id="mobile-peer-id-display" class="font-mono text-sm font-bold text-gray-800 select-all break-all">Connecting...</div>
         </div>
 
-        <!-- Profile Card -->
         <div class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-xl shadow-sm cursor-pointer hover:bg-gray-50 transition-colors" onclick="toggleProfilePanel()">
             <div class="relative">
               <img class="current-user-avatar w-10 h-10 rounded-full object-cover" src="https://i.ibb.co.com/Cs3vDh96/360-F-553796090-XHr-E6-R9jwm-BJUMo9-HKl41hy-HJ5gqt9oz.jpg" />
@@ -192,7 +180,6 @@
       </div>
     </div>
 
-    <!-- Profile Settings Modal (Shared) -->
     <div id="profile-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" onclick="toggleProfilePanel()"></div>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xs relative z-10 overflow-hidden transform transition-all scale-100">
@@ -230,6 +217,31 @@
     // --- Utilities ---
     const getEl = (id) => document.getElementById(id);
     const getEls = (sel) => document.querySelectorAll(sel);
+    const formatFileSize = (bytes) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+    const getFileIcon = (fileType, fileName) => {
+        const extension = fileName.split('.').pop().toLowerCase();
+        let icon = 'fas fa-file';
+        let color = 'text-gray-500';
+
+        if (fileType.startsWith("image/")) { icon = 'fas fa-file-image'; color = 'text-purple-500'; }
+        else if (fileType.startsWith("audio/")) { icon = 'fas fa-file-audio'; color = 'text-yellow-500'; }
+        else if (fileType.startsWith("video/")) { icon = 'fas fa-file-video'; color = 'text-red-500'; }
+        else if (fileType.includes("pdf")) { icon = 'fas fa-file-pdf'; color = 'text-red-600'; }
+        else if (fileType.includes("word") || extension === 'doc' || extension === 'docx') { icon = 'fas fa-file-word'; color = 'text-blue-600'; }
+        else if (fileType.includes("excel") || extension === 'xls' || extension === 'xlsx') { icon = 'fas fa-file-excel'; color = 'text-green-600'; }
+        else if (fileType.includes("powerpoint") || extension === 'ppt' || extension === 'pptx') { icon = 'fas fa-file-powerpoint'; color = 'text-orange-600'; }
+        else if (fileType.includes("zip") || fileType.includes("rar")) { icon = 'fas fa-file-archive'; color = 'text-indigo-600'; }
+        else if (extension === 'js' || extension === 'json' || extension === 'html' || extension === 'css' || extension === 'py') { icon = 'fas fa-file-code'; color = 'text-cyan-600'; }
+        else if (extension === 'txt') { icon = 'fas fa-file-alt'; color = 'text-gray-400'; }
+
+        return { icon, color, fileExtension: extension.toUpperCase() };
+    };
     
     // --- State ---
     const peer = new Peer();
@@ -346,7 +358,7 @@
           peerDetails[conn.peer].avatar = data.avatar;
           updateAllPeerLists();
         } else {
-          displayMessage(data.username, data.message, data.avatar, data.fileType, data.fileData, data.fileName, conn.peer, data.replyTo);
+          displayMessage(data.username, data.message, data.avatar, data.fileType, data.fileData, data.fileName, data.fileSize, conn.peer, data.replyTo);
           peerDetails[conn.peer].messages++;
           if (data.fileType) peerDetails[conn.peer].files++;
           updateAllPeerLists();
@@ -371,7 +383,7 @@
       if (!msg) return;
       const payload = { type: 'text', message: msg, replyTo: replyingTo };
       broadcast(payload);
-      displayMessage(localUsername, msg, localAvatar, null, null, null, peer.id, replyingTo);
+      displayMessage(localUsername, msg, localAvatar, null, null, null, null, peer.id, replyingTo);
       messageInput.value = "";
       cancelReply();
       if(peerDetails[peer.id]) peerDetails[peer.id].messages++;
@@ -387,7 +399,7 @@
       });
     }
 
-    function displayMessage(sender, message = '', avatar = '', fileType = '', fileData = '', fileName = '', peerId = null, replyTo = null) {
+    function displayMessage(sender, message = '', avatar = '', fileType = '', fileData = '', fileName = '', fileSize = null, peerId = null, replyTo = null) {
       const isMe = peerId === peer.id;
       const container = document.createElement("div");
       container.className = `message-container flex gap-2 sm:gap-3 relative group w-full ${isMe ? 'flex-row-reverse' : ''}`;
@@ -435,18 +447,52 @@
         body.innerHTML = cleanMsg;
       } else if (fileType && fileData) {
         if (fileType.startsWith("image/")) {
+          // IMAGE PREVIEW
           const imgEl = document.createElement("img");
           imgEl.src = fileData;
           imgEl.className = "max-w-full rounded-lg mt-1 cursor-pointer hover:opacity-90 transition-opacity";
           imgEl.onclick = () => window.open(fileData);
           body.appendChild(imgEl);
+        } else if (fileType.startsWith("audio/") || fileType.startsWith("video/")) {
+          // MEDIA PREVIEW (Audio/Video)
+          const mediaType = fileType.split('/')[0];
+          const mediaEl = document.createElement(mediaType);
+          mediaEl.src = fileData;
+          mediaEl.controls = true;
+          mediaEl.className = "max-w-full rounded-lg mt-1";
+          mediaEl.style.minWidth = '200px';
+          
+          body.appendChild(mediaEl);
+
         } else {
-             const fileEl = document.createElement("a");
-             fileEl.href = fileData;
-             fileEl.download = fileName;
-             fileEl.className = `flex items-center gap-2 ${isMe ? 'text-white' : 'text-blue-600'} underline decoration-dotted mt-1`;
-             fileEl.innerHTML = `<i class="fas fa-file"></i> <span class="truncate">${fileName}</span>`;
-             body.appendChild(fileEl);
+             // GENERAL FILE PREVIEW
+             const { icon, color, fileExtension } = getFileIcon(fileType, fileName);
+             
+             const filePreview = document.createElement("div");
+             filePreview.className = `flex flex-col gap-2 p-3 ${isMe ? 'bg-blue-700/70 text-white' : 'bg-gray-50 border border-gray-200 text-gray-800'} rounded-lg mt-1`;
+             filePreview.innerHTML = `
+                 <div class="flex items-center gap-3">
+                    <div class="file-icon-box ${color} bg-white/50 rounded-lg text-xl">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="font-semibold text-sm truncate">${fileName}</div>
+                        <div class="text-[10px] opacity-80">${fileExtension} File</div>
+                    </div>
+                 </div>
+                 <div class="grid grid-cols-2 gap-2 text-xs opacity-90 border-t ${isMe ? 'border-blue-600/50' : 'border-gray-200'} pt-2">
+                    <div>
+                        <span class="font-bold">Size:</span> ${fileSize ? formatFileSize(fileSize) : 'N/A'}
+                    </div>
+                    <div>
+                        <span class="font-bold">Type:</span> ${fileType.split('/').pop()}
+                    </div>
+                 </div>
+                 <a href="${fileData}" download="${fileName}" class="w-full text-center py-1.5 mt-2 rounded-lg text-xs font-bold transition-colors ${isMe ? 'bg-white text-blue-600 hover:bg-gray-100' : 'bg-blue-600 text-white hover:bg-blue-700'}">
+                    <i class="fas fa-download mr-1"></i> Download
+                 </a>
+             `;
+             body.appendChild(filePreview);
         }
       }
 
@@ -473,7 +519,7 @@
       else hover.style.marginLeft = "8px";
       
       hover.addEventListener("click", () => {
-        replyingTo = { sender, message: message || '[File]', timestamp: new Date() };
+        replyingTo = { sender, message: message || (fileName ? `[File: ${fileName}]` : '[File]'), timestamp: new Date() };
         getEl("reply-text-content").textContent = message || `File: ${fileName}`;
         replyPreview.classList.remove("hidden");
         messageInput.focus();
@@ -502,9 +548,16 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             const data = e.target.result;
-            const payload = { type: 'file', fileType: file.type, fileData: data, fileName: file.name, replyTo: replyingTo };
+            const payload = { 
+                type: 'file', 
+                fileType: file.type, 
+                fileData: data, 
+                fileName: file.name, 
+                fileSize: file.size, // Added file size
+                replyTo: replyingTo 
+            };
             broadcast(payload);
-            displayMessage(localUsername, '', localAvatar, file.type, data, file.name, peer.id, replyingTo);
+            displayMessage(localUsername, '', localAvatar, file.type, data, file.name, file.size, peer.id, replyingTo);
             cancelReply();
             if(peerDetails[peer.id]) { peerDetails[peer.id].messages++; peerDetails[peer.id].files++; }
             updateAllPeerLists();

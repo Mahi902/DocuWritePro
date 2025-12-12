@@ -46,7 +46,9 @@ const PAGES_TO_CACHE = [
   "/image-editor.html",
   "/atbedt.html",
   "/image-generator.html",
-  "/draw.html"
+  "/draw.html",
+  "/connect1.html",
+  "/connect.html"
 ];
 
 // -------------------------

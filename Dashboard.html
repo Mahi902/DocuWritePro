@@ -967,6 +967,80 @@
     }
     /* --- END SETTINGS PANEL --- */
 
+    /* --- NEW: Connection Modal Styles --- */
+    .connection-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2100; /* Above settings */
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+    }
+    .connection-modal.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    .connection-content {
+        background-color: var(--theme-surface);
+        width: 90%;
+        max-width: 400px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--theme-border);
+        transform: scale(0.9);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .connection-modal.active .connection-content {
+        transform: scale(1);
+    }
+    .connection-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--theme-border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .connection-header h3 {
+        margin: 0;
+        font-size: 16px;
+        color: var(--theme-text);
+        font-weight: 500;
+    }
+    .close-modal-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--theme-text-secondary);
+        padding: 5px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .close-modal-btn:hover {
+        background-color: var(--theme-hover-bg);
+    }
+    .smooth-iframe {
+        width: 100%;
+        height: 400px; /* "Small" */
+        border: none;
+        display: block;
+        /* Scrollable handled by iframe content or overflow here if needed */
+    }
+    /* --- END: Connection Modal Styles --- */
+
 
     /* Responsive */
     @media (max-width: 768px) {
@@ -1046,7 +1120,11 @@
         </div>
         
         <div class="right-section" style="margin-left: auto;">
-            <!-- Grid button removed -->
+            <!-- New Connection Button -->
+            <button class="settings-btn" id="connectBtn" title="Connect" style="margin-right: 10px;">
+                <span class="material-symbols-outlined">link</span>
+            </button>
+            <!-- Settings Button -->
             <button class="settings-btn" id="settingsBtn" title="Settings">
                 <span class="material-symbols-outlined">settings</span>
             </button>
@@ -1189,7 +1267,7 @@
                 <h3 style="text-align: center; margin-bottom: 5px;">DocuWrite Pro</h3>
 			</br>
                 <!-- --- VERSION UPDATED --- -->
-                <p id="app-version">Version 4.9.7</p>
+                <p id="app-version">Version 4.9.8</p>
             </div>
             
             <!-- --- UPDATED: Account Section --- -->
@@ -1354,6 +1432,19 @@
                 <h3>Legal</h3>
                 <iframe id="legal-iframe" src="https://mahi902.github.io/DocuWritePro/legal-documents.html"></iframe>
             </div>
+        </div>
+    </div>
+    
+    <!-- --- NEW: Connection Modal --- -->
+    <div id="connectionModal" class="connection-modal">
+        <div class="connection-content">
+            <div class="connection-header">
+                <h3>Connection</h3>
+                <button id="closeConnectionBtn" class="close-modal-btn">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <iframe src="https://mahi902.github.io/DocuWritePro/ct.html" class="smooth-iframe"></iframe>
         </div>
     </div>
     
@@ -2129,6 +2220,26 @@
             
             // --- NEW: Check Cookie Status ---
             checkCookieStatus();
+            
+            // --- NEW: Connection Modal Logic ---
+            const connectBtn = document.getElementById('connectBtn');
+            const connectionModal = document.getElementById('connectionModal');
+            const closeConnectionBtn = document.getElementById('closeConnectionBtn');
+
+            connectBtn.addEventListener('click', () => {
+                connectionModal.classList.add('active');
+            });
+
+            closeConnectionBtn.addEventListener('click', () => {
+                connectionModal.classList.remove('active');
+            });
+
+            // Close modal when clicking outside content
+            connectionModal.addEventListener('click', (e) => {
+                if (e.target === connectionModal) {
+                    connectionModal.classList.remove('active');
+                }
+            });
 
         });
 

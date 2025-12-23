@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- STRICT CSP: Blocks all external requests. Only allows inline scripts/styles and local images. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data: blob:;">
+    <title>File Encryptor - Zero-Knowledge Encryption</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --error: #ef4444;
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--surface);
+            width: 100%;
+            max-width: 600px;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .icon-shield {
+            width: 48px;
+            height: 48px;
+            background: var(--primary);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .title h1 { font-size: 1.25rem; font-weight: 700; }
+        .title p { color: var(--text-muted); font-size: 0.875rem; margin-top: 4px; }
+        .badge {
+            background: #dbeafe; color: #1e40af; 
+            padding: 2px 8px; rounded: 4px; font-size: 0.7rem; font-weight: 700; 
+            border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .tab-btn {
+            flex: 1; padding: 16px; border: none; background: none;
+            font-weight: 600; color: var(--text-muted); cursor: pointer;
+            transition: all 0.2s; border-bottom: 2px solid transparent;
+        }
+        .tab-btn:hover { background: #f1f5f9; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        .content { padding: 24px; }
+        .form-group { margin-bottom: 24px; }
+        .label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; }
+        
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .drop-zone:hover, .drop-zone.active { border-color: var(--primary); background: #eff6ff; }
+        .drop-zone input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .file-info { margin-top: 8px; font-size: 0.875rem; color: var(--primary); font-weight: 500; display: none; }
+
+        .input-group { position: relative; display: flex; }
+        .code-input {
+            width: 100%; padding: 12px 16px; padding-right: 100px;
+            border: 1px solid var(--border); border-radius: 8px;
+            font-family: 'Courier New', monospace; font-size: 1rem;
+            outline: none; transition: 0.2s;
+        }
+        .code-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .btn-generate {
+            position: absolute; right: 6px; top: 6px; bottom: 6px;
+            background: #f1f5f9; border: none; padding: 0 12px;
+            border-radius: 6px; color: var(--text-main); font-weight: 600;
+            font-size: 0.75rem; cursor: pointer;
+        }
+        .btn-generate:hover { background: #e2e8f0; }
+
+        .btn-primary {
+            width: 100%; padding: 14px; background: var(--primary);
+            color: white; border: none; border-radius: 8px;
+            font-weight: 600; font-size: 1rem; cursor: pointer;
+            transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .status {
+            padding: 12px; border-radius: 8px; font-size: 0.875rem;
+            margin-bottom: 16px; display: none;
+        }
+        .status.success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .status.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+        .security-note {
+            margin-top: 24px; padding: 16px; background: #f8fafc;
+            border-radius: 8px; border: 1px solid var(--border);
+            font-size: 0.75rem; color: var(--text-muted);
+        }
+        .security-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .check { color: var(--success); }
+
+        .hidden { display: none; }
+        
+        /* Spinner */
+        .spinner {
+            width: 18px; height: 18px; border: 2px solid #ffffff;
+            border-bottom-color: transparent; border-radius: 50%;
+            display: inline-block; box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <div class="icon-shield">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <div class="title">
+                <h1>File Encryptor <span class="badge">.vault</span></h1>
+                <p>AES-GCM-256 / SHA-512 / Metadata Encryption</p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('encrypt')" id="tab-encrypt">Encrypt</button>
+            <button class="tab-btn" onclick="switchTab('decrypt')" id="tab-decrypt">Decrypt</button>
+        </div>
+
+        <div class="content">
+            <div id="status-msg" class="status"></div>
+
+            <!-- ENCRYPT VIEW -->
+            <div id="view-encrypt">
+                <div class="form-group">
+                    <label class="label">1. Select File</label>
+                    <div class="drop-zone" id="dz-enc">
+                        <p>Click or drag file here</p>
+                        <div id="file-name-enc" class="file-info"></div>
+                        <input type="file" id="file-enc">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">2. Secure Code (20 Digits)</label>
+                    <div class="input-group">
+                        <input type="text" id="pass-enc" class="code-input" placeholder="Generate random code ->" autocomplete="off">
+                        <button class="btn-generate" onclick="generateStrongCode()">GENERATE</button>
+                    </div>
+                    <p style="font-size: 0.75rem; color: var(--error); margin-top: 6px; font-weight: 500;">SAVE THIS CODE. If lost, the file is unrecoverable.</p>
+                </div>
+
+                <button class="btn-primary" onclick="processEncryption()" id="btn-enc">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Encrypt & Download
+                </button>
+            </div>
+
+            <!-- DECRYPT VIEW -->
+            <div id="view-decrypt" class="hidden">
+                <div class="form-group">
+                    <label class="label">1. Select Vault File (.vault)</label>
+                    <div class="drop-zone" id="dz-dec">
+                        <p>Click or drag .vault file here</p>
+                        <div id="file-name-dec" class="file-info"></div>
+                        <input type="file" id="file-dec">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="label">2. Enter Decryption Code</label>
+                    <input type="password" id="pass-dec" class="code-input" placeholder="Enter your 20-digit code" autocomplete="off">
+                </div>
+
+                <button class="btn-primary" onclick="processDecryption()" id="btn-dec">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                    Decrypt & Restore
+                </button>
+            </div>
+
+            <div class="security-note">
+                <div class="security-item"><span class="check">✓</span> Offline Execution (No Server)</div>
+                <div class="security-item"><span class="check">✓</span> Filenames are Encrypted</div>
+                <div class="security-item"><span class="check">✓</span> 1,000,000 PBKDF2 Iterations</div>
+                <div class="security-item"><span class="check">✓</span> Memory Cleaning (Best Effort)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CRYPTO CONFIGURATION (EXTREME SECURITY) ---
+        const CONFIG = {
+            saltLen: 32,              // 32 bytes (256 bits) salt
+            ivLen: 12,                // 12 bytes (96 bits) standard GCM IV
+            iterations: 1000000,      // 1 MILLION iterations (Slow but secure)
+            hash: 'SHA-512',          // Stronger hashing algorithm
+            keyLen: 256               // AES-256
+        };
+
+        // --- UTILITIES ---
+        const $ = id => document.getElementById(id);
+        const setStatus = (msg, type) => {
+            const el = $('status-msg');
+            el.textContent = msg;
+            el.className = `status ${type}`;
+            el.style.display = 'block';
+        };
+        const clearStatus = () => $('status-msg').style.display = 'none';
+
+        // --- UI LOGIC ---
+        function switchTab(mode) {
+            clearStatus();
+            $('view-encrypt').classList.toggle('hidden', mode !== 'encrypt');
+            $('view-decrypt').classList.toggle('hidden', mode !== 'decrypt');
+            $('tab-encrypt').classList.toggle('active', mode === 'encrypt');
+            $('tab-decrypt').classList.toggle('active', mode === 'decrypt');
+        }
+
+        ['enc', 'dec'].forEach(mode => {
+            const input = $(`file-${mode}`);
+            const zone = $(`dz-${mode}`);
+            const label = $(`file-name-${mode}`);
+
+            input.addEventListener('change', e => {
+                if(e.target.files[0]) {
+                    label.textContent = `Selected: ${e.target.files[0].name}`;
+                    label.style.display = 'block';
+                    zone.classList.add('active');
+                    clearStatus();
+                }
+            });
+            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('active'); });
+            zone.addEventListener('dragleave', e => zone.classList.remove('active'));
+            zone.addEventListener('drop', e => {
+                e.preventDefault();
+                input.files = e.dataTransfer.files;
+                input.dispatchEvent(new Event('change'));
+            });
+        });
+
+        function generateStrongCode() {
+            const array = new Uint32Array(5);
+            window.crypto.getRandomValues(array);
+            let code = '';
+            // Generate a numeric string from high-entropy random values
+            for(let i=0; i<array.length; i++) code += array[i].toString().slice(-4);
+            while(code.length < 20) code += Math.floor(Math.random() * 10);
+            const finalCode = code.slice(0, 20);
+            
+            $('pass-enc').value = finalCode;
+            
+            navigator.clipboard.writeText(finalCode).then(() => {
+                setStatus('Secure code copied to clipboard!', 'success');
+            }).catch(() => setStatus('Code generated. Copy it manually.', 'success'));
+        }
+
+        // --- CORE CRYPTO ENGINE ---
+
+        // 1. Pack Data: [Filename Len (2 bytes)] + [Filename] + [File Content]
+        // This ensures the filename is encrypted alongside the data
+        function packData(filename, fileData) {
+            const enc = new TextEncoder();
+            const nameBytes = enc.encode(filename);
+            
+            if (nameBytes.length > 65535) throw new Error("Filename too long");
+
+            // Create buffer: 2 bytes (len) + nameBytes + fileData
+            const buffer = new Uint8Array(2 + nameBytes.length + fileData.byteLength);
+            
+            // Set Length (Little Endian)
+            new DataView(buffer.buffer).setUint16(0, nameBytes.length, true);
+            
+            // Set Name
+            buffer.set(nameBytes, 2);
+            
+            // Set Data
+            buffer.set(new Uint8Array(fileData), 2 + nameBytes.length);
+            
+            return buffer;
+        }
+
+        // 2. Unpack Data: Inverse of packData
+        function unpackData(decryptedBuffer) {
+            const view = new DataView(decryptedBuffer);
+            const nameLen = view.getUint16(0, true);
+            
+            const nameBytes = new Uint8Array(decryptedBuffer, 2, nameLen);
+            const dec = new TextDecoder();
+            const filename = dec.decode(nameBytes);
+            
+            const fileData = decryptedBuffer.slice(2 + nameLen);
+            
+            return { filename, fileData };
+        }
+
+        async function processEncryption() {
+            const file = $('file-enc').files[0];
+            const code = $('pass-enc').value.trim();
+            const btn = $('btn-enc');
+
+            if (!file) return setStatus('Please select a file.', 'error');
+            if (!code || code.length < 10) return setStatus('Code too weak or missing.', 'error');
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span> Encrypting...';
+                
+                // Allow UI to render
+                await new Promise(r => requestAnimationFrame(r));
+                await new Promise(r => setTimeout(r, 50));
+
+                const rawData = await file.arrayBuffer();
+                const packedData = packData(file.name, rawData);
+
+                // Generate Salt & IV
+                const salt = window.crypto.getRandomValues(new Uint8Array(CONFIG.saltLen));
+                const iv = window.crypto.getRandomValues(new Uint8Array(CONFIG.ivLen));
+
+                // Key Derivation
+                const keyMaterial = await window.crypto.subtle.importKey(
+                    "raw", new TextEncoder().encode(code), { name: "PBKDF2" }, false, ["deriveKey"]
+                );
+
+                const key = await window.crypto.subtle.deriveKey(
+                    {
+                        name: "PBKDF2", salt: salt, iterations: CONFIG.iterations, hash: CONFIG.hash
+                    },
+                    keyMaterial,
+                    { name: "AES-GCM", length: CONFIG.keyLen },
+                    false, ["encrypt"]
+                );
+
+                // Encrypt
+                const encryptedContent = await window.crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv }, key, packedData
+                );
+
+                // Final Blob: [Salt] + [IV] + [Ciphertext]
+                const finalBuffer = new Uint8Array(salt.byteLength + iv.byteLength + encryptedContent.byteLength);
+                finalBuffer.set(salt, 0);
+                finalBuffer.set(iv, salt.byteLength);
+                finalBuffer.set(new Uint8Array(encryptedContent), salt.byteLength + iv.byteLength);
+
+                downloadBlob(finalBuffer, `secure_archive_${Date.now()}.vault`);
+                
+                setStatus('Encryption Successful! Filename is now hidden.', 'success');
+                
+                // Memory hygiene
+                $('pass-enc').value = ''; 
+                
+            } catch (err) {
+                console.error(err);
+                setStatus('Encryption failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Encrypt & Download';
+            }
+        }
+
+        async function processDecryption() {
+            const file = $('file-dec').files[0];
+            const code = $('pass-dec').value.trim();
+            const btn = $('btn-dec');
+
+            if (!file) return setStatus('Please select a vault file.', 'error');
+            if (!code) return setStatus('Please enter the decryption code.', 'error');
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner"></span> Decrypting...';
+                
+                await new Promise(r => requestAnimationFrame(r));
+                await new Promise(r => setTimeout(r, 50));
+
+                const fileData = await file.arrayBuffer();
+                
+                // Extract Salt, IV, Ciphertext
+                const salt = new Uint8Array(fileData.slice(0, CONFIG.saltLen));
+                const iv = new Uint8Array(fileData.slice(CONFIG.saltLen, CONFIG.saltLen + CONFIG.ivLen));
+                const ciphertext = fileData.slice(CONFIG.saltLen + CONFIG.ivLen);
+
+                // Key Derivation (Must match encryption params)
+                const keyMaterial = await window.crypto.subtle.importKey(
+                    "raw", new TextEncoder().encode(code), { name: "PBKDF2" }, false, ["deriveKey"]
+                );
+
+                const key = await window.crypto.subtle.deriveKey(
+                    {
+                        name: "PBKDF2", salt: salt, iterations: CONFIG.iterations, hash: CONFIG.hash
+                    },
+                    keyMaterial,
+                    { name: "AES-GCM", length: CONFIG.keyLen },
+                    false, ["decrypt"]
+                );
+
+                // Decrypt
+                const decryptedPacked = await window.crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: iv }, key, ciphertext
+                );
+
+                // Unpack metadata
+                const { filename, fileData: originalData } = unpackData(decryptedPacked);
+
+                downloadBlob(originalData, filename);
+                setStatus(`Successfully restored: ${filename}`, 'success');
+
+                // Memory hygiene
+                $('pass-dec').value = '';
+
+            } catch (err) {
+                console.error(err);
+                setStatus('Decryption failed. Invalid code or corrupted file.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Decrypt & Restore';
+            }
+        }
+
+        function downloadBlob(data, filename) {
+            const blob = new Blob([data], { type: "application/octet-stream" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>

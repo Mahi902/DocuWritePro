@@ -15,6 +15,7 @@ const PAGES_TO_CACHE = [
   "/findandreplacer.html",
   "/page-number-adder.html",
   "/rm.html",
+  "/fe.html",
   "/chart-maker.html",
   "/graphmaker.html",
   "/whiteboard.html",

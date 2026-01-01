@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spreadsheet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    <style>
+        :root {
+            --grid-border: #e2e8f0;
+            --header-bg: #f8fafc;
+            --selection-bg: rgba(79, 70, 229, 0.08);
+            --selection-border: #4f46e5;
+            --dependency-bg: rgba(16, 185, 129, 0.1);
+            --dependency-border: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #1e293b;
+        }
+
+        .spreadsheet-container {
+            flex: 1;
+            overflow: auto;
+            position: relative;
+            background: #f1f5f9;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+            background: white;
+        }
+
+        th, td {
+            border-right: 1px solid var(--grid-border);
+            border-bottom: 1px solid var(--grid-border);
+            position: relative;
+            min-width: 100px;
+            height: 28px;
+            padding: 0 8px;
+            font-size: 13px;
+            outline: none;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        th {
+            background: var(--header-bg);
+            font-weight: 500;
+            color: #64748b;
+            user-select: none;
+            text-align: center;
+        }
+
+        .row-header {
+            width: 50px;
+            min-width: 50px;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+        }
+
+        .col-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .corner-header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            z-index: 20;
+            background: #cbd5e1;
+            width: 50px;
+        }
+
+        td.selected {
+            background: var(--selection-bg);
+            box-shadow: inset 0 0 0 2px var(--selection-border);
+            z-index: 5;
+        }
+
+        td.dependency-highlight {
+            background: var(--dependency-bg);
+            box-shadow: inset 0 0 0 1px var(--dependency-border);
+            z-index: 4;
+        }
+
+        .toolbar {
+            background: white;
+            border-bottom: 1px solid var(--grid-border);
+            padding: 8px 12px;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .tool-btn {
+            padding: 6px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #475569;
+        }
+
+        .tool-btn:hover, .tool-btn.active {
+            background: #f1f5f9;
+            color: #4f46e5;
+        }
+
+        .divider {
+            width: 1px;
+            height: 20px;
+            background: var(--grid-border);
+            margin: 0 6px;
+        }
+
+        input[type="color"] {
+            width: 20px;
+            height: 20px;
+            border: none;
+            padding: 0;
+            background: none;
+            cursor: pointer;
+        }
+
+        #file-input { display: none; }
+    </style>
+</head>
+<body class="bg-slate-50">
+
+    <header class="bg-white px-4 py-2 flex items-center justify-between border-b shadow-sm z-30">
+        <div class="flex items-center gap-4">
+            <div class="bg-indigo-600 p-1.5 rounded-lg shadow-inner">
+                <span class="material-symbols-outlined text-white text-xl leading-none block">grid_view</span>
+            </div>
+            <input type="text" id="sheet-title" value="Spreadsheet" class="text-lg font-semibold outline-none border-b-2 border-transparent focus:border-indigo-500 transition-all px-1 bg-transparent">
+        </div>
+        <div class="flex gap-2">
+            <button onclick="document.getElementById('file-input').click()" class="px-3 py-1.5 border border-slate-300 rounded-md text-sm font-medium hover:bg-slate-100 transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">upload_file</span> Import
+            </button>
+            <div class="relative group">
+                <button class="px-4 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">download</span> Export
+                </button>
+                <div class="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded shadow-lg hidden group-hover:block z-50">
+                    <button onclick="exportFile('json')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm text-indigo-500">data_object</span> Save as JSON
+                    </button>
+                    <button onclick="exportFile('csv')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2 border-t border-slate-100">
+                        <span class="material-symbols-outlined text-sm text-slate-500">csv</span> Export as CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <input type="file" id="file-input" accept=".json,.csv" onchange="importFile(event)">
+
+    <div class="toolbar">
+        <div class="tool-btn" onclick="undo()" title="Undo"><span class="material-symbols-outlined">undo</span></div>
+        <div class="tool-btn" onclick="redo()" title="Redo"><span class="material-symbols-outlined">redo</span></div>
+        <div class="divider"></div>
+        <div class="tool-btn" onclick="addRow()" title="Add Row Below"><span class="material-symbols-outlined">add_row_below</span></div>
+        <div class="tool-btn" onclick="addCol()" title="Add Column Right"><span class="material-symbols-outlined">add_column_right</span></div>
+        <div class="divider"></div>
+        <div class="tool-btn" id="btn-bold" onclick="applyStyle('fontWeight', 'bold')" title="Bold"><span class="material-symbols-outlined">format_bold</span></div>
+        <div class="tool-btn" id="btn-italic" onclick="applyStyle('fontStyle', 'italic')" title="Italic"><span class="material-symbols-outlined">format_italic</span></div>
+        <div class="tool-btn" id="btn-underline" onclick="applyStyle('textDecoration', 'underline')" title="Underline"><span class="material-symbols-outlined">format_underlined</span></div>
+        <div class="divider"></div>
+        <div class="tool-btn" onclick="applyStyle('textAlign', 'left')"><span class="material-symbols-outlined">format_align_left</span></div>
+        <div class="tool-btn" onclick="applyStyle('textAlign', 'center')"><span class="material-symbols-outlined">format_align_center</span></div>
+        <div class="tool-btn" onclick="applyStyle('textAlign', 'right')"><span class="material-symbols-outlined">format_align_right</span></div>
+        <div class="divider"></div>
+        <div class="flex items-center gap-1 px-2 hover:bg-slate-100 rounded cursor-pointer h-8">
+            <span class="material-symbols-outlined text-sm">palette</span>
+            <input type="color" onchange="applyStyle('color', this.value)" title="Text Color">
+        </div>
+        <div class="flex items-center gap-1 px-2 hover:bg-slate-100 rounded cursor-pointer h-8">
+            <span class="material-symbols-outlined text-sm">format_color_fill</span>
+            <input type="color" id="bg-color-input" onchange="applyStyle('backgroundColor', this.value)" value="#ffffff" title="Cell Background">
+        </div>
+        <div class="divider"></div>
+        <button onclick="deleteCurrentRow()" class="text-xs px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors">Delete Row</button>
+        <button onclick="deleteCurrentCol()" class="text-xs px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors ml-1">Delete Col</button>
+    </div>
+
+    <div class="formula-bar flex border-b bg-white items-center px-3 py-1 gap-2 shadow-sm z-20">
+        <div id="active-cell-id" class="text-xs font-mono font-bold text-indigo-600 min-w-[50px] px-2 py-1 bg-indigo-50 border border-indigo-100 rounded text-center">A1</div>
+        <div class="text-slate-300 font-light text-xl">|</div>
+        <span class="material-symbols-outlined text-slate-400 text-sm">function</span>
+        <input type="text" id="formula-input" class="flex-1 outline-none text-sm font-medium py-1 px-2 focus:bg-slate-50 rounded transition-colors" placeholder="Enter value or formula (e.g., =SUM(A1:A10))">
+    </div>
+
+    <div class="spreadsheet-container" id="drop-zone">
+        <table id="main-grid">
+            <thead id="grid-head"></thead>
+            <tbody id="grid-body"></tbody>
+        </table>
+    </div>
+
+    <footer class="bg-white border-t px-4 py-2 text-[10px] text-slate-400 flex justify-between uppercase tracking-widest font-bold">
+        <div id="status-text">Ready</div>
+        <div id="grid-dimensions">0 Rows x 0 Cols</div>
+    </footer>
+
+    <script>
+        let rows = 40;
+        let cols = 20;
+        let cellData = {}; 
+        let activeCell = { r: 0, c: 0 };
+        let history = [];
+        let historyIndex = -1;
+
+        // --- Core Helpers ---
+        function getColLabel(index) {
+            let label = "";
+            while (index >= 0) {
+                label = String.fromCharCode((index % 26) + 65) + label;
+                index = Math.floor(index / 26) - 1;
+            }
+            return label;
+        }
+
+        function getCellId(r, c) { return `${getColLabel(c)}${r + 1}`; }
+
+        function parseCellId(id) {
+            const match = id.match(/([A-Z]+)(\d+)/);
+            if (!match) return null;
+            let colLabel = match[1], row = parseInt(match[2]) - 1, col = 0;
+            for (let i = 0; i < colLabel.length; i++) col = col * 26 + (colLabel.charCodeAt(i) - 64);
+            return { r: row, c: col - 1 };
+        }
+
+        // --- Grid Management ---
+        function renderGrid() {
+            const head = document.getElementById('grid-head');
+            const body = document.getElementById('grid-body');
+            head.innerHTML = `<tr><th class="corner-header"></th>${Array.from({length: cols}, (_, c) => `<th class="col-header">${getColLabel(c)}</th>`).join('')}</tr>`;
+
+            let bHtml = "";
+            for (let r = 0; r < rows; r++) {
+                bHtml += `<tr><th class="row-header">${r + 1}</th>`;
+                for (let c = 0; c < cols; c++) {
+                    const id = getCellId(r, c);
+                    const data = cellData[id] || { display: '', style: {} };
+                    const styleStr = buildStyleString(data.style || {});
+                    bHtml += `<td id="${id}" contenteditable="true" style="${styleStr}" onfocus="onCellFocus(${r}, ${c})" onblur="onCellBlur('${id}')" onkeydown="onCellKey(event, ${r}, ${c})">${data.display || ''}</td>`;
+                }
+                bHtml += `</tr>`;
+            }
+            body.innerHTML = bHtml;
+            document.getElementById('grid-dimensions').innerText = `${rows} Rows x ${cols} Cols`;
+        }
+
+        function buildStyleString(styleObj) {
+            return Object.entries(styleObj).map(([k,v]) => `${k.replace(/[A-Z]/g, m => "-" + m.toLowerCase())}:${v}`).join(';');
+        }
+
+        // --- Cell Logic ---
+        function onCellFocus(r, c) {
+            clearHighlights();
+            const prevId = getCellId(activeCell.r, activeCell.c);
+            document.getElementById(prevId)?.classList.remove('selected');
+
+            activeCell = { r, c };
+            const id = getCellId(r, c);
+            const td = document.getElementById(id);
+            td.classList.add('selected');
+            document.getElementById('active-cell-id').innerText = id;
+            
+            const data = cellData[id] || { raw: '' };
+            if (data.raw && data.raw.toString().startsWith('=')) {
+                td.innerText = data.raw;
+                highlightDependencies(data.raw);
+            }
+            document.getElementById('formula-input').value = data.raw || td.innerText;
+        }
+
+        function onCellBlur(id) {
+            const td = document.getElementById(id);
+            updateCellValue(id, td.innerText);
+            recalculateAll();
+        }
+
+        function updateCellValue(id, val) {
+            if (!cellData[id]) cellData[id] = { raw: '', display: '', style: {} };
+            const oldRaw = cellData[id].raw;
+            cellData[id].raw = val;
+            if (oldRaw !== val) saveHistory();
+        }
+
+        function onCellKey(e, r, c) {
+            if (e.key === 'Enter') { e.preventDefault(); moveFocus(r + 1, c); }
+            if (e.key === 'Tab') { e.preventDefault(); moveFocus(r, c + 1); }
+        }
+
+        function moveFocus(r, c) {
+            const id = getCellId(Math.max(0, Math.min(r, rows-1)), Math.max(0, Math.min(c, cols-1)));
+            document.getElementById(id)?.focus();
+        }
+
+        document.getElementById('formula-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const id = getCellId(activeCell.r, activeCell.c);
+                updateCellValue(id, e.target.value);
+                recalculateAll();
+                document.getElementById(id).focus();
+            }
+        });
+
+        // --- Styles ---
+        function applyStyle(prop, val) {
+            const id = getCellId(activeCell.r, activeCell.c);
+            const td = document.getElementById(id);
+            if (!td) return;
+            
+            if (!cellData[id]) cellData[id] = { raw: td.innerText, display: td.innerText, style: {} };
+            
+            // Toggle Logic for simple styles
+            if (prop === 'fontWeight') val = td.style.fontWeight === 'bold' ? 'normal' : 'bold';
+            else if (prop === 'fontStyle') val = td.style.fontStyle === 'italic' ? 'normal' : 'italic';
+            else if (prop === 'textDecoration') val = td.style.textDecoration.includes('underline') ? 'none' : 'underline';
+            
+            td.style[prop] = val;
+            cellData[id].style[prop] = val;
+            saveHistory();
+        }
+
+        // --- Formula Engine ---
+        function clearHighlights() {
+            document.querySelectorAll('.dependency-highlight').forEach(el => el.classList.remove('dependency-highlight'));
+        }
+
+        function highlightDependencies(formula) {
+            extractCellReferences(formula).forEach(id => {
+                document.getElementById(id)?.classList.add('dependency-highlight');
+            });
+        }
+
+        function extractCellReferences(formula) {
+            const refs = new Set(), upper = formula.toString().toUpperCase();
+            const rangeRegex = /([A-Z]+\d+):([A-Z]+\d+)/g;
+            let match;
+            while ((match = rangeRegex.exec(upper)) !== null) {
+                const start = parseCellId(match[1]), end = parseCellId(match[2]);
+                if (start && end) {
+                    for (let r = Math.min(start.r, end.r); r <= Math.max(start.r, end.r); r++)
+                        for (let c = Math.min(start.c, end.c); c <= Math.max(start.c, end.c); c++)
+                            refs.add(getCellId(r, c));
+                }
+            }
+            const cellRegex = /\b[A-Z]+\d+\b/g;
+            while ((match = cellRegex.exec(upper)) !== null) {
+                const id = match[0];
+                const prev = upper[match.index - 1], next = upper[match.index + id.length];
+                if (prev !== ':' && next !== ':') refs.add(id);
+            }
+            return Array.from(refs);
+        }
+
+        function recalculateAll() {
+            const ids = Object.keys(cellData);
+            for(let i = 0; i < 8; i++) { 
+                let changed = false;
+                ids.forEach(id => {
+                    const item = cellData[id];
+                    let newVal;
+                    if (item.raw && item.raw.toString().startsWith('=')) {
+                        newVal = executeFormula(item.raw);
+                    } else {
+                        newVal = item.raw;
+                    }
+                    if (item.display !== newVal) {
+                        item.display = newVal;
+                        changed = true;
+                    }
+                    const td = document.getElementById(id);
+                    if (td && document.activeElement !== td) td.innerText = item.display;
+                });
+                if (!changed) break;
+            }
+        }
+
+        function executeFormula(raw) {
+            try {
+                let expr = raw.substring(1).toUpperCase();
+                const funcRegex = /(SUM|AVERAGE|COUNT|MIN|MAX)\(([A-Z0-9:]+)\)/g;
+                expr = expr.replace(funcRegex, (m, func, range) => {
+                    const vals = getRangeValues(range);
+                    if (func === 'SUM') return vals.reduce((a, b) => a + b, 0);
+                    if (func === 'AVERAGE') return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+                    if (func === 'COUNT') return vals.length;
+                    if (func === 'MIN') return vals.length ? Math.min(...vals) : 0;
+                    if (func === 'MAX') return vals.length ? Math.max(...vals) : 0;
+                });
+                expr = expr.replace(/\b[A-Z]+\d+\b/g, (m) => {
+                    const val = cellData[m]?.display || "0";
+                    return isNaN(val) || val === "" ? 0 : val;
+                });
+                if (/[^0-9+\-*/().\s]/.test(expr)) return "#REF!";
+                const res = eval(expr);
+                return isFinite(res) ? Math.round(res * 100) / 100 : "#ERR";
+            } catch { return "#VAL"; }
+        }
+
+        function getRangeValues(rangeStr) {
+            if (!rangeStr.includes(':')) {
+                const v = parseFloat(cellData[rangeStr]?.display);
+                return isNaN(v) ? [] : [v];
+            }
+            const [sId, eId] = rangeStr.split(':'), start = parseCellId(sId), end = parseCellId(eId);
+            if (!start || !end) return [];
+            const vals = [];
+            for (let r = Math.min(start.r, end.r); r <= Math.max(start.r, end.r); r++)
+                for (let c = Math.min(start.c, end.c); c <= Math.max(start.c, end.c); c++) {
+                    const v = parseFloat(cellData[getCellId(r, c)]?.display);
+                    if (!isNaN(v)) vals.push(v);
+                }
+            return vals;
+        }
+
+        // --- Grid Mutations ---
+        function addRow() { rows++; renderGrid(); recalculateAll(); saveHistory(); }
+        function addCol() { cols++; renderGrid(); recalculateAll(); saveHistory(); }
+        function deleteCurrentRow() {
+            if (rows <= 1) return;
+            const r = activeCell.r;
+            const newData = {};
+            Object.keys(cellData).forEach(id => {
+                const cell = parseCellId(id);
+                if (cell.r < r) newData[id] = cellData[id];
+                else if (cell.r > r) newData[getCellId(cell.r - 1, cell.c)] = cellData[id];
+            });
+            cellData = newData;
+            rows--;
+            renderGrid(); recalculateAll(); saveHistory();
+        }
+        function deleteCurrentCol() {
+            if (cols <= 1) return;
+            const c = activeCell.c;
+            const newData = {};
+            Object.keys(cellData).forEach(id => {
+                const cell = parseCellId(id);
+                if (cell.c < c) newData[id] = cellData[id];
+                else if (cell.c > c) newData[getCellId(cell.r, cell.c - 1)] = cellData[id];
+            });
+            cellData = newData;
+            cols--;
+            renderGrid(); recalculateAll(); saveHistory();
+        }
+
+        // --- Persistence ---
+        function exportFile(type) {
+            const title = document.getElementById('sheet-title').value || 'spreadsheet';
+            let content, mime, ext;
+
+            if (type === 'json') {
+                content = JSON.stringify({ 
+                    title, 
+                    rows, 
+                    cols, 
+                    cellData 
+                }, null, 4);
+                mime = 'application/json';
+                ext = 'json';
+            } else {
+                let csvRows = [];
+                for (let r = 0; r < rows; r++) {
+                    let csvRow = [];
+                    for (let c = 0; c < cols; c++) {
+                        csvRow.push(`"${(cellData[getCellId(r, c)]?.display || "").toString().replace(/"/g, '""')}"`);
+                    }
+                    csvRows.push(csvRow.join(','));
+                }
+                content = csvRows.join('\n');
+                mime = 'text/csv';
+                ext = 'csv';
+            }
+
+            const blob = new Blob([content], { type: mime });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${title}.${ext}`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importFile(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target.result;
+                const fileName = file.name.toLowerCase();
+
+                if (fileName.endsWith('.json')) {
+                    try {
+                        const data = JSON.parse(text);
+                        rows = data.rows || 40;
+                        cols = data.cols || 20;
+                        cellData = data.cellData || {};
+                        document.getElementById('sheet-title').value = data.title || 'Untitled Spreadsheet';
+                        
+                        renderGrid(); 
+                        recalculateAll(); 
+                        saveHistory();
+                        document.getElementById('status-text').innerText = "JSON Loaded";
+                    } catch (err) { alert("Invalid JSON file"); }
+                } else if (fileName.endsWith('.csv')) {
+                    const csvLines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+                    cellData = {};
+                    rows = Math.max(40, csvLines.length);
+                    cols = 20;
+                    csvLines.forEach((line, r) => {
+                        const rowCells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                        cols = Math.max(cols, rowCells.length);
+                        rowCells.forEach((val, c) => {
+                            const cleanVal = val.replace(/^"|"$/g, '').replace(/""/g, '"');
+                            if (cleanVal) cellData[getCellId(r, c)] = { raw: cleanVal, display: cleanVal, style: {} };
+                        });
+                    });
+                    renderGrid(); recalculateAll(); saveHistory();
+                    document.getElementById('status-text').innerText = "CSV Loaded";
+                }
+                e.target.value = ''; // Reset file input
+            };
+            reader.readAsText(file);
+        }
+
+        // --- History / Undo ---
+        function saveHistory() {
+            const snap = JSON.stringify({ rows, cols, cellData });
+            if (historyIndex < history.length - 1) history = history.slice(0, historyIndex + 1);
+            history.push(snap);
+            historyIndex++;
+            if (history.length > 50) history.shift();
+        }
+
+        function undo() {
+            if (historyIndex > 0) {
+                historyIndex--;
+                restoreState(JSON.parse(history[historyIndex]));
+            }
+        }
+
+        function redo() {
+            if (historyIndex < history.length - 1) {
+                historyIndex++;
+                restoreState(JSON.parse(history[historyIndex]));
+            }
+        }
+
+        function restoreState(state) {
+            rows = state.rows; cols = state.cols; cellData = state.cellData;
+            renderGrid(); recalculateAll();
+        }
+
+        window.onload = () => { renderGrid(); saveHistory(); };
+    </script>
+</body>
+</html>

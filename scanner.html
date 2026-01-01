@@ -3,56 +3,15 @@
 <head>
     <meta charset="UTF-8">   
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Scanner</title>
-    <meta name="description" content="DocuWrite Pro is an all-in-one online workspace that lets you write, edit, convert, design, and manage documents and digital content instantly—no installation, no complexity.">
-  <meta name="keywords" content="DocuWrite Pro, Mohtadi Azad Mahi, AI writer, document editor, online text tool, GitHub project, DocuWritePro, Document Editor, Document, Editor, PDF, JPG, Edit, Text, Change File Type, File Changer, Format, Format Changer, Office, Docs, A4, Editor, General document editing, Collab, Editing documents together, Document Viewer, Viewing documents, Word Finder, Searching for specific words, Translator, Language translation, Document Signer, Electronically signing documents, Page Number Adder, Adding page numbers to documents, Chart Maker, Creating data charts, Table Maker, Creating tables, Watermark Adder, Adding watermarks to files, Email Writer, Assisting with writing emails, Spell Checker, Checking spelling and grammar, File Extractor, Extracting contents from files, QR Maker, Creating QR codes, ID Card Maker, Designing and creating ID cards, File Zipper, Compressing or zipping files, PDF Converter, Converting files to or from PDF format, Context Field, Analyzing text (e.g., word count, frequency), Gift Card Maker, Creating custom gift cards, Share File, Uploading or sharing a file, Text Extractor, Extracting text from sources (e.g., images), Keyboard Click Test, Testing keyboard functionality, Frontend IDE, Integrated Development Environment for frontend coding, HTML Editor, Editing HTML code, HTML Writer, Writing or generating HTML content, Button Designer, Designing user interface buttons, HTML Splitter, Splitting HTML files or elements, GoTo Code, Navigation feature in an IDE/editor, Code Snipper, Storing or managing code snippets, Image Editor, Editing images, Image Generator, Generating new images, Drawing Board, A simple drawing or sketching tool, HTML, CSS, JS, Online, Fast, Easy, No login, No signup, Free, No credit card required, Mohtadi, Azad, Mahi, Mohtadi Azad, Mohtadi Azad Mahi, mahi902">
-  <meta name="author" content="Mohtadi Azad Mahi">
-  <meta name="robots" content="index, follow">
-
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <meta name="theme-color" content="#ffffff">
-
-  <!-- App & Brand Metadata -->
-  <meta property="og:site_name" content="DocuWrite Pro">
-  <meta name="application-name" content="DocuWrite Pro">
-  <meta name="apple-mobile-web-app-title" content="DocuWrite Pro">
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="DocuWrite Pro — Online Document Editor">
-  <meta property="og:description" content="Edit, format, and export documents easily with DocuWrite Pro by Mohtadi Azad Mahi.">
-  <meta property="og:url" content="https://mahi902.github.io/DocuWritePro/">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DocuWrite Pro — Online Document Editor">
-  <meta name="twitter:description" content="Create, format, and export documents easily with DocuWrite Pro. Built by Mohtadi Azad Mahi.">
-  <meta name="twitter:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-
-  <!-- Structured Data (Google Knowledge Graph) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "DocuWrite Pro",
-    "alternateName": "DocuWrite Pro — Online Document Editor",
-    "url": "https://mahi902.github.io/DocuWritePro/",
-    "creator": {
-      "@type": "Person",
-      "name": "Mohtadi Azad Mahi"
-    }
-  }
-  </script>
+    <title>Scanner Pro</title>
+    <meta name="description" content="Advanced Document Scanner with OCR and Translation capabilities.">
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load OpenCV.js -->
     <script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
     <!-- Load jsPDF for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Load Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         body { touch-action: none; overscroll-behavior: none; background-color: #f3f4f6; color: #1f2937; font-family: sans-serif; }
         
@@ -75,6 +34,33 @@
         /* Loading Spinner */
         .loader { border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Scanning Animation */
+        .scan-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 40;
+            display: none;
+            background: rgba(0,0,0,0.2);
+        }
+        .scan-line {
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(to bottom, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.8), rgba(59, 130, 246, 0));
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
+            position: absolute;
+            top: -10%;
+            animation: scanMove 2s linear infinite;
+        }
+        @keyframes scanMove {
+            0% { top: -10%; }
+            100% { top: 110%; }
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -91,6 +77,16 @@
         <div id="loading" class="absolute inset-0 flex flex-col items-center justify-center z-50 bg-gray-50">
             <div class="loader mb-4"></div>
             <p class="text-gray-500 text-sm">Initializing Vision Engine...</p>
+        </div>
+
+        <!-- Scanning Overlay Effect -->
+        <div id="scanOverlay" class="scan-overlay">
+            <div class="scan-line"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <div class="bg-black/70 text-white px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-sm" id="scanText">
+                    Processing...
+                </div>
+            </div>
         </div>
 
         <!-- Video Source (Hidden) -->
@@ -111,16 +107,77 @@
 
         <!-- Result Mode (After processing) -->
         <div id="result-controls" class="hidden w-full max-w-lg flex flex-col gap-3">
+            <!-- Filter Options -->
             <div class="flex justify-center gap-3">
-                <button id="colorBtn" onclick="toggleFilter('color')" class="px-4 py-2 rounded-full font-semibold transition-colors border">Color Photo</button>
-                <button id="bwBtn" onclick="toggleFilter('bw')" class="px-4 py-2 rounded-full font-semibold transition-colors border bg-blue-600 text-white border-blue-600">B&W Document</button>
+                <button id="colorBtn" onclick="toggleFilter('color')" class="px-4 py-2 rounded-full font-semibold transition-colors border">Color</button>
+                <button id="bwBtn" onclick="toggleFilter('bw')" class="px-4 py-2 rounded-full font-semibold transition-colors border bg-blue-600 text-white border-blue-600">B&W</button>
             </div>
 
+            <!-- OCR & Translate Buttons -->
+            <div class="flex gap-2 w-full">
+                <button onclick="openLanguageModal('extract')" class="flex-1 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+                    Extract Text
+                </button>
+                <button onclick="openLanguageModal('translate')" class="flex-1 py-2 bg-teal-100 hover:bg-teal-200 text-teal-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5-5 5 5"/><path d="M12 18V3"/><path d="m20 21-3-3 3-3"/></svg>
+                    Translate
+                </button>
+            </div>
+
+             <!-- Action Buttons -->
              <div class="flex gap-3 w-full">
-                <button onclick="retake()" class="flex-1 py-3 border border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-50">New Scan</button>
+                <button onclick="retake()" class="flex-1 py-3 border border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-50">Retake</button>
                 <a id="downloadLink" download="scan.png" class="flex-1 py-3 bg-gray-800 hover:bg-gray-900 rounded-lg text-white font-medium text-center shadow-lg cursor-pointer">Save Img</a>
             </div>
             <button onclick="savePDF()" class="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium shadow-lg shadow-red-100 transition-colors">Save as PDF</button>
+        </div>
+    </div>
+
+    <!-- Language Selection Modal -->
+    <div id="languageModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
+            <h3 id="modalTitle" class="text-lg font-bold mb-4">Select Language</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Document Language</label>
+                    <select id="sourceLang" class="w-full p-2 border rounded-lg bg-gray-50">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <div id="targetLangContainer" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Translate To</label>
+                    <select id="targetLang" class="w-full p-2 border rounded-lg bg-gray-50">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <div class="flex gap-3 mt-6">
+                    <button onclick="closeModal('languageModal')" class="flex-1 py-2 border rounded-lg text-gray-600">Cancel</button>
+                    <button id="startProcessBtn" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow-md">Start</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Text Result Modal -->
+    <div id="textResultModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg h-[80vh] flex flex-col">
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-lg font-bold" id="resultTitle">Result</h3>
+                <button onclick="closeModal('textResultModal')" class="text-gray-500 hover:text-gray-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            
+            <textarea id="resultText" class="flex-grow p-4 resize-none focus:outline-none font-mono text-sm leading-relaxed" readonly></textarea>
+            
+            <div class="p-4 border-t bg-gray-50 rounded-b-xl flex gap-3">
+                <button onclick="copyText()" class="flex-1 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium shadow-sm hover:bg-gray-100">Copy Text</button>
+                <button onclick="closeModal('textResultModal')" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium shadow-md hover:bg-blue-700">Done</button>
+            </div>
         </div>
     </div>
 
@@ -140,18 +197,30 @@
     let animationId = null;
 
     // --- Core Data Storage ---
-    // A hidden canvas to store the raw captured frame for re-processing
     let snappedCanvas = document.createElement('canvas');
     snappedCanvas.style.display = 'none';
     document.body.appendChild(snappedCanvas);
     let snappedCtx = snappedCanvas.getContext('2d');
 
-    // OpenCV Mat to hold the color, perspective-corrected image (base image)
     let warpedColorMat = null; 
-    let currentFilter = 'bw'; // State: 'bw' or 'color'
-
-    // Detected Corners (normalized 0-1 relative to the internal canvas resolution)
+    let currentFilter = 'bw'; 
     let corners = [{x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}];
+
+    // --- Supported Languages for Tesseract & Translation ---
+    const LANGUAGES = [
+        { name: 'English', code: 'eng', trans: 'en' },
+        { name: 'Spanish', code: 'spa', trans: 'es' },
+        { name: 'French', code: 'fra', trans: 'fr' },
+        { name: 'German', code: 'deu', trans: 'de' },
+        { name: 'Italian', code: 'ita', trans: 'it' },
+        { name: 'Portuguese', code: 'por', trans: 'pt' },
+        { name: 'Chinese (Simp)', code: 'chi_sim', trans: 'zh' },
+        { name: 'Japanese', code: 'jpn', trans: 'ja' },
+        { name: 'Russian', code: 'rus', trans: 'ru' },
+        { name: 'Hindi', code: 'hin', trans: 'hi' },
+        { name: 'Bengali', code: 'ben', trans: 'bn' },
+        { name: 'Arabic', code: 'ara', trans: 'ar' }
+    ];
 
     // --- Init ---
     function onOpenCvReady() {
@@ -160,9 +229,25 @@
         statusDiv.innerText = "Camera Ready";
         statusDiv.className = "text-xs font-medium text-green-600";
         startCamera();
+        populateLanguages();
     }
 
-    // Displays temporary message
+    function populateLanguages() {
+        const sourceSelect = document.getElementById('sourceLang');
+        const targetSelect = document.getElementById('targetLang');
+        
+        LANGUAGES.forEach(lang => {
+            let opt1 = new Option(lang.name, lang.code);
+            let opt2 = new Option(lang.name, lang.trans); // Target uses ISO codes
+            sourceSelect.add(opt1);
+            targetSelect.add(opt2);
+        });
+        
+        // Defaults
+        sourceSelect.value = 'eng';
+        targetSelect.value = 'es';
+    }
+
     function displayMessage(message, isError = false) {
         statusDiv.innerText = message;
         statusDiv.className = `text-xs font-medium ${isError ? 'text-red-600' : 'text-blue-600'}`;
@@ -181,7 +266,6 @@
         if (!isOpenCvReady) return;
         
         try {
-            // Request back camera
             stream = await navigator.mediaDevices.getUserMedia({ 
                 video: { facingMode: 'environment' }, 
                 audio: false 
@@ -211,7 +295,6 @@
         cancelAnimationFrame(animationId);
     }
 
-    // Resize canvas to fit container while maintaining video aspect ratio
     function resizeCanvasToFitVideo() {
         if (!isStreaming && mode !== 'camera') return;
         
@@ -225,11 +308,9 @@
         const w = videoW * scale;
         const h = videoH * scale;
 
-        // Internal resolution matches video resolution for quality
         displayCanvas.width = videoW;
         displayCanvas.height = videoH;
         
-        // CSS size fits the screen
         displayCanvas.style.width = w + "px";
         displayCanvas.style.height = h + "px";
     }
@@ -238,14 +319,12 @@
     function scanLoop() {
         if (!isStreaming || mode !== 'camera') return;
 
-        // Draw video frame
         ctx.drawImage(video, 0, 0, displayCanvas.width, displayCanvas.height);
 
         try {
             let src = cv.imread(displayCanvas);
             let gray = new cv.Mat();
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-            
             cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
             cv.Canny(gray, gray, 75, 200);
 
@@ -278,54 +357,56 @@
                 approx.delete();
             }
 
-            // Draw Visual Feedback
             if (currentPoints) {
-                ctx.beginPath();
-                ctx.lineWidth = 6;
-                ctx.strokeStyle = 'rgba(59, 130, 246, 0.8)'; // Blue
-                
+                // Draw Blue Overlay Preview
                 const orderedPts = orderPoints(currentPoints);
+                
+                ctx.beginPath();
                 ctx.moveTo(orderedPts[0].x, orderedPts[0].y);
                 for(let i=1; i<4; i++) ctx.lineTo(orderedPts[i].x, orderedPts[i].y);
                 ctx.closePath();
+
+                // Fill with transparent blue
+                ctx.fillStyle = 'rgba(59, 130, 246, 0.2)'; 
+                ctx.fill();
+
+                // Stroke with solid blue
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = 'rgba(59, 130, 246, 1)'; 
                 ctx.stroke();
+                
+                // Draw corners
+                ctx.fillStyle = 'rgba(59, 130, 246, 1)';
+                for(let i=0; i<4; i++) {
+                     ctx.beginPath();
+                     ctx.arc(orderedPts[i].x, orderedPts[i].y, 6, 0, 2*Math.PI);
+                     ctx.fill();
+                }
             }
 
             src.delete(); gray.delete(); contours.delete(); hierarchy.delete();
-
-        } catch (e) {
-            console.error("OpenCV loop error:", e);
-        }
+        } catch (e) { }
 
         animationId = requestAnimationFrame(scanLoop);
     }
 
     // --- Capture & Process ---
     snapBtn.addEventListener('click', () => {
-        // 1. Snapshot the current video frame into the hidden canvas
         snappedCanvas.width = video.videoWidth;
         snappedCanvas.height = video.videoHeight;
         snappedCtx.drawImage(video, 0, 0, snappedCanvas.width, snappedCanvas.height);
         
         stopCamera();
-        
-        // 2. Detect corners on the snapshot
         detectForCapture(); 
-        
-        // 3. Perform Perspective Warp (creates the base color Mat)
         captureAndWarp(); 
         
-        // 4. Set UI to Result Mode
         mode = 'result';
         document.getElementById('camera-controls').classList.add('hidden');
         document.getElementById('result-controls').classList.remove('hidden');
-        
-        // 5. Display the default filter (B&W)
         toggleFilter('bw');
     });
 
     function detectForCapture() {
-        // Detect corners on the *snapped* canvas
         let src = cv.imread(snappedCanvas);
         let gray = new cv.Mat();
         cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
@@ -365,52 +446,34 @@
 
         if (bestPoints) {
             corners = orderPoints(bestPoints);
-            displayMessage("Document detected. Scanning...", false);
         } else {
-            // Fallback: 80% inset
             let w = snappedCanvas.width;
             let h = snappedCanvas.height;
             let px = w * 0.1;
             let py = h * 0.1;
-            corners = [
-                {x: px, y: py},
-                {x: w - px, y: py},
-                {x: w - px, y: h - py},
-                {x: px, y: h - py}
-            ];
-            displayMessage("No clear document detected. Scanning full frame...", true);
+            corners = [{x: px, y: py}, {x: w - px, y: py}, {x: w - px, y: h - py}, {x: px, y: h - py}];
         }
     }
 
     function orderPoints(pts) {
-        // Standardize: TL (Top-Left), TR, BR, BL
         let sum = (p) => p.x + p.y;
         let diff = (p) => p.y - p.x;
-        
         let tl = pts.reduce((prev, curr) => sum(curr) < sum(prev) ? curr : prev);
         let br = pts.reduce((prev, curr) => sum(curr) > sum(prev) ? curr : prev);
-        
         let remaining = pts.filter(p => p !== tl && p !== br);
-        
         let tr = remaining.reduce((prev, curr) => diff(curr) < diff(prev) ? curr : prev);
         let bl = remaining.reduce((prev, curr) => diff(curr) > diff(prev) ? curr : prev);
-        
         return [tl, tr, br, bl];
     }
 
     function captureAndWarp() {
         if (warpedColorMat) warpedColorMat.delete();
-        
         try {
-            // 1. Source Points from corners
             let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-                corners[0].x, corners[0].y, // TL
-                corners[1].x, corners[1].y, // TR
-                corners[2].x, corners[2].y, // BR
-                corners[3].x, corners[3].y  // BL
+                corners[0].x, corners[0].y, corners[1].x, corners[1].y,
+                corners[2].x, corners[2].y, corners[3].x, corners[3].y
             ]);
 
-            // 2. Calculate Destination Size (Natural Aspect Ratio)
             let widthTop = Math.hypot(corners[0].x - corners[1].x, corners[0].y - corners[1].y);
             let widthBottom = Math.hypot(corners[2].x - corners[3].x, corners[2].y - corners[3].y);
             let maxWidth = Math.round(Math.max(widthTop, widthBottom));
@@ -419,68 +482,46 @@
             let heightRight = Math.hypot(corners[1].x - corners[2].x, corners[1].y - corners[2].y);
             let maxHeight = Math.round(Math.max(heightLeft, heightRight));
 
-            // 3. Destination Matrix
-            let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-                0, 0,
-                maxWidth, 0,
-                maxWidth, maxHeight,
-                0, maxHeight
-            ]);
+            let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, maxWidth, 0, maxWidth, maxHeight, 0, maxHeight]);
 
-            // 4. Warp
             let M = cv.getPerspectiveTransform(srcTri, dstTri);
             let src = cv.imread(snappedCanvas);
             warpedColorMat = new cv.Mat();
-            let dsize = new cv.Size(maxWidth, maxHeight);
-            
-            // Perform the perspective warp (this result is the color base image)
-            cv.warpPerspective(src, warpedColorMat, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+            cv.warpPerspective(src, warpedColorMat, M, new cv.Size(maxWidth, maxHeight), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
 
-            // Cleanup
             src.delete(); M.delete(); srcTri.delete(); dstTri.delete();
-
         } catch (e) {
-            console.error("Warping Error:", e);
-            displayMessage("An error occurred during scanning. Please try again.", true);
             retake(); 
         }
     }
 
-    // --- Filter Toggle and Display ---
     function toggleFilter(filterType) {
         if (!warpedColorMat) return;
-        
         currentFilter = filterType;
         let dst = new cv.Mat();
 
         if (filterType === 'bw') {
-            // Apply B&W filter to a copy of the color mat
             cv.cvtColor(warpedColorMat, dst, cv.COLOR_RGBA2GRAY);
             cv.adaptiveThreshold(dst, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 15, 10);
         } else {
-            // Display the original warped color image
-            dst = warpedColorMat.clone(); // Clone to avoid issues with cv.imshow managing the Mat
+            dst = warpedColorMat.clone();
         }
 
         const maxWidth = dst.cols;
         const maxHeight = dst.rows;
 
-        // 1. Update display canvas internal size
         displayCanvas.width = maxWidth;
         displayCanvas.height = maxHeight;
         
-        // 2. Update CSS size to fit the container
         let containerW = canvasContainer.clientWidth;
         let containerH = canvasContainer.clientHeight;
         let scale = Math.min(containerW / maxWidth, containerH / maxHeight) * 0.95;
         displayCanvas.style.width = (maxWidth * scale) + "px";
         displayCanvas.style.height = (maxHeight * scale) + "px";
 
-        // 3. Show result
         cv.imshow('displayCanvas', dst);
-        dst.delete(); // Delete the temporary Mat created for display
+        dst.delete();
 
-        // 4. Update UI buttons and download link
         const isBW = filterType === 'bw';
         document.getElementById('colorBtn').className = `px-4 py-2 rounded-full font-semibold transition-colors border ${!isBW ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-600 border-gray-300 hover:bg-gray-100'}`;
         document.getElementById('bwBtn').className = `px-4 py-2 rounded-full font-semibold transition-colors border ${isBW ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-600 border-gray-300 hover:bg-gray-100'}`;
@@ -489,53 +530,162 @@
         document.getElementById('downloadLink').href = dataURL;
         document.getElementById('downloadLink').download = `${isBW ? 'document_bw' : 'document_color'}.png`;
         statusDiv.innerText = (isBW ? "B&W Document" : "Color Photo") + " Ready";
-        statusDiv.className = "text-xs font-medium text-blue-600";
     }
 
+    // --- OCR & Translation ---
+    let processAction = ''; // 'extract' or 'translate'
+
+    function openLanguageModal(action) {
+        processAction = action;
+        const modal = document.getElementById('languageModal');
+        const targetContainer = document.getElementById('targetLangContainer');
+        const btn = document.getElementById('startProcessBtn');
+
+        modal.classList.remove('hidden');
+
+        if (action === 'extract') {
+            document.getElementById('modalTitle').innerText = "Extract Text";
+            targetContainer.classList.add('hidden');
+            btn.innerText = "Extract";
+        } else {
+            document.getElementById('modalTitle').innerText = "Translate Document";
+            targetContainer.classList.remove('hidden');
+            btn.innerText = "Translate";
+        }
+        
+        // Remove old listener to prevent duplicates
+        let newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+        newBtn.addEventListener('click', startProcessing);
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+
+    // --- Helper: Chunk Text ---
+    function chunkText(text, maxChars) {
+        const chunks = [];
+        let currentChunk = '';
+        const words = text.split(/(\s+)/); // Split by whitespace but keep delimiters
+
+        for (const word of words) {
+            if ((currentChunk + word).length > maxChars) {
+                if (currentChunk.trim().length > 0) chunks.push(currentChunk);
+                currentChunk = word;
+            } else {
+                currentChunk += word;
+            }
+        }
+        if (currentChunk.trim().length > 0) chunks.push(currentChunk);
+        return chunks;
+    }
+
+    async function startProcessing() {
+        closeModal('languageModal');
+        
+        // Show scan overlay
+        const overlay = document.getElementById('scanOverlay');
+        const overlayText = document.getElementById('scanText');
+        overlay.style.display = 'block';
+        overlayText.innerText = processAction === 'extract' ? "Scanning Text..." : "Translating...";
+        
+        const langCode = document.getElementById('sourceLang').value;
+        const targetLang = document.getElementById('targetLang').value;
+        const sourceLangIso = LANGUAGES.find(l => l.code === langCode).trans;
+
+        try {
+            // 1. Perform OCR
+            const { data: { text } } = await Tesseract.recognize(
+                displayCanvas,
+                langCode,
+                { logger: m => console.log(m) }
+            );
+
+            if (processAction === 'extract') {
+                showResult(text, "Extracted Text");
+            } else {
+                if (!text || text.trim().length === 0) throw new Error("No text detected");
+
+                // 2. Perform Chunked Translation
+                const chunks = chunkText(text, 500); // 500 Chars limit
+                let fullTranslation = '';
+                
+                for (let i = 0; i < chunks.length; i++) {
+                    overlayText.innerText = `Translating Part ${i + 1}/${chunks.length}...`;
+                    
+                    const chunk = chunks[i];
+                    // Encode nicely
+                    const q = encodeURIComponent(chunk);
+                    const url = `https://api.mymemory.translated.net/get?q=${q}&langpair=${sourceLangIso}|${targetLang}`;
+                    
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    if (data.responseStatus === 200) {
+                        fullTranslation += data.responseData.translatedText + " ";
+                    } else if (data.responseStatus === 429) {
+                         // Too many requests - Wait and retry simple backoff
+                         await new Promise(r => setTimeout(r, 1000));
+                         i--; // Retry this chunk
+                    } else {
+                        console.warn("Translation partial error:", data);
+                        fullTranslation += `[Translation Error]` + " ";
+                    }
+                }
+
+                showResult(fullTranslation, "Translation Result");
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert("Error: " + err.message);
+        } finally {
+            overlay.style.display = 'none';
+        }
+    }
+
+    function showResult(text, title) {
+        document.getElementById('resultTitle').innerText = title;
+        document.getElementById('resultText').value = text;
+        document.getElementById('textResultModal').classList.remove('hidden');
+    }
+
+    function copyText() {
+        const txt = document.getElementById('resultText');
+        txt.select();
+        document.execCommand('copy');
+        
+        const copyBtn = document.querySelector('#textResultModal button[onclick="copyText()"]');
+        const originalText = copyBtn.innerText;
+        copyBtn.innerText = "Copied!";
+        setTimeout(() => copyBtn.innerText = originalText, 2000);
+    }
 
     // --- PDF Export ---
     function savePDF() {
         const { jsPDF } = window.jspdf;
-        
-        let imgData = displayCanvas.toDataURL("image/jpeg", 0.9); // Use JPEG for smaller PDF size
+        let imgData = displayCanvas.toDataURL("image/jpeg", 0.9);
         let w = displayCanvas.width;
         let h = displayCanvas.height;
-        
         let orientation = w > h ? 'l' : 'p';
-        
-        const pdf = new jsPDF({
-            orientation: orientation,
-            unit: 'px',
-            format: [w, h]
-        });
-
+        const pdf = new jsPDF({ orientation: orientation, unit: 'px', format: [w, h] });
         pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
         pdf.save(`document-scan-${currentFilter}.pdf`);
     }
 
     function retake() {
         mode = 'camera';
-        
-        // Cleanup Mat memory
-        if (warpedColorMat) {
-            warpedColorMat.delete();
-            warpedColorMat = null;
-        }
-
+        if (warpedColorMat) { warpedColorMat.delete(); warpedColorMat = null; }
         document.getElementById('result-controls').classList.add('hidden');
         document.getElementById('camera-controls').classList.remove('hidden');
         statusDiv.innerText = "Camera Ready";
-        
         startCamera();
     }
     
     window.addEventListener('resize', () => {
-        if (mode === 'camera') {
-            resizeCanvasToFitVideo();
-        } else if (mode === 'result') {
-            // Re-render the result to adjust CSS size on window resize
-            toggleFilter(currentFilter);
-        }
+        if (mode === 'camera') resizeCanvasToFitVideo();
+        else if (mode === 'result') toggleFilter(currentFilter);
     });
 </script>
 </body>

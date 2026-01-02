@@ -575,5 +575,329 @@
 
         window.onload = () => { renderGrid(); saveHistory(); };
     </script>
+<script>
+    /**
+     * Advanced IF Logic for Opensheet
+     * Distinguishes between "C1" (text) and C1 (cell value)
+     */
+    const baseExecuteFormula = executeFormula;
+
+    executeFormula = function(raw) {
+        try {
+            let expr = raw.substring(1).toUpperCase();
+            
+            // Regex captures: 1:LeftCell, 2:Op, 3:RightSide, 4:TruePart, 5:OptionalFalsePart
+            const ifRegex = /IF\(([A-Z]+\d+)\s*([>=<]+|!=)\s*([A-Z0-9.]+)\s*,\s*([^,)]+)(?:\s*,\s*([^)]+))?\)/g;
+            
+            expr = expr.replace(ifRegex, (match, leftCell, operator, rightSide, truePart, falsePart) => {
+                const leftVal = parseFloat(cellData[leftCell]?.display) || 0;
+                
+                // Determine if right side of condition is a cell or number
+                let rightVal;
+                if (/^[A-Z]+\d+$/.test(rightSide)) {
+                    rightVal = parseFloat(cellData[rightSide]?.display) || 0;
+                } else {
+                    rightVal = parseFloat(rightSide) || 0;
+                }
+
+                // Comparison Logic
+                let conditionMet = false;
+                switch(operator) {
+                    case '>':  conditionMet = leftVal > rightVal; break;
+                    case '<':  conditionMet = leftVal < rightVal; break;
+                    case '>=': conditionMet = leftVal >= rightVal; break;
+                    case '<=': conditionMet = leftVal <= rightVal; break;
+                    case '=':  conditionMet = leftVal === rightVal; break;
+                    case '!=': conditionMet = leftVal !== rightVal; break;
+                }
+
+                const resultPart = conditionMet ? truePart.trim() : (falsePart ? falsePart.trim() : "");
+
+                // Logic to distinguish "Text" vs Cell Reference
+                // If it's wrapped in quotes, remove them and return as text
+                if (/^["'].*["']$/.test(resultPart)) {
+                    return resultPart.replace(/["']/g, "");
+                } 
+                // If it's a valid Cell ID (like C1), return that cell's display value
+                else if (/^[A-Z]+\d+$/.test(resultPart)) {
+                    return cellData[resultPart]?.display || "";
+                }
+                // Otherwise return the raw result (numbers, etc)
+                return resultPart;
+            });
+
+            // Pass to original engine for math/sums if IF is done
+            if (expr.includes('SUM') || expr.includes('AVERAGE') || /[\+\-\*\/]/.test(expr)) {
+                return baseExecuteFormula("=" + expr);
+            }
+
+            return expr;
+        } catch (e) {
+            return "#IF_ERR";
+        }
+    };
+</script>
+<script>
+    /**
+     * Updates the formula engine to support direct cell references.
+     * Works for both: =A1 and =(A1)
+     */
+    const originalEngine = executeFormula;
+
+    executeFormula = function(raw) {
+        try {
+            // Remove the '=' and parentheses, then trim whitespace
+            let expr = raw.substring(1).replace(/[()]/g, '').trim().toUpperCase();
+
+            // Check if the remaining expression is exactly one cell ID (e.g., A1, B10, AA5)
+            const cellIdPattern = /^[A-Z]+\d+$/;
+            
+            if (cellIdPattern.test(expr)) {
+                // If it's a match, return the display value of that cell
+                // We use cellData[expr].display to ensure we get the calculated result
+                return cellData[expr] ? cellData[expr].display : "";
+            }
+
+            // If it's not a simple reference, pass it back to the main formula logic
+            return originalEngine(raw);
+        } catch (e) {
+            return "#REF!";
+        }
+    };
+</script>
+<script>
+    /**
+     * Adds =RANDOM functionality to Opensheet.
+     * Supports: 
+     * 1. =RANDOM(A1, B1, C1) - Picks one of the specific cells.
+     * 2. =RANDOM(A1:A5) - Picks one cell from the defined range.
+     */
+    const extensionEngine = executeFormula;
+
+    executeFormula = function(raw) {
+        try {
+            let expr = raw.substring(1).toUpperCase();
+
+            // Match RANDOM(args)
+            const randomRegex = /RANDOM\(([^)]+)\)/g;
+
+            if (expr.includes("RANDOM")) {
+                const result = expr.replace(randomRegex, (match, args) => {
+                    let candidates = [];
+
+                    // Check if it's a range (A1:A5) or a list (A1, B1)
+                    if (args.includes(':')) {
+                        // Use the existing getRangeValues logic but get IDs instead of values
+                        const [sId, eId] = args.split(':');
+                        const start = parseCellId(sId.trim());
+                        const end = parseCellId(eId.trim());
+                        
+                        if (start && end) {
+                            for (let r = Math.min(start.r, end.r); r <= Math.max(start.r, end.r); r++) {
+                                for (let c = Math.min(start.c, end.c); c <= Math.max(start.c, end.c); c++) {
+                                    candidates.push(getCellId(r, c));
+                                }
+                            }
+                        }
+                    } else {
+                        // Split by comma for individual cells
+                        candidates = args.split(',').map(s => s.trim());
+                    }
+
+                    if (candidates.length === 0) return "#REF!";
+
+                    // Pick a random ID from the list
+                    const randomId = candidates[Math.floor(Math.random() * candidates.length)];
+                    
+                    // Return the display value of the chosen cell
+                    return cellData[randomId] ? cellData[randomId].display : "";
+                });
+
+                // If the result is just the value, return it; otherwise pass to base engine
+                return result;
+            }
+
+            return extensionEngine(raw);
+        } catch (e) {
+            return "#RAND_ERR";
+        }
+    };
+</script>
+<script>
+    /**
+     * Adds Date, Year, Day, Month, and DateM functions to Opensheet.
+     * All values are pulled from the user's local device.
+     */
+    const dateExtensionEngine = executeFormula;
+
+    executeFormula = function(raw) {
+        try {
+            let expr = raw.substring(1).toUpperCase().trim();
+            const now = new Date();
+
+            // =DATE -> DD/MM/YYYY
+            if (expr === "DATE") {
+                const day = String(now.getDate()).padStart(2, '0');
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                return `${day}/${month}/${now.getFullYear()}`;
+            }
+
+            // =YEAR -> YYYY
+            if (expr === "YEAR") {
+                return now.getFullYear();
+            }
+
+            // =DAY -> Full weekday name (e.g., Monday)
+            if (expr === "DAY") {
+                return now.toLocaleDateString(undefined, { weekday: 'long' });
+            }
+
+            // =MONTH -> Full month name (e.g., January)
+            if (expr === "MONTH") {
+                return now.toLocaleDateString(undefined, { month: 'long' });
+            }
+
+            // =DATEM -> Just the day of the month (1-31)
+            if (expr === "DATEM") {
+                return now.getDate();
+            }
+
+            // Fallback to previous engine logic (IF, RANDOM, etc.)
+            return dateExtensionEngine(raw);
+        } catch (e) {
+            return "#DATE_ERR";
+        }
+    };
+</script>
+<script>
+    /**
+     * Adds =RN(start:end) functionality to Opensheet.
+     * Generates a random integer between the two numbers provided.
+     */
+    const rnExtensionEngine = executeFormula;
+
+    executeFormula = function(raw) {
+        try {
+            let expr = raw.substring(1).toUpperCase().trim();
+
+            // Match RN(number:number)
+            const rnRegex = /RN\((\d+):(\d+)\)/;
+            const match = expr.match(rnRegex);
+
+            if (match) {
+                const start = parseInt(match[1]);
+                const end = parseInt(match[2]);
+
+                if (!isNaN(start) && !isNaN(end)) {
+                    const min = Math.min(start, end);
+                    const max = Math.max(start, end);
+                    // Generate random integer between min and max inclusive
+                    return Math.floor(Math.random() * (max - min + 1)) + min;
+                }
+                return "#VAL!";
+            }
+
+            // Fallback to previous logic (Date, IF, RANDOM, etc.)
+            return rnExtensionEngine(raw);
+        } catch (e) {
+            return "#RN_ERR";
+        }
+    };
+</script>
+<script>
+    /**
+     * Adds =LIST functionality to Opensheet.
+     * Supports:
+     * 1. =LIST(A1, B2, C3) -> Displays "Val1, Val2, Val3"
+     * 2. =LIST(A1:A5) -> Displays all values in that range separated by commas.
+     */
+    const listExtensionEngine = executeFormula;
+
+    executeFormula = function(raw) {
+        try {
+            let expr = raw.substring(1).toUpperCase().trim();
+
+            if (expr.startsWith("LIST(")) {
+                // Extract everything inside the parentheses
+                const args = expr.match(/LIST\((.+)\)/)[1];
+                let values = [];
+
+                if (args.includes(':')) {
+                    // Handle Range: =LIST(A1:A9)
+                    const [sId, eId] = args.split(':');
+                    const start = parseCellId(sId.trim());
+                    const end = parseCellId(eId.trim());
+
+                    if (start && end) {
+                        for (let r = Math.min(start.r, end.r); r <= Math.max(start.r, end.r); r++) {
+                            for (let c = Math.min(start.c, end.c); c <= Math.max(start.c, end.c); c++) {
+                                const val = cellData[getCellId(r, c)]?.display;
+                                if (val !== undefined && val !== "") values.push(val);
+                            }
+                        }
+                    }
+                } else {
+                    // Handle Individual Cells: =LIST(A1, A2, B3)
+                    const cellRefs = args.split(',');
+                    cellRefs.forEach(ref => {
+                        const id = ref.trim();
+                        const val = cellData[id]?.display;
+                        if (val !== undefined && val !== "") values.push(val);
+                    });
+                }
+
+                return values.join(', ');
+            }
+
+            // Fallback to previous logic (RN, Date, IF, RANDOM, etc.)
+            return listExtensionEngine(raw);
+        } catch (e) {
+            return "#LIST_ERR";
+        }
+    };
+</script>
+<script>
+    /**
+     * Adds Percentage functionality to Opensheet.
+     * Supports:
+     * 1. (A1)150 -> Takes value of A1 and calculates 150% of it.
+     * 2. (10)150 -> Takes number 10 and calculates 150% of it.
+     */
+    const percentExtensionEngine = executeFormula;
+
+    executeFormula = function(raw) {
+        try {
+            let expr = raw.substring(1).toUpperCase().trim();
+
+            // Match pattern: (CellOrNumber)Number
+            // Group 1: The value inside () | Group 2: The percentage number
+            const percentRegex = /^\(([A-Z0-9.]+)\)(\d+)$/;
+            const match = expr.match(percentRegex);
+
+            if (match) {
+                const innerPart = match[1];
+                const percentAmount = parseFloat(match[2]);
+                let baseValue;
+
+                // Check if inner part is a Cell ID or a raw number
+                if (/^[A-Z]+\d+$/.test(innerPart)) {
+                    baseValue = parseFloat(cellData[innerPart]?.display) || 0;
+                } else {
+                    baseValue = parseFloat(innerPart) || 0;
+                }
+
+                // Calculation: (Base * Percentage) / 100
+                const result = (baseValue * percentAmount) / 100;
+                return Math.round(result * 100) / 100; // Round to 2 decimal places
+            }
+
+            // Fallback to previous logic (LIST, RN, Date, IF, etc.)
+            return percentExtensionEngine(raw);
+        } catch (e) {
+            return "#PERC_ERR";
+        }
+    };
+</script>
 </body>
 </html>
+

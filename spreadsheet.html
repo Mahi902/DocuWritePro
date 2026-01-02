@@ -898,6 +898,149 @@
         }
     };
 </script>
+<script>
+    /**
+     * Adds =MOST and =LEAST functionality to Opensheet.
+     * Supports both comma-separated lists and colon-separated ranges.
+     */
+    const statsExtensionEngine = executeFormula;
+
+    executeFormula = function(raw) {
+        try {
+            let expr = raw.substring(1).toUpperCase().trim();
+
+            if (expr.startsWith("MOST(") || expr.startsWith("LEAST(")) {
+                const isMost = expr.startsWith("MOST(");
+                const args = expr.match(/(?:MOST|LEAST)\((.+)\)/)[1];
+                let values = [];
+
+                // 1. Collect values from Range or List
+                if (args.includes(':')) {
+                    const [sId, eId] = args.split(':');
+                    const start = parseCellId(sId.trim());
+                    const end = parseCellId(eId.trim());
+                    if (start && end) {
+                        for (let r = Math.min(start.r, end.r); r <= Math.max(start.r, end.r); r++) {
+                            for (let c = Math.min(start.c, end.c); c <= Math.max(start.c, end.c); c++) {
+                                const val = cellData[getCellId(r, c)]?.display;
+                                if (val !== undefined && val !== "") values.push(val);
+                            }
+                        }
+                    }
+                } else {
+                    const cellRefs = args.split(',');
+                    cellRefs.forEach(ref => {
+                        const val = cellData[ref.trim()]?.display;
+                        if (val !== undefined && val !== "") values.push(val);
+                    });
+                }
+
+                if (values.length === 0) return "";
+
+                // 2. Count frequencies
+                const counts = {};
+                values.forEach(v => counts[v] = (counts[v] || 0) + 1);
+
+                // 3. Find the Most or Least repeated
+                const sorted = Object.keys(counts).sort((a, b) => {
+                    return isMost ? counts[b] - counts[a] : counts[a] - counts[b];
+                });
+
+                return sorted[0]; // Returns the top result
+            }
+
+            // Fallback to previous logic (Percentage, LIST, RN, Date, IF, etc.)
+            return statsExtensionEngine(raw);
+        } catch (e) {
+            return "#ERR";
+        }
+    };
+</script>
+<script>
+    /**
+     * Adds =CON(range/list, "condition") functionality to Opensheet.
+     * Conditions supported: <, >, =, n= (not equal), n< (not smaller than), n> (not bigger than).
+     * Returns the most frequent value(s) that meet the condition.
+     */
+    const conExtensionEngine = executeFormula;
+
+    executeFormula = function(raw) {
+        try {
+            let expr = raw.substring(1).toUpperCase().trim();
+
+            if (expr.startsWith("CON(")) {
+                // Extract everything inside CON(...)
+                const inner = expr.match(/CON\((.+)\)/)[1];
+                const parts = inner.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                const conditionStr = parts.pop().trim().replace(/["']/g, ""); // Last arg is condition
+                const dataArgs = parts;
+                
+                let values = [];
+
+                // 1. Collect values from Range or List
+                dataArgs.forEach(arg => {
+                    const item = arg.trim();
+                    if (item.includes(':')) {
+                        const [sId, eId] = item.split(':');
+                        const start = parseCellId(sId.trim());
+                        const end = parseCellId(eId.trim());
+                        if (start && end) {
+                            for (let r = Math.min(start.r, end.r); r <= Math.max(start.r, end.r); r++) {
+                                for (let c = Math.min(start.c, end.c); c <= Math.max(start.c, end.c); c++) {
+                                    const val = cellData[getCellId(r, c)]?.display;
+                                    if (val !== undefined && val !== "") values.push(val);
+                                }
+                            }
+                        }
+                    } else {
+                        const val = cellData[item]?.display;
+                        if (val !== undefined && val !== "") values.push(val);
+                    }
+                });
+
+                // 2. Parse Condition and Filter
+                const condMatch = conditionStr.match(/^(N[>=<]|[>=<]|N=|=)(.+)$/);
+                if (!condMatch) return "#COND_ERR";
+                
+                const op = condMatch[1];
+                const target = parseFloat(condMatch[2]);
+
+                const filtered = values.filter(v => {
+                    const num = parseFloat(v);
+                    if (isNaN(num)) return false;
+                    switch(op) {
+                        case '<':  return num < target;
+                        case '>':  return num > target;
+                        case '=':  return num === target;
+                        case 'N=': return num !== target;
+                        case 'N<': return num >= target; // Not small (>=)
+                        case 'N>': return num <= target; // Not big (<=)
+                        default:   return false;
+                    }
+                });
+
+                if (filtered.length === 0) return "";
+
+                // 3. Count frequencies of filtered values
+                const counts = {};
+                filtered.forEach(v => counts[v] = (counts[v] || 0) + 1);
+
+                // 4. Find the most frequent frequency
+                const maxFreq = Math.max(...Object.values(counts));
+                
+                // 5. Get all values that share that max frequency
+                const mostFrequent = Object.keys(counts).filter(v => counts[v] === maxFreq);
+
+                return mostFrequent.join(', ');
+            }
+
+            // Fallback to previous logic (MOST, LEAST, Percentage, etc.)
+            return conExtensionEngine(raw);
+        } catch (e) {
+            return "#CON_ERR";
+        }
+    };
+</script>
 </body>
 </html>
 

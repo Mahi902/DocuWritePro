@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spreadsheet</title>
+    <title>Opensheet | Spreadsheet</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
     <style>
@@ -1232,6 +1232,168 @@
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') clearFormulaHighlights();
     });
+</script>
+<script>
+(function () {
+    const DATA = {
+        1: { n: "SUM", s: "SUM(range)", w: "Adds multiple numbers together. Works across rows, columns, or selected cells. Commonly used for totals and balances.", e: "=SUM(A1:A5)" },
+        2: { n: "AVERAGE", s: "AVERAGE(range)", w: "Calculates the middle value. Useful for grades, statistics, and performance tracking.", e: "=AVERAGE(A1:A5)" },
+        3: { n: "COUNT", s: "COUNT(range)", w: "Counts cells with numeric values. Text and empty cells are ignored. Helpful for tracking entries.", e: "=COUNT(A1:A5)" },
+        4: { n: "MIN", s: "MIN(range)", w: "Finds the smallest number in a group. Great for lowest prices, scores, or measurements.", e: "=MIN(A1:A5)" },
+        5: { n: "MAX", s: "MAX(range)", w: "Returns the highest number. Often used for top scores, peaks, or maximum limits.", e: "=MAX(A1:A5)" },
+        6: { n: "IF", s: "IF(condition, true, false)", w: "Makes decisions automatically based on a condition. Useful for grading and logical outputs.", e: "=IF(A1>10,\"Pass\",\"Fail\")" },
+        7: { n: "RANDOM", s: "RANDOM(range)", w: "Selects a random value from a range. Useful for sampling, games, or testing logic.", e: "=RANDOM(A1:A5)" },
+        8: { n: "RN", s: "RN(start:end)", w: "Generates a random number between two defined limits.", e: "=RN(1:100)" },
+        9: { n: "LIST", s: "LIST(values)", w: "Combines multiple values into a sequence for grouped displays or previews.", e: "=LIST(A1,A2,A3)" },
+        10: { n: "MOST", s: "MOST(range)", w: "Finds the most frequently appearing value (Mode). Great for trend analysis.", e: "=MOST(A1:A5)" },
+        11: { n: "LEAST", s: "LEAST(range)", w: "Finds the value that appears the fewest times in a set.", e: "=LEAST(A1:A5)" },
+        12: { n: "CON", s: "CON(range, condition)", w: "Filters values based on a logic rule. Only returns matching data. Supporting conditions: <, >, =, N<, N>, N=", e: "=CON(A1:A5,\">10\")" },
+        13: { n: "HOWMP", s: "HOWMP(max:value)", w: "Converts a value into a percentage of a maximum limit.", e: "=HOWMP(100:A1)" },
+        14: { n: "DATE", s: "DATE", w: "Shows current system date (DD/MM/YYYY). Updates automatically.", e: "=DATE" },
+        15: { n: "YEAR", s: "YEAR", w: "Extracts the current year from the system clock.", e: "=YEAR" },
+        16: { n: "MONTH", s: "MONTH", w: "Displays the current month name or number.", e: "=MONTH" },
+        17: { n: "DAY", s: "DAY", w: "Displays the current day of the month.", e: "=DAY" },
+        18: { n: "DATEM", s: "DATEM", w: "Provides the current date of the month only. Useful for date only cases scenarios.", e: "=DATEM" }
+    };
+
+    // --- Floating Trigger Button ---
+    const btn = document.createElement("div");
+    btn.className = "formula-trigger";
+    btn.innerHTML = `<span class="material-symbols-outlined" style="font-size: 24px;">function</span>`;
+    Object.assign(btn.style, {
+        position: 'fixed', bottom: '24px', right: '24px',
+        width: '56px', height: '56px', backgroundColor: '#4F46E5',
+        color: 'white', borderRadius: '50%', display: 'flex',
+        alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+        zIndex: '9999', boxShadow: '0 4px 14px rgba(79, 70, 229, 0.4)',
+        transition: 'transform 0.2s ease'
+    });
+    btn.onmouseover = () => btn.style.transform = 'scale(1.1)';
+    btn.onmouseout = () => btn.style.transform = 'scale(1)';
+    document.body.appendChild(btn);
+
+    // --- Main Panel ---
+    const panel = document.createElement("div");
+    Object.assign(panel.style, {
+        position: 'fixed', right: '24px', bottom: '90px', width: '380px',
+        maxHeight: '80vh', backgroundColor: '#ffffff', borderRadius: '20px',
+        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)',
+        fontFamily: "'Inter', sans-serif", display: 'none', zIndex: '9999',
+        overflow: 'hidden', border: '1px solid #f0f0f0', flexDirection: 'column'
+    });
+
+    panel.innerHTML = `
+        <div style="padding: 20px; background: #F8FAFC; border-bottom: 1px solid #F1F5F9; position: relative;">
+            <button id="close-formula" style="position: absolute; right: 15px; top: 15px; border: none; background: #EDF2F7; color: #4A5568; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">close</span>
+            </button>
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                <div style="background: #4F46E5; color: white; padding: 6px; border-radius: 8px; display: flex;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">menu_book</span>
+                </div>
+                <div style="font-size: 18px; font-weight: 700; color: #1E293B;">Formula Center</div>
+            </div>
+            <p style="font-size: 13px; color: #64748B; margin: 0 0 16px 0;">Master the logic of Opensheet</p>
+            <div style="position: relative;">
+                <span class="material-symbols-outlined" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94A3B8; font-size: 18px;">search</span>
+                <input id="formula-search" placeholder="Search functions..." 
+                    style="width: 100%; padding: 10px 10px 10px 36px; border-radius: 12px; border: 1px solid #E2E8F0; font-size: 14px; outline: none; transition: border 0.2s;">
+            </div>
+        </div>
+        <div id="formula-scroll" style="overflow-y: auto; flex: 1; padding: 10px;">
+            <div id="formula-list"></div>
+            <div id="formula-detail" style="display: none; padding: 10px;"></div>
+        </div>
+    `;
+    document.body.appendChild(panel);
+
+    const searchInput = panel.querySelector("#formula-search");
+    const listContainer = panel.querySelector("#formula-list");
+    const detailContainer = panel.querySelector("#formula-detail");
+    const closeBtn = panel.querySelector("#close-formula");
+
+    // Toggle logic
+    const togglePanel = () => {
+        const isHidden = panel.style.display === "none";
+        panel.style.display = isHidden ? "flex" : "none";
+        if (isHidden) {
+            renderList("");
+            searchInput.focus();
+        }
+    };
+
+    btn.onclick = togglePanel;
+    closeBtn.onclick = () => panel.style.display = "none";
+
+    function renderList(filter) {
+        detailContainer.style.display = "none";
+        listContainer.style.display = "block";
+        listContainer.innerHTML = "";
+        
+        Object.entries(DATA).forEach(([id, item]) => {
+            if (item.n.toLowerCase().includes(filter.toLowerCase()) || id.includes(filter)) {
+                const itemEl = document.createElement("div");
+                Object.assign(itemEl.style, {
+                    padding: '12px 16px', borderRadius: '12px', cursor: 'pointer',
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    marginBottom: '4px', transition: 'background 0.2s'
+                });
+                itemEl.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="font-size: 12px; font-weight: 600; color: #94A3B8; width: 20px;">${id}</span>
+                        <span style="font-weight: 600; color: #334155;">${item.n}</span>
+                    </div>
+                    <span class="material-symbols-outlined" style="color: #CBD5E1; font-size: 18px;">chevron_right</span>
+                `;
+                itemEl.onmouseover = () => itemEl.style.backgroundColor = '#F1F5F9';
+                itemEl.onmouseout = () => itemEl.style.backgroundColor = 'transparent';
+                itemEl.onclick = () => showDetail(id);
+                listContainer.appendChild(itemEl);
+            }
+        });
+    }
+
+    function showDetail(id) {
+        const d = DATA[id];
+        listContainer.style.display = "none";
+        detailContainer.style.display = "block";
+        detailContainer.innerHTML = `
+            <button id="back-to-list" style="display: flex; align-items: center; gap: 4px; border: none; background: none; color: #4F46E5; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 16px; padding: 0;">
+                <span class="material-symbols-outlined" style="font-size: 16px;">arrow_back</span> Back to list
+            </button>
+            <div style="font-size: 22px; font-weight: 800; color: #1E293B; margin-bottom: 4px;">${d.n}</div>
+            <div style="font-family: monospace; background: #EEF2FF; color: #4F46E5; padding: 8px 12px; border-radius: 8px; font-size: 14px; margin-bottom: 20px;">${d.s}</div>
+            
+            <div style="margin-bottom: 20px;">
+                <div style="font-size: 12px; font-weight: 700; color: #94A3B8; text-transform: uppercase; margin-bottom: 6px;">Description</div>
+                <div style="font-size: 14px; color: #475569; line-height: 1.6;">${d.w}</div>
+            </div>
+
+            <div>
+                <div style="font-size: 12px; font-weight: 700; color: #94A3B8; text-transform: uppercase; margin-bottom: 6px;">Example</div>
+                <div style="background: #1E293B; color: #F8FAFC; padding: 16px; border-radius: 12px; position: relative;">
+                    <code id="example-code" style="font-family: monospace; font-size: 14px;">${d.e}</code>
+                    <button id="copy-btn" style="position: absolute; right: 8px; top: 8px; background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 6px; padding: 4px; cursor: pointer;">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        detailContainer.querySelector("#back-to-list").onclick = () => renderList(searchInput.value);
+        
+        detailContainer.querySelector("#copy-btn").onclick = function() {
+            navigator.clipboard.writeText(d.e);
+            this.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px; color: #10B981;">check</span>`;
+            setTimeout(() => this.innerHTML = `<span class="material-symbols-outlined" style="font-size: 16px;">content_copy</span>`, 2000);
+        };
+    }
+
+    searchInput.oninput = e => renderList(e.target.value);
+    
+    // Initial Render
+    renderList("");
+})();
 </script>
 </body>
 </html>

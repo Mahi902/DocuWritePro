@@ -94,7 +94,7 @@ Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWri
 
 ## Contributing
 
-DocuWrite Pro is created and moderated by [Mahi902](https://github.com/Mahi902/). For contributing or requesting any change, reach out to mohtadiazadmahi902@gmail.com. 
+DocuWrite Pro is created and moderated by [Mahi902](https://github.com/Mahi902/). For contributing or requesting any change, reach out to mohtadiazadmahi902@gmail.com. I do not intent to sell or share DocuWrite Pro with potential buyer's. Donation requests are welcome.
 
 
 ## License

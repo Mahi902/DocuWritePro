@@ -115,7 +115,7 @@ The project is under the [MIT](https://choosealicense.com/licenses/mit/) License
 • Requirements: The main condition is that the original copyright notice and the license text must be included with any distribution of the software.
 
 ### Legal Info
-Learn more about DocuWrite Pro's Privacy Policy, Terms of Use & Third Party Policies at [Legal Documents](https://github.com/Mahi902/DocuWritePro/legal-documents). DocuWrite Pro uses service third party providors and Java Script libararies. Check DocuWrite Pro API usage [here](https://mahi902.github.io/DocuWritePro/ctpn.html)
+Learn more about DocuWrite Pro's Privacy Policy, Terms of Use & Third Party Policies at [Legal Documents](https://github.com/Mahi902/DocuWritePro/legal-documents). DocuWrite Pro uses services from third party providors and Java Script libararies. Check DocuWrite Pro API usage [here](https://mahi902.github.io/DocuWritePro/ctpn.html).
 
 ## Statistics
 

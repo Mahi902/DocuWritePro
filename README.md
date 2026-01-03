@@ -82,6 +82,50 @@ The project is under the [MIT](https://choosealicense.com/licenses/mit/) License
 • Requirements: The main condition is that the original copyright notice and the license text must be included with any distribution of the software.
 
 
+<table>
+  <tr>
+    <td><img src="https://img.shields.io/github/repo-size/Mahi902/DocuWritePro?style=flat-square" alt="Repo Size" height="40"></td>
+    <td><img src="https://img.shields.io/github/languages/code-size/Mahi902/DocuWritePro?style=flat-square" alt="Code Size" height="40"></td>
+    <td><img src="https://img.shields.io/github/directory-file-count/Mahi902/DocuWritePro?style=flat-square" alt="File Count" height="40"></td>
+    <td><img src="https://img.shields.io/github/languages/count/Mahi902/DocuWritePro?style=flat-square" alt="Languages Count" height="40"></td>
+    <td><img src="https://img.shields.io/github/languages/top/Mahi902/DocuWritePro?style=flat-square" alt="Top Language" height="40"></td>
+  </tr>
+  <tr>
+    <td><a href="https://github.com/Mahi902/DocuWritePro"><img src="https://img.shields.io/badge/Maintained-yes-green?style=flat-square" alt="Maintenance" height="40"></a></td>
+    <td><a href="https://mahi902.github.io/DocuWritePro"><img src="https://img.shields.io/website-up-down-green-red/http/mahi902.github.io/DocuWritePro.svg?style=flat-square" alt="Website" height="40"></a></td>
+    <td><img src="https://img.shields.io/github/stars/Mahi902/DocuWritePro?style=flat-square" alt="Stars" height="40"></td>
+    <td><img src="https://img.shields.io/github/forks/Mahi902/DocuWritePro?style=flat-square" alt="Forks" height="40"></td>
+    <td><img src="https://img.shields.io/github/watchers/Mahi902/DocuWritePro?style=flat-square" alt="Watchers" height="40"></td>
+  </tr>
+  <tr>
+    <td><img src="https://img.shields.io/github/contributors/Mahi902/DocuWritePro?style=flat-square" alt="Contributors" height="40"></td>
+    <td><img src="https://img.shields.io/github/issues/Mahi902/DocuWritePro?style=flat-square" alt="Open Issues" height="40"></td>
+    <td><img src="https://img.shields.io/github/issues-closed/Mahi902/DocuWritePro?style=flat-square" alt="Closed Issues" height="40"></td>
+    <td><img src="https://img.shields.io/github/issues-pr/Mahi902/DocuWritePro?style=flat-square" alt="Open PRs" height="40"></td>
+    <td><img src="https://img.shields.io/github/issues-pr-closed/Mahi902/DocuWritePro?style=flat-square" alt="Closed PRs" height="40"></td>
+  </tr>
+  <tr>
+    <td><img src="https://img.shields.io/github/v/release/Mahi902/DocuWritePro?style=flat-square" alt="Latest Release" height="40"></td>
+    <td><img src="https://img.shields.io/github/release-date/Mahi902/DocuWritePro?style=flat-square" alt="Release Date" height="40"></td>
+    <td><img src="https://img.shields.io/github/downloads/Mahi902/DocuWritePro/total?style=flat-square" alt="Downloads" height="40"></td>
+    <td><img src="https://img.shields.io/github/last-commit/Mahi902/DocuWritePro?style=flat-square" alt="Last Commit" height="40"></td>
+    <td><img src="https://img.shields.io/github/commit-activity/m/Mahi902/DocuWritePro?style=flat-square" alt="Commit Activity" height="40"></td>
+  </tr>
+  <tr>
+    <td><img src="https://img.shields.io/github/commit-activity/y/Mahi902/DocuWritePro?style=flat-square" alt="Commit Activity Year" height="40"></td>
+    <td><img src="https://img.shields.io/github/license/Mahi902/DocuWritePro?style=flat-square" alt="License" height="40"></td>
+    <td><img src="https://img.shields.io/github/created-at/Mahi902/DocuWritePro?style=flat-square" alt="Created At" height="40"></td>
+    <td><img src="https://img.shields.io/github/discussions/Mahi902/DocuWritePro?style=flat-square" alt="Discussions" height="40"></td>
+    <td><img src="https://img.shields.io/github/repo-size/Mahi902/DocuWritePro?style=flat-square&label=DocuWrite%20Pro" alt="DocuWrite Pro" height="40"></td>
+  </tr>
+  <tr>
+    <td><img src="https://img.shields.io/github/languages/code-size/Mahi902/DocuWritePro?style=flat-square&label=codebase" alt="Codebase" height="40"></td>
+    <td><img src="https://img.shields.io/github/last-commit/Mahi902/DocuWritePro?style=flat-square&label=active" alt="Active Dev" height="40"></td>
+    <td colspan="3"></td>
+  </tr>
+</table>
+
+
 
 ### Creator Profile 
 ## 👋 Hi, I'm Mohtadi Azad Mahi

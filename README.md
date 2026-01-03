@@ -126,6 +126,7 @@ The project is under the [MIT](https://choosealicense.com/licenses/mit/) License
   </tr>
 </table>
 
+---
 
 
 ### Creator Profile 

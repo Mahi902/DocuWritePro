@@ -77,7 +77,9 @@ DocuWrite Pro is created and moderated by [Mahi902](https://github.com/Mahi902/)
 
 ## License
 
-The project is under the [MIT](https://choosealicense.com/licenses/mit/) License in GitHub. 
+![Banner3](https://i.ibb.co/QjYtH4CY/MIT-Logo-New-svg.png)
+
+The project is under the [MIT](https://choosealicense.com/licenses/mit/) License in GitHub. Learn more at MIT's official website.
 
 ### Notes
 • Commercial Use Allowed: The MIT License permits the use of the software in commercial and proprietary products.

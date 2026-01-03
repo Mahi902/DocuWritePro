@@ -7,6 +7,7 @@ const PAGES_TO_CACHE = [
 
   // Main Tools (same-origin only)
   "/document-writer.html",
+  "/spreadsheet.html"
   "/collab-document-editor.html",
   "/viewer.html",
   "/word-description-finder.html",

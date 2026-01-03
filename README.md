@@ -81,6 +81,7 @@ The project is under the [MIT](https://choosealicense.com/licenses/mit/) License
 
 • Requirements: The main condition is that the original copyright notice and the license text must be included with any distribution of the software.
 
+## Statistics
 
 <table>
   <tr>

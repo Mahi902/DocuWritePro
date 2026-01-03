@@ -157,6 +157,7 @@ I'm a passionate **student, software developer, and tech innovator**. I love cre
 ####  Connect with Me
 - [GitHub](https://github.com/Mahi902)  
 - [Mail](mohtadiazadmahi902@gmail.com)  
-- [LinkedIn](https://lnkd.in/gedVbbKP)  
+- [LinkedIn](https://lnkd.in/gedVbbKP)
+- [Official Website](https://mahi902.github.io)
 
 > "Turning ideas into reality, one line of code at a time."  

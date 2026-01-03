@@ -8,7 +8,7 @@
 ### 🔹mahi902.GitHub.io/DocuWritePro
 _Last updated: January 3rd, 2026_
 
-## Intruduction
+## Introduction
 
 DocuWrite Pro is a completely client side based online document editor. No need to go to different sites for document editing, get everything done in one place using **DocuWrite Pro**.
 

@@ -136,7 +136,7 @@ The project is under the [MIT](https://choosealicense.com/licenses/mit/) License
 I'm a passionate **student, software developer, and tech innovator**. I love creating tools, games, educational software, and unique digital projects that simplify learning and make life more interactive.  
 
 - 🔹 Currently working on **DocuWrite Pro**, **Aurora**, and educational web apps  
-- 🔹 Creator of **Color Code Art Converter**, **Mo game**, and other creative projects  
+- 🔹 Creator of **Clevo**, **DESWORD**, **Clan** and other creative projects  
 - 🔹 Always exploring **HTML, CSS, JS, and AI-powered tools**  
 - 🔹 Student with strong focus on software development and problem-solving  
 
@@ -145,6 +145,7 @@ I'm a passionate **student, software developer, and tech innovator**. I love cre
 |----------------|-----------------------------|------|
 | DocuWrite Pro  | All-in-one document toolkit | [GitHub](https://github.com/Mahi902/DocuWritePro) |
 | Aurora         | Innovative web platform     | [GitHub](https://github.com/Mahi902/Aurora) |
+| eCalculator    | Simple online calculator    | [Google Sites](https://sites.google.com/view/calculator-simply/home) |
 
 
 

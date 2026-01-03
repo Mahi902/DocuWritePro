@@ -141,7 +141,11 @@ I'm a passionate **student, software developer, and tech innovator**. I love cre
 - 🔹 Student with strong focus on software development and problem-solving  
 
 ####  Top Projects
-DocuWrite Pro | All-in-one document toolkit | [GitHub](https://github.com/Mahi902/DocuWritePro). Aurora | Innovative web platform | [GitHub](https://github.com/Mahi902/Aurora) |
+| Project        | Description                  | Link |
+|----------------|-----------------------------|------|
+| DocuWrite Pro  | All-in-one document toolkit | [GitHub](https://github.com/Mahi902/DocuWritePro) |
+| Aurora         | Innovative web platform     | [GitHub](https://github.com/Mahi902/Aurora) |
+
 
 
 #### Tools & Skills

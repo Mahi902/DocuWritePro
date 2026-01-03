@@ -70,6 +70,11 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - **Drawing Board**: A simple drawing or sketching tool
 
 
+## AI Powered Tools
+
+All tools which use AI in DocuWrite Pro are provided by [pollinations.ai](https://pollinations.ai/). Their documentation is available [here](https://pollinations.ai/docs). We use this service for both text generation and image generation. We do not charge for any AI usage within DocuWrite Pro.
+
+
 ## Contributing
 
 DocuWrite Pro is created and moderated by [Mahi902](https://github.com/Mahi902/). For contributing or requesting any change, reach out to mohtadiazadmahi902@gmail.com. 

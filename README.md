@@ -159,6 +159,9 @@ I'm a passionate **student, software developer, and tech innovator**. I love cre
 
 
 #### Tools & Skills
+
+![Photoroom](https://i.ibb.co/RptyWnVt/1000039506-Photoroom.png)
+
 - HTML, CSS, JS, Python, Tesseract.js  
 - Game & web development  
 - Software automation & productivity tools  

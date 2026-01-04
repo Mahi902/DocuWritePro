@@ -12,13 +12,16 @@ _Last updated: January 3rd, 2026_
 
 DocuWrite Pro is a completely client side based online document editor. No need to go to different sites for document editing, get everything done in one place using **DocuWrite Pro**.
 
-<sub>
-Quicklinks ·
-[Lander](https://mahi902.github.io/DocuWritePro/lander1.html) ·
-[Dashboard](https://mahi902.github.io/DocuWritePro/Dashboard.html) ·
-[Editor](https://mahi902.github.io/DocuWritePro/document-writer.html) ·
-[Legal Docs](https://mahi902.github.io/DocuWritePro/legal-documents.html)
-</sub>
+<details>
+<summary><strong>Quicklinks</strong></summary>
+
+[Lander →](https://mahi902.github.io/DocuWritePro/lander1.html) ·
+[Dashboard →](https://mahi902.github.io/DocuWritePro/Dashboard.html) ·
+[Editor →](https://mahi902.github.io/DocuWritePro/document-writer.html) ·
+[Legal Docs →](https://mahi902.github.io/DocuWritePro/legal-documents.html)
+
+</details>
+
 
 <details>
 <summary><strong>Table of Contents</strong></summary>

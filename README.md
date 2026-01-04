@@ -143,6 +143,27 @@ The following tools use these AI features to enhance user experience:
 | Mobile App (PWA) | Install and use the Progressive Web App (PWA) version of the full editing suite on your device by following the installation guide. | Internet connection, PWA-supported browser | https://mahi902.github.io/DocuWritePro/instapp.html |
 | Local Desktop (Clone Repo) | Clone the entire DocuWrite Pro repository to your desktop and run it locally by following GitHub’s official cloning guide. | Git, Desktop environment | https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository |
 
+
+## Privacy & Authentication 
+
+![Banner8](https://i.ibb.co/wrQG6YdN/1000039764-Photoroom.png)
+
+
+In DocuWrite Pro, we highly value your privacy. As a client side device, we dont connect or share your data with any external servers. In rare occasions we do so, we let you know through your dashboard. 
+
+<details>
+<summary><strong>Forms of Authentication</strong></summary>
+
+- **Account Creation:**  
+  On the web version of DocuWrite Pro, you need to create an account on the Dashboard page. Your data is stored locally on your device. We use your **Name** and **Profile Picture** to enhance your experience within DocuWrite Pro tools. This data is **not shared with third-party services**. You can manually clear your browser cookies to remove this data.
+
+- **Human Verification:**  
+  On the web version of DocuWrite Pro, you also verify that you are human using a simple test. This service is provided by **MCaptcha**, a sub-division of DocuWrite Pro. MCaptcha helps keep our platform free from invaders and automated bots.
+
+</details>
+
+
+  
 ## Contributing
 
 DocuWrite Pro is created and moderated by [Mahi902](https://github.com/Mahi902/). For contributing or requesting any change, reach out to mohtadiazadmahi902@gmail.com. I do not intend to sell or share DocuWrite Pro with potential buyer's. Donation requests are welcome.

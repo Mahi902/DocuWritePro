@@ -46,7 +46,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 
 ## Description
 
-![Banner6](https://i.ibb.co/KcMXvGp8/1000039596-Photoroom.png)
+![Banner6](https://i.ibb.co/DHNTFc2R/1000039604-Photoroom.png)
 
 
 DocuWrite Pro is a powerful, intuitive web-based writing and documentation tool designed to empower creators, students, and professionals to craft polished content effortlessly. Built with a clean and minimalist interface, it removes distractions so users can focus fully on their ideas. The platform supports rich text formatting, seamless embedding of media, and real-time collaboration, making it ideal for anything from academic papers to business reports. With robust version history and cloud-syncing capabilities, users never lose progress, and can access their documents from anywhere. Smart features like context-aware suggestions, customizable templates, and distraction-free modes help guide writers through every stage of the creative process, whether they’re drafting a first outline or refining a final draft.

@@ -86,8 +86,12 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 ⓘ All tools which use AI in DocuWrite Pro are provided by [pollinations.ai](https://pollinations.ai/). Their documentation is available [here](https://pollinations.ai/docs). We use this service for both text generation and image generation. We do not charge for any AI usage within DocuWrite Pro.
 
 The following tools use this AI festure to enhance user experience:
- - ❖ Editor   - ❖ Word Finder   - ❖ HTML Writer   - ❖ Website Generator
+ - ❖ Editor
+ - ❖ Word Finder
+ - ❖ HTML Writer
+ - ❖ Website Generator
  - ❖ Image Generator
+ 
 
  
  ## Clone or use DocuWrite Pro

@@ -133,7 +133,7 @@ The following tools use this AI festure to enhance user experience:
 
  
  ## Clone or use DocuWrite Pro
- to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.
+ Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.
 
 - How to use DocuWrite Pro (instructions):
 

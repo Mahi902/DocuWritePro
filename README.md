@@ -18,6 +18,21 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 > [Editor →](https://mahi902.github.io/DocuWritePro/document-writer.html) |
 > [Legal Documents →](https://mahi902.github.io/DocuWritePro/legal-documents.html)
 
+### Table of Content
+- [Introduction](#introduction)
+- [DocuWrite Pro Tools](#docuwrite-pro-tools)
+  - [Main Tools](#main-tools)
+  - [Additional Tools](#additional-tools)
+  - [AI Powered Tools](#ai-powered-tools)
+- [Clone or Use DocuWrite Pro](#clone-or-use-docuwrite-pro)
+- [Contributing](#contributing)
+- [License](#license)
+  - [Notes](#notes)
+- [Legal Info](#legal-info)
+- [Statistics](#statistics)
+- [Creator Profile](#creator-profile)
+
+  
 # DocuWrite Pro Tools
 
 ![Banner1](https://i.ibb.co/nqp2X4Nk/1000039482-Photoroom.png)

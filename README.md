@@ -244,9 +244,9 @@ I'm a passionate **student, software developer, and tech innovator**. I love cre
 - Creative coding and educational software  
 
 ####  Connect with Me
-- [GitHub](https://github.com/Mahi902)  
-- [Mail](mohtadiazadmahi902@gmail.com)  
-- [LinkedIn](https://lnkd.in/gedVbbKP)
-- [Official Website](https://mahi902.github.io)
+## Connect with me
+
+| [![GitHub](https://img.shields.io/badge/-@Mahi902-ADD8E6?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Mahi902) | [![Email](https://img.shields.io/badge/-Mahi-ADD8E6?style=for-the-badge&logo=gmail&logoColor=white)](mailto:mohtadiazadmahi902@gmail.com) | [![LinkedIn](https://img.shields.io/badge/-🅘🅝_Mahi-ADD8E6?style=for-the-badge&logo=in&logoColor=white)](https://lnkd.in/gedVbbKP) | [![Website](https://img.shields.io/badge/-mahi902-ADD8E6?style=for-the-badge&logo=google-chrome&logoColor=white)](https://mahi902.github.io) |
+
 
 > "Turning ideas into reality, one line of code at a time."  

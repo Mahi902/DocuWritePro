@@ -149,7 +149,7 @@ The following tools use these AI features to enhance user experience:
 ![Banner8](https://i.ibb.co/wrQG6YdN/1000039764-Photoroom.png)
 
 
-In DocuWrite Pro, we highly value your privacy. As a client side device, we dont connect or share your data with any external servers. In rare occasions we do so, we let you know through your dashboard. 
+In DocuWrite Pro, we highly value your privacy. As a client side service, we don't connect or share your data with any external servers. In rare occasions we do let you know through your dashboard. 
 
 <details>
 <summary><strong>Forms of Authentication</strong></summary>

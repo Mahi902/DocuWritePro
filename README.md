@@ -83,12 +83,18 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 
 ![Banner5](https://i.ibb.co/ksG37Gkd/1000039551-Photoroom.png)
 
-All tools which use AI in DocuWrite Pro are provided by [pollinations.ai](https://pollinations.ai/). Their documentation is available [here](https://pollinations.ai/docs). We use this service for both text generation and image generation. We do not charge for any AI usage within DocuWrite Pro.
+ⓘ All tools which use AI in DocuWrite Pro are provided by [pollinations.ai](https://pollinations.ai/). Their documentation is available [here](https://pollinations.ai/docs). We use this service for both text generation and image generation. We do not charge for any AI usage within DocuWrite Pro.
 
+The following tools use this AI festure to enhance user experience:
+ ❖ Editor
+ ❖ Word Finder
+ ❖ HTML Writer
+ ❖ Website Generator
+ ❖ Image Generator
 
-## Clone or use DocuWrite Pro
-
-Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.
+ 
+ ## Clone or use DocuWrite Pro
+ to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.
 
 - How to use DocuWrite Pro (instructions):
 

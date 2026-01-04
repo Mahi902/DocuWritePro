@@ -94,7 +94,7 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 - **ID Card Maker**: Designing and creating ID cards
 - **File Zipper**: Compressing or zipping files
 - **PDF Converter**: Converting files to or from PDF format
-- **PDF Compressor**: Compress PDF's and shrink file size
+- **PDF Compressor**: Compress PDFs and shrink file size
 - **Markdown Editor**: Edit or convert plain text to markdown .md
 
 ## Additional Tools

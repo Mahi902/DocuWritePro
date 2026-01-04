@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Iframe Hash Listener</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #0f172a;
+      transition: background-color 0.25s ease;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .flash {
+      background-color: #22c55e !important;
+    }
+  </style>
+</head>
+<body>
+
+<iframe id="docuwrite" src="https://mahi902.github.io/DocuWritePro/1.html"></iframe>
+
+<script>
+  const iframe = document.getElementById("docuwrite");
+  let lastHash = "";
+
+  setInterval(() => {
+    try {
+      const currentHash = iframe.contentWindow.location.hash;
+
+      if (currentHash === "#clicked" && lastHash !== "#clicked") {
+        flashGreen();
+      }
+
+      lastHash = currentHash;
+    } catch (e) {
+      // Safety fallback (should not trigger since same-origin)
+    }
+  }, 200);
+
+  function flashGreen() {
+    document.body.classList.add("flash");
+    setTimeout(() => {
+      document.body.classList.remove("flash");
+    }, 300);
+  }
+</script>
+
+</body>
+</html>

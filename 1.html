@@ -2,40 +2,275 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Hash Click</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCaptcha 1</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <style>
     body {
+      font-family: 'Inter', sans-serif;
+      background: #ffffff;
       display: flex;
-      height: 100vh;
-      align-items: center;
       justify-content: center;
-      font-family: system-ui, sans-serif;
-      background: #f5f7fa;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      overflow: hidden;
     }
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      border: none;
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.5s ease-out;
+      z-index: 1000;
+    }
+    #loadingImage {
+      max-width: 100%;
+      max-height: 100%;
+      background: #eee;
+      width: 150px; 
+      height: 150px;
+      object-fit: contain;
       border-radius: 8px;
+    }
+    .captcha-box {
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 16px;
+      text-align: center;
+      width: 380px; 
+      box-sizing: border-box;
+      opacity: 1;
+      transform: scale(1);
+      transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out, max-height 0.4s ease-in-out;
+      max-height: 600px;
+      display: none;
+    }
+    h1 { color: #1a73e8; font-weight: 500; font-size: 1.25rem; margin-bottom: 4px; }
+    p { color: #5f6368; font-size: 0.85rem; margin: 0 0 12px 0; }
+    canvas {
+      width: 300px;
+      height: 300px;
+      border-radius: 4px;
+      border: 1px solid #c4c4c4; 
+      margin: 16px 0;
       cursor: pointer;
-      background: #2563eb;
-      color: white;
+      background: #f7f7f7; 
+      box-sizing: content-box;
     }
-    button:hover {
-      background: #1d4ed8;
+    .footer {
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: #707070;
     }
+    .footer a { color: #1a73e8; text-decoration: none; font-weight: 500; padding: 4px 8px; border-radius: 4px; transition: background 0.15s; }
+    .footer a:hover { background: #f5f5f5; }
+    .actions { display: flex; justify-content: flex-end; gap: 12px; font-size: 0.8rem; color: #1a73e8; user-select: none; padding-top: 8px; }
+    .actions span { cursor: pointer; transition: opacity 0.2s; font-weight: 500; }
+    .actions span:hover { opacity: 0.8; }
+    .verified { color: #0f9d58; font-weight: 600; margin-top: 10px; font-size: 1rem; display: none; }
+    .material-icons { font-size: 1.2em; }
   </style>
 </head>
 <body>
+  
+  <div id="loadingOverlay">
+    <img id="loadingImage" src="https://i.ibb.co.com/ZRXppRc1/Gemini-Generated-Image-bmoecabmoecabmoe.png" 
+         onerror="this.onerror=null; this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAYAAAB1iadOAAAAAXNSR0IArs4c6QAAAXRJREFUeJzt3LGOFEEQhdHv8QoN+cQkL6Tgp0SDRJ/K938rJ8L0k/n8fD97g3QCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAN62v62/iO7H2n1b35e2/l7+tH5Vf444X9n31xPj8/l/V5Wc3/683w+O2/r7+K+V23/y+28P/17R9d7h55X9/c/j+7p+Ufn8fD/7g7ReL/c+41Wn+Xyv7X3r76Nf1a/izxf2/fXEy+v7vx4c/76+/S/v34/n79z2/fW/u8v2/fX/H+sAAAAAAAAAAACAcwD6Y3gH2vHn5fX/J9m/i+1/q58nzpfnJ8/r/2P2NnO7/O7t592d3v775/O53J7m+3+lX7i/93s6L/n+v0v27+L7X2v3z+bnyfOF+enru/6/ZnW7/O7t5+1d3/775/P5/J7m+3+lX7i/8oMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB+eAEfM2eB23zSgwAAAABJRU5ErkJggg==';"
+         alt="Loading MCaptcha">
+  </div>
 
-<button onclick="addHash()">Click me</button>
+  <div class="captcha-box" id="captchaBox">
+    <h1>Verify You're Not a Robot</h1>
+    <p>Solve the puzzle</p>
+    <canvas id="captchaCanvas" width="300" height="300"></canvas>
+    
+    <div class="verified" id="verified">
+      <span class="material-icons" style="vertical-align:middle; margin-right: 4px;">check_circle</span> Verified
+    </div>
 
-<script>
-  function addHash() {
-    window.location.hash = "clicked";
-  }
-</script>
+    <div class="actions">
+      <span id="reset">Reset Puzzle</span>
+      <span id="newEmoji">New Challenge</span>
+    </div>
 
+    <div class="footer">
+        <span>Protected by MCaptcha</span>
+        <a href="https://mahi902.github.io/DocuWritePro/mct.html" target="_blank">Terms</a>
+    </div>
+  </div>
+
+  <script>
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const captchaBox = document.getElementById('captchaBox');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const canvas = document.getElementById('captchaCanvas');
+    const ctx = canvas.getContext('2d');
+    const verifiedMsg = document.getElementById('verified');
+    const resetBtn = document.getElementById('reset');
+    const newBtn = document.getElementById('newEmoji');
+
+    const GRID_SIZE = 3;
+    const CANVAS_SIZE = 300;
+    const TILE = CANVAS_SIZE / GRID_SIZE; 
+    
+    let emoji = "😀";
+    let tiles = [];
+    let empty = {x: TILE * 2, y: TILE * 2};
+
+    let hiddenCanvas = document.createElement('canvas');
+    hiddenCanvas.width = CANVAS_SIZE;
+    hiddenCanvas.height = CANVAS_SIZE;
+    const hctx = hiddenCanvas.getContext('2d');
+
+    function getRandomEmoji() {
+      const base = 0x1F600; 
+      const range = 0x1F64F - base; 
+      return String.fromCodePoint(base + Math.floor(Math.random() * range));
+    }
+
+    function calculateInversions(seq) {
+      let inversions = 0;
+      for (let i=0;i<seq.length;i++)
+        for(let j=i+1;j<seq.length;j++)
+          if(seq[i]>seq[j]) inversions++;
+      return inversions;
+    }
+
+    function isSolvable(seq){ return calculateInversions(seq)%2===0; }
+
+    function getCurrentTileSequence() {
+      const visualSpots=[];
+      for(let r=0;r<GRID_SIZE;r++)
+        for(let c=0;c<GRID_SIZE;c++)
+          visualSpots.push({x:c*TILE,y:r*TILE});
+      const seq=[];
+      for(const pos of visualSpots){
+        if(pos.x===empty.x && pos.y===empty.y) continue;
+        const tile = tiles.find(t=>t.x===pos.x && t.y===pos.y);
+        if(tile) seq.push(tile.id);
+      }
+      return seq;
+    }
+
+    function makeEmojiTiles() {
+      hctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+      hctx.font="240px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif";
+      hctx.textAlign="center";
+      hctx.textBaseline="middle";
+      hctx.fillText(emoji,CANVAS_SIZE/2,CANVAS_SIZE/2);
+
+      tiles=[];
+      let tileId=1;
+      for(let r=0;r<GRID_SIZE;r++)
+        for(let c=0;c<GRID_SIZE;c++){
+          if(r===GRID_SIZE-1 && c===GRID_SIZE-1) continue;
+          const xStart=c*TILE;
+          const yStart=r*TILE;
+          const imgData=hctx.getImageData(xStart,yStart,TILE,TILE);
+          tiles.push({img:imgData,x:xStart,y:yStart,originalX:xStart,originalY:yStart,id:tileId++});
+        }
+      empty={x:TILE*2,y:TILE*2};
+    }
+
+    function shuffleTiles() {
+      let solvable=false;
+      let allPositions=[];
+      for(let r=0;r<GRID_SIZE;r++)
+        for(let c=0;c<GRID_SIZE;c++)
+          allPositions.push({x:c*TILE,y:r*TILE});
+      while(!solvable){
+        allPositions.sort(()=>Math.random()-0.5);
+        for(let i=0;i<8;i++){ tiles[i].x=allPositions[i].x; tiles[i].y=allPositions[i].y; }
+        empty.x=allPositions[8].x; empty.y=allPositions[8].y;
+        if(isSolvable(getCurrentTileSequence()) && !isSolved()) solvable=true;
+      }
+    }
+
+    function drawTileNumber(tile){
+      ctx.strokeStyle='#c4c4c4'; ctx.strokeRect(tile.x,tile.y,TILE,TILE);
+      const boxSize=24; const padding=2;
+      ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.fillRect(tile.x+padding,tile.y+padding,boxSize,boxSize);
+      ctx.strokeStyle='#1a73e8'; ctx.strokeRect(tile.x+padding,tile.y+padding,boxSize,boxSize);
+      ctx.font='500 14px Inter, sans-serif'; ctx.fillStyle='#1a73e8';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(tile.id,tile.x+padding+boxSize/2,tile.y+padding+boxSize/2);
+    }
+
+    function drawTiles(){
+      ctx.clearRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+      for(let t of tiles){ ctx.putImageData(t.img,t.x,t.y); drawTileNumber(t); }
+      ctx.strokeStyle="#c4c4c4"; ctx.strokeRect(0,0,CANVAS_SIZE,CANVAS_SIZE);
+    }
+
+    function isSolved(){
+      return tiles.every(t=>t.x===t.originalX && t.y===t.originalY) && empty.x===TILE*2 && empty.y===TILE*2;
+    }
+
+    async function handleVerificationSuccess(){
+      verifiedMsg.style.display="block";
+      // Update URL hash
+      window.location.hash = "clicked";
+      await sleep(500);
+      captchaBox.style.opacity=0;
+      captchaBox.style.transform='scale(0.9)';
+      captchaBox.style.maxHeight='0px';
+      await sleep(400);
+      captchaBox.style.display='none';
+    }
+
+    canvas.addEventListener('click', e=>{
+      if(verifiedMsg.style.display==="block") return;
+      verifiedMsg.style.display="none";
+      const rect=canvas.getBoundingClientRect();
+      const x=e.clientX-rect.left;
+      const y=e.clientY-rect.top;
+      const col=Math.floor(x/TILE);
+      const row=Math.floor(y/TILE);
+      const clickedX=col*TILE;
+      const clickedY=row*TILE;
+      const piece=tiles.find(t=>t.x===clickedX && t.y===clickedY);
+      if(!piece) return;
+      const dx=Math.abs(piece.x-empty.x);
+      const dy=Math.abs(piece.y-empty.y);
+      if((dx===TILE && dy===0)||(dx===0 && dy===TILE)){
+        const oldEmpty={x:empty.x,y:empty.y};
+        empty.x=piece.x; empty.y=piece.y;
+        piece.x=oldEmpty.x; piece.y=oldEmpty.y;
+        drawTiles();
+      }
+      if(isSolved()) handleVerificationSuccess();
+    });
+
+    resetBtn.onclick=()=>{ verifiedMsg.style.display="none"; shuffleTiles(); drawTiles(); };
+    newBtn.onclick=()=>{ emoji=getRandomEmoji(); verifiedMsg.style.display="none"; makeEmojiTiles(); shuffleTiles(); drawTiles(); };
+
+    async function initialize(){
+      captchaBox.style.display='none';
+      await sleep(500);
+      loadingOverlay.style.opacity=0;
+      await sleep(500);
+      loadingOverlay.style.display='none';
+      captchaBox.style.display='block';
+      emoji=getRandomEmoji(); makeEmojiTiles(); shuffleTiles(); drawTiles();
+    }
+    initialize();
+  </script>
 </body>
 </html>
+

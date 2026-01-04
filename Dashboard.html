@@ -2317,5 +2317,115 @@
             document.getElementById("filterOptions").classList.remove("show");
         }
     </script>
+
 </body>
 </html>
+
+
+<!-- Full-page iframe with Remember Me -->
+<style>
+  /* Lock scrolling while iframe is active */
+  body.human-auth-locked {
+    overflow: hidden;
+  }
+
+  /* Full-page overlay */
+  #human-auth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.0); /* transparent, iframe is visible */
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Full-page iframe */
+  #human-auth-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    flex: 1;
+  }
+
+  /* Remember Me label at the bottom */
+  #remember-container {
+    position: absolute;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    color: #fff;
+    font-family: system-ui, sans-serif;
+    font-size: 14px;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 12px;
+    border-radius: 8px;
+  }
+
+  #remember-container input[type="checkbox"] {
+    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+  }
+</style>
+
+<div id="human-auth-overlay">
+  <iframe src="https://mahi902.github.io/DocuWritePro/1.html" id="human-auth-iframe"></iframe>
+  <label id="remember-container">
+    <input type="checkbox" id="remember-me"> Remember me for 30 days
+  </label>
+</div>
+
+<script>
+(function() {
+  function getCookie(name) {
+    const value = "; " + document.cookie;
+    const parts = value.split("; " + name + "=");
+    if (parts.length === 2) return parts.pop().split(";").shift();
+    return null;
+  }
+
+  function setCookie(name, value, days) {
+    const expires = new Date(Date.now() + days * 864e5).toUTCString();
+    document.cookie = name + "=" + value + "; expires=" + expires + "; path=/";
+  }
+
+  if (getCookie("humanAuthVerified") === "true") {
+    document.getElementById("human-auth-overlay")?.remove();
+    return;
+  }
+
+  document.body.classList.add("human-auth-locked");
+
+  const overlay = document.getElementById("human-auth-overlay");
+  const iframe = document.getElementById("human-auth-iframe");
+  const rememberCheckbox = document.getElementById("remember-me");
+  let lastHash = "";
+
+  const interval = setInterval(() => {
+    try {
+      const hash = iframe.contentWindow.location.hash;
+      if (hash === "#clicked" && lastHash !== "#clicked") {
+        unlockPage();
+      }
+      lastHash = hash;
+    } catch (e) {
+      console.warn("Cannot access iframe hash. Use postMessage for cross-origin.");
+    }
+  }, 200);
+
+  function unlockPage() {
+    clearInterval(interval);
+    overlay.remove();
+    document.body.classList.remove("human-auth-locked");
+
+    if (rememberCheckbox.checked) {
+      setCookie("humanAuthVerified", "true", 30);
+    }
+  }
+})();
+</script>

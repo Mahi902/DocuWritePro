@@ -113,7 +113,7 @@
             <input type="range" id="draw-width" min="1" max="50" value="10" title="Brush Size" onchange="updateBrush()">
         </div>
 
-        <!-- Shapes & Text -->
+        <!-- Shapes, Text & Image -->
         <div class="tool-group">
             <button onclick="addShape('rect')" title="Rectangle"><i class="far fa-square"></i></button>
             <button onclick="addShape('circle')" title="Circle"><i class="far fa-circle"></i></button>
@@ -121,6 +121,10 @@
             <button onclick="addText()" title="Add Text"><i class="fas fa-font"></i></button>
             <button onclick="toggleTextStyle('bold')" title="Bold"><i class="fas fa-bold"></i></button>
             <button onclick="importFont()" title="Google Font"><i class="fab fa-google"></i></button>
+            
+            <!-- Image Upload Input & Button -->
+            <input type="file" id="img-upload" accept="image/*" class="hidden" onchange="handleImageUpload(this)">
+            <button onclick="document.getElementById('img-upload').click()" title="Add Image"><i class="fas fa-image"></i></button>
         </div>
 
         <!-- Auto OCR -->
@@ -383,7 +387,7 @@
         }
     });
 
-    // --- Shapes & Text ---
+    // --- Shapes, Text & Images ---
 
     function getActiveCanvas() {
         // Return the canvas whose wrapper is currently most visible in viewport
@@ -415,7 +419,6 @@
         // Place in center of viewport, not just center of page
         const vpt = canvas.vptCoords || canvas.getCenter();
         const center = { left: canvas.width / 2, top: canvas.height / 2 }; 
-        // Note: For simplicity, placing at center of page.
         
         let obj;
         const commonProps = { 
@@ -498,6 +501,54 @@
             alert("Could not load font. Make sure it's a valid Google Fonts CSS URL.");
         }
     }
+    
+    // --- Image Upload Logic ---
+    function handleImageUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const canvas = getActiveCanvas();
+        if (!canvas) {
+            alert("Please open a PDF document first.");
+            input.value = ''; // Reset
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(f) {
+            const data = f.target.result;
+            fabric.Image.fromURL(data, function(img) {
+                // Scale image down if it's too large for the page
+                const maxDim = 300;
+                if (img.width > maxDim || img.height > maxDim) {
+                    img.scaleToWidth(maxDim);
+                }
+
+                img.set({
+                    left: canvas.width / 2,
+                    top: canvas.height / 2,
+                    originX: 'center',
+                    originY: 'center',
+                    cornerColor: 'blue',
+                    cornerSize: 10,
+                    transparentCorners: false
+                });
+
+                canvas.add(img);
+                canvas.setActiveObject(img);
+                
+                // Automatically switch to 'select' tool to allow immediate manipulation
+                setTool('select');
+                
+                // Clear input so same file can be selected again if needed
+                input.value = '';
+                
+                saveHistory(fabricCanvases.indexOf(canvas));
+            });
+        };
+        reader.readAsDataURL(file);
+    }
+
 
     // --- Auto Highlighter (OCR with Bangla) ---
 

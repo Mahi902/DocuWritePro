@@ -1908,6 +1908,52 @@ body.dark-mode .btn-secondary {
   color: #e8eaed;
 }
 
+/* Export tip popup */
+#export-tip {
+  position: absolute;
+  background: #1a73e8;
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 8px;
+  width: 260px;
+  font-size: 13px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.3s ease;
+}
+
+#export-tip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#export-tip a {
+  color: #fff;
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+#export-tip .tip-actions {
+  margin-top: 10px;
+  text-align: right;
+}
+
+#export-tip button {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+#export-tip button:hover {
+  background: rgba(255,255,255,0.25);
+}
+
 .btn {
   border-radius: 4px;
   padding: 10px 16px;
@@ -5604,6 +5650,40 @@ window.addEventListener('beforeunload', function (event) {
 <script>document.addEventListener('input',e=>{ if(e.target.closest && e.target.closest('#editor, .editor-page')) document.getElementById('apply-custom-font')?.click(); }, true);</script>
 <script>document.addEventListener("dblclick",e=>{if(e.clientX<30&&e.clientY<30)document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();});</script>
 	
+<div id="export-tip">
+  Want to edit an exported PDF?  
+  Try the <a href="https://mahi902.github.io/DocuWritePro/markup.html" target="_blank">Markup tool</a>.
+  <div class="tip-actions">
+    <button id="export-tip-ok">Got it</button>
+  </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (localStorage.getItem("exportTipSeen") === "true") return;
+
+  const exportBtn = document.getElementById("export-btn");
+  const tip = document.getElementById("export-tip");
+  const okBtn = document.getElementById("export-tip-ok");
+
+  if (!exportBtn || !tip) return;
+
+  setTimeout(() => {
+    const rect = exportBtn.getBoundingClientRect();
+
+    tip.style.top = (rect.bottom + window.scrollY + 10) + "px";
+    tip.style.left = (rect.left + window.scrollX - 180) + "px";
+
+    tip.classList.add("show");
+  }, 1000);
+
+  okBtn.addEventListener("click", () => {
+    tip.classList.remove("show");
+    localStorage.setItem("exportTipSeen", "true");
+  });
+});
+</script>
+
+
 	
 </body>
 </html>

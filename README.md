@@ -74,6 +74,7 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
   
 - **Collab**: Editing documents together
 - **Document Viewer**: Viewing documents
+- **Markup & Reconstructor**: Edit already edited PDFs
 - **Word Finder**: Searching for specific words
 - **Translator**: Language translation
 - **Document Signer**: Electronically signing documents

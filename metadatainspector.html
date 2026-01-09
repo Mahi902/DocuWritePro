@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metadata Inspector</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <!-- Piexifjs for reading/writing JPEG EXIF data -->
+    <script src="https://unpkg.com/piexifjs@1.0.6/piexif.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
+        .drag-active { border-color: #3b82f6; background-color: #eff6ff; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .metadata-row:hover .row-actions { opacity: 1; }
+        .row-actions { opacity: 0; transition: opacity 0.2s; }
+        /* Always show actions on mobile */
+        @media (max-width: 768px) { .row-actions { opacity: 1; } }
+    </style>
+</head>
+<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
+        <span class="material-symbols-rounded text-green-400">check_circle</span>
+        <span id="toast-msg">Action Successful</span>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shadow-sm z-10 shrink-0">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-rounded text-blue-600 !text-3xl"></span>
+            <h1 class="text-xl font-semibold tracking-tight text-slate-800">Metadata <span class="text-blue-600">Inspector</span></h1>
+        </div>
+        <div class="flex gap-3">
+             <button onclick="document.getElementById('fileInput').click()" class="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">
+                <span class="material-symbols-rounded">upload_file</span>
+                Open File
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+
+        <!-- Empty State / Drop Zone (Overlay) -->
+        <div id="dropZone" class="absolute inset-0 z-20 bg-fuchsia-50/50 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300" style="display: flex;">
+            <div class="bg-white p-12 rounded-2xl shadow-xl border-2 border-dashed border-slate-300 text-center max-w-md w-full mx-4 hover:border-blue-400 transition-colors cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-rounded !text-4xl">cloud_upload</span>
+                </div>
+                <h2 class="text-xl font-semibold mb-2">Upload a file to inspect</h2>
+                <p class="text-slate-500 text-sm mb-6">Drag and drop or click to browse. <br> Full editing support for JPEGs.</p>
+                <button class="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+                    Select File
+                </button>
+                <input type="file" id="fileInput" class="hidden" accept="*/*">
+            </div>
+        </div>
+
+        <!-- Left Panel: Preview -->
+        <div class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-slate-200 p-6 flex flex-col overflow-y-auto shrink-0 z-10">
+            <div class="mb-6">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">File Preview</h3>
+                <div class="aspect-square bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden relative group">
+                    <img id="previewImage" class="w-full h-full object-contain hidden" alt="Preview">
+                    <div id="fileIcon" class="hidden flex-col items-center text-slate-400">
+                        <span class="material-symbols-rounded !text-6xl mb-2">description</span>
+                        <span class="text-xs uppercase font-bold" id="fileExt">FILE</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs text-slate-500 font-medium">Filename</label>
+                    <p id="metaName" class="text-sm font-medium text-slate-800 break-all">No file selected</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-slate-500 font-medium">Size</label>
+                        <p id="metaSize" class="text-sm font-medium text-slate-800">-</p>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500 font-medium">Type</label>
+                        <p id="metaType" class="text-sm font-medium text-slate-800">-</p>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-500 font-medium">Last Modified</label>
+                    <p id="metaDate" class="text-sm font-medium text-slate-800">-</p>
+                </div>
+            </div>
+
+            <div class="mt-auto pt-6 border-t border-slate-100 space-y-3">
+                 <button id="downloadBtn" class="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-lg text-sm font-medium transition shadow-lg shadow-slate-900/10 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <span class="material-symbols-rounded">download</span>
+                    Download File
+                </button>
+                <button id="scrubBtn" class="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <span class="material-symbols-rounded">cleaning_services</span>
+                    Erase All Metadata
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Metadata Editor -->
+        <div class="flex-1 bg-slate-50 flex flex-col overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <h2 class="font-semibold text-slate-800">Metadata Properties</h2>
+                    <span id="tagCount" class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full font-medium">0 Tags</span>
+                </div>
+                <div class="text-xs text-slate-400 flex items-center gap-1">
+                    <span class="material-symbols-rounded !text-base">info</span>
+                    <span>Editing supported for JPEG/EXIF</span>
+                </div>
+            </div>
+
+            <div id="metadataList" class="flex-1 overflow-y-auto p-6 space-y-2">
+                <!-- Metadata items injected here -->
+                <div class="flex flex-col items-center justify-center h-full text-slate-400">
+                    <span class="material-symbols-rounded !text-5xl mb-3 opacity-20">dataset</span>
+                    <p>No metadata available to display</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- State ---
+        let currentFile = null;
+        let originalDataUrl = null;
+        let modifiedDataUrl = null;
+        let exifObj = null; // Stores the parsed piexif object
+        let isJpeg = false;
+
+        // --- DOM Elements ---
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const metadataList = document.getElementById('metadataList');
+        const previewImage = document.getElementById('previewImage');
+        const fileIcon = document.getElementById('fileIcon');
+        const fileExt = document.getElementById('fileExt');
+        
+        // Buttons
+        const downloadBtn = document.getElementById('downloadBtn');
+        const scrubBtn = document.getElementById('scrubBtn');
+
+        // --- Event Listeners ---
+        
+        // Drag & Drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        document.body.addEventListener('dragenter', () => dropZone.classList.add('bg-blue-50/90'));
+        document.body.addEventListener('dragleave', (e) => {
+            if (e.relatedTarget === null) dropZone.classList.remove('bg-blue-50/90');
+        });
+
+        document.body.addEventListener('drop', handleDrop, false);
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+        
+        function handleDrop(e) {
+            dropZone.classList.remove('bg-blue-50/90');
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            handleFile(file);
+        }
+
+        downloadBtn.addEventListener('click', downloadFile);
+        scrubBtn.addEventListener('click', eraseAllMetadata);
+
+        // --- Core Logic ---
+
+        function handleFile(file) {
+            if (!file) return;
+
+            currentFile = file;
+            
+            // UI Reset
+            dropZone.style.display = 'none';
+            metadataList.innerHTML = '';
+            previewImage.classList.add('hidden');
+            fileIcon.classList.add('hidden');
+            fileIcon.classList.remove('flex');
+            downloadBtn.disabled = false;
+            
+            // Basic File Info
+            document.getElementById('metaName').textContent = file.name;
+            document.getElementById('metaSize').textContent = formatBytes(file.size);
+            document.getElementById('metaType').textContent = file.type || 'Unknown';
+            document.getElementById('metaDate').textContent = new Date(file.lastModified).toLocaleDateString();
+
+            // Check if JPEG
+            isJpeg = file.type === 'image/jpeg' || file.type === 'image/jpg';
+            
+            if (isJpeg) {
+                scrubBtn.disabled = false;
+            } else {
+                scrubBtn.disabled = true; // Can't easily scrub arbitrary file types in browser JS
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                originalDataUrl = e.target.result;
+                modifiedDataUrl = e.target.result;
+
+                // Set Preview
+                if (file.type.startsWith('image/')) {
+                    previewImage.src = originalDataUrl;
+                    previewImage.classList.remove('hidden');
+                } else {
+                    fileIcon.classList.remove('hidden');
+                    fileIcon.classList.add('flex');
+                    fileExt.textContent = file.name.split('.').pop() || 'FILE';
+                }
+
+                if (isJpeg) {
+                    try {
+                        exifObj = piexif.load(originalDataUrl);
+                        renderExifData(exifObj);
+                    } catch (err) {
+                        console.error("Exif parsing failed", err);
+                        renderGenericMessage("Could not parse EXIF data. File might be corrupted or not standard JPEG.");
+                    }
+                } else {
+                    renderGenericMessage("Deep metadata editing is only supported for JPEG files. Basic file properties are shown on the left.");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Tag Mapping for Readable Names (Subset of common tags)
+        const TAG_MAP = {
+            "0th": {
+                271: "Make", 272: "Model", 274: "Orientation", 305: "Software", 306: "DateTime", 
+                315: "Artist", 33432: "Copyright", 270: "ImageDescription"
+            },
+            "Exif": {
+                36867: "DateTimeOriginal", 36868: "DateTimeDigitized", 33434: "ExposureTime", 
+                33437: "FNumber", 34850: "ExposureProgram", 34855: "ISOSpeedRatings",
+                37377: "ShutterSpeedValue", 37378: "ApertureValue", 37386: "FocalLength"
+            },
+            "GPS": {
+                // GPS logic is complex (rationals), we might mostly view it or delete it
+                2: "GPSLatitude", 4: "GPSLongitude", 6: "GPSAltitude"
+            }
+        };
+
+        function renderExifData(data) {
+            metadataList.innerHTML = '';
+            let count = 0;
+
+            const ifds = ["0th", "Exif", "GPS", "1st"];
+            
+            ifds.forEach(ifd => {
+                const tags = data[ifd];
+                if (!tags) return;
+
+                for (let tagId in tags) {
+                    const value = tags[tagId];
+                    if (value === null || value === undefined) continue;
+
+                    count++;
+                    const tagName = (TAG_MAP[ifd] && TAG_MAP[ifd][tagId]) ? TAG_MAP[ifd][tagId] : `Tag ${tagId}`;
+                    
+                    // Determine if editable (strings are safe, others risky in simple UI)
+                    const isEditable = typeof value === 'string';
+
+                    createRow(ifd, tagId, tagName, value, isEditable);
+                }
+            });
+
+            document.getElementById('tagCount').textContent = `${count} Tags`;
+
+            if (count === 0) {
+                renderGenericMessage("No EXIF metadata found in this image.");
+            }
+        }
+
+        function createRow(ifd, tagId, key, value, isEditable) {
+            const row = document.createElement('div');
+            row.className = "metadata-row bg-white border border-slate-200 rounded-lg p-3 flex items-center justify-between group hover:border-blue-400 transition-colors";
+            
+            // Format value for display (truncate long strings, handle arrays)
+            let displayValue = value;
+            if (Array.isArray(value)) displayValue = `[${value.length} values]`;
+            if (typeof value === 'string' && value.length > 50) displayValue = value.substring(0, 50) + '...';
+
+            row.innerHTML = `
+                <div class="flex-1 min-w-0 mr-4">
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-xs font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded uppercase">${ifd}</span>
+                        <h4 class="text-sm font-semibold text-slate-700 truncate" title="${key}">${key}</h4>
+                    </div>
+                    <p class="text-sm text-slate-600 mt-1 truncate font-mono" id="val-${ifd}-${tagId}" title="${value}">${displayValue}</p>
+                </div>
+                <div class="row-actions flex items-center gap-1">
+                    ${isEditable ? `
+                        <button onclick="startEdit('${ifd}', '${tagId}')" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="Edit">
+                            <span class="material-symbols-rounded text-lg">edit</span>
+                        </button>
+                    ` : ''}
+                    <button onclick="deleteTag('${ifd}', '${tagId}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition" title="Delete">
+                        <span class="material-symbols-rounded text-lg">delete</span>
+                    </button>
+                </div>
+            `;
+            metadataList.appendChild(row);
+        }
+
+        // --- Actions ---
+
+        function startEdit(ifd, tagId) {
+            const currentVal = exifObj[ifd][tagId];
+            const newVal = prompt(`Edit value for ${tagId} (${ifd})`, currentVal);
+            
+            if (newVal !== null && newVal !== currentVal) {
+                exifObj[ifd][tagId] = newVal;
+                refreshExif();
+                showToast("Value updated");
+            }
+        }
+
+        function deleteTag(ifd, tagId) {
+            delete exifObj[ifd][tagId];
+            refreshExif();
+            showToast("Tag deleted");
+        }
+
+        function eraseAllMetadata() {
+            if (!confirm("Are you sure you want to remove ALL metadata? This cannot be undone.")) return;
+            
+            // Piexif expects an object with keys but empty values to represent 'clean'
+            exifObj = { "0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": null };
+            refreshExif();
+            showToast("All metadata erased");
+        }
+
+        function refreshExif() {
+            // Re-dump to binary string
+            try {
+                const exifBytes = piexif.dump(exifObj);
+                // Insert into original image data
+                modifiedDataUrl = piexif.insert(exifBytes, originalDataUrl); // Use original to avoid degradation, just updating headers
+                
+                // Update Preview to show changes (unlikely visual, but good practice)
+                previewImage.src = modifiedDataUrl;
+                
+                // Re-render list
+                renderExifData(exifObj);
+            } catch (e) {
+                console.error(e);
+                showToast("Error updating EXIF structure");
+            }
+        }
+
+        function downloadFile() {
+            const link = document.createElement('a');
+            
+            if (isJpeg) {
+                link.href = modifiedDataUrl;
+                // Add _clean suffix
+                const nameParts = currentFile.name.split('.');
+                const ext = nameParts.pop();
+                link.download = `${nameParts.join('.')}_edited.${ext}`;
+            } else {
+                // For non-jpeg, just download original since we didn't edit
+                link.href = originalDataUrl;
+                link.download = currentFile.name;
+            }
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Download started");
+        }
+
+        // --- Helpers ---
+
+        function renderGenericMessage(msg) {
+            metadataList.innerHTML = `
+                <div class="flex flex-col items-center justify-center h-full text-slate-400 text-center px-6">
+                    <span class="material-symbols-rounded !text-5xl mb-3 opacity-20">info</span>
+                    <p>${msg}</p>
+                </div>
+            `;
+            document.getElementById('tagCount').textContent = "0 Tags";
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-4');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -101,6 +101,7 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 
 ## Additional Tools
 - **Context Field**: Analyzing text (e.g., word count, frequency)
+- **Metadata Inspector**: Inspect and edit file metadata info
 - **Gift Card Maker**: Creating custom gift cards
 - **Share File**: Uploading or sharing a file
 - **Text Extractor**: Extracting text from sources (e.g., images)

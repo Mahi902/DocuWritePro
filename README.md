@@ -188,7 +188,7 @@ The project is under the [MIT](https://choosealicense.com/licenses/mit/) License
 Learn more about DocuWrite Pro's Privacy Policy, Terms of Use & Third Party Policies at [Legal Documents](https://mahi902.github.io/DocuWritePro/legal-documents.html). DocuWrite Pro uses services from third party providers and Java Script libararies. Check DocuWrite Pro API usage [here](https://mahi902.github.io/DocuWritePro/ctpn.html).
 
 ## Statistics
-
+![Stat](https://repobeats.axiom.co/api/embed/e85f2269179da6102705120a79edb3c33b1515bd.svg "Repobeats analytics image")
 <table>
   <tr>
     <td><img src="https://img.shields.io/github/repo-size/Mahi902/DocuWritePro?style=flat-square" alt="Repo Size" height="40"></td>

@@ -1,5 +1,5 @@
 # Code of Conduct  
-*Last Updated: Jan 13, 2026*
+*Last Updated: January 13th, 2026*
 
 ## Our Commitment
 

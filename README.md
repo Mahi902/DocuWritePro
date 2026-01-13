@@ -109,27 +109,15 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 - **Frontend IDE**: Integrated Development Environment for frontend coding
 - **HTML Editor**: Editing HTML code
 - **HTML Writer**: Writing or generating HTML content
-- **Website Generator**: Generate live websites using AI
 - **Button Designer**: Designing user interface buttons
 - **HTML Splitter**: Splitting HTML files or elements
 - **GoTo Code**: Navigation feature in an IDE/editor
 - **Code Snipper**: Storing or managing code snippets
 - **Image Editor**: Editing images
 - **Attribution Editor**: Edit attribution values of images
-- **Image Generator**: Generating new images
 - **Drawing Board**: A simple drawing or sketching tool
 
 
-## AI Powered Tools
-
-![Banner5](https://i.ibb.co/ksG37Gkd/1000039551-Photoroom.png)
-
-ⓘ All tools which use AI in DocuWrite Pro are provided by [pollinations.ai](https://pollinations.ai/). Their documentation is available [here](https://pollinations.ai/docs). We use this service for both text generation and image generation. We do not charge for any AI usage within DocuWrite Pro.
-
-The following tools use these AI features to enhance user experience:
- - ❖ Website Generator
- - ❖ Image Generator
- 
 
  
  ## Clone or use DocuWrite Pro

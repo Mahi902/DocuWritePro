@@ -34,7 +34,6 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - [DocuWrite Pro Tools](#docuwrite-pro-tools)
   - [Main Tools](#main-tools)
   - [Additional Tools](#additional-tools)
-  - [AI Powered Tools](#ai-powered-tools)
 - [Clone or Use DocuWrite Pro](#clone-or-use-docuwrite-pro)
 - [Privacy and Authentication](#privacy-and-authentication)
 - [Contributing](#contributing)

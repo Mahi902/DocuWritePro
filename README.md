@@ -127,9 +127,6 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 ⓘ All tools which use AI in DocuWrite Pro are provided by [pollinations.ai](https://pollinations.ai/). Their documentation is available [here](https://pollinations.ai/docs). We use this service for both text generation and image generation. We do not charge for any AI usage within DocuWrite Pro.
 
 The following tools use these AI features to enhance user experience:
- - ❖ Editor
- - ❖ Word Finder
- - ❖ HTML Writer
  - ❖ Website Generator
  - ❖ Image Generator
  

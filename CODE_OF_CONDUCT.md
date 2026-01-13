@@ -1,5 +1,5 @@
 # Code of Conduct  
-**DocuWrite Pro**
+*Last Updated: Jan 13, 2026*
 
 ## Our Commitment
 

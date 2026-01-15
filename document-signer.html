@@ -1057,6 +1057,192 @@ state.currentSignColor = color;
             errorMessage.style.display = 'block';
         }
     </script>
+    <script>
+(() => {
+  // Updated Storage Key for Document Signer
+  const STORAGE_KEY = "docuwritepro_document_signer_guide_seen";
+  if (localStorage.getItem(STORAGE_KEY)) return;
+
+  const tips = [
+    "Welcome to Document Signer! Start by uploading a PDF or an image (PNG/JPG) that needs your signature.",
+    "If you upload a multi-page PDF, use the 'Select Page' screen to pick the specific page you want to sign.",
+    "You have two ways to add a signature: 'Upload Signature' for an existing image or 'Draw Signature' to create one live.",
+    "When drawing, use the color picker below the canvas to switch between black, blue, red, green, or gold ink.",
+    "If you make a mistake while drawing, just click 'Clear' to reset the signature canvas and start over.",
+    "After saving your signature, click anywhere on the document preview to place it exactly where it needs to be.",
+    "Use the 'Signature Properties' sidebar to adjust the size of your signature using the slider.",
+    "Forgot to change the ink color? You can still update the signature color in the properties panel after placing it.",
+    "If you need to move the signature to a different spot, click 'Place Signature Again' to re-position it on the page.",
+    "Once finished, click 'Download' to save your signed document as a high-quality PNG image file."
+  ];
+
+  let index = 0;
+  let direction = 1;
+
+  /* Container */
+  const box = document.createElement("div");
+  box.id = "dwp-tip-box";
+  box.innerHTML = `
+    <div class="dwp-progress">
+      <div class="dwp-progress-bar"></div>
+    </div>
+
+    <div class="dwp-tip-wrapper">
+      <div class="dwp-tip-text"></div>
+    </div>
+
+    <div class="dwp-actions">
+      <button class="dwp-prev">Back</button>
+      <button class="dwp-next">Next</button>
+    </div>
+  `;
+  document.body.appendChild(box);
+
+  const textEl = box.querySelector(".dwp-tip-text");
+  const nextBtn = box.querySelector(".dwp-next");
+  const prevBtn = box.querySelector(".dwp-prev");
+  const progressBar = box.querySelector(".dwp-progress-bar");
+
+  function updateTip(animate = true) {
+    if (animate) {
+      textEl.classList.remove("slide-in-left", "slide-in-right");
+      void textEl.offsetWidth;
+      textEl.classList.add(direction > 0 ? "slide-in-right" : "slide-in-left");
+    }
+
+    textEl.textContent = tips[index];
+    progressBar.style.width = `${((index + 1) / tips.length) * 100}%`;
+
+    prevBtn.style.visibility = index === 0 ? "hidden" : "visible";
+    nextBtn.textContent = index === tips.length - 1 ? "Got it" : "Next";
+  }
+
+  nextBtn.onclick = () => {
+    if (index === tips.length - 1) {
+      localStorage.setItem(STORAGE_KEY, "true");
+      box.classList.add("fade-out");
+      setTimeout(() => box.remove(), 300);
+    } else {
+      direction = 1;
+      index++;
+      updateTip();
+    }
+  };
+
+  prevBtn.onclick = () => {
+    if (index > 0) {
+      direction = -1;
+      index--;
+      updateTip();
+    }
+  };
+
+  setTimeout(() => {
+    box.classList.add("show");
+    updateTip(false);
+  }, 1000);
+
+  /* Styles */
+  const style = document.createElement("style");
+  style.textContent = `
+    #dwp-tip-box {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 320px;
+      background: #4285f4; /* Updated to match Document Signer primary color */
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 12px 35px rgba(0,0,0,.25);
+      font-family: 'Roboto', system-ui, sans-serif;
+      z-index: 99999;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity .3s ease, transform .3s ease;
+    }
+
+    #dwp-tip-box.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #dwp-tip-box.fade-out {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    .dwp-progress {
+      height: 4px;
+      background: rgba(255,255,255,.25);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .dwp-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #fff;
+      transition: width .35s ease;
+    }
+
+    .dwp-tip-wrapper {
+      overflow: hidden;
+      min-height: 48px;
+    }
+
+    .dwp-tip-text {
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .slide-in-right {
+      animation: slideRight .25s ease;
+    }
+
+    .slide-in-left {
+      animation: slideLeft .25s ease;
+    }
+
+    @keyframes slideRight {
+      from { opacity: 0; transform: translateX(14px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideLeft {
+      from { opacity: 0; transform: translateX(-14px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .dwp-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+
+    .dwp-actions button {
+      border: none;
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .dwp-prev {
+      background: rgba(255,255,255,.25);
+      color: #fff;
+    }
+
+    .dwp-next {
+      background: #fff;
+      color: #4285f4;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+    </script>
 </body>
 </html>
                 

@@ -1515,6 +1515,191 @@ document.querySelector('${idAttr ? `#${controls.buttonId.value}` : classAttr ? `
     });
 })();
 </script>
+<script>
+(() => {
+  // Updated Storage Key for Button Designer
+  const STORAGE_KEY = "docuwritepro_button_designer_seen";
+  if (localStorage.getItem(STORAGE_KEY)) return;
 
+  const tips = [
+    "Welcome to the Button Designer! Use the Basic tab to set your button text and primary font styles.",
+    "Toggle between the Basic, Border, Effects, and Interaction tabs to access different styling categories.",
+    "The Interaction tab allows you to configure how your button looks during Hover, Active, and Focus states.",
+    "Check the Interaction tab to add a link URL if you want your button to act as an anchor (<a>) tag.",
+    "Use the Background Type dropdown to switch between solid colors, linear/radial gradients, or background images.",
+    "The Effects tab lets you add professional touches like Box Shadows, Glow effects, and Backdrop Filters.",
+    "Choose from Material Icons or Font Awesome libraries to add visual cues to your button text.",
+    "The Advanced tab allows you to write custom CSS if the built-in controls don't cover your specific needs.",
+    "Once you're happy with the design, click 'Copy Code' to get the ready-to-use HTML, CSS, and JS snippet.",
+    "You can save your current design as a 'Preset' in the Advanced tab to reuse the configuration later."
+  ];
+
+  let index = 0;
+  let direction = 1;
+
+  /* Container */
+  const box = document.createElement("div");
+  box.id = "dwp-tip-box";
+  box.innerHTML = `
+    <div class="dwp-progress">
+      <div class="dwp-progress-bar"></div>
+    </div>
+
+    <div class="dwp-tip-wrapper">
+      <div class="dwp-tip-text"></div>
+    </div>
+
+    <div class="dwp-actions">
+      <button class="dwp-prev">Back</button>
+      <button class="dwp-next">Next</button>
+    </div>
+  `;
+  document.body.appendChild(box);
+
+  const textEl = box.querySelector(".dwp-tip-text");
+  const nextBtn = box.querySelector(".dwp-next");
+  const prevBtn = box.querySelector(".dwp-prev");
+  const progressBar = box.querySelector(".dwp-progress-bar");
+
+  function updateTip(animate = true) {
+    if (animate) {
+      textEl.classList.remove("slide-in-left", "slide-in-right");
+      void textEl.offsetWidth;
+      textEl.classList.add(direction > 0 ? "slide-in-right" : "slide-in-left");
+    }
+
+    textEl.textContent = tips[index];
+    progressBar.style.width = `${((index + 1) / tips.length) * 100}%`;
+
+    prevBtn.style.visibility = index === 0 ? "hidden" : "visible";
+    nextBtn.textContent = index === tips.length - 1 ? "Got it" : "Next";
+  }
+
+  nextBtn.onclick = () => {
+    if (index === tips.length - 1) {
+      localStorage.setItem(STORAGE_KEY, "true");
+      box.classList.add("fade-out");
+      setTimeout(() => box.remove(), 300);
+    } else {
+      direction = 1;
+      index++;
+      updateTip();
+    }
+  };
+
+  prevBtn.onclick = () => {
+    if (index > 0) {
+      direction = -1;
+      index--;
+      updateTip();
+    }
+  };
+
+  setTimeout(() => {
+    box.classList.add("show");
+    updateTip(false);
+  }, 1000);
+
+  /* Styles */
+  const style = document.createElement("style");
+  style.textContent = `
+    #dwp-tip-box {
+      position: fixed;
+      top: 80px; /* Adjusted to sit below the header of the button designer */
+      right: 20px;
+      width: 320px;
+      background: #4285f4; /* Changed to match Button Designer primary color */
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 12px 35px rgba(0,0,0,.25);
+      font-family: 'Roboto', system-ui, sans-serif;
+      z-index: 99999;
+      opacity: 0;
+      transform: translateY(-6px);
+      transition: opacity .3s ease, transform .3s ease;
+    }
+
+    #dwp-tip-box.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #dwp-tip-box.fade-out {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    .dwp-progress {
+      height: 4px;
+      background: rgba(255,255,255,.25);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .dwp-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #fff;
+      transition: width .35s ease;
+    }
+
+    .dwp-tip-wrapper {
+      overflow: hidden;
+      min-height: 48px;
+    }
+
+    .dwp-tip-text {
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .slide-in-right {
+      animation: slideRight .25s ease;
+    }
+
+    .slide-in-left {
+      animation: slideLeft .25s ease;
+    }
+
+    @keyframes slideRight {
+      from { opacity: 0; transform: translateX(14px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideLeft {
+      from { opacity: 0; transform: translateX(-14px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .dwp-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+
+    .dwp-actions button {
+      border: none;
+      padding: 6px 14px;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .dwp-prev {
+      background: rgba(255,255,255,.25);
+      color: #fff;
+    }
+
+    .dwp-next {
+      background: #fff;
+      color: #4285f4;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+</script>
 </body>
 </html>

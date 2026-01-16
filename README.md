@@ -151,6 +151,22 @@ In DocuWrite Pro, we highly value your privacy. As a client side service, we don
 </details>
 
 
+## Use of AI
+
+ⓘ DocuWrite Pro avoids built-in AI (Artificial Intelligence) to protect user privacy and security. As a fully client-side document editor, all data stays on the user’s device, ensuring full control, transparency, and trust.
+
+<details>
+<summary><strong>Use of Artificial Intelligence in DocuWrite Pro</strong></summary>
+
+- <strong>Use of Artificial Intelligence during development:</strong><br>
+  During the development of DocuWrite Pro, we took guidance and inspiration from various AI models. This does not imply direct copying of code. Instead, AI tools were used for design inspiration, debugging assistance, general suggestions, and feedback analysis. Additionally, GitHub Copilot’s “Auto Generate” feature is used to create clear and structured commit messages during version control.
+
+- <strong>Use of Artificial Intelligence within DocuWrite Pro:</strong><br>
+  DocuWrite Pro is a fully self-hosted, independent project with no commercial partnerships or revenue sources. To keep the platform free and accessible, it relies entirely on GitHub’s hosting infrastructure. Due to these constraints—and because AI-generated outputs can sometimes be inaccurate or unreliable—DocuWrite Pro intentionally does not integrate Artificial Intelligence into its core features or functionality.
+
+</details>
+
+
   
 ## Contributing
 

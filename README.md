@@ -128,7 +128,7 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 - ❖ Collab Editor
 - ❖ Connect Text Chat
 - ❖ Connect Call
-- ❖ DocuDrop Document Share
+- ❖ DocuDrop Share File
 
 ---
 

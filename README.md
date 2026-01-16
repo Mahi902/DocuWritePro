@@ -73,6 +73,23 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
   ![Editor](https://i.ibb.co/yFnbSdRR/1000039569-modified.png)
   
 - **Collab**: Editing documents together
+  <details>
+<summary><h5>Details</h5></summary>
+
+![Banner10](https://i.ibb.co/JwnqxqzT/1000040454-modified.png)
+
+1. **Download as JPG**: Download the document as a JPG image  
+2. **Leave Team**: Leave the current team  
+3. **Team Code**: Copy the team code to invite others  
+4. **Team Members**: View all team members  
+5. **Edit Permissions (Admin Only)**: Change permissions for team members  
+6. **Remove Member (Admin Only)**: Remove a member from the team  
+7. **Delete Team (Admin Only)**: Permanently delete the team and remove all members  
+   *(Note: Non-admin users will see “Leave Team” instead)*  
+8. **Toolbar**: Edit the document using the toolbar  
+
+</details>
+
 - **Document Viewer**: Viewing documents
 - **Markup & Reconstructor**: Edit already edited PDFs
 - **Word Finder**: Searching for specific words

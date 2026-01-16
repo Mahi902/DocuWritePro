@@ -130,8 +130,7 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 - DocuDrop Document Share
 
   <details>
-<summary><strong>Collab Editor</strong>: How it works</summary>
-
+<summary><strong>Collab Editor</strong></summary>
 
 <img src="https://i.ibb.co/JwnqxqzT/1000040454-modified.png" alt="Team Options Banner" />
 
@@ -149,6 +148,7 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 </ol>
 
 </details>
+
 
  
  ## Clone or use DocuWrite Pro

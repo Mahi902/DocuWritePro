@@ -154,7 +154,7 @@ In DocuWrite Pro, we highly value your privacy. As a client side service, we don
 
 ## Use of AI
 
-![Banner9](https://i.ibb.co/M5gVJ1Hs/1000040364-Photoroom.png)
+![Banner9](https://i.ibb.co/9mdzhV2d/1000040367-Photoroom.png)
 
 ⓘ DocuWrite Pro avoids built-in AI (Artificial Intelligence) to protect user privacy and security. As a fully client-side document editor, all data stays on the user’s device, ensuring full control, transparency, and trust.
 

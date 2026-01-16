@@ -220,6 +220,10 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 
 
 
+![Screenshot](https://i.ibb.co/9kdJFCTm/Screenshot-2026-01-16-16-53-50-218-com-google-android-apps-docs-editors-docs-edit.jpg#gh-light-mode-only)
+
+
+
 ## Privacy and Authentication 
 
 ![Banner8](https://i.ibb.co/wrQG6YdN/1000039764-Photoroom.png)

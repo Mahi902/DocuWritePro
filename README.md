@@ -129,6 +129,10 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 - Connect Call
 - DocuDrop Document Share
 
+---
+***
+___
+
   **How the Collab Editor works:**
 
 <img src="https://i.ibb.co/JwnqxqzT/1000040454-modified.png" alt="Team Options Banner" />

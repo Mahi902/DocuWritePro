@@ -153,7 +153,10 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 </details>
 
 
+---
+
 **➩ How the Connect Text Chat works:**
+
 <details>
 <summary><strong>Example Conversation</strong></summary>
 

@@ -172,6 +172,7 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
        alt="Screenshot 3" border="0">
 </a>
 </details>
+
 **How to access the text chat feature:**
 - **On Webpage**: Dashboard > Connect icon (top right) > Text Chat Icon
 - **On Mobile**: App Interface > Quick Tools > Swipe right > Text

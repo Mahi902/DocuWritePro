@@ -130,6 +130,11 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 - ❖ Connect Call
 - ❖ DocuDrop Share File
 
+ⓘ All collaboration tools in DocuWrite Pro are built using **PeerJS** and **WebRTC**, which allow real-time communication directly between users’ devices.  
+This means that your files, edits, and messages never pass through DocuWrite Pro’s servers, ensuring full privacy and security. By using this peer-to-peer approach, DocuWrite Pro keeps your data safe while still enabling features like live collaboration, file sharing, and team editing.  
+
+Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
+
 ---
 
 

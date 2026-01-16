@@ -68,7 +68,7 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 
 
 ## Main Tools
-- **Editor**: Edit documents seamlessly with the clutter free AI powered PDF editor!
+- **Editor**: Edit documents seamlessly with the clutter free PDF editor!
  
   ![Editor](https://i.ibb.co/yFnbSdRR/1000039569-modified.png)
   

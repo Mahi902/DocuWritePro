@@ -74,7 +74,7 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
   
 - **Collab**: Editing documents together
   <details>
-<summary>Details</summary>
+<summary><strong>Details</strong></summary>
 
 ![Banner10](https://i.ibb.co/JwnqxqzT/1000040454-modified.png)
 
@@ -89,6 +89,7 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 8. **Toolbar**: Edit the document using the toolbar  
 
 </details>
+
 
 - **Document Viewer**: Viewing documents
 - **Markup & Reconstructor**: Edit already edited PDFs

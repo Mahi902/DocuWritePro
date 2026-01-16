@@ -1,5 +1,5 @@
 
-![Logo](https://i.ibb.co.com/svPG5YGf/unnamed.png)
+
 
 ## Premium Document Editing Suite
 

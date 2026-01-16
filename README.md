@@ -153,6 +153,28 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 </details>
 
 
+**➩ How the Connect Text Chat works:**
+<details>
+<summary><strong>Example Conversation</strong></summary>
+
+<a href="https://ibb.co/YT3YcXd2">
+  <img src="https://i.ibb.co/k6xk4JDK/Screenshot-2026-01-16-12-16-58-839-com-android-chrome-edit.jpg" 
+       alt="Screenshot 1" border="0">
+</a>
+
+<a href="https://ibb.co/5XRJLm8V">
+  <img src="https://i.ibb.co/vCjMkpP8/Screenshot-2026-01-16-12-17-14-113-com-android-chrome-edit.jpg" 
+       alt="Screenshot 2" border="0">
+</a>
+
+<a href="https://ibb.co/TDLbySLx">
+  <img src="https://i.ibb.co/Xf83Hg8r/Screenshot-2026-01-16-12-17-25-471-com-android-chrome-edit.jpg" 
+       alt="Screenshot 3" border="0">
+</a>
+
+**How to access the text chat feature:**
+- **On Webpage**: Dashboard > Connect icon (top right) > Text Chat Icon
+- **On Mobile**: App Interface > Quick Tools > Swipe right > Text
  
  ## Clone or use DocuWrite Pro
  Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.

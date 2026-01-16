@@ -79,15 +79,15 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
   <details>
 <summary><strong>Details</strong></summary>
 
-1. **Download as JPG**: Download the document as a JPG image  
-2. **Leave Team**: Leave the current team  
-3. **Team Code**: Copy the team code to invite others  
-4. **Team Members**: View all team members  
-5. **Edit Permissions (Admin Only)**: Change permissions for team members  
-6. **Remove Member (Admin Only)**: Remove a member from the team  
-7. **Delete Team (Admin Only)**: Permanently delete the team and remove all members  
+- 1. **Download as JPG**: Download the document as a JPG image  
+- 2. **Leave Team**: Leave the current team  
+- 3. **Team Code**: Copy the team code to invite others  
+- 4. **Team Members**: View all team members  
+- 5. **Edit Permissions (Admin Only)**: Change permissions for team members  
+- 6. **Remove Member (Admin Only)**: Remove a member from the team  
+- 7. **Delete Team (Admin Only)**: Permanently delete the team and remove all members  
    *(Note: Non-admin users will see “Leave Team” instead)*  
-8. **Toolbar**: Edit the document using the toolbar  
+- 8. **Toolbar**: Edit the document using the toolbar  
 
 </details>
 

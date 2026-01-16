@@ -73,10 +73,11 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
   ![Editor](https://i.ibb.co/yFnbSdRR/1000039569-modified.png)
   
 - **Collab**: Editing documents together
+
+  ![Banner10](https://i.ibb.co/JwnqxqzT/1000040454-modified.png)
+  
   <details>
 <summary><strong>Details</strong></summary>
-
-![Banner10](https://i.ibb.co/JwnqxqzT/1000040454-modified.png)
 
 1. **Download as JPG**: Download the document as a JPG image  
 2. **Leave Team**: Leave the current team  

@@ -179,7 +179,16 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 **How to access the text chat feature:**
 - **On Webpage**: Dashboard > Connect icon (top right) > Text Chat Icon
 - **On Mobile**: App Interface > Quick Tools > Swipe right > Text
- 
+
+---
+
+
+  **➩ How the Connect Call works:**
+  
+  **How to access the call feature:**
+- **On Webpage**: Dashboard > Connect icon (top right) > Call Icon
+- **On Mobile**: App Interface > Quick Tools > Swipe right > Call
+  
  ## Clone or use DocuWrite Pro
  Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.
 

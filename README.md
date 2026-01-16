@@ -219,6 +219,8 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 | Local Desktop (Clone Repo) | Clone the entire DocuWrite Pro repository to your desktop and run it locally by following GitHub’s official cloning guide. | Git, Desktop environment | https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository |
 
 
+## Install Mobile App
+<img width="1717" height="795" alt="1000040484" src="https://github.com/user-attachments/assets/df27bb73-aa69-42bd-9cb2-a87c35323512" />
 
 
 

@@ -188,6 +188,20 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
   **How to access the call feature:**
 - **On Webpage**: Dashboard > Connect icon (top right) > Call Icon
 - **On Mobile**: App Interface > Quick Tools > Swipe right > Call
+
+---
+
+
+  **➩ How the DocuDrop File Share works:**
+
+  <ol>
+  <li>Choose <strong>Send File</strong> or <strong>Receive File</strong>.</li>
+  <li>Choose files.</li>
+  <li>Enter connection code.</li>
+  <li>Send or receive.</li>
+</ol>
+
+
   
  ## Clone or use DocuWrite Pro
  Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.

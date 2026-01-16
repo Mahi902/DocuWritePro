@@ -75,7 +75,7 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 - **Collab**: Editing documents together
 
 <details>
-<summary><small>Details</small></summary>
+<summary>**Collab**: Edit documents together</summary>
 
 
 <img src="https://i.ibb.co/JwnqxqzT/1000040454-modified.png" alt="Team Options Banner" />

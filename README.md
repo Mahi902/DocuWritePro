@@ -120,6 +120,36 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 
 
 
+## Collaboration Tools
+
+In DocuWrite Pro, there are various tools which support collaboration or can connect users together in one united workspace. The tools which use collaboration features are listed below:
+
+- Collab Editor
+- Connect Text Chat
+- Connect Call
+- DocuDrop Document Share
+
+  <details>
+<summary><strong>Collab Editor</strong>: How it works</summary>
+
+
+<img src="https://i.ibb.co/JwnqxqzT/1000040454-modified.png" alt="Team Options Banner" />
+
+<ol>
+  <li><strong>Download as JPG</strong>: Download the document as a JPG image</li>
+  <li><strong>Leave Team</strong>: Leave the current team</li>
+  <li><strong>Team Code</strong>: Copy the team code to invite others</li>
+  <li><strong>Team Members</strong>: View all team members</li>
+  <li><strong>Edit Permissions (Admin Only)</strong>: Change permissions for team members</li>
+  <li><strong>Remove Member (Admin Only)</strong>: Remove a member from the team</li>
+  <li><strong>Delete Team (Admin Only)</strong>: Permanently delete the team and remove all members
+    <br><em>(Note: Non-admin users will see “Leave Team” instead)</em>
+  </li>
+  <li><strong>Toolbar</strong>: Edit the document using the toolbar</li>
+</ol>
+
+</details>
+
  
  ## Clone or use DocuWrite Pro
  Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.

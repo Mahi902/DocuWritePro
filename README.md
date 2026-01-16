@@ -34,6 +34,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - [DocuWrite Pro Tools](#docuwrite-pro-tools)
   - [Main Tools](#main-tools)
   - [Additional Tools](#additional-tools)
+  - [Collaboration Tools](#collaboration-tools)
 - [Clone or Use DocuWrite Pro](#clone-or-use-docuwrite-pro)
 - [Privacy and Authentication](#privacy-and-authentication)
 - [Use of Artificial Intelligence](#use-of-ai)
@@ -124,16 +125,15 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 
 In DocuWrite Pro, there are various tools which support collaboration or can connect users together in one united workspace. The tools which use collaboration features are listed below:
 
-- Collab Editor
-- Connect Text Chat
-- Connect Call
-- DocuDrop Document Share
+- ❖ Collab Editor
+- ❖ Connect Text Chat
+- ❖ Connect Call
+- ❖ DocuDrop Document Share
 
 ---
-***
-___
 
-  **How the Collab Editor works:**
+
+  **➩ How the Collab Editor works:**
 
 <img src="https://i.ibb.co/JwnqxqzT/1000040454-modified.png" alt="Team Options Banner" />
 

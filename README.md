@@ -191,6 +191,7 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 
 Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 
+<details><summary>(Expand/Collapse)</summary>
 ---
 
 
@@ -262,7 +263,7 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
   <li>Send or receive.</li>
 </ol>
 
-
+</details>
   
  ## Clone or use DocuWrite Pro
  Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.

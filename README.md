@@ -79,7 +79,18 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 
 <img width="2560" height="1308" alt="1000040577" src="https://github.com/user-attachments/assets/02bd0147-2d3a-4285-b992-ee9600856740" />
 
-
+1. **Hide Sidebar:** Use this button to completely hide the sidebar from view. 
+2. **Document Title:** Use this tool to change the title of the document. 
+3. **Theme Changer:** Use this tool to alternate between light and dark theme. 
+4. **Export:** Use this tool to export your document. 
+5. **Text Customization:** Use this tool to customize your texts colour and highlight. 
+6. **Font Viewer:** View the selected font.
+7. **Toolbar:** Use to format, align and insert images. 
+8. **Redo/Undo:** Redo or Undo changes in your document.
+9. **Preset Selector:** Choose presets of your text, such as size. 
+10. **Sidebar:** Contains all the tools. 
+11. **Collapse:** Collapses the sidebar as a second toolbar. 
+12. **Canvas:** Your writing area.
 
 ## Main Tools
 - **Editor**: Edit documents seamlessly with the clutter free PDF editor!

@@ -89,7 +89,7 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 8. **Redo/Undo:** Redo or Undo changes in your document.
 9. **Preset Selector:** Choose presets of your text, such as size.
     
-    | All Available Presets |
+| All Available Presets |
 | --- |
 | Paragraph |
 | Heading 1 |

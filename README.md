@@ -32,6 +32,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - [Introduction](#introduction)
 - [Description](#description)
 - [DocuWrite Pro Tools](#docuwrite-pro-tools)
+  - [The Editor](#the-editor)
   - [Main Tools](#main-tools)
   - [Additional Tools](#additional-tools)
   - [Collaboration Tools](#collaboration-tools)
@@ -123,6 +124,9 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 
 11. **Collapse:** Collapses the sidebar as a second toolbar. 
 12. **Canvas:** Your writing area.
+
+
+---
 
 ## Main Tools
 - **Editor**: Edit documents seamlessly with the clutter free PDF editor!

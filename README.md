@@ -102,7 +102,25 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 | Blockquote |
 | Performatted |
 
-10. **Sidebar:** Contains all the tools. 
+10. **Sidebar:** Contains all the tools. Available tools in the latest editor:
+
+
+| Name | Use | Result |
+| --- | --- | --- |
+| **Smart Lookup** | Lets you look up specific words instantly. | Displays definitions, phonetics, images, and synonyms for the selected word. |
+| **Autosave Settings** | Allows you to configure automatic save intervals. | Periodically creates downloadable backup copies of the document. |
+| **Smart Spelling** | Helps detect spelling mistakes in your document. | Highlights incorrect words with red underlines. |
+| **Custom Fonts** | Enables uploading custom font families or choosing from 300+ preloaded fonts. Also supports loading fonts directly from Google Fonts. | Applies the selected font across the entire document. |
+| **Customize Watermark** | Lets you edit, replace, or disable document watermarks. | Applies the customized watermark to every page. |
+| **Customize Theme** | Allows full customization of the editor’s appearance. | Applies the theme across the editor and remembers it after reload. |
+| **Line Spacing** | Enables adjustment of line spacing values. | Applies the selected spacing to the whole document. |
+| **Rearrange Pages** | Allows pages to be reordered or removed. | Updates page order or permanently deletes selected pages. |
+| **Insert Table** | Lets you add tables to the document. | Inserts a structured table at the selected position. |
+| **Word Count** | Provides detailed document statistics. | Shows word count, paragraph count, and word frequency instantly. |
+| **Translate Page** | Translates the entire document into a chosen language. | Replaces existing text with the translated version. |
+| **Share Page** | Enables quick sharing of specific pages. | Generates secure, shareable viewer links for selected pages. |
+
+
 11. **Collapse:** Collapses the sidebar as a second toolbar. 
 12. **Canvas:** Your writing area.
 

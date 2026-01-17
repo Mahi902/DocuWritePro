@@ -79,7 +79,9 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 In DocuWrite Pro, the first tool that will come to mind is our premium and clutter-free document editor. The editor is enhanced with all the tools you'll need to craft a perfect document, which include **full rich text editing, watermark customization & more!** Below we've shown our editor and all the tools within it.
 
 <details>
-<summary><strong>Expand</strong></summary>
+<summary>(Expand/Collapse)</summary>
+
+---
   
 <img width="2560" height="1308" alt="1000040577" src="https://github.com/user-attachments/assets/02bd0147-2d3a-4285-b992-ee9600856740" />
 

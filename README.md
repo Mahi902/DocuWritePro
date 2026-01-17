@@ -87,7 +87,20 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 6. **Font Viewer:** View the selected font.
 7. **Toolbar:** Use to format, align and insert images. 
 8. **Redo/Undo:** Redo or Undo changes in your document.
-9. **Preset Selector:** Choose presets of your text, such as size. 
+9. **Preset Selector:** Choose presets of your text, such as size.
+    
+    | All Available Presets |
+| --- |
+| Paragraph |
+| Heading 1 |
+| Heading 2 |
+| Heading 3 |
+| Heading 4 |
+| Heading 5 |
+| Heading 6 |
+| Blockquote |
+| Performatted |
+
 10. **Sidebar:** Contains all the tools. 
 11. **Collapse:** Collapses the sidebar as a second toolbar. 
 12. **Canvas:** Your writing area.

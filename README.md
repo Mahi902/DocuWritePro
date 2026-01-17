@@ -36,7 +36,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
   - [Main Tools](#main-tools)
   - [Additional Tools](#additional-tools)
   - [Collaboration Tools](#collaboration-tools)
-- [Clone or Use DocuWrite Pro](#clone-or-use-docuwrite-pro)
+- [Clone or Use Contents Pro](#clone-or-use-docuwrite-pro)
   - [Install Mobile App](#install-mobile-app)
 - [Privacy and Authentication](#privacy-and-authentication)
 - [Use of Artificial Intelligence](#use-of-ai)
@@ -78,6 +78,9 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 
 In DocuWrite Pro, the first tool that will come to mind is our premium and clutter-free document editor. The editor is enhanced with all the tools you'll need to craft a perfect document, which include **full rich text editing, watermark customization & more!** Below we've shown our editor and all the tools within it.
 
+<details>
+<summary><strong>Expand</strong></summary>
+  
 <img width="2560" height="1308" alt="1000040577" src="https://github.com/user-attachments/assets/02bd0147-2d3a-4285-b992-ee9600856740" />
 
 1. **Hide Sidebar:** Use this button to completely hide the sidebar from view. 
@@ -114,8 +117,9 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 
 
 11. **Collapse:** Collapses the sidebar as a second toolbar. 
-12. **Canvas:** Your writing area.
-
+12. **Canvas:** Your writing aarea
+    
+</details>
 
 ---
 

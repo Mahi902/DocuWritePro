@@ -69,6 +69,14 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 ![Screenshot-2025-12-06-14-04-01-280-com-android-chrome-edit](https://i.ibb.co.com/r2NN0G1V/Screenshot-2025-12-06-14-04-01-280-com-android-chrome-edit.jpg)
 
 
+
+
+## The Editor
+
+<img width="2560" height="1308" alt="1000040577" src="https://github.com/user-attachments/assets/02bd0147-2d3a-4285-b992-ee9600856740" />
+
+
+
 ## Main Tools
 - **Editor**: Edit documents seamlessly with the clutter free PDF editor!
  

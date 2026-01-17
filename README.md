@@ -91,17 +91,8 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 9. **Preset Selector:** Choose presets of your text, such as size.
     
 
-| All Available Presets |
-| --- |
-| Paragraph |
-| Heading 1 |
-| Heading 2 |
-| Heading 3 |
-| Heading 4 |
-| Heading 5 |
-| Heading 6 |
-| Blockquote |
-| Performatted |
+| Paragraph | Heading 1 | Heading 2 | Heading 3 | Heading 4 | Heading 5 | Heading 6 | Blockquote | Performatted |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
 10. **Sidebar:** Contains all the tools. Available tools in the latest editor:
 

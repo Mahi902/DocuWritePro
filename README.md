@@ -212,7 +212,6 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
   <li><strong>Toolbar</strong>: Edit the document using the toolbar</li>
 </ol>
 
-</details>
 
 
 ---

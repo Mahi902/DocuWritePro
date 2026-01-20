@@ -65,7 +65,8 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 ![Banner1](https://i.ibb.co/nqp2X4Nk/1000039482-Photoroom.png)
 
 
-![1000040872](https://github.com/user-attachments/assets/66ddebf7-9528-490e-9954-0ce0ae576514)
+![1000040879](https://github.com/user-attachments/assets/0ab68e91-0487-42ea-8692-11a16d0979ca)
+
 
 ![1000040874](https://github.com/user-attachments/assets/d6acabe0-9190-4e70-8e35-7514266a3dba)
 

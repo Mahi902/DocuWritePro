@@ -65,9 +65,9 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 ![Banner1](https://i.ibb.co/nqp2X4Nk/1000039482-Photoroom.png)
 
 
-![Screenshot-2025-12-06-14-04-21-662-com-android-chrome-edit](https://i.ibb.co.com/hJVFcBTh/Screenshot-2025-12-06-14-04-21-662-com-android-chrome-edit.jpg)
+![1000040872](https://github.com/user-attachments/assets/66ddebf7-9528-490e-9954-0ce0ae576514)
 
-![Screenshot-2025-12-06-14-04-01-280-com-android-chrome-edit](https://i.ibb.co.com/r2NN0G1V/Screenshot-2025-12-06-14-04-01-280-com-android-chrome-edit.jpg)
+![1000040874](https://github.com/user-attachments/assets/d6acabe0-9190-4e70-8e35-7514266a3dba)
 
 
 

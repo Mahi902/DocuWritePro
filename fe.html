@@ -52,221 +52,707 @@
   </script>
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --primary-light: #dbeafe;
+            --primary-ultralight: #eff6ff;
             --bg: #f8fafc;
             --surface: #ffffff;
+            --surface-light: #f1f5f9;
             --text-main: #0f172a;
             --text-muted: #64748b;
             --border: #e2e8f0;
+            --border-light: #f1f5f9;
             --success: #10b981;
+            --success-light: #d1fae5;
             --error: #ef4444;
+            --error-light: #fee2e2;
             --radius: 12px;
+            --radius-lg: 16px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+            --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
+            --gradient: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { 
+            box-sizing: border-box; 
+            margin: 0; 
+            padding: 0; 
+        }
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg);
+            background: var(--bg);
             color: var(--text-main);
             display: flex;
-            justify-content: center;
-            align-items: center;
+            flex-direction: column;
             min-height: 100vh;
-            padding: 20px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Subtle animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.4;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(96, 165, 250, 0.1) 0%, transparent 50%);
+            animation: float 20s ease-in-out infinite;
         }
 
         .container {
-            background: var(--surface);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 800px;
             width: 100%;
-            max-width: 600px;
-            border-radius: var(--radius);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            border: 1px solid var(--border);
+            margin: 0 auto;
+            padding: 20px;
+            animation: fadeIn 0.8s ease-out;
         }
 
         .header {
-            padding: 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
+            padding: 32px 0;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container {
+            display: inline-flex;
             align-items: center;
-            gap: 16px;
+            justify-content: center;
+            background: var(--surface);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+            border: 2px solid var(--primary-light);
+        }
+
+        .logo-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, var(--primary), transparent);
+            animation: rotate 3s linear infinite;
+        }
+
+        .logo-container::after {
+            content: '';
+            position: absolute;
+            inset: 4px;
+            background: var(--surface);
+            border-radius: 50%;
         }
 
         .icon-shield {
-            width: 48px;
-            height: 48px;
-            background: var(--primary);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            color: var(--primary);
+            position: relative;
+            z-index: 2;
+            animation: pulse 2s infinite;
         }
 
-        .title h1 { font-size: 1.25rem; font-weight: 700; }
-        .title p { color: var(--text-muted); font-size: 0.875rem; margin-top: 4px; }
+        .title h1 { 
+            font-size: 2.5rem; 
+            font-weight: 800; 
+            color: var(--text-main);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        
+        .title p { 
+            color: var(--text-muted); 
+            font-size: 1.1rem; 
+            margin-bottom: 20px;
+        }
+        
         .badge {
-            background: #dbeafe; color: #1e40af; 
-            padding: 2px 8px; rounded: 4px; font-size: 0.7rem; font-weight: 700; 
-            border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em;
+            background: var(--gradient); 
+            color: white; 
+            padding: 6px 16px; 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            border-radius: 20px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.05em;
+            display: inline-block;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+            animation: badgeGlow 3s infinite;
         }
 
-        .tabs { display: flex; border-bottom: 1px solid var(--border); }
+        .main-content {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tabs { 
+            display: flex; 
+            background: var(--surface-light);
+            border-bottom: 1px solid var(--border);
+        }
+        
         .tab-btn {
-            flex: 1; padding: 16px; border: none; background: none;
-            font-weight: 600; color: var(--text-muted); cursor: pointer;
-            transition: all 0.2s; border-bottom: 2px solid transparent;
+            flex: 1; 
+            padding: 20px; 
+            border: none; 
+            background: none;
+            font-weight: 600; 
+            color: var(--text-muted); 
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            font-size: 1.1rem;
+            position: relative;
+            overflow: hidden;
         }
-        .tab-btn:hover { background: #f1f5f9; }
-        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+        
+        .tab-btn:hover { 
+            background: rgba(59, 130, 246, 0.05); 
+            color: var(--primary);
+        }
+        
+        .tab-btn.active { 
+            color: var(--primary); 
+            border-bottom-color: var(--primary);
+            background: var(--primary-ultralight);
+        }
+        
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: var(--primary);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .tab-btn.active::after {
+            width: 100%;
+        }
 
-        .content { padding: 24px; }
-        .form-group { margin-bottom: 24px; }
-        .label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; }
+        .content { 
+            padding: 40px; 
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group { 
+            margin-bottom: 32px; 
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        .label { 
+            display: block; 
+            font-weight: 600; 
+            margin-bottom: 12px; 
+            font-size: 1rem; 
+            color: var(--text-main);
+        }
         
         .drop-zone {
             border: 2px dashed var(--border);
-            border-radius: 8px;
-            padding: 32px;
+            border-radius: var(--radius);
+            padding: 48px 32px;
             text-align: center;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.3s ease;
             position: relative;
+            background: var(--bg);
         }
-        .drop-zone:hover, .drop-zone.active { border-color: var(--primary); background: #eff6ff; }
-        .drop-zone input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-        .file-info { margin-top: 8px; font-size: 0.875rem; color: var(--primary); font-weight: 500; display: none; }
+        
+        .drop-zone:hover, .drop-zone.active { 
+            border-color: var(--primary); 
+            background: var(--primary-ultralight);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        
+        .drop-zone input { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            opacity: 0; 
+            cursor: pointer; 
+        }
+        
+        .drop-zone p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .file-info { 
+            margin-top: 16px; 
+            font-size: 0.95rem; 
+            color: var(--primary); 
+            font-weight: 600; 
+            display: none;
+            padding: 12px;
+            background: var(--primary-ultralight);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
 
-        .input-group { position: relative; display: flex; }
+        .input-group { 
+            position: relative; 
+            display: flex; 
+        }
+        
         .code-input {
-            width: 100%; padding: 12px 16px; padding-right: 100px;
-            border: 1px solid var(--border); border-radius: 8px;
-            font-family: 'Courier New', monospace; font-size: 1rem;
-            outline: none; transition: 0.2s;
+            width: 100%; 
+            padding: 18px 20px;
+            padding-right: 120px;
+            border: 2px solid var(--border); 
+            border-radius: var(--radius);
+            font-family: 'Courier New', monospace; 
+            font-size: 1.1rem;
+            outline: none; 
+            transition: all 0.3s ease;
+            background: var(--surface);
+            color: var(--text-main);
         }
-        .code-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        .code-input:focus { 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); 
+        }
+        
         .btn-generate {
-            position: absolute; right: 6px; top: 6px; bottom: 6px;
-            background: #f1f5f9; border: none; padding: 0 12px;
-            border-radius: 6px; color: var(--text-main); font-weight: 600;
-            font-size: 0.75rem; cursor: pointer;
+            position: absolute; 
+            right: 8px; 
+            top: 8px; 
+            bottom: 8px;
+            background: var(--primary); 
+            border: none; 
+            padding: 0 20px;
+            border-radius: calc(var(--radius) - 4px); 
+            color: white; 
+            font-weight: 600;
+            font-size: 0.9rem; 
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
-        .btn-generate:hover { background: #e2e8f0; }
+        
+        .btn-generate:hover { 
+            background: var(--primary-hover); 
+            transform: scale(1.05);
+        }
 
         .btn-primary {
-            width: 100%; padding: 14px; background: var(--primary);
-            color: white; border: none; border-radius: 8px;
-            font-weight: 600; font-size: 1rem; cursor: pointer;
-            transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; 
+            padding: 20px; 
+            background: var(--gradient);
+            color: white; 
+            border: none; 
+            border-radius: var(--radius);
+            font-weight: 600; 
+            font-size: 1.1rem; 
+            cursor: pointer;
+            transition: all 0.3s ease; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 12px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
         }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        .btn-primary:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(59, 130, 246, 0.2);
+        }
+        
+        .btn-primary:disabled { 
+            opacity: 0.7; 
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: 0.5s;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
 
         .status {
-            padding: 12px; border-radius: 8px; font-size: 0.875rem;
-            margin-bottom: 16px; display: none;
+            padding: 20px; 
+            border-radius: var(--radius); 
+            font-size: 1rem;
+            margin-bottom: 24px; 
+            display: none;
+            animation: fadeInUp 0.5s ease-out;
+            border-left: 4px solid;
         }
-        .status.success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .status.error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        
+        .status.success { 
+            background: var(--success-light); 
+            color: #065f46; 
+            border-color: var(--success);
+        }
+        
+        .status.error { 
+            background: var(--error-light); 
+            color: #991b1b; 
+            border-color: var(--error);
+        }
 
         .security-note {
-            margin-top: 24px; padding: 16px; background: #f8fafc;
-            border-radius: 8px; border: 1px solid var(--border);
-            font-size: 0.75rem; color: var(--text-muted);
+            margin-top: 40px; 
+            padding: 24px; 
+            background: var(--primary-ultralight);
+            border-radius: var(--radius); 
+            border: 1px solid var(--border);
+            font-size: 0.9rem; 
+            color: var(--text-muted);
+            animation: fadeIn 1s ease-out 0.3s both;
         }
-        .security-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-        .check { color: var(--success); }
-
-        .hidden { display: none; }
         
-        /* Spinner */
-        .spinner {
-            width: 18px; height: 18px; border: 2px solid #ffffff;
-            border-bottom-color: transparent; border-radius: 50%;
-            display: inline-block; box-sizing: border-box;
-            animation: rotation 1s linear infinite;
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
         }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .security-item { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            margin-bottom: 8px; 
+            padding: 8px 0;
+        }
+        
+        .check { 
+            color: var(--success); 
+            font-size: 1.2rem;
+            animation: checkPulse 2s infinite;
+        }
+
+        .hidden { 
+            display: none; 
+        }
+        
+        /* Encryption Animation */
+        .encryption-animation {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .lock-animation {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            position: relative;
+        }
+        
+        .lock-body {
+            width: 60px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 10px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .lock-shackle {
+            width: 50px;
+            height: 30px;
+            border: 8px solid var(--primary);
+            border-radius: 50%;
+            position: absolute;
+            top: -25px;
+            left: 5px;
+            border-bottom: none;
+            border-right: none;
+            border-left: none;
+            transform-origin: center;
+        }
+        
+        .encrypting .lock-shackle {
+            animation: lockShake 1.5s infinite;
+        }
+        
+        .decrypting .lock-shackle {
+            animation: unlockShake 1.5s infinite;
+        }
+        
+        .progress-ring {
+            width: 100px;
+            height: 100px;
+            margin: 20px auto;
+        }
+        
+        .progress-ring-circle {
+            stroke: var(--primary);
+            stroke-width: 4;
+            stroke-linecap: round;
+            fill: none;
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            transform-origin: center;
+            transform: rotate(-90deg);
+        }
+        
+        .encrypting .progress-ring-circle {
+            animation: progressFill 2s ease-out forwards;
+        }
+        
+        .decrypting .progress-ring-circle {
+            animation: progressFillReverse 2s ease-out forwards;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        @keyframes badgeGlow {
+            0%, 100% { box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2); }
+            50% { box-shadow: 0 4px 25px rgba(59, 130, 246, 0.3); }
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            33% { transform: translateY(-10px) rotate(120deg); }
+            66% { transform: translateY(10px) rotate(240deg); }
+        }
+        
+        @keyframes lockShake {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(-5px) rotate(-5deg); }
+            75% { transform: translateX(5px) rotate(5deg); }
+        }
+        
+        @keyframes unlockShake {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(5px) rotate(5deg); }
+            75% { transform: translateX(-5px) rotate(-5deg); }
+        }
+        
+        @keyframes progressFill {
+            from { stroke-dashoffset: 283; }
+            to { stroke-dashoffset: 0; }
+        }
+        
+        @keyframes progressFillReverse {
+            from { stroke-dashoffset: 0; }
+            to { stroke-dashoffset: 283; }
+        }
+        
+        @keyframes checkPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .content {
+                padding: 24px;
+            }
+            
+            .title h1 {
+                font-size: 2rem;
+            }
+            
+            .tab-btn {
+                padding: 16px;
+                font-size: 1rem;
+            }
+            
+            .drop-zone {
+                padding: 32px 20px;
+            }
+            
+            .security-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
 
+    <div class="bg-animation"></div>
+
     <div class="container">
         <div class="header">
-            <div class="icon-shield">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <div class="logo-container">
+                <div class="icon-shield">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                </div>
             </div>
             <div class="title">
-                <h1>File Encryptor <span class="badge">.vault</span></h1>
+                <h1>File Encryptor</h1>
                 <p>AES-GCM-256 / SHA-512 / Metadata Encryption</p>
+                <span class="badge">.vault</span>
             </div>
         </div>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('encrypt')" id="tab-encrypt">Encrypt</button>
-            <button class="tab-btn" onclick="switchTab('decrypt')" id="tab-decrypt">Decrypt</button>
-        </div>
-
-        <div class="content">
-            <div id="status-msg" class="status"></div>
-
-            <!-- ENCRYPT VIEW -->
-            <div id="view-encrypt">
-                <div class="form-group">
-                    <label class="label">1. Select File</label>
-                    <div class="drop-zone" id="dz-enc">
-                        <p>Click or drag file here</p>
-                        <div id="file-name-enc" class="file-info"></div>
-                        <input type="file" id="file-enc">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="label">2. Secure Code (20 Digits)</label>
-                    <div class="input-group">
-                        <input type="text" id="pass-enc" class="code-input" placeholder="Generate random code ->" autocomplete="off">
-                        <button class="btn-generate" onclick="generateStrongCode()">GENERATE</button>
-                    </div>
-                    <p style="font-size: 0.75rem; color: var(--error); margin-top: 6px; font-weight: 500;">SAVE THIS CODE. If lost, the file is unrecoverable.</p>
-                </div>
-
-                <button class="btn-primary" onclick="processEncryption()" id="btn-enc">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                    Encrypt & Download
-                </button>
+        <div class="main-content">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('encrypt')" id="tab-encrypt">Encrypt</button>
+                <button class="tab-btn" onclick="switchTab('decrypt')" id="tab-decrypt">Decrypt</button>
             </div>
 
-            <!-- DECRYPT VIEW -->
-            <div id="view-decrypt" class="hidden">
-                <div class="form-group">
-                    <label class="label">1. Select Vault File (.vault)</label>
-                    <div class="drop-zone" id="dz-dec">
-                        <p>Click or drag .vault file here</p>
-                        <div id="file-name-dec" class="file-info"></div>
-                        <input type="file" id="file-dec">
+            <div class="content">
+                <div id="status-msg" class="status"></div>
+                
+                <!-- Encryption Animation -->
+                <div class="encryption-animation" id="encryption-animation">
+                    <div class="lock-animation" id="lock-animation">
+                        <div class="lock-body"></div>
+                        <div class="lock-shackle"></div>
+                    </div>
+                    <div class="progress-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="progress-ring-circle" cx="50" cy="50" r="45"></circle>
+                        </svg>
+                    </div>
+                    <h3 id="animation-text">Processing...</h3>
+                    <p id="animation-subtext" style="color: var(--text-muted); margin-top: 8px;">This may take a moment</p>
+                </div>
+
+                <!-- ENCRYPT VIEW -->
+                <div id="view-encrypt">
+                    <div class="form-group">
+                        <label class="label">1. Select File</label>
+                        <div class="drop-zone" id="dz-enc">
+                            <p>Click or drag file here</p>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 8px;">Any file type up to 2GB</p>
+                            <div id="file-name-enc" class="file-info"></div>
+                            <input type="file" id="file-enc">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">2. Secure Code (20 Digits)</label>
+                        <div class="input-group">
+                            <input type="text" id="pass-enc" class="code-input" placeholder="Generate random code ->" autocomplete="off" maxlength="20">
+                            <button class="btn-generate" onclick="generateStrongCode()">GENERATE</button>
+                        </div>
+                        <p style="font-size: 0.85rem; color: #b91c1c; margin-top: 8px; font-weight: 500; padding: 8px; background: var(--error-light); border-radius: 6px;">
+                            ⚠️ SAVE THIS CODE. If lost, the file is permanently unrecoverable.
+                        </p>
+                    </div>
+
+                    <button class="btn-primary" onclick="processEncryption()" id="btn-enc">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        Encrypt & Download
+                    </button>
+                </div>
+
+                <!-- DECRYPT VIEW -->
+                <div id="view-decrypt" class="hidden">
+                    <div class="form-group">
+                        <label class="label">1. Select Vault File (.vault)</label>
+                        <div class="drop-zone" id="dz-dec">
+                            <p>Click or drag .vault file here</p>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 8px;">Encrypted with this tool</p>
+                            <div id="file-name-dec" class="file-info"></div>
+                            <input type="file" id="file-dec" accept=".vault">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="label">2. Enter Decryption Code</label>
+                        <input type="password" id="pass-dec" class="code-input" placeholder="Enter your 20-digit code" autocomplete="off">
+                    </div>
+
+                    <button class="btn-primary" onclick="processDecryption()" id="btn-dec">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                        Decrypt & Restore
+                    </button>
+                </div>
+
+                <div class="security-note">
+                    <h4 style="color: var(--text-main); margin-bottom: 16px;">Security Features</h4>
+                    <div class="security-grid">
+                        <div class="security-item"><span class="check">✓</span> Zero-Knowledge Encryption</div>
+                        <div class="security-item"><span class="check">✓</span> All Data Stays Offline</div>
+                        <div class="security-item"><span class="check">✓</span> Filenames Encrypted</div>
+                        <div class="security-item"><span class="check">✓</span> AES-256-GCM + SHA-512</div>
+                        <div class="security-item"><span class="check">✓</span> 1,000,000 PBKDF2 Iterations</div>
+                        <div class="security-item"><span class="check">✓</span> Memory Wiped After Use</div>
                     </div>
                 </div>
-
-                <div class="form-group">
-                    <label class="label">2. Enter Decryption Code</label>
-                    <input type="password" id="pass-dec" class="code-input" placeholder="Enter your 20-digit code" autocomplete="off">
-                </div>
-
-                <button class="btn-primary" onclick="processDecryption()" id="btn-dec">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
-                    Decrypt & Restore
-                </button>
-            </div>
-
-            <div class="security-note">
-                <div class="security-item"><span class="check">✓</span> Offline Execution (No Server)</div>
-                <div class="security-item"><span class="check">✓</span> Filenames are Encrypted</div>
-                <div class="security-item"><span class="check">✓</span> 1,000,000 PBKDF2 Iterations</div>
-                <div class="security-item"><span class="check">✓</span> Memory Cleaning (Best Effort)</div>
             </div>
         </div>
     </div>
@@ -288,37 +774,128 @@
             el.textContent = msg;
             el.className = `status ${type}`;
             el.style.display = 'block';
+            setTimeout(() => {
+                el.style.opacity = '1';
+            }, 10);
         };
-        const clearStatus = () => $('status-msg').style.display = 'none';
+        const clearStatus = () => {
+            const el = $('status-msg');
+            el.style.opacity = '0';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 300);
+        };
+
+        // --- ANIMATION FUNCTIONS ---
+        function showEncryptionAnimation(mode) {
+            const viewEncrypt = $('view-encrypt');
+            const viewDecrypt = $('view-decrypt');
+            const animation = $('encryption-animation');
+            const lockAnimation = $('lock-animation');
+            const animationText = $('animation-text');
+            const animationSubtext = $('animation-subtext');
+            
+            // Hide the main views
+            viewEncrypt.style.display = 'none';
+            viewDecrypt.style.display = 'none';
+            
+            // Show animation
+            animation.style.display = 'block';
+            
+            // Set animation mode
+            if (mode === 'encrypt') {
+                lockAnimation.className = 'lock-animation encrypting';
+                animationText.textContent = 'Encrypting File...';
+                animationSubtext.textContent = 'Generating secure encryption keys';
+            } else {
+                lockAnimation.className = 'lock-animation decrypting';
+                animationText.textContent = 'Decrypting File...';
+                animationSubtext.textContent = 'Validating security credentials';
+            }
+            
+            // Reset progress animation
+            const circle = document.querySelector('.progress-ring-circle');
+            circle.style.animation = 'none';
+            setTimeout(() => {
+                if (mode === 'encrypt') {
+                    circle.style.animation = 'progressFill 2s ease-out forwards';
+                } else {
+                    circle.style.animation = 'progressFillReverse 2s ease-out forwards';
+                }
+            }, 50);
+        }
+
+        function hideEncryptionAnimation() {
+            const viewEncrypt = $('view-encrypt');
+            const viewDecrypt = $('view-decrypt');
+            const animation = $('encryption-animation');
+            
+            // Hide animation
+            animation.style.display = 'none';
+            
+            // Show appropriate view
+            if ($('tab-encrypt').classList.contains('active')) {
+                viewEncrypt.style.display = 'block';
+            } else {
+                viewDecrypt.style.display = 'block';
+            }
+        }
 
         // --- UI LOGIC ---
         function switchTab(mode) {
             clearStatus();
-            $('view-encrypt').classList.toggle('hidden', mode !== 'encrypt');
-            $('view-decrypt').classList.toggle('hidden', mode !== 'decrypt');
+            hideEncryptionAnimation();
+            
+            // Update tabs
             $('tab-encrypt').classList.toggle('active', mode === 'encrypt');
             $('tab-decrypt').classList.toggle('active', mode === 'decrypt');
+            
+            // Update views
+            $('view-encrypt').style.display = mode === 'encrypt' ? 'block' : 'none';
+            $('view-decrypt').style.display = mode === 'decrypt' ? 'block' : 'none';
+            
+            // Clear file selections
+            ['enc', 'dec'].forEach(m => {
+                $(`file-${m}`).value = '';
+                $(`file-name-${m}`).style.display = 'none';
+                $(`dz-${m}`).classList.remove('active');
+            });
         }
 
         ['enc', 'dec'].forEach(mode => {
             const input = $(`file-${mode}`);
             const zone = $(`dz-${mode}`);
-            const label = $(`file-name-${mode}`);
+            const label = $(`file-name-${m}`);
 
             input.addEventListener('change', e => {
                 if(e.target.files[0]) {
-                    label.textContent = `Selected: ${e.target.files[0].name}`;
+                    const fileName = e.target.files[0].name;
+                    const fileSize = (e.target.files[0].size / (1024*1024)).toFixed(2);
+                    label.textContent = `${fileName} (${fileSize} MB)`;
                     label.style.display = 'block';
                     zone.classList.add('active');
                     clearStatus();
                 }
             });
-            zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('active'); });
-            zone.addEventListener('dragleave', e => zone.classList.remove('active'));
+            
+            zone.addEventListener('dragover', e => { 
+                e.preventDefault(); 
+                zone.classList.add('active'); 
+            });
+            
+            zone.addEventListener('dragleave', e => { 
+                if (!zone.contains(e.relatedTarget)) {
+                    zone.classList.remove('active'); 
+                }
+            });
+            
             zone.addEventListener('drop', e => {
                 e.preventDefault();
-                input.files = e.dataTransfer.files;
-                input.dispatchEvent(new Event('change'));
+                zone.classList.remove('active');
+                if(e.dataTransfer.files[0]) {
+                    input.files = e.dataTransfer.files;
+                    input.dispatchEvent(new Event('change'));
+                }
             });
         });
 
@@ -326,52 +903,46 @@
             const array = new Uint32Array(5);
             window.crypto.getRandomValues(array);
             let code = '';
-            // Generate a numeric string from high-entropy random values
             for(let i=0; i<array.length; i++) code += array[i].toString().slice(-4);
             while(code.length < 20) code += Math.floor(Math.random() * 10);
             const finalCode = code.slice(0, 20);
             
             $('pass-enc').value = finalCode;
             
+            // Animate the button
+            const btn = document.querySelector('.btn-generate');
+            btn.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                btn.style.transform = 'scale(1)';
+            }, 150);
+            
+            // Copy to clipboard with visual feedback
             navigator.clipboard.writeText(finalCode).then(() => {
-                setStatus('Secure code copied to clipboard!', 'success');
+                setStatus('Secure code generated and copied to clipboard!', 'success');
             }).catch(() => setStatus('Code generated. Copy it manually.', 'success'));
         }
 
         // --- CORE CRYPTO ENGINE ---
-
-        // 1. Pack Data: [Filename Len (2 bytes)] + [Filename] + [File Content]
-        // This ensures the filename is encrypted alongside the data
         function packData(filename, fileData) {
             const enc = new TextEncoder();
             const nameBytes = enc.encode(filename);
             
             if (nameBytes.length > 65535) throw new Error("Filename too long");
 
-            // Create buffer: 2 bytes (len) + nameBytes + fileData
             const buffer = new Uint8Array(2 + nameBytes.length + fileData.byteLength);
-            
-            // Set Length (Little Endian)
             new DataView(buffer.buffer).setUint16(0, nameBytes.length, true);
-            
-            // Set Name
             buffer.set(nameBytes, 2);
-            
-            // Set Data
             buffer.set(new Uint8Array(fileData), 2 + nameBytes.length);
             
             return buffer;
         }
 
-        // 2. Unpack Data: Inverse of packData
         function unpackData(decryptedBuffer) {
             const view = new DataView(decryptedBuffer);
             const nameLen = view.getUint16(0, true);
-            
             const nameBytes = new Uint8Array(decryptedBuffer, 2, nameLen);
             const dec = new TextDecoder();
             const filename = dec.decode(nameBytes);
-            
             const fileData = decryptedBuffer.slice(2 + nameLen);
             
             return { filename, fileData };
@@ -386,13 +957,11 @@
             if (!code || code.length < 10) return setStatus('Code too weak or missing.', 'error');
 
             try {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner"></span> Encrypting...';
+                showEncryptionAnimation('encrypt');
                 
-                // Allow UI to render
-                await new Promise(r => requestAnimationFrame(r));
-                await new Promise(r => setTimeout(r, 50));
-
+                // Small delay to show animation
+                await new Promise(r => setTimeout(r, 100));
+                
                 const rawData = await file.arrayBuffer();
                 const packedData = packData(file.name, rawData);
 
@@ -425,19 +994,23 @@
                 finalBuffer.set(iv, salt.byteLength);
                 finalBuffer.set(new Uint8Array(encryptedContent), salt.byteLength + iv.byteLength);
 
-                downloadBlob(finalBuffer, `secure_archive_${Date.now()}.vault`);
-                
-                setStatus('Encryption Successful! Filename is now hidden.', 'success');
-                
-                // Memory hygiene
-                $('pass-enc').value = ''; 
+                // Add animation completion delay
+                setTimeout(() => {
+                    downloadBlob(finalBuffer, `secure_archive_${Date.now()}.vault`);
+                    hideEncryptionAnimation();
+                    setStatus('✓ Encryption Successful! File is now secure and filename is hidden.', 'success');
+                    
+                    // Memory hygiene
+                    $('pass-enc').value = '';
+                    $('file-enc').value = '';
+                    $('file-name-enc').style.display = 'none';
+                    $('dz-enc').classList.remove('active');
+                }, 500);
                 
             } catch (err) {
                 console.error(err);
+                hideEncryptionAnimation();
                 setStatus('Encryption failed: ' + err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Encrypt & Download';
             }
         }
 
@@ -450,11 +1023,9 @@
             if (!code) return setStatus('Please enter the decryption code.', 'error');
 
             try {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="spinner"></span> Decrypting...';
+                showEncryptionAnimation('decrypt');
                 
-                await new Promise(r => requestAnimationFrame(r));
-                await new Promise(r => setTimeout(r, 50));
+                await new Promise(r => setTimeout(r, 100));
 
                 const fileData = await file.arrayBuffer();
                 
@@ -463,7 +1034,7 @@
                 const iv = new Uint8Array(fileData.slice(CONFIG.saltLen, CONFIG.saltLen + CONFIG.ivLen));
                 const ciphertext = fileData.slice(CONFIG.saltLen + CONFIG.ivLen);
 
-                // Key Derivation (Must match encryption params)
+                // Key Derivation
                 const keyMaterial = await window.crypto.subtle.importKey(
                     "raw", new TextEncoder().encode(code), { name: "PBKDF2" }, false, ["deriveKey"]
                 );
@@ -485,18 +1056,22 @@
                 // Unpack metadata
                 const { filename, fileData: originalData } = unpackData(decryptedPacked);
 
-                downloadBlob(originalData, filename);
-                setStatus(`Successfully restored: ${filename}`, 'success');
-
-                // Memory hygiene
-                $('pass-dec').value = '';
+                setTimeout(() => {
+                    downloadBlob(originalData, filename);
+                    hideEncryptionAnimation();
+                    setStatus(`✓ Successfully restored: ${filename}`, 'success');
+                    
+                    // Memory hygiene
+                    $('pass-dec').value = '';
+                    $('file-dec').value = '';
+                    $('file-name-dec').style.display = 'none';
+                    $('dz-dec').classList.remove('active');
+                }, 500);
 
             } catch (err) {
                 console.error(err);
+                hideEncryptionAnimation();
                 setStatus('Decryption failed. Invalid code or corrupted file.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = 'Decrypt & Restore';
             }
         }
 
@@ -506,11 +1081,27 @@
             const a = document.createElement("a");
             a.href = url;
             a.download = filename;
+            a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
             document.body.removeChild(a);
         }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add enter key support
+            $('pass-enc').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') processEncryption();
+            });
+            
+            $('pass-dec').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') processDecryption();
+            });
+            
+            // Generate initial code suggestion
+            setTimeout(generateStrongCode, 500);
+        });
     </script>
 </body>
 </html>

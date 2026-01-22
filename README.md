@@ -286,8 +286,6 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 
 ## Pricing
 
-## Pricing
-
 | Tier | Name | Price | Tools | Usage | Advertisement | Support |
 |-----:|------|-------|-------|-------|---------------|---------|
 | S | Pro | 0 USD | All | Unlimited | ✕ | ✓ |

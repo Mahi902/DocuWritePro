@@ -284,9 +284,11 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 <img width="1717" height="795" alt="1000040484" src="https://github.com/user-attachments/assets/df27bb73-aa69-42bd-9cb2-a87c35323512" />
 
 
-
 ## Pricing
-![1000040938](https://github.com/user-attachments/assets/e790f7cf-6dbc-47e0-ab46-04eab839e574)
+
+| Tier | Name | Price | Tools | Usage | Advertisement | Support |
+|-----:|------|-------|-------|-------|---------------|---------|
+| S | Pro | 0 USD | All | Unlimited | ✕ | ✓ |
 
 
 ## Development

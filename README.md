@@ -286,11 +286,13 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 
 ## Pricing
 
+## Pricing
+
 | Tier | Name | Price | Tools | Usage | Advertisement | Support |
 |-----:|------|-------|-------|-------|---------------|---------|
 | S | Pro | 0 USD | All | Unlimited | ✕ | ✓ |
 
-
+ⓘ DocuWrite Pro is a free-forall-forever project which is completely free. This is an [open source](#license) and publicly available software. We never ask for your credit card or other payment information. 
 ## Development
 
 DocuWrite Pro is fully designed, developed, and maintained by **Mohtadi Azad Mahi**. All aspects of the project—including concept planning, UI/UX design, core functionality, performance optimization, and ongoing improvements—are independently handled to ensure consistency, quality, and a clear long-term vision.

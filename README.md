@@ -6,7 +6,7 @@
 
 
 ### 🔹mahi902.GitHub.io/DocuWritePro
-_Last updated: January 18th, 2026_
+_Last updated: January 22nd, 2026_
 
 ## Introduction
 
@@ -38,6 +38,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
   - [Collaboration Tools](#collaboration-tools)
 - [Installation Guide](#clone-or-use-docuwrite-pro)
   - [Install Mobile App](#install-mobile-app)
+-[Pricing](#pricing)
 - [Development](#development)
   - [Privacy and Authentication](#privacy-and-authentication)
   - [Use of Artificial Intelligence](#use-of-ai)
@@ -282,6 +283,10 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 ### Install Mobile App
 <img width="1717" height="795" alt="1000040484" src="https://github.com/user-attachments/assets/df27bb73-aa69-42bd-9cb2-a87c35323512" />
 
+
+
+## Pricing
+![1000040938](https://github.com/user-attachments/assets/e790f7cf-6dbc-47e0-ab46-04eab839e574)
 
 
 ## Development

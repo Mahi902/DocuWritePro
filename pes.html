@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple Search</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter for a clean, modern look -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fafafa; /* Very light gray/almost white */
+            background-color: #fafafa; 
         }
-        /* Custom smooth transition for the input ring */
         .search-ring {
             transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
         }
@@ -22,14 +19,11 @@
 <body class="flex flex-col items-center justify-center min-h-screen px-4 text-gray-800">
 
     <div class="w-full max-w-xl flex flex-col items-center transform -translate-y-12">
-        <!-- Main Title -->
         <h1 class="text-5xl font-light tracking-tight text-gray-900 mb-10 select-none">
             Search
         </h1>
 
-        <!-- Search Bar Wrapper -->
         <div class="relative w-full group">
-            <!-- Input Field -->
             <input 
                 type="text" 
                 id="searchInput" 
@@ -39,7 +33,6 @@
                 autocomplete="off"
             >
 
-            <!-- Search Button/Icon -->
             <button 
                 id="searchBtn" 
                 class="absolute inset-y-0 right-2 flex items-center justify-center w-12 h-12 my-auto text-gray-400 transition-colors duration-200 rounded-full hover:text-blue-600 hover:bg-gray-50 active:scale-95"
@@ -51,9 +44,8 @@
             </button>
         </div>
 
-        <!-- Helper Text -->
         <p class="mt-6 text-sm text-gray-400 font-light">
-            Press Enter to search
+            Using Perspective
         </p>
     </div>
 
@@ -66,25 +58,17 @@
             if (query) {
                 const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
                 
-                // Attempt to break out of any iframe (if previewing) to avoid "refused to connect" errors
-                // from Google's X-Frame-Options headers.
-                try {
-                    if (window.top !== window.self) {
-                        window.top.location.href = searchUrl;
-                    } else {
-                        window.location.href = searchUrl;
-                    }
-                } catch (e) {
-                    // Fallback if cross-origin rules block window.top access
-                    window.location.href = searchUrl;
-                }
+                // Opens the search results in a new tab
+                // '_blank' specifies a new window/tab
+                window.open(searchUrl, '_blank');
+                
+                // Optional: Clear the input after searching
+                // input.value = '';
             }
         }
 
-        // Click event for the icon
         btn.addEventListener('click', performSearch);
 
-        // Enter key event for the input
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 performSearch();

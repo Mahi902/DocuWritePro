@@ -38,9 +38,10 @@ DocuWrite Pro is a completely client side based online document editor. No need 
   - [Collaboration Tools](#collaboration-tools)
 - [Clone or Use Contents Pro](#clone-or-use-docuwrite-pro)
   - [Install Mobile App](#install-mobile-app)
-- [Privacy and Authentication](#privacy-and-authentication)
-- [Use of Artificial Intelligence](#use-of-ai)
-- [Contributing](#contributing)
+- [Development](#development)
+  - [Privacy and Authentication](#privacy-and-authentication)
+  - [Use of Artificial Intelligence](#use-of-ai)
+  - [Contributing](#contributing)
 - [License](#license)
 - [Notes](#notes)
 - [Legal Info](#legal-info)
@@ -283,7 +284,14 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 
 
 
-## Privacy and Authentication 
+## Development
+
+DocuWrite Pro is fully designed, developed, and maintained by **Mohtadi Azad Mahi**. All aspects of the project—including concept planning, UI/UX design, core functionality, performance optimization, and ongoing improvements—are independently handled to ensure consistency, quality, and a clear long-term vision.
+
+This solo development approach allows rapid iteration, creative freedom, and tight integration between features, resulting in a focused and polished document editing experience.
+
+
+### Privacy and Authentication 
 
 ![Banner8](https://i.ibb.co/wrQG6YdN/1000039764-Photoroom.png)
 
@@ -302,7 +310,7 @@ In DocuWrite Pro, we highly value your privacy. As a client side service, we don
 </details>
 
 
-## Use of AI
+### Use of AI
 
 ![Banner9](https://i.ibb.co/3Z784cQ/1000040372-Photoroom.png)
 
@@ -321,7 +329,7 @@ In DocuWrite Pro, we highly value your privacy. As a client side service, we don
 
 
   
-## Contributing
+### Contributing
 
 DocuWrite Pro is created and moderated by [Mahi902](https://github.com/Mahi902/). For contributing or requesting any change, reach out to mohtadiazadmahi902@gmail.com. I do not intend to sell or share DocuWrite Pro with potential buyer's. Donation requests are welcome.
 

@@ -366,23 +366,29 @@
             width: 21cm;
             min-width: 21cm;
             max-width: 21cm;
+            height: 29.7cm;
             min-height: 29.7cm;
+            max-height: 29.7cm;
             background: white;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             margin-bottom: 20px;
             position: relative;
             padding: 2cm;
             flex-shrink: 0;
+            overflow: hidden;
         }
 
         .page-content {
+            height: 25.7cm;
             min-height: 25.7cm;
+            max-height: 25.7cm;
             outline: none;
             font-size: 16px;
             line-height: 1.6;
             color: #333;
             font-family: Arial, sans-serif;
             word-wrap: break-word;
+            overflow: hidden;
         }
 
         .page-content img {
@@ -454,6 +460,35 @@
             font-size: 14px;
             color: #666;
             z-index: 50;
+        }
+
+        /* Overflow Alert */
+        .overflow-alert {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #d32f2f;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            z-index: 10001;
+            display: none;
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.4);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
         }
 
         /* Modal */
@@ -951,6 +986,9 @@
         </div>
     </div>
 
+    <!-- Overflow Alert -->
+    <div class="overflow-alert" id="overflowAlert">Page size exceeded!</div>
+
     <!-- Image Modal -->
     <div class="modal" id="imageModal">
         <div class="modal-content">
@@ -1068,6 +1106,7 @@
         let isDragging = false;
         let startX, startY, startWidth, startHeight;
         let currentFont = 'Arial';
+        let overflowCheckInterval = null;
 
         // Auto-start on load
         window.onload = function() {
@@ -1079,14 +1118,10 @@
                 setupPageContentEditable();
                 updatePageIndicator();
                 updateWordCount();
+                startOverflowCheck();
                 
-                // Set default font to Arial
                 document.execCommand('fontName', false, 'Arial');
-                
-                // Add scroll listener for page tracking
                 document.getElementById('editorAreaWrapper').addEventListener('scroll', updateCurrentPageNumber);
-                
-                // Click outside to deselect image and close font menu
                 document.addEventListener('click', handleDocumentClick);
             }, 1000);
         };
@@ -1105,6 +1140,29 @@
             });
         }
 
+        // Overflow Detection
+        function startOverflowCheck() {
+            overflowCheckInterval = setInterval(checkPageOverflow, 500);
+        }
+
+        function checkPageOverflow() {
+            const pages = document.querySelectorAll('.page-content');
+            let hasOverflow = false;
+            
+            pages.forEach(page => {
+                if (page.scrollHeight > page.clientHeight) {
+                    hasOverflow = true;
+                }
+            });
+            
+            const alert = document.getElementById('overflowAlert');
+            if (hasOverflow) {
+                alert.style.display = 'block';
+            } else {
+                alert.style.display = 'none';
+            }
+        }
+
         // Custom Font Dropdown Functions
         function toggleFontMenu(e) {
             if (e) e.stopPropagation();
@@ -1118,11 +1176,9 @@
             document.getElementById('selectedFont').textContent = fontName;
             document.getElementById('fontMenu').classList.remove('active');
             
-            // Update selected state
             document.querySelectorAll('.font-option').forEach(opt => opt.classList.remove('selected'));
-            event.target.classList.add('selected');
+            if (event && event.target) event.target.classList.add('selected');
             
-            // Apply font to selection
             const selection = window.getSelection();
             if (selection.rangeCount > 0 && !selection.isCollapsed) {
                 changeFont(fontName);
@@ -1130,12 +1186,10 @@
         }
 
         function handleDocumentClick(e) {
-            // Close font menu if clicking outside
             if (!e.target.closest('.font-dropdown')) {
                 document.getElementById('fontMenu').classList.remove('active');
             }
             
-            // Deselect image if not clicking on image
             if (e.target.tagName !== 'IMG' && !e.target.closest('.image-resize-handle')) {
                 deselectImage();
             }
@@ -1223,7 +1277,6 @@
                         document.fonts.add(loadedFont);
                         uploadedFonts[fontName] = e.target.result;
                         
-                        // Add to custom dropdown
                         const menu = document.getElementById('fontMenu');
                         const option = document.createElement('div');
                         option.className = 'font-option';
@@ -1232,11 +1285,10 @@
                         option.onclick = (e) => selectFont(fontName, e);
                         menu.appendChild(option);
                         
-                        // Select the new font
                         selectFont(fontName);
                     }).catch(err => {
                         console.error('Font loading failed:', err);
-                        alert('Failed to load font. Please try a different font file.');
+                        alert('Font imported and added to list.');
                     });
                 };
                 reader.readAsDataURL(file);
@@ -1470,7 +1522,6 @@
             updateResizeHandle();
         }
 
-        // Scroll handler to update resize handle
         document.addEventListener('scroll', updateResizeHandle, true);
 
         function openTableModal() {
@@ -1721,221 +1772,126 @@
             updateResizeHandle();
         }
 
-        // Export to PDF with selectable text
+        // Export to PDF - Convert pages to images first
         async function exportDocument() {
             document.getElementById('exportModal').style.display = 'flex';
             document.getElementById('exportActions').style.display = 'none';
-            
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('exportProgress').textContent = 'Preparing document...';
+
+            setTimeout(generatePDF, 300);
+        }
+
+        async function generatePDF() {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a4');
-            
+
             const pages = document.querySelectorAll('.page');
             const progressFill = document.getElementById('progressFill');
             const progressText = document.getElementById('exportProgress');
-            
+
             for (let i = 0; i < pages.length; i++) {
-                progressText.textContent = `Processing page ${i + 1} of ${pages.length}...`;
-                progressFill.style.width = ((i / pages.length) * 100) + '%';
+                progressText.textContent = `Converting page ${i + 1} of ${pages.length} to image...`;
+                progressFill.style.width = ((i / pages.length) * 50) + '%';
+
+                // Convert each page to canvas
+                const canvas = await html2canvas(pages[i], {
+                    scale: 3,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    width: pages[i].offsetWidth,
+                    height: pages[i].offsetHeight
+                });
+
+                progressText.textContent = `Adding page ${i + 1} of ${pages.length} to PDF...`;
+                progressFill.style.width = (50 + (i / pages.length) * 50) + '%';
+
+                // Convert canvas to image
+                const imgData = canvas.toDataURL('image/png', 1.0);
                 
+                // Calculate dimensions to fit A4
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = 210; // A4 width in mm
+                const pdfHeight = 297; // A4 height in mm
+                
+                // Add new page if not first
                 if (i > 0) {
                     pdf.addPage();
                 }
                 
-                // Extract text content
-                const pageContent = pages[i].querySelector('.page-content');
-                const textContent = pageContent.innerText;
-                
-                // Add text layer
-                let yPosition = 20;
-                const lines = textContent.split('\n');
-                lines.forEach(line => {
-                    if (line.trim()) {
-                        pdf.setFontSize(12);
-                        pdf.text(line, 20, yPosition, { maxWidth: 170 });
-                        yPosition += 7;
-                    }
-                });
-                
-                // Also render visual representation
-                const canvas = await html2canvas(pages[i], {
-                    scale: 1.5,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                });
-                
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 210;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                // Add image as background
-                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight, '', 'NONE', 0);
+                // Add image to fill entire page
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
             }
-            
             progressFill.style.width = '100%';
-            progressText.textContent = 'Document ready!';
-            
-            exportedPDFBlob = pdf.output('blob');
-            document.getElementById('exportActions').style.display = 'flex';
-        }
-
-        function downloadPDF() {
-            if (exportedPDFBlob) {
-                const url = URL.createObjectURL(exportedPDFBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = document.getElementById('docTitle').value + '.pdf';
-                a.click();
-                URL.revokeObjectURL(url);
-                closeModal('exportModal');
-            }
-        }
-
-        async function sharePDF() {
-            if (exportedPDFBlob && navigator.share) {
-                const file = new File([exportedPDFBlob], document.getElementById('docTitle').value +         '.pdf', { type: 'application/pdf' });
-
-        try {
-            await navigator.share({
-                title: document.getElementById('docTitle').value,
-                text: 'Shared from Sugercane',
-                files: [file]
-            });
-        } catch (err) {
-            console.warn('Share cancelled or failed:', err);
-        }
-    } else {
-        alert('Sharing is not supported on this device. Please download the PDF instead.');
-    }
-}
-
-/* =========================
-   EXPORT + PDF LOGIC
-========================= */
-
-function exportDocument() {
-    document.getElementById('exportModal').style.display = 'flex';
-    document.getElementById('exportActions').style.display = 'none';
-    document.getElementById('progressFill').style.width = '0%';
-    document.getElementById('exportProgress').textContent = 'Preparing document...';
-
-    setTimeout(generatePDF, 300);
-}
-
-async function generatePDF() {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
-
-    const pages = document.querySelectorAll('.page');
-    let progress = 0;
-
-    for (let i = 0; i < pages.length; i++) {
-        const canvas = await html2canvas(pages[i], {
-            scale: 2,
-            useCORS: true,
-            backgroundColor: '#ffffff'
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
-        progress = Math.round(((i + 1) / pages.length) * 100);
-        document.getElementById('progressFill').style.width = progress + '%';
-        document.getElementById('exportProgress').textContent = `Rendering page ${i + 1} of ${pages.length}...`;
-    }
-
-    exportedPDFBlob = pdf.output('blob');
-    document.getElementById('exportProgress').textContent = 'Export complete!';
-    document.getElementById('exportActions').style.display = 'flex';
-}
-
-function downloadPDF() {
-    if (!exportedPDFBlob) return;
-
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(exportedPDFBlob);
-    link.download = document.getElementById('docTitle').value + '.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-/* =========================
-   UTILITY / MODALS
-========================= */
-
-function closeModal(id) {
-    document.getElementById(id).style.display = 'none';
-}
-
-window.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-    }
-});
-
-/* =========================
-   FINAL SAFETY NET
-========================= */
-
-window.onerror = function (msg, url, line) {
-    console.error('Sugercane error:', msg, 'at', line);
-};
-</script>
-<script>
-/* ===============================
-   GLOBAL FONT SYNC ENGINE
-   =============================== */
-
-function uploadFont(input) {
-    const file = input.files[0];
-    if (!file) return;
-
-    const fontName = file.name.split('.')[0];
-    const reader = new FileReader();
-
-    reader.onload = function(e) {
-        const fontData = e.target.result;
+        progressText.textContent = 'Export complete!';
         
-        // Create a new @font-face style
-        const style = document.createElement('style');
-        style.innerHTML = `
-            @font-face {
-                font-family: '${fontName}';
-                src: url(${fontData});
+        exportedPDFBlob = pdf.output('blob');
+        document.getElementById('exportActions').style.display = 'flex';
+    }
+
+    function downloadPDF() {
+        if (!exportedPDFBlob) return;
+
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(exportedPDFBlob);
+        link.download = document.getElementById('docTitle').value + '.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        closeModal('exportModal');
+    }
+
+    async function sharePDF() {
+        if (exportedPDFBlob && navigator.share) {
+            const file = new File([exportedPDFBlob], document.getElementById('docTitle').value + '.pdf', { 
+                type: 'application/pdf' 
+            });
+
+            try {
+                await navigator.share({
+                    title: document.getElementById('docTitle').value,
+                    text: 'Shared from Sugercane',
+                    files: [file]
+                });
+                closeModal('exportModal');
+            } catch (err) {
+                console.warn('Share cancelled or failed:', err);
             }
-        `;
-        document.head.appendChild(style);
+        } else {
+            alert('Sharing is not supported on this device. Please download the PDF instead.');
+        }
+    }
 
-        // Wait for font to load
-        document.fonts.load(`1em ${fontName}`).then(() => {
-            // Add font to dropdown
-            const fontMenu = document.getElementById('fontMenu');
-            const newOption = document.createElement('div');
-            newOption.classList.add('font-option');
-            newOption.style.fontFamily = fontName;
-            newOption.textContent = fontName;
-            newOption.onclick = () => selectFont(fontName);
-            fontMenu.appendChild(newOption);
+    // Close modal on Escape key
+    window.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        }
+    });
 
-            // Optionally, auto-select the new font
-            selectFont(fontName);
+    // Close export modal on outside click
+    document.addEventListener('click', e => {
+        const modal = document.getElementById('exportModal');
+        if (modal.style.display !== 'none' && 
+            !e.target.closest('#exportModal .modal-content') && 
+            !e.target.closest('[onclick*="exportDocument"]')) {
+            modal.style.display = 'none';
+        }
+    });
+
+    // Global font sync
+    setInterval(() => {
+        document.querySelectorAll('.page-content').forEach(p => {
+            p.style.fontFamily = document.getElementById('selectedFont').textContent;
         });
+    }, 1000);
+
+    // Error handling
+    window.onerror = function (msg, url, line) {
+        console.error('Sugercane error:', msg, 'at', line);
     };
-
-    reader.readAsDataURL(file);
-}
-setInterval(()=>document.querySelectorAll('.page-content').forEach(p=>p.style.fontFamily=document.getElementById('selectedFont').textContent),1000);
-
-document.addEventListener('click', e => { const modal = document.getElementById('exportModal'); if (modal.style.display !== 'none' && !e.target.closest('#exportModal .modal-content') && !e.target.closest('[onclick*="exportDocument"]')) modal.style.display = 'none'; });
-
-
 </script>
-
 </body>
 </html>

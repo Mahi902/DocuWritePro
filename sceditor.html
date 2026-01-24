@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sugercane</title>
+    <title>Editor | Sugercane | DocuWrite Pro</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <style>
         * {
@@ -1782,53 +1782,86 @@
             setTimeout(generatePDF, 300);
         }
 
-        async function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('p', 'mm', 'a4');
+async function generatePDF() {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
 
-            const pages = document.querySelectorAll('.page');
-            const progressFill = document.getElementById('progressFill');
-            const progressText = document.getElementById('exportProgress');
+    const pages = document.querySelectorAll('.page');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('exportProgress');
 
-            for (let i = 0; i < pages.length; i++) {
-                progressText.textContent = `Converting page ${i + 1} of ${pages.length} to image...`;
-                progressFill.style.width = ((i / pages.length) * 50) + '%';
+    // Temporarily reset zoom for consistent rendering
+    const originalZoom = currentZoom;
+    currentZoom = 100;
+    applyZoom();
 
-                // Convert each page to canvas
-                const canvas = await html2canvas(pages[i], {
-                    scale: 3,
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#ffffff',
-                    width: pages[i].offsetWidth,
-                    height: pages[i].offsetHeight
-                });
+    // Wait for zoom to apply
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-                progressText.textContent = `Adding page ${i + 1} of ${pages.length} to PDF...`;
-                progressFill.style.width = (50 + (i / pages.length) * 50) + '%';
+    for (let i = 0; i < pages.length; i++) {
+        progressText.textContent = `Rendering page ${i + 1} of ${pages.length}...`;
+        progressFill.style.width = ((i / pages.length) * 100) + '%';
 
-                // Convert canvas to image
-                const imgData = canvas.toDataURL('image/png', 1.0);
-                
-                // Calculate dimensions to fit A4
-                const imgProps = pdf.getImageProperties(imgData);
-                const pdfWidth = 210; // A4 width in mm
-                const pdfHeight = 297; // A4 height in mm
-                
-                // Add new page if not first
-                if (i > 0) {
-                    pdf.addPage();
+        // Clone the page to avoid rendering issues
+        const pageClone = pages[i].cloneNode(true);
+        pageClone.style.position = 'absolute';
+        pageClone.style.left = '-9999px';
+        pageClone.style.top = '0';
+        document.body.appendChild(pageClone);
+
+        // Wait for fonts and images to load
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Convert to canvas with high quality settings
+        const canvas = await html2canvas(pageClone, {
+            scale: 3,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            width: pageClone.offsetWidth,
+            height: pageClone.offsetHeight,
+            windowWidth: pageClone.offsetWidth,
+            windowHeight: pageClone.offsetHeight,
+            logging: false,
+            imageTimeout: 0,
+            letterRendering: true,
+            onclone: (clonedDoc) => {
+                // Ensure all styles are applied in the cloned document
+                const clonedPage = clonedDoc.querySelector('.page');
+                if (clonedPage) {
+                    clonedPage.style.width = '21cm';
+                    clonedPage.style.height = '29.7cm';
                 }
-                
-                // Add image to fill entire page
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, '', 'FAST');
             }
-            progressFill.style.width = '100%';
-        progressText.textContent = 'Export complete!';
+        });
+
+        // Remove the clone
+        document.body.removeChild(pageClone);
+
+        // Convert to image
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
         
-        exportedPDFBlob = pdf.output('blob');
-        document.getElementById('exportActions').style.display = 'flex';
+        // A4 dimensions
+        const pdfWidth = 210;
+        const pdfHeight = 297;
+        
+        if (i > 0) {
+            pdf.addPage();
+        }
+        
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, '', 'SLOW');
     }
+
+    // Restore original zoom
+    currentZoom = originalZoom;
+    applyZoom();
+
+    progressFill.style.width = '100%';
+    progressText.textContent = 'Export complete!';
+    
+    exportedPDFBlob = pdf.output('blob');
+    document.getElementById('exportActions').style.display = 'flex';
+}
 
     function downloadPDF() {
         if (!exportedPDFBlob) return;

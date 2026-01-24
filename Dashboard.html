@@ -795,6 +795,10 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        margin-bottom: 15px;
+    }
+    .toggle-switch:last-child {
+        margin-bottom: 0;
     }
     .toggle-switch label {
         font-size: 14px;
@@ -834,6 +838,35 @@
     }
     input:checked + .slider:before {
         transform: translateX(20px);
+    }
+
+    /* Editor Dropdown */
+    .editor-dropdown {
+        position: relative;
+        width: 150px;
+    }
+    .editor-dropdown select {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--theme-border);
+        border-radius: 8px;
+        background-color: var(--theme-surface);
+        color: var(--theme-text);
+        font-size: 14px;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+    }
+    .editor-dropdown::after {
+        content: "▼";
+        font-size: 12px;
+        color: var(--theme-text-secondary);
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
     }
 
     /* Starred Tools */
@@ -1194,7 +1227,7 @@
                   Data attributes added for new tab functionality.
                   Original onclick="window.open(...)" removed.
                 -->
-                <div class="document-card" data-href="https://mahi902.github.io/DocuWritePro/document-writer.html">
+                <div class="document-card" id="blank-document-card" data-default-href="https://mahi902.github.io/DocuWritePro/document-writer.html" data-sugarcane-href="https://mahi902.github.io/DocuWritePro/sceditor.html">
                     <div class="document-icon"><span class="material-symbols-outlined plus-icon">add</span></div>
                     <div class="document-name">Blank Document</div>
                 </div>
@@ -1242,7 +1275,7 @@
             -->
             <div class="tools-container" id="toolsContainer">
                  <!-- Document Editing Tools -->
-                <div class="tool-card" data-category="Document Editing" data-href="https://mahi902.github.io/DocuWritePro/document-writer.html" data-tool-id="editor" data-tool-name="Editor"><span class="material-symbols-outlined tool-icon">edit</span><div class="tool-name">Editor</div><span class="material-symbols-outlined star-icon">star</span></div>
+                <div class="tool-card" data-category="Document Editing" data-default-href="https://mahi902.github.io/DocuWritePro/document-writer.html" data-sugarcane-href="https://mahi902.github.io/DocuWritePro/sceditor.html" data-tool-id="editor" data-tool-name="Editor"><span class="material-symbols-outlined tool-icon">edit</span><div class="tool-name">Editor</div><span class="material-symbols-outlined star-icon">star</span></div>
                 <div class="tool-card" data-category="Document Editing" data-href="https://mahi902.github.io/DocuWritePro/viewer.html" data-tool-id="viewer" data-tool-name="Document Viewer"><span class="material-symbols-outlined tool-icon">visibility</span><div class="tool-name">Document Viewer</div><span class="material-symbols-outlined star-icon">star</span></div>
                 <div class="tool-card" data-category="Document Editing" data-href="https://mahi902.github.io/DocuWritePro/markup.html" data-tool-id="viewer" data-tool-name="Markup & Reconstructor"><span class="material-symbols-outlined tool-icon">ink_highlighter</span><div class="tool-name">Markup & Reconstructor</div><span class="material-symbols-outlined star-icon">star</span></div>
                 <div class="tool-card" data-category="Document Editing" data-href="https://mahi902.github.io/DocuWritePro/word-description-finder.html" data-tool-id="word-finder" data-tool-name="Word Finder"><span class="material-symbols-outlined tool-icon">menu_book</span><div class="tool-name">Word Finder</div><span class="material-symbols-outlined star-icon">star</span></div>
@@ -1312,8 +1345,8 @@
             <div class="settings-section">
                 <h3 style="text-align: center; margin-bottom: 5px;">DocuWrite Pro</h3>
 			</br>
-                <!-- --- VERSION UPDATED --- -->
-                <p id="app-version">Version 5.0.2</p>
+                <!-- --- VERSION UPDATED TO 5.0.3 --- -->
+                <p id="app-version">Version 5.0.3</p>
             </div>
             
             <!-- --- UPDATED: Account Section --- -->
@@ -1379,6 +1412,18 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+                
+                <!-- --- NEW: Default Document Editor Dropdown --- -->
+                <div class="toggle-switch">
+                    <label for="defaultEditor">Default Document Editor</label>
+                    <div class="editor-dropdown">
+                        <select id="defaultEditor">
+                            <option value="default">Default</option>
+                            <option value="sugarcane">Sugarcane</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- --- END: Default Document Editor Dropdown --- -->
             </div>
 
             <div class="settings-section">
@@ -1753,12 +1798,41 @@
             }
         }
 
-        // --- PREFERENCES (New Tab) ---
+        // --- PREFERENCES (New Tab & Default Editor) ---
         const newTabToggle = document.getElementById('newTabToggle');
+        const defaultEditorSelect = document.getElementById('defaultEditor');
 
         function loadNewTabSetting() {
             const openInNewTab = localStorage.getItem('openInNewTab') !== 'false'; // Default to true
             newTabToggle.checked = openInNewTab;
+        }
+        
+        function loadDefaultEditorSetting() {
+            const defaultEditor = localStorage.getItem('defaultEditor') || 'default';
+            defaultEditorSelect.value = defaultEditor;
+            updateEditorLinks(defaultEditor);
+        }
+        
+        function updateEditorLinks(editorType) {
+            // Update Blank Document card
+            const blankDocumentCard = document.getElementById('blank-document-card');
+            if (blankDocumentCard) {
+                if (editorType === 'sugarcane') {
+                    blankDocumentCard.dataset.href = blankDocumentCard.dataset.sugarcaneHref;
+                } else {
+                    blankDocumentCard.dataset.href = blankDocumentCard.dataset.defaultHref;
+                }
+            }
+            
+            // Update Editor tool card
+            const editorToolCard = document.querySelector('.tool-card[data-tool-id="editor"]');
+            if (editorToolCard) {
+                if (editorType === 'sugarcane') {
+                    editorToolCard.dataset.href = editorToolCard.dataset.sugarcaneHref;
+                } else {
+                    editorToolCard.dataset.href = editorToolCard.dataset.defaultHref;
+                }
+            }
         }
 
         function handleLinkClick(e) {
@@ -2149,6 +2223,13 @@
             newTabToggle.addEventListener('change', (e) => {
                 localStorage.setItem('openInNewTab', e.target.checked);
             });
+            
+            // --- Default Editor Preference ---
+            loadDefaultEditorSetting();
+            defaultEditorSelect.addEventListener('change', (e) => {
+                localStorage.setItem('defaultEditor', e.target.value);
+                updateEditorLinks(e.target.value);
+            });
 
             // --- Starred Tools Setup ---
             populateAllToolsData();
@@ -2372,13 +2453,6 @@
     height: 16px;
   }
 </style>
-
-<div id="human-auth-overlay">
-  <iframe src="https://mahi902.github.io/DocuWritePro/1.html" id="human-auth-iframe"></iframe>
-  <label id="remember-container">
-    <input type="checkbox" id="remember-me"> Remember me for 30 days
-  </label>
-</div>
 
 <script>
 (function() {

@@ -137,6 +137,9 @@ Asides from the regular document editor, the Sugarcane editor is generally a lig
 <summary> (Collapse/Expand) </summary>
 
 
+![1000042451](https://github.com/user-attachments/assets/20a81db0-9a88-49b0-9efe-fd233262b7b5)
+
+
 1. **Document Title**: Set the title of your document here.
 2. **Export Button**: Export your document using this button.
 3. **Taskbar/Toolbar**: Contains all the basic rich text formatting features you need.

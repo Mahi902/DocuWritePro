@@ -123,7 +123,7 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 
 
 11. **Collapse:** Collapses the sidebar as a second toolbar. 
-12. **Canvas:** Your writing area
+12. **Canvas:** Your writing area.
     
 </details>
 

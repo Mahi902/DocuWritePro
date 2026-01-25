@@ -129,7 +129,8 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 
 ### The Editor: Sugarcane Edition
 
-![1000042460](https://github.com/user-attachments/assets/b7259bf2-cbf6-4e97-9af0-a4d24083ecb4)
+![1000042460](https://github.com/user-attachments/assets/adf5bce7-557d-43e1-8a20-bb05e552c875)
+
 
 Asides from the regular document editor, the Sugarcane editor is generally a light version of the main editor. It has all the essential tools you need to make a document. All the extra tools were scraped from this version, and the UI was completely revamped to a much lighter, cleaner and simpler layout and design.
 

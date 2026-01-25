@@ -6,7 +6,7 @@
 
 
 ### 🔹mahi902.GitHub.io/DocuWritePro
-_Last updated: January 22nd, 2026_
+_Last updated: January 25th, 2026_
 
 ## Introduction
 
@@ -33,6 +33,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 - [Description](#description)
 - [DocuWrite Pro Tools](#docuwrite-pro-tools)
   - [The Editor](#the-editor)
+    - [Sugercane Edition](#the-editor-:-sugercane-edition)
   - [Main Tools](#main-tools)
   - [Additional Tools](#additional-tools)
   - [Collaboration Tools](#collaboration-tools)

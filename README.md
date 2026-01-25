@@ -128,7 +128,7 @@ In DocuWrite Pro, the first tool that will come to mind is our premium and clutt
 </details>
 
 
-### The Editor: Sugarcane Edition
+### The Editor Sugarcane Edition
 
 <img width="2504" height="1247" alt="1000042461" src="https://github.com/user-attachments/assets/0b6cb555-5a51-4b5b-b35e-e5b8ea5434ed" />
 

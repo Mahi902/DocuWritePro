@@ -139,6 +139,35 @@ Asides from the default document editor, the Sugarcane editor is generally a lig
 <summary> (Collapse/Expand) </summary>
 
 
+#### DocuWrite Pro vs Sugercane Edition – Feature Comparison
+
+| Category | DocuWrite Pro (Main Editor) | Sugercane Edition |
+|--------|----------------------------|-------------------|
+| Editor Philosophy | Power-user, feature-rich document editor | Minimalist, focus-first writing editor |
+| Target Use Case | Full document creation, analysis, and publishing | Fast drafting, simple writing, distraction-free editing |
+| UI Density | Tool-heavy, control-oriented interface | Clean, spacious, reduced visual clutter |
+| Themes | Multiple customizable themes available | Single fixed minimalist theme |
+| Dark Mode Control | Theme-based or advanced toggles | Simple on/off dark mode |
+| Smart Lookup | Available (context-aware lookup tools) | Not available |
+| Smart Spelling | Advanced spelling and suggestion system | Not available |
+| Font Import (via Link) | Supported | Not supported |
+| Font Import (via File Upload) | Supported | Supported |
+| Font Management | Advanced font controls | Basic font selection only |
+| Watermark Customization | Full control (text, opacity, position, style) | Text-only watermark with fixed centered angled faded style |
+| Page Rearranging | Pages can be reordered freely | Pages remain in linear order |
+| Word Count Detail | Advanced statistics (paragraphs, sentences, frequency, etc.) | Basic total word count only |
+| Text Translation | Built-in translation tools | Not available |
+| Page Sharing | Share page via link or built-in options | Not available |
+| Writing Assistance Tools | Extensive AI-assisted and smart tools | None |
+| Editing Distraction Level | Medium (many optional tools visible) | Very low |
+| Offline-first Design | Partial (some features rely on extras) | Strong offline-first focus |
+| Learning Curve | Moderate to high | Very low |
+| Best For | Long-form writing, publishing, research | Notes, drafts, quick writing sessions |
+| Export Capability | Available | Available |
+
+
+#### Sugercane Edition: UI layout
+
 ![1000042451](https://github.com/user-attachments/assets/20a81db0-9a88-49b0-9efe-fd233262b7b5)
 
 

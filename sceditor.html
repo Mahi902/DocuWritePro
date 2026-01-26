@@ -1927,5 +1927,202 @@ async function generatePDF() {
     };
 </script>
 <script>window.onbeforeunload=()=>true;</script>
+<script>
+(() => {
+  // Updated Storage Key for Sugercane Editor
+  const STORAGE_KEY = "docuwritepro_sugercane_editor_guide_seen";
+  if (localStorage.getItem(STORAGE_KEY)) return;
+
+  const tips = [
+    "Welcome to Sugercane Editor! This tool features a sleek, paginated interface designed for focused document creation.",
+    "The floating 'Magic Toolbar' at the top gives you quick access to text formatting, font selection, and page management.",
+    "Need more space? Click '+ Add New Page' in the floating menu to create a fresh A4-sized canvas instantly.",
+    "Hide the sidebar by clicking the collapse button, or want to open it again? Click the expand icon.",
+    "To customize your typography, click the Font name in the toolbar to cycle through available fonts. Or click the '+' icon to upload a font of your own.",
+    "Use the 'Alignment' buttons to switch between Left, Center, and Right-aligned text for headers or body copy.",
+    "The editor tracks your progress automatically; notice the 'Page Count' in the sidebar to keep an eye on your document length.",
+    "When you're ready to share, click the 'Export' icon. You can choose to download a PDF or use the mobile-friendly 'Share' option.",
+    "Use the 'Document Title' field at the top to name your project. This title will be used as the filename when you export.",
+    "Sugercane is designed as a light version of the default DocuWrite Pro Editor, for all features, use the default editor."
+  ];
+
+  let index = 0;
+  let direction = 1;
+
+  /* Container */
+  const box = document.createElement("div");
+  box.id = "dwp-tip-box";
+  box.innerHTML = `
+    <div class="dwp-progress">
+      <div class="dwp-progress-bar"></div>
+    </div>
+
+    <div class="dwp-tip-wrapper">
+      <div class="dwp-tip-text"></div>
+    </div>
+
+    <div class="dwp-actions">
+      <button class="dwp-prev">Back</button>
+      <button class="dwp-next">Next</button>
+    </div>
+  `;
+  document.body.appendChild(box);
+
+  const textEl = box.querySelector(".dwp-tip-text");
+  const nextBtn = box.querySelector(".dwp-next");
+  const prevBtn = box.querySelector(".dwp-prev");
+  const progressBar = box.querySelector(".dwp-progress-bar");
+
+  function updateTip(animate = true) {
+    if (animate) {
+      textEl.classList.remove("slide-in-left", "slide-in-right");
+      void textEl.offsetWidth;
+      textEl.classList.add(direction > 0 ? "slide-in-right" : "slide-in-left");
+    }
+
+    textEl.textContent = tips[index];
+    progressBar.style.width = `${((index + 1) / tips.length) * 100}%`;
+
+    prevBtn.style.visibility = index === 0 ? "hidden" : "visible";
+    nextBtn.textContent = index === tips.length - 1 ? "Got it" : "Next";
+  }
+
+  nextBtn.onclick = () => {
+    if (index === tips.length - 1) {
+      localStorage.setItem(STORAGE_KEY, "true");
+      box.classList.add("fade-out");
+      setTimeout(() => box.remove(), 300);
+    } else {
+      direction = 1;
+      index++;
+      updateTip();
+    }
+  };
+
+  prevBtn.onclick = () => {
+    if (index > 0) {
+      direction = -1;
+      index--;
+      updateTip();
+    }
+  };
+
+  setTimeout(() => {
+    box.classList.add("show");
+    updateTip(false);
+  }, 1000);
+
+  /* Styles */
+  const style = document.createElement("style");
+  style.textContent = `
+    #dwp-tip-box {
+      position: fixed;
+      bottom: 100px; /* Positioned above the Sugercane floating toolbar */
+      right: 25px;
+      width: 300px;
+      background: #1976d2; /* Matched to Sugercane's primary blue */
+      color: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 32px rgba(25, 118, 210, 0.3);
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      z-index: 10001;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .3s ease, transform .3s ease;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    #dwp-tip-box.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #dwp-tip-box.fade-out {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .dwp-progress {
+      height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .dwp-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: #ffffff;
+      transition: width .35s ease;
+    }
+
+    .dwp-tip-wrapper {
+      overflow: hidden;
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+    }
+
+    .dwp-tip-text {
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .slide-in-right {
+      animation: slideRight .25s ease;
+    }
+
+    .slide-in-left {
+      animation: slideLeft .25s ease;
+    }
+
+    @keyframes slideRight {
+      from { opacity: 0; transform: translateX(12px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideLeft {
+      from { opacity: 0; transform: translateX(-12px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .dwp-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 16px;
+      gap: 10px;
+    }
+
+    .dwp-actions button {
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      flex: 1;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .dwp-actions button:active {
+      transform: scale(0.96);
+    }
+
+    .dwp-prev {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+    }
+
+    .dwp-next {
+      background: #ffffff;
+      color: #1976d2;
+    }
+  `;
+  document.head.appendChild(style);
+})();
+</script>
 </body>
 </html>

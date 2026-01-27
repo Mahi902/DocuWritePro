@@ -340,6 +340,8 @@ In both versions of the editor—Default and Sugercane—DocuWrite Pro offers a 
 <details>
 <summary>(Expand/Collapse)</summary>
 
+---
+
 - Default Editor
 
 In the default DocuWrite Pro editor, sharing is done through the “Share Page” option available in the sidebar. You can select specific pages you want to share and generate a link for them. When someone opens this link, it displays a read-only version of the document, which can also be exported if needed.

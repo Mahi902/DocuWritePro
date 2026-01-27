@@ -139,6 +139,8 @@ Asides from the default document editor, the Sugarcane editor is generally a lig
 <details>
 <summary> (Collapse/Expand) </summary>
 
+---
+
 
 #### DocuWrite Pro vs Sugercane Edition – Feature Comparison
 
@@ -392,6 +394,8 @@ In DocuWrite Pro, we highly value your privacy. As a client side service, we don
 <details>
 <summary><strong>Forms of Authentication</strong></summary>
 
+---
+
 - **Account Creation:**  
   On the web version of DocuWrite Pro, you need to create an account on the Dashboard page. Your data is stored locally on your device. We use your **Name** and **Profile Picture** to enhance your experience within DocuWrite Pro tools. This data is **not shared with third-party services**. You can manually clear your browser cookies to remove this data.
 
@@ -409,6 +413,8 @@ In DocuWrite Pro, we highly value your privacy. As a client side service, we don
 
 <details>
 <summary><strong>Use of Artificial Intelligence in DocuWrite Pro</strong></summary>
+
+---
 
 - <strong>Use of Artificial Intelligence during development:</strong><br>
   During the development of DocuWrite Pro, we took guidance and inspiration from various AI models. This does not imply direct copying of code. Instead, AI tools were used for design inspiration, debugging assistance, general suggestions, and feedback analysis. Additionally, GitHub Copilot’s “Auto Generate” feature is used to create clear and structured commit messages during version control.

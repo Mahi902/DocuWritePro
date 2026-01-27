@@ -327,6 +327,24 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 </ol>
 
 </details>
+
+
+### Sharing Documents
+
+In both versions of the editor—Default and Sugercane—DocuWrite Pro offers a seamless way to share documents with others. Instead of downloading a PDF and then sending it manually, you can simply copy a link and share it directly. Both editors support this powerful feature, each in its own way.
+
+<details>
+<summary>(Expand/Collapse)</summary>
+
+- Default Editor
+
+In the default DocuWrite Pro editor, sharing is done through the “Share Page” option available in the sidebar. You can select specific pages you want to share and generate a link for them. When someone opens this link, it displays a read-only version of the document, which can also be exported if needed.
+
+- Sugercane Edition
+
+Sharing in the Sugercane edition works a bit differently and is handled through Templates. Templates are quick-access links that usually contain small documents of 1–2 pages. You can create a template from the sidebar and copy its link. When opened, the link loads the exact document directly inside the editor, allowing it to be fully edited and exported.
+
+</details>
   
  ## Clone or use DocuWrite Pro
  Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.

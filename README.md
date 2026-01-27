@@ -332,6 +332,9 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 
 ### Sharing Documents
 
+<img width="1065" height="255" alt="1000042595" src="https://github.com/user-attachments/assets/ec47d304-5020-4b3d-aa2c-8425a98011d3" />
+
+
 In both versions of the editor—Default and Sugercane—DocuWrite Pro offers a seamless way to share documents with others. Instead of downloading a PDF and then sending it manually, you can simply copy a link and share it directly. Both editors support this powerful feature, each in its own way.
 
 <details>

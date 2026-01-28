@@ -730,5 +730,112 @@
         switchTab('home');
 
     </script>
+<script>
+/* =====================================================
+   FORCED PRELOAD USING FIXED LINK LIST
+   ===================================================== */
+(async function () {
+
+    if (localStorage.getItem('docuwrite_forced_preload_done')) return;
+
+    const LINKS = [
+        "https://mahi902.github.io/DocuWritePro/manifest.json",
+        "https://mahi902.github.io/DocuWritePro/document-writer.html",
+        "https://mahi902.github.io/DocuWritePro/viewer.html",
+        "https://mahi902.github.io/DocuWritePro/markup.html",
+        "https://mahi902.github.io/DocuWritePro/word-description-finder.html",
+        "https://mahi902.github.io/DocuWritePro/translator.html",
+        "https://mahi902.github.io/DocuWritePro/document-signer.html",
+        "https://mahi902.github.io/DocuWritePro/findandreplacer.html",
+        "https://mahi902.github.io/DocuWritePro/page-number-adder.html",
+        "https://mahi902.github.io/DocuWritePro/spreadsheet.html",
+        "https://mahi902.github.io/DocuWritePro/rm.html",
+        "https://mahi902.github.io/DocuWritePro/fe.html",
+        "https://mahi902.github.io/DocuWritePro/chart-maker.html",
+        "https://mahi902.github.io/DocuWritePro/graphmaker.html",
+        "https://mahi902.github.io/DocuWritePro/whiteboard.html",
+        "https://mahi902.github.io/DocuWritePro/mmm.html",
+        "https://mahi902.github.io/DocuWritePro/table-maker.html",
+        "https://mahi902.github.io/DocuWritePro/watermarker.html",
+        "https://mahi902.github.io/DocuWritePro/email-writer.html",
+        "https://mahi902.github.io/DocuWritePro/spell-checker.html",
+        "https://mahi902.github.io/DocuWritePro/file-extractor.html",
+        "https://mahi902.github.io/DocuWritePro/qr-code-maker.html",
+        "https://mahi902.github.io/DocuWritePro/id-card-maker.html",
+        "https://mahi902.github.io/DocuWritePro/file-zipper.html",
+        "https://mahi902.github.io/DocuWritePro/converters.html",
+        "https://mahi902.github.io/DocuWritePro/pdfcompressor.html",
+        "https://mahi902.github.io/DocuWritePro/context-field.html",
+        "https://mahi902.github.io/DocuWritePro/metadatainspector.html",
+        "https://mahi902.github.io/DocuWritePro/gift-card-maker.html",
+        "https://mahi902.github.io/DocuWritePro/docudrop.html",
+        "https://mahi902.github.io/DocuWritePro/text-extractor.html",
+        "https://mahi902.github.io/DocuWritePro/keyboard-click-test.html",
+        "https://mahi902.github.io/DocuWritePro/frontend-ide.html",
+        "https://mahi902.github.io/DocuWritePro/code-playground.html",
+        "https://mahi902.github.io/DocuWritePro/html.html",
+        "https://mahi902.github.io/DocuWritePro/mdeditor.html",
+        "https://mahi902.github.io/DocuWritePro/button-designer.html",
+        "https://mahi902.github.io/DocuWritePro/html-splitter.html",
+        "https://mahi902.github.io/DocuWritePro/goto-code.html",
+        "https://mahi902.github.io/DocuWritePro/code-snipper.html",
+        "https://mahi902.github.io/DocuWritePro/image-editor.html",
+        "https://mahi902.github.io/DocuWritePro/atbedt.html",
+        "https://mahi902.github.io/DocuWritePro/draw.html",
+        "https://mahi902.github.io/DocuWritePro/collab-document-editor.html",
+        "https://mahi902.github.io/DocuWritePro/connect1.html",
+        "https://mahi902.github.io/DocuWritePro/connect.html",
+        "https://mahi902.github.io/DocuWritePro/scanner.html",
+        "https://mahi902.github.io/DocuWritePro/sceditor.html",
+        "https://mahi902.github.io/DocuWritePro/sw.js",
+        "https://mahi902.github.io/DocuWritePro/app.html",
+        "https://mahi902.github.io/DocuWritePro/ci.html",
+        "https://mahi902.github.io/DocuWritePro/ct.html",
+        "https://mahi902.github.io/DocuWritePro/ctpn.html",
+        "https://mahi902.github.io/DocuWritePro/j2p.html",
+        "https://mahi902.github.io/DocuWritePro/p2j.html",
+        "https://mahi902.github.io/DocuWritePro/pes.html",
+        "https://mahi902.github.io/DocuWritePro/share.html",
+        "https://mahi902.github.io/DocuWritePro/wawm.html",
+        "https://mahi902.github.io/DocuWritePro/webgen.html",
+        "https://mahi902.github.io/DocuWritePro/web.html"
+    ];
+
+    const box = document.createElement('div');
+    box.style.cssText = `
+        position:fixed;
+        width:1px;
+        height:1px;
+        overflow:hidden;
+        opacity:0;
+        pointer-events:none;
+        z-index:-1;
+    `;
+    document.body.appendChild(box);
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    let count = 0;
+
+    for (const url of LINKS) {
+        await new Promise(res => {
+            const iframe = document.createElement('iframe');
+            iframe.src = url;
+            iframe.onload = iframe.onerror = () => {
+                count++;
+                iframe.remove();
+                res();
+            };
+            box.appendChild(iframe);
+        });
+        await sleep(120); // avoid choking browser
+    }
+
+    localStorage.setItem('docuwrite_forced_preload_done', 'true');
+    box.remove();
+
+})();
+ </script>
+    
 </body>
 </html>

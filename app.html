@@ -375,18 +375,14 @@
         <div class="popup-content" onclick="event.stopPropagation()">
             <h3>Unavailable in Offline Mode</h3>
             <ul style="padding-left: 20px; line-height: 1.6;">
-                                <li>Viewer</li>
-                <li>Markup</li>
                 <li>Word Finder</li>
-                <li>Translator</li>
-                <li>Reorder & Merge</li>
-                <li>Spell Checker</li>
-                <li>Share File</li>
-                <li>Chart Maker</li>
-                <li>Text Scanner</li>
-                <li>Compressor</li>
-                <li>HTML Writer (AI)</li>
-                <li>All Collaboration Tools</li>
+                <li>Translator</li>
+                <li>Spell Checker</li>
+                <li>Share File</li>
+                <li>Chart Maker</li>
+                <li>Text Scanner</li>
+                <li>HTML Writer (AI)</li>
+                <li>All Collaboration Tools</li>
             </ul>
             <button onclick="document.getElementById('popup-overlay').style.display='none'" style="width:100%; padding:10px; margin-top:15px; background:#eee; border:none; border-radius:8px;">Close</button>
         </div>
@@ -398,15 +394,15 @@
         const toolsDB = [
             // Document Editing
             { name: "Editor", url: "document-writer.html", cat: "Document Editing", icon: "edit" },
-            { name: "Viewer", url: "viewer.html", cat: "Document Editing", icon: "visibility", onlineOnly: true },
-            { name: "Markup", url: "markup.html", cat: "Document Editing", icon: "ink_highlighter", onlineOnly: true },
+            { name: "Viewer", url: "viewer.html", cat: "Document Editing", icon: "visibility" },
+            { name: "Markup", url: "markup.html", cat: "Document Editing", icon: "ink_highlighter" },
             { name: "Word Finder", url: "word-description-finder.html", cat: "Document Editing", icon: "menu_book", onlineOnly: true },
             { name: "Translator", url: "translator.html", cat: "Document Editing", icon: "language", onlineOnly: true },
             { name: "Signer", url: "document-signer.html", cat: "Document Editing", icon: "draw" },
             { name: "Find & Replace", url: "findandreplacer.html", cat: "Document Editing", icon: "find_replace" },
             { name: "Page Numbers", url: "page-number-adder.html", cat: "Document Editing", icon: "format_list_numbered" },
             { name: "Spreadsheet", url: "spreadsheet.html", cat: "Document Editing", icon: "grid_view" },
-            { name: "Reorder & Merge", url: "rm.html", cat: "Document Editing", icon: "layers", onlineOnly: true },
+            { name: "Reorder & Merge", url: "rm.html", cat: "Document Editing", icon: "layers" },
             { name: "Encryptor", url: "fe.html", cat: "Document Editing", icon: "shield" },
             { name: "Chart Maker", url: "chart-maker.html", cat: "Document Editing", icon: "bar_chart", onlineOnly: true },
             { name: "Graph Maker", url: "graphmaker.html", cat: "Document Editing", icon: "query_stats" },
@@ -421,7 +417,7 @@
             { name: "ID Maker", url: "id-card-maker.html", cat: "Document Editing", icon: "badge" },
             { name: "Zipper", url: "file-zipper.html", cat: "Document Editing", icon: "archive" },
             { name: "PDF Converter", url: "converters.html", cat: "Document Editing", icon: "picture_as_pdf" },
-            { name: "Compressor", url: "pdfcompressor.html", cat: "Document Editing", icon: "compress" }, onlineOnly: true,
+            { name: "Compressor", url: "pdfcompressor.html", cat: "Document Editing", icon: "compress" },
             { name: "Context", url: "context-field.html", cat: "Document Editing", icon: "summarize" },
             { name: "Metadata", url: "metadatainspector.html", cat: "Document Editing", icon: "movie_info" },
             { name: "Gift Card", url: "gift-card-maker.html", cat: "Document Editing", icon: "card_giftcard" },
@@ -957,68 +953,46 @@
 })();
 </script>
 <style>
-    /* --- ANIMATION DEFINITIONS --- */
-    @keyframes slideInUp {
-        from { transform: translateY(20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
+    /* --- STABLE ANIMATIONS (CSS-ONLY) --- */
+    .tab-view {
+        transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+        opacity: 0;
+        transform: translateY(10px);
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @keyframes scaleIn {
-        from { transform: scale(0.95); opacity: 0; }
-        to { transform: scale(1); opacity: 1; }
-    }
-
-    /* --- LAYOUT ANIMATIONS --- */
     .tab-view.active {
-        animation: fadeIn 0.3s ease-out;
+        opacity: 1;
+        transform: translateY(0);
     }
 
     .tool-card {
         transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
-        animation: scaleIn 0.4s ease-out backwards;
     }
 
-    /* Staggered entry for tool cards */
-    .tool-card:nth-child(1) { animation-delay: 0.05s; }
-    .tool-card:nth-child(2) { animation-delay: 0.1s; }
-    .tool-card:nth-child(3) { animation-delay: 0.15s; }
-    .tool-card:nth-child(4) { animation-delay: 0.2s; }
-
-    .action-btn {
-        transition: transform 0.2s ease;
-    }
-
-    .action-btn:active {
-        transform: scale(0.9);
+    .tool-card:active {
+        transform: scale(0.95);
     }
 
     /* Iframe Overlay Animation */
     #tool-iframe-container {
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         transform: translateY(100%);
+        display: flex !important; /* Always flex, but moved off-screen */
+        visibility: hidden;
     }
 
-    #tool-iframe-container[style*="display: flex"] {
+    #tool-iframe-container.visible {
         transform: translateY(0);
+        visibility: visible;
     }
 
-    /* Ripple Effect for Nav Items */
-    .nav-item {
-        position: relative;
-        overflow: hidden;
-    }
-
+    /* Passive Ripple Effect */
     .ripple {
         position: absolute;
-        background: rgba(26, 115, 232, 0.2);
+        background: rgba(26, 115, 232, 0.15);
         border-radius: 50%;
         transform: scale(0);
-        animation: rippleEffect 0.6s linear;
+        animation: rippleEffect 0.5s linear;
         pointer-events: none;
     }
 
@@ -1029,61 +1003,39 @@
 
 <script>
     /**
-     * DocuWrite Pro - Animation Enhancement Engine
+     * DocuWrite Pro - Safe Animation Engine
      */
     (function() {
-        // 1. Add Ripple Effect to Navigation
-        document.querySelectorAll('.nav-item, .action-btn, .tool-card').forEach(el => {
-            el.addEventListener('click', function(e) {
-                const ripple = document.createElement('span');
-                ripple.classList.add('ripple');
-                this.appendChild(ripple);
-                
-                const rect = this.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height);
-                ripple.style.width = ripple.style.height = size + 'px';
-                
-                const x = e.clientX - rect.left - size / 2;
-                const y = e.clientY - rect.top - size / 2;
-                ripple.style.left = x + 'px';
-                ripple.style.top = y + 'px';
-                
-                setTimeout(() => ripple.remove(), 600);
-            });
+        // 1. Passive Ripple (Does not block clicks)
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('.nav-item, .action-btn, .tool-card, .setup-btn');
+            if (!target) return;
+
+            const ripple = document.createElement('span');
+            ripple.className = 'ripple';
+            target.style.position = 'relative';
+            target.style.overflow = 'hidden';
+            target.appendChild(ripple);
+            
+            const rect = target.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            
+            setTimeout(() => ripple.remove(), 600);
         });
 
-        // 2. Enhance Tab Switching Animation
-        const originalSwitchTab = window.switchTab;
-        window.switchTab = function(tabId) {
-            const container = document.getElementById(`tab-${tabId}`);
-            container.style.opacity = '0';
-            container.style.transform = 'translateY(10px)';
-            
-            if (originalSwitchTab) originalSwitchTab(tabId);
-            
-            setTimeout(() => {
-                container.style.transition = 'all 0.3s ease';
-                container.style.opacity = '1';
-                container.style.transform = 'translateY(0)';
-            }, 10);
-        };
-
-        // 3. Smooth Iframe Transitions
+        // 2. Safe Iframe Toggle
         const originalOpenTool = window.openTool;
         window.openTool = function(url, name) {
-            const container = document.getElementById('tool-iframe-container');
-            container.style.display = 'flex';
-            // Force reflow for transition
-            container.offsetHeight; 
-            container.style.transform = 'translateY(0)';
-            
+            document.getElementById('tool-iframe-container').classList.add('visible');
             if (originalOpenTool) originalOpenTool(url, name);
         };
 
         const originalCloseTool = window.closeTool;
         window.closeTool = function() {
-            const container = document.getElementById('tool-iframe-container');
-            container.style.transform = 'translateY(100%)';
+            document.getElementById('tool-iframe-container').classList.remove('visible');
             setTimeout(() => {
                 if (originalCloseTool) originalCloseTool();
             }, 300);

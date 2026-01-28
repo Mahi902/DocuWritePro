@@ -952,5 +952,139 @@
     });
 })();
 </script>
+<style>
+    /* --- ANIMATION DEFINITIONS --- */
+    @keyframes slideInUp {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    /* --- LAYOUT ANIMATIONS --- */
+    .tab-view.active {
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .tool-card {
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+        animation: scaleIn 0.4s ease-out backwards;
+    }
+
+    /* Staggered entry for tool cards */
+    .tool-card:nth-child(1) { animation-delay: 0.05s; }
+    .tool-card:nth-child(2) { animation-delay: 0.1s; }
+    .tool-card:nth-child(3) { animation-delay: 0.15s; }
+    .tool-card:nth-child(4) { animation-delay: 0.2s; }
+
+    .action-btn {
+        transition: transform 0.2s ease;
+    }
+
+    .action-btn:active {
+        transform: scale(0.9);
+    }
+
+    /* Iframe Overlay Animation */
+    #tool-iframe-container {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(100%);
+    }
+
+    #tool-iframe-container[style*="display: flex"] {
+        transform: translateY(0);
+    }
+
+    /* Ripple Effect for Nav Items */
+    .nav-item {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ripple {
+        position: absolute;
+        background: rgba(26, 115, 232, 0.2);
+        border-radius: 50%;
+        transform: scale(0);
+        animation: rippleEffect 0.6s linear;
+        pointer-events: none;
+    }
+
+    @keyframes rippleEffect {
+        to { transform: scale(4); opacity: 0; }
+    }
+</style>
+
+<script>
+    /**
+     * DocuWrite Pro - Animation Enhancement Engine
+     */
+    (function() {
+        // 1. Add Ripple Effect to Navigation
+        document.querySelectorAll('.nav-item, .action-btn, .tool-card').forEach(el => {
+            el.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                ripple.classList.add('ripple');
+                this.appendChild(ripple);
+                
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                ripple.style.width = ripple.style.height = size + 'px';
+                
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                ripple.style.left = x + 'px';
+                ripple.style.top = y + 'px';
+                
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        // 2. Enhance Tab Switching Animation
+        const originalSwitchTab = window.switchTab;
+        window.switchTab = function(tabId) {
+            const container = document.getElementById(`tab-${tabId}`);
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(10px)';
+            
+            if (originalSwitchTab) originalSwitchTab(tabId);
+            
+            setTimeout(() => {
+                container.style.transition = 'all 0.3s ease';
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 10);
+        };
+
+        // 3. Smooth Iframe Transitions
+        const originalOpenTool = window.openTool;
+        window.openTool = function(url, name) {
+            const container = document.getElementById('tool-iframe-container');
+            container.style.display = 'flex';
+            // Force reflow for transition
+            container.offsetHeight; 
+            container.style.transform = 'translateY(0)';
+            
+            if (originalOpenTool) originalOpenTool(url, name);
+        };
+
+        const originalCloseTool = window.closeTool;
+        window.closeTool = function() {
+            const container = document.getElementById('tool-iframe-container');
+            container.style.transform = 'translateY(100%)';
+            setTimeout(() => {
+                if (originalCloseTool) originalCloseTool();
+            }, 300);
+        };
+    })();
+</script>
 </body>
 </html>

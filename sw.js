@@ -1,147 +1,72 @@
-const CACHE_NAME = "docuwrite-pro-cache-v2";
+const CACHE_NAME = 'docuwrite-pro-v5';
 
-const PAGES_TO_CACHE = [
-  "/",
-  "/app.html",
-  "/manifest.json",
+// Install Event: Activate immediately
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
 
-  // Main Tools (same-origin only)
-  "/document-writer.html",
-  "/spreadsheet.html"
-  "/collab-document-editor.html",
-  "/viewer.html",
-  "/word-description-finder.html",
-  "/translator.html",
-  "/document-signer.html",
-  "/findandreplacer.html",
-  "/page-number-adder.html",
-  "/rm.html",
-  "/fe.html",
-  "/chart-maker.html",
-  "/graphmaker.html",
-  "/whiteboard.html",
-  "/mmm.html",
-  "/table-maker.html",
-  "/watermarker.html",
-  "/email-writer.html",
-  "/spell-checker.html",
-  "/file-extractor.html",
-  "/qr-code-maker.html",
-  "/id-card-maker.html",
-  "/file-zipper.html",
-  "/converters.html",
-  "/pdfcompressor.html",
-  "/context-field.html",
-  "/gift-card-maker.html",
-  "/docudrop.html",
-  "/text-extractor.html",
-  "/keyboard-click-test.html",
-  "/frontend-ide.html",
-  "/code-playground.html",
-  "/html.html",
-  "/wawm.html",
-  "/mdeditor.html",
-  "/button-designer.html",
-  "/html-splitter.html",
-  "/goto-code.html",
-  "/code-snipper.html",
-  "/image-editor.html",
-  "/atbedt.html",
-  "/image-generator.html",
-  "/draw.html",
-  "/connect1.html",
-  "/connect.html"
-];
-
-// -------------------------
-// INSTALL
-// -------------------------
-self.addEventListener("install", event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return Promise.all(
-        PAGES_TO_CACHE.map(url => {
-          return fetch(url)
-            .then(res => {
-              if (!res.ok) throw new Error("Failed: " + url);
-              return cache.put(url, res);
+// Activate Event: Claim clients immediately so we can control app.html right away
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        Promise.all([
+            self.clients.claim(),
+            // Clean up old caches if any
+            caches.keys().then((cacheNames) => {
+                return Promise.all(
+                    cacheNames.map((cache) => {
+                        if (cache !== CACHE_NAME) {
+                            return caches.delete(cache);
+                        }
+                    })
+                );
             })
-            .catch(() => {
-              console.warn("Not cached (likely 404 or CORS):", url);
+        ])
+    );
+});
+
+// Fetch Event: Cache First, Fallback to Network
+// This ensures offline functionality for everything we've cached.
+self.addEventListener('fetch', (event) => {
+    event.respondWith(
+        caches.match(event.request).then((response) => {
+            // Return cache if found
+            if (response) {
+                return response;
+            }
+            // Otherwise fetch from network
+            return fetch(event.request).catch(() => {
+                // Optional: Return a specific offline page if network fails and not in cache
+                // For now, we rely on the caching logic in message listener
+                return new Response("You are offline and this tool wasn't cached yet.");
             });
         })
-      );
-    })
-  );
-
-  self.skipWaiting();
-});
-
-// -------------------------
-// ACTIVATE
-// -------------------------
-self.addEventListener("activate", event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys.map(key => {
-          if (key !== CACHE_NAME) {
-            return caches.delete(key);
-          }
-        })
-      )
-    )
-  );
-
-  self.clients.claim();
-});
-
-// -------------------------
-// FETCH STRATEGY
-// -------------------------
-self.addEventListener("fetch", event => {
-  const req = event.request;
-
-  // -------------------------
-  // 1. HTML → NETWORK FIRST
-  // -------------------------
-  if (req.mode === "navigate") {
-    event.respondWith(
-      fetch(req)
-        .then(res => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
-          return res;
-        })
-        .catch(() => {
-          return caches.match(req).then(cached => {
-            return (
-              cached ||
-              new Response("Offline and page not cached yet.", {
-                headers: { "Content-Type": "text/plain" }
-              })
-            );
-          });
-        })
     );
-    return;
-  }
+});
 
-  // -------------------------
-  // 2. STATIC FILES → CACHE FIRST
-  // -------------------------
-  event.respondWith(
-    caches.match(req).then(cached => {
-      return (
-        cached ||
-        fetch(req)
-          .then(res => {
-            const copy = res.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
-            return res;
-          })
-          .catch(() => cached)
-      );
-    })
-  );
+// Message Event: Handle Manual Caching Trigger
+self.addEventListener('message', (event) => {
+    if (event.data.action === 'CACHE_URLS') {
+        const urls = event.data.urls;
+        
+        // Open cache and add all files
+        caches.open(CACHE_NAME).then((cache) => {
+            // We use map to handle them individually to prevent one 404 from stopping the whole batch
+            // effectively "Best Effort" caching
+            const promises = urls.map(url => {
+                return fetch(url).then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return cache.put(url, response);
+                }).catch(err => {
+                    console.warn(`Failed to cache ${url}:`, err);
+                });
+            });
+
+            return Promise.all(promises);
+        }).then(() => {
+            // Notify the client that we are done
+            event.source.postMessage({
+                type: 'CACHE_COMPLETE'
+            });
+        });
+    }
 });

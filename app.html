@@ -836,6 +836,121 @@
 
 })();
  </script>
-    
+
+<script>
+/**
+ * DocuWrite Pro - Resource Warm-up Script
+ * Forces the browser to load sub-pages in a hidden iframe to prime caches.
+ */
+(function() {
+    const ASSET_LINKS = [
+        "https://mahi902.github.io/DocuWritePro/manifest.json",
+        "https://mahi902.github.io/DocuWritePro/document-writer.html",
+        "https://mahi902.github.io/DocuWritePro/viewer.html",
+        "https://mahi902.github.io/DocuWritePro/markup.html",
+        "https://mahi902.github.io/DocuWritePro/word-description-finder.html",
+        "https://mahi902.github.io/DocuWritePro/translator.html",
+        "https://mahi902.github.io/DocuWritePro/document-signer.html",
+        "https://mahi902.github.io/DocuWritePro/findandreplacer.html",
+        "https://mahi902.github.io/DocuWritePro/page-number-adder.html",
+        "https://mahi902.github.io/DocuWritePro/spreadsheet.html",
+        "https://mahi902.github.io/DocuWritePro/rm.html",
+        "https://mahi902.github.io/DocuWritePro/fe.html",
+        "https://mahi902.github.io/DocuWritePro/chart-maker.html",
+        "https://mahi902.github.io/DocuWritePro/graphmaker.html",
+        "https://mahi902.github.io/DocuWritePro/whiteboard.html",
+        "https://mahi902.github.io/DocuWritePro/mmm.html",
+        "https://mahi902.github.io/DocuWritePro/table-maker.html",
+        "https://mahi902.github.io/DocuWritePro/watermarker.html",
+        "https://mahi902.github.io/DocuWritePro/email-writer.html",
+        "https://mahi902.github.io/DocuWritePro/spell-checker.html",
+        "https://mahi902.github.io/DocuWritePro/file-extractor.html",
+        "https://mahi902.github.io/DocuWritePro/qr-code-maker.html",
+        "https://mahi902.github.io/DocuWritePro/id-card-maker.html",
+        "https://mahi902.github.io/DocuWritePro/file-zipper.html",
+        "https://mahi902.github.io/DocuWritePro/converters.html",
+        "https://mahi902.github.io/DocuWritePro/pdfcompressor.html",
+        "https://mahi902.github.io/DocuWritePro/context-field.html",
+        "https://mahi902.github.io/DocuWritePro/metadatainspector.html",
+        "https://mahi902.github.io/DocuWritePro/gift-card-maker.html",
+        "https://mahi902.github.io/DocuWritePro/docudrop.html",
+        "https://mahi902.github.io/DocuWritePro/text-extractor.html",
+        "https://mahi902.github.io/DocuWritePro/keyboard-click-test.html",
+        "https://mahi902.github.io/DocuWritePro/frontend-ide.html",
+        "https://mahi902.github.io/DocuWritePro/code-playground.html",
+        "https://mahi902.github.io/DocuWritePro/html.html",
+        "https://mahi902.github.io/DocuWritePro/mdeditor.html",
+        "https://mahi902.github.io/DocuWritePro/button-designer.html",
+        "https://mahi902.github.io/DocuWritePro/html-splitter.html",
+        "https://mahi902.github.io/DocuWritePro/goto-code.html",
+        "https://mahi902.github.io/DocuWritePro/code-snipper.html",
+        "https://mahi902.github.io/DocuWritePro/image-editor.html",
+        "https://mahi902.github.io/DocuWritePro/atbedt.html",
+        "https://mahi902.github.io/DocuWritePro/draw.html",
+        "https://mahi902.github.io/DocuWritePro/collab-document-editor.html",
+        "https://mahi902.github.io/DocuWritePro/connect1.html",
+        "https://mahi902.github.io/DocuWritePro/connect.html",
+        "https://mahi902.github.io/DocuWritePro/scanner.html",
+        "https://mahi902.github.io/DocuWritePro/sceditor.html",
+        "https://mahi902.github.io/DocuWritePro/sw.js",
+        "https://mahi902.github.io/DocuWritePro/app.html",
+        "https://mahi902.github.io/DocuWritePro/ci.html",
+        "https://mahi902.github.io/DocuWritePro/ct.html",
+        "https://mahi902.github.io/DocuWritePro/ctpn.html",
+        "https://mahi902.github.io/DocuWritePro/j2p.html",
+        "https://mahi902.github.io/DocuWritePro/p2j.html",
+        "https://mahi902.github.io/DocuWritePro/pes.html",
+        "https://mahi902.github.io/DocuWritePro/share.html",
+        "https://mahi902.github.io/DocuWritePro/wawm.html",
+        "https://mahi902.github.io/DocuWritePro/webgen.html",
+        "https://mahi902.github.io/DocuWritePro/web.html"
+    ];
+
+    async function warmUpResources() {
+        const statusEl = document.getElementById('setup-status');
+        const container = document.createElement('div');
+        
+        // Hidden container for the iframe
+        container.style.cssText = "position:fixed;width:1px;height:1px;top:-10px;left:-10px;overflow:hidden;opacity:0;pointer-events:none;";
+        document.body.appendChild(container);
+
+        const iframe = document.createElement('iframe');
+        container.appendChild(iframe);
+
+        for (let i = 0; i < ASSET_LINKS.length; i++) {
+            const url = ASSET_LINKS[i];
+            const progress = Math.round(((i + 1) / ASSET_LINKS.length) * 100);
+            
+            if (statusEl) statusEl.textContent = `Warming up tools: ${progress}%`;
+
+            await new Promise((resolve) => {
+                iframe.onload = iframe.onerror = () => resolve();
+                iframe.src = url;
+            });
+            
+            // Short delay to prevent browser thread locking
+            await new Promise(r => setTimeout(r, 50));
+        }
+
+        container.remove();
+        if (statusEl) statusEl.textContent = "All systems ready!";
+        
+        // Set completion flag and hide overlay
+        localStorage.setItem('app_setup_done', 'true');
+        setTimeout(() => {
+            document.getElementById('setup-overlay').classList.add('hidden');
+            if(typeof switchTab === 'function') switchTab('home');
+        }, 1000);
+    }
+
+    // Intercept the existing Service Worker message listener
+    navigator.serviceWorker.addEventListener('message', event => {
+        if (event.data.type === 'CACHE_COMPLETE') {
+            // Instead of finishing immediately, start the "Warm-up" phase
+            warmUpResources();
+        }
+    });
+})();
+</script>
 </body>
 </html>

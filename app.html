@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>DocuWrite Pro App</title>
-    <meta name="description" content="DocuWrite Pro Offline App">
+    <meta name="description" content="DocuWrite Pro Mobile App">
     <link rel="manifest" href="manifest.json">
     
     <!-- Mobile Web App Capable -->
@@ -14,7 +14,7 @@
 
     <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 
     <style>
         /* --- CORE APP STYLES --- */
@@ -23,377 +23,711 @@
             --bg-color: #f8f9fa;
             --surface-color: #ffffff;
             --text-color: #202124;
+            --text-secondary: #5f6368;
+            --border-color: #dadce0;
+            --nav-height: 60px;
+            --header-height: 60px;
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
+            margin: 0; padding: 0; height: 100%; width: 100%;
             font-family: 'Roboto', sans-serif;
             background-color: var(--bg-color);
-            overflow: hidden; /* Prevent body scroll, handle inside views */
-        }
-
-        /* --- VIEWS --- */
-        #dashboard-view {
-            height: 100%;
-            width: 100%;
-            overflow-y: auto;
-            display: block;
-            padding-bottom: 80px; /* Space for bottom content */
-        }
-
-        #tool-view {
-            height: 100%;
-            width: 100%;
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            background: #fff;
-            z-index: 1000;
-        }
-
-        /* --- IFRAME FOR TOOLS --- */
-        #app-frame {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-        }
-
-        /* --- APP HEADER (Mobile Friendly) --- */
-        .app-header {
-            position: sticky;
-            top: 0;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid #dadce0;
-            z-index: 100;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-
-        .app-title {
-            font-size: 20px;
-            font-weight: 500;
+            overflow: hidden; /* App-like feel */
             color: var(--text-color);
         }
 
-        /* --- FLOATING HOME BUTTON (Visible in Tool View) --- */
-        #home-fab {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            width: 56px;
-            height: 56px;
-            background-color: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            display: none; /* Hidden by default */
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            cursor: pointer;
-            z-index: 1001;
-            transition: transform 0.2s;
-        }
-        #home-fab:active {
-            transform: scale(0.95);
-        }
-
-        /* --- SETUP OVERLAY --- */
-        #setup-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+        /* --- LAYOUT CONTAINERS --- */
+        #app-container {
             height: 100%;
-            background: rgba(255, 255, 255, 0.98);
-            z-index: 2000;
+            width: 100%;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            text-align: center;
+            padding-bottom: var(--nav-height); /* Space for bottom nav */
+            overflow: hidden;
+        }
+
+        .tab-view {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            display: none; /* Hidden by default */
+            padding: 15px;
+        }
+
+        .tab-view.active { display: block; }
+
+        /* --- BOTTOM NAVIGATION --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            height: var(--nav-height);
+            background: var(--surface-color);
+            border-top: 1px solid var(--border-color);
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-secondary);
+            font-size: 10px;
+            padding: 5px;
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item .material-symbols-outlined { font-size: 24px; margin-bottom: 2px; }
+        
+        /* Scan Button (Online Only) */
+        #nav-scan { display: none; } 
+        body.online #nav-scan { display: flex; color: var(--primary-color); }
+
+        /* --- HOME TAB STYLES --- */
+        .home-header h2 { margin: 10px 0 15px 0; font-size: 22px; }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 25px;
         }
         
-        #setup-overlay.hidden {
-            display: none;
+        .action-btn {
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; cursor: pointer;
         }
-
-        .setup-icon {
-            font-size: 64px;
+        
+        .action-icon-circle {
+            width: 50px; height: 50px;
+            background: #e8f0fe;
             color: var(--primary-color);
-            margin-bottom: 20px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 5px;
         }
+        
+        .action-label { font-size: 12px; font-weight: 500; }
 
-        .setup-btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            font-size: 16px;
-            border-radius: 24px;
-            margin-top: 20px;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px;
         }
+        .section-title { font-size: 18px; font-weight: 500; }
+        .clear-btn { color: var(--primary-color); font-size: 13px; font-weight: 500; cursor: pointer; }
 
-        .setup-progress {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #555;
-            min-height: 20px;
-        }
-
-        /* --- DASHBOARD GRIDS (Ported Styles) --- */
-        .grid-container {
+        .recent-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 15px;
-            padding: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+        }
+        .recent-placeholder {
+            grid-column: 1 / -1;
+            text-align: center; padding: 20px; color: var(--text-secondary); font-style: italic; font-size: 14px;
+        }
+
+        /* --- TOOLS TAB STYLES --- */
+        .tools-top-bar {
+            display: flex; gap: 10px; margin-bottom: 15px; align-items: center;
+        }
+        
+        .search-box {
+            flex: 1;
+            background: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            display: flex; align-items: center;
+        }
+        .search-box input { border: none; background: transparent; width: 100%; outline: none; margin-left: 8px; }
+        
+        .sort-btn { padding: 8px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; }
+
+        .tool-category { margin-bottom: 20px; }
+        .tool-category h3 { font-size: 16px; color: var(--text-secondary); margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        
+        /* Grid for tools */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
         }
 
         .tool-card {
             background: var(--surface-color);
-            border: 1px solid #dadce0;
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 15px 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            transition: transform 0.1s;
         }
+        .tool-card:active { transform: scale(0.97); }
+        .tool-card span { font-size: 32px; color: var(--primary-color); margin-bottom: 8px; }
+        .tool-name { font-size: 12px; line-height: 1.3; font-weight: 500; }
+
+        /* Offline Styles */
+        body.offline .online-only { display: none !important; }
+        .offline-banner {
+            background-color: #333; color: white;
+            padding: 10px 15px; font-size: 13px;
+            display: none; /* Controlled by JS */
+            justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 900;
+        }
+        body.offline .offline-banner { display: flex; }
+        body.offline.banner-dismissed .offline-banner { display: none; }
+        .banner-actions button { background: none; border: none; color: #8ab4f8; margin-left: 10px; font-weight: bold; cursor: pointer; }
+
+        /* --- SETTINGS TAB STYLES --- */
+        .settings-item {
+            background: var(--surface-color);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-color);
+        }
+        .settings-item label { display: block; font-weight: 500; margin-bottom: 8px; }
+        .settings-item select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); }
+
+        /* --- IFRAME OVERLAY (For Tools) --- */
+        #tool-iframe-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 2000;
+            display: none; flex-direction: column;
+        }
+        #app-frame { flex: 1; border: none; width: 100%; height: 100%; }
         
-        .tool-card:active {
-            transform: scale(0.96);
+        .iframe-header {
+            height: 50px; background: #fff; border-bottom: 1px solid #eee;
+            display: flex; align-items: center; padding: 0 15px;
+        }
+        .close-tool-btn { font-size: 24px; margin-right: 15px; color: var(--text-color); cursor: pointer; }
+        .iframe-title { font-weight: 500; }
+
+        /* --- SETUP SCREEN --- */
+        #setup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 3000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px; text-align: center;
+        }
+        #setup-overlay.hidden { display: none; }
+        .setup-btn {
+            background: var(--primary-color); color: white; border: none;
+            padding: 12px 30px; border-radius: 25px; font-size: 16px; margin-top: 20px;
         }
 
-        .tool-card span.material-symbols-outlined {
-            font-size: 40px;
-            color: var(--primary-color);
-            margin-bottom: 10px;
+        /* --- POPUP (Offline List) --- */
+        #popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2500; display: none;
+            align-items: flex-end;
         }
-
-        .tool-name {
-            font-size: 13px;
-            color: var(--text-color);
-            font-weight: 500;
-            line-height: 1.2;
+        .popup-content {
+            background: white; width: 100%; max-height: 70%; overflow-y: auto;
+            border-radius: 20px 20px 0 0; padding: 20px;
+            animation: slideUp 0.3s ease;
         }
-
-        .section-title {
-            padding: 20px 20px 0 20px;
-            font-size: 18px;
-            font-weight: 500;
-            color: #5f6368;
-        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
     </style>
 </head>
-<body>
+<body class="online"> <!-- Default to online -->
 
-    <!-- --- SETUP SCREEN --- -->
+    <!-- --- SETUP OVERLAY --- -->
     <div id="setup-overlay">
-        <span class="material-symbols-outlined setup-icon">cloud_download</span>
-        <h2>App Setup</h2>
-        <p>DocuWrite Pro needs to download tools for offline access.</p>
-        <button id="start-setup-btn" class="setup-btn">Download & Install Tools</button>
-        <div class="setup-progress" id="setup-progress"></div>
+        <span class="material-symbols-outlined" style="font-size: 64px; color: var(--primary-color); margin-bottom: 20px;">cloud_sync</span>
+        <h2>Welcome to DocuWrite Pro</h2>
+        <p>To use this app offline, we need to download the necessary tools. This happens once.</p>
+        <button id="start-setup-btn" class="setup-btn">Start Setup</button>
+        <p id="setup-status" style="margin-top: 15px; font-size: 14px; color: #666;"></p>
     </div>
 
-    <!-- --- HOME FAB --- -->
-    <div id="home-fab">
-        <span class="material-symbols-outlined">home</span>
-    </div>
-
-    <!-- --- DASHBOARD VIEW --- -->
-    <div id="dashboard-view">
-        <div class="app-header">
-            <span class="app-title">DocuWrite Pro</span>
-            <span class="material-symbols-outlined" onclick="location.reload()">refresh</span>
-        </div>
-
-        <div class="section-title">Common Tools</div>
-        <div class="grid-container" id="common-tools">
-            <!-- Blank Document -->
-            <div class="tool-card" data-url="document-writer.html">
-                <span class="material-symbols-outlined">add</span>
-                <div class="tool-name">New Document</div>
-            </div>
-            <!-- Collab -->
-            <div class="tool-card" data-url="collab-document-editor.html">
-                <span class="material-symbols-outlined">group</span>
-                <div class="tool-name">Collab</div>
-            </div>
-             <!-- Code -->
-             <div class="tool-card" data-url="code-playground.html">
-                <span class="material-symbols-outlined">code</span>
-                <div class="tool-name">Code Editor</div>
+    <!-- --- APP CONTAINER --- -->
+    <div id="app-container">
+        
+        <!-- Offline Banner -->
+        <div class="offline-banner" id="offline-banner">
+            <span>Some tools are not available in offline mode.</span>
+            <div class="banner-actions">
+                <button onclick="showOfflinePopup()">Show</button>
+                <button onclick="dismissBanner()">Got It</button>
             </div>
         </div>
 
-        <div class="section-title">All Tools</div>
-        <!-- This container is scanned by JS to generate the cache list -->
-        <div class="grid-container" id="tools-grid">
+        <!-- === HOME TAB === -->
+        <div id="tab-home" class="tab-view active">
+            <div class="home-header">
+                <h2>New</h2>
+                <div class="quick-actions">
+                    <div class="action-btn" id="btn-new-doc">
+                        <div class="action-icon-circle"><span class="material-symbols-outlined">add</span></div>
+                        <span class="action-label">Document</span>
+                    </div>
+                    <div class="action-btn" id="btn-new-img">
+                        <div class="action-icon-circle"><span class="material-symbols-outlined">image</span></div>
+                        <span class="action-label">Image</span>
+                    </div>
+                    <div class="action-btn" id="btn-new-code">
+                        <div class="action-icon-circle"><span class="material-symbols-outlined">code</span></div>
+                        <span class="action-label">Code</span>
+                    </div>
+                    <div class="action-btn" onclick="switchTab('tools')">
+                        <div class="action-icon-circle"><span class="material-symbols-outlined">grid_view</span></div>
+                        <span class="action-label">All</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <span class="section-title">Recent Tools</span>
+                <span class="clear-btn" onclick="clearRecents()">Clear</span>
+            </div>
+            <div class="recent-grid" id="recent-grid">
+                <!-- Populated by JS -->
+                <div class="recent-placeholder">No recent tools used</div>
+            </div>
+        </div>
+
+        <!-- === TOOLS TAB === -->
+        <div id="tab-tools" class="tab-view">
+            <div class="tools-top-bar">
+                <div class="search-box">
+                    <span class="material-symbols-outlined">search</span>
+                    <input type="text" id="tool-search" placeholder="Search tools...">
+                </div>
+                <button class="sort-btn" id="sort-trigger"><span class="material-symbols-outlined">sort</span></button>
+            </div>
+
+            <!-- Categories -->
+            <div id="tools-list-container">
+                <!-- Categories injected here -->
+            </div>
+        </div>
+
+        <!-- === SETTINGS TAB === -->
+        <div id="tab-settings" class="tab-view">
+            <h2 style="margin-top: 10px;">Settings</h2>
             
-            <!-- Ported tools from dashboard -->
-            <div class="tool-card" data-url="viewer.html"><span class="material-symbols-outlined">visibility</span><div class="tool-name">Viewer</div></div>
-            <div class="tool-card" data-url="markup.html"><span class="material-symbols-outlined">ink_highlighter</span><div class="tool-name">Markup</div></div>
-            <div class="tool-card" data-url="word-description-finder.html"><span class="material-symbols-outlined">menu_book</span><div class="tool-name">Word Finder</div></div>
-            <div class="tool-card" data-url="translator.html"><span class="material-symbols-outlined">language</span><div class="tool-name">Translator</div></div>
-            <div class="tool-card" data-url="document-signer.html"><span class="material-symbols-outlined">draw</span><div class="tool-name">Signer</div></div>
-            <div class="tool-card" data-url="findandreplacer.html"><span class="material-symbols-outlined">find_replace</span><div class="tool-name">Find/Replace</div></div>
-            <div class="tool-card" data-url="page-number-adder.html"><span class="material-symbols-outlined">format_list_numbered</span><div class="tool-name">Page Numbers</div></div>
-            <div class="tool-card" data-url="spreadsheet.html"><span class="material-symbols-outlined">grid_view</span><div class="tool-name">Spreadsheet</div></div>
-            <div class="tool-card" data-url="rm.html"><span class="material-symbols-outlined">layers</span><div class="tool-name">Reorder/Merge</div></div>
-            <div class="tool-card" data-url="fe.html"><span class="material-symbols-outlined">shield</span><div class="tool-name">Encryptor</div></div>
-            <div class="tool-card" data-url="chart-maker.html"><span class="material-symbols-outlined">bar_chart</span><div class="tool-name">Chart Maker</div></div>
-            <div class="tool-card" data-url="graphmaker.html"><span class="material-symbols-outlined">query_stats</span><div class="tool-name">Graph Maker</div></div>
-            <div class="tool-card" data-url="whiteboard.html"><span class="material-symbols-outlined">ad</span><div class="tool-name">Whiteboard</div></div>
-            <div class="tool-card" data-url="mmm.html"><span class="material-symbols-outlined">graph_2</span><div class="tool-name">Mind Map</div></div>
-            <div class="tool-card" data-url="table-maker.html"><span class="material-symbols-outlined">table_chart</span><div class="tool-name">Table Maker</div></div>
-            <div class="tool-card" data-url="watermarker.html"><span class="material-symbols-outlined">filter_alt</span><div class="tool-name">Watermarker</div></div>
-            <div class="tool-card" data-url="email-writer.html"><span class="material-symbols-outlined">email</span><div class="tool-name">Email Writer</div></div>
-            <div class="tool-card" data-url="spell-checker.html"><span class="material-symbols-outlined">spellcheck</span><div class="tool-name">Spell Checker</div></div>
-            <div class="tool-card" data-url="file-extractor.html"><span class="material-symbols-outlined">unarchive</span><div class="tool-name">Extractor</div></div>
-            <div class="tool-card" data-url="qr-code-maker.html"><span class="material-symbols-outlined">qr_code</span><div class="tool-name">QR Maker</div></div>
-            <div class="tool-card" data-url="id-card-maker.html"><span class="material-symbols-outlined">badge</span><div class="tool-name">ID Maker</div></div>
-            <div class="tool-card" data-url="file-zipper.html"><span class="material-symbols-outlined">archive</span><div class="tool-name">Zipper</div></div>
-            <div class="tool-card" data-url="converters.html"><span class="material-symbols-outlined">picture_as_pdf</span><div class="tool-name">PDF Convert</div></div>
-            <div class="tool-card" data-url="pdfcompressor.html"><span class="material-symbols-outlined">compress</span><div class="tool-name">Compressor</div></div>
-            <div class="tool-card" data-url="context-field.html"><span class="material-symbols-outlined">summarize</span><div class="tool-name">Context</div></div>
-            <div class="tool-card" data-url="metadatainspector.html"><span class="material-symbols-outlined">movie_info</span><div class="tool-name">Metadata</div></div>
-            <div class="tool-card" data-url="gift-card-maker.html"><span class="material-symbols-outlined">card_giftcard</span><div class="tool-name">Gift Card</div></div>
-            <div class="tool-card" data-url="text-extractor.html"><span class="material-symbols-outlined">document_scanner</span><div class="tool-name">Text Scan</div></div>
-            <div class="tool-card" data-url="keyboard-click-test.html"><span class="material-symbols-outlined">keyboard</span><div class="tool-name">Key Test</div></div>
-            <div class="tool-card" data-url="frontend-ide.html"><span class="material-symbols-outlined">developer_mode</span><div class="tool-name">IDE</div></div>
-            <div class="tool-card" data-url="html.html"><span class="material-symbols-outlined">html</span><div class="tool-name">HTML Write</div></div>
-            <div class="tool-card" data-url="mdeditor.html"><span class="material-symbols-outlined">markdown</span><div class="tool-name">Markdown</div></div>
-            <div class="tool-card" data-url="button-designer.html"><span class="material-symbols-outlined">smart_button</span><div class="tool-name">Button Dev</div></div>
-            <div class="tool-card" data-url="html-splitter.html"><span class="material-symbols-outlined">integration_instructions</span><div class="tool-name">Splitter</div></div>
-            <div class="tool-card" data-url="goto-code.html"><span class="material-symbols-outlined">merge</span><div class="tool-name">GoTo</div></div>
-            <div class="tool-card" data-url="code-snipper.html"><span class="material-symbols-outlined">content_cut</span><div class="tool-name">Snipper</div></div>
-            <div class="tool-card" data-url="image-editor.html"><span class="material-symbols-outlined">collections</span><div class="tool-name">Img Editor</div></div>
-            <div class="tool-card" data-url="atbedt.html"><span class="material-symbols-outlined">display_settings</span><div class="tool-name">Attrib Edit</div></div>
-            <div class="tool-card" data-url="draw.html"><span class="material-symbols-outlined">brush</span><div class="tool-name">Draw</div></div>
+            <div class="settings-item">
+                <label>Default Document Editor</label>
+                <select id="setting-doc-editor">
+                    <option value="default">Default (Writer)</option>
+                    <option value="sugarcane">Sugarcane</option>
+                </select>
+            </div>
 
+            <div class="settings-item">
+                <label>Default Image Editor</label>
+                <select id="setting-img-editor">
+                    <option value="default">Basic Editor</option>
+                    <option value="attribution">Attribution Editor</option>
+                </select>
+            </div>
+
+            <div class="settings-item">
+                <label>Default Code Editor</label>
+                <select id="setting-code-editor">
+                    <option value="default">HTML Editor (Offline)</option>
+                    <option value="ide">Frontend IDE</option>
+                </select>
+            </div>
+            <p style="font-size: 12px; color: #999; text-align: center;">DocuWrite Pro App v5.0.3</p>
+        </div>
+
+    </div>
+
+    <!-- --- BOTTOM NAVIGATION --- -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')" id="nav-home">
+            <span class="material-symbols-outlined">home</span>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tools')" id="nav-tools">
+            <span class="material-symbols-outlined">apps</span>
+            <span>Tools</span>
+        </div>
+        <div class="nav-item online-only" id="nav-scan" onclick="openTool('scanner.html', 'Scanner')">
+            <span class="material-symbols-outlined">photo_camera</span>
+            <span>Scan</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('settings')" id="nav-settings">
+            <span class="material-symbols-outlined">settings</span>
+            <span>Settings</span>
         </div>
     </div>
 
-    <!-- --- TOOL VIEW (IFRAME) --- -->
-    <div id="tool-view">
+    <!-- --- TOOL IFRAME OVERLAY --- -->
+    <div id="tool-iframe-container">
+        <div class="iframe-header">
+            <span class="material-symbols-outlined close-tool-btn" onclick="closeTool()">arrow_back</span>
+            <span class="iframe-title" id="iframe-title-text">Tool</span>
+        </div>
         <iframe id="app-frame" src="about:blank"></iframe>
     </div>
 
+    <!-- --- OFFLINE POPUP --- -->
+    <div id="popup-overlay" onclick="this.style.display='none'">
+        <div class="popup-content" onclick="event.stopPropagation()">
+            <h3>Unavailable in Offline Mode</h3>
+            <ul style="padding-left: 20px; line-height: 1.6;">
+                <li>Word Finder</li>
+                <li>Translator</li>
+                <li>Spell Checker</li>
+                <li>Share File</li>
+                <li>Chart Maker</li>
+                <li>Text Scanner</li>
+                <li>HTML Writer (AI)</li>
+                <li>All Collaboration Tools</li>
+            </ul>
+            <button onclick="document.getElementById('popup-overlay').style.display='none'" style="width:100%; padding:10px; margin-top:15px; background:#eee; border:none; border-radius:8px;">Close</button>
+        </div>
+    </div>
+
     <script>
-        // --- 1. APP LOGIC ---
-        const dashboardView = document.getElementById('dashboard-view');
-        const toolView = document.getElementById('tool-view');
-        const appFrame = document.getElementById('app-frame');
-        const homeFab = document.getElementById('home-fab');
+        // --- 1. DATA & CONFIG ---
+        // Tool Database
+        const toolsDB = [
+            // Document Editing
+            { name: "Editor", url: "document-writer.html", cat: "Document Editing", icon: "edit" },
+            { name: "Viewer", url: "viewer.html", cat: "Document Editing", icon: "visibility" },
+            { name: "Markup", url: "markup.html", cat: "Document Editing", icon: "ink_highlighter" },
+            { name: "Word Finder", url: "word-description-finder.html", cat: "Document Editing", icon: "menu_book", onlineOnly: true },
+            { name: "Translator", url: "translator.html", cat: "Document Editing", icon: "language", onlineOnly: true },
+            { name: "Signer", url: "document-signer.html", cat: "Document Editing", icon: "draw" },
+            { name: "Find & Replace", url: "findandreplacer.html", cat: "Document Editing", icon: "find_replace" },
+            { name: "Page Numbers", url: "page-number-adder.html", cat: "Document Editing", icon: "format_list_numbered" },
+            { name: "Spreadsheet", url: "spreadsheet.html", cat: "Document Editing", icon: "grid_view" },
+            { name: "Reorder & Merge", url: "rm.html", cat: "Document Editing", icon: "layers" },
+            { name: "Encryptor", url: "fe.html", cat: "Document Editing", icon: "shield" },
+            { name: "Chart Maker", url: "chart-maker.html", cat: "Document Editing", icon: "bar_chart", onlineOnly: true },
+            { name: "Graph Maker", url: "graphmaker.html", cat: "Document Editing", icon: "query_stats" },
+            { name: "Whiteboard", url: "whiteboard.html", cat: "Document Editing", icon: "ad" },
+            { name: "Mind Map", url: "mmm.html", cat: "Document Editing", icon: "graph_2" },
+            { name: "Table Maker", url: "table-maker.html", cat: "Document Editing", icon: "table_chart" },
+            { name: "Watermarker", url: "watermarker.html", cat: "Document Editing", icon: "filter_alt" },
+            { name: "Email Writer", url: "email-writer.html", cat: "Document Editing", icon: "email" },
+            { name: "Spell Checker", url: "spell-checker.html", cat: "Document Editing", icon: "spellcheck", onlineOnly: true },
+            { name: "Extractor", url: "file-extractor.html", cat: "Document Editing", icon: "unarchive" },
+            { name: "QR Maker", url: "qr-code-maker.html", cat: "Document Editing", icon: "qr_code" },
+            { name: "ID Maker", url: "id-card-maker.html", cat: "Document Editing", icon: "badge" },
+            { name: "Zipper", url: "file-zipper.html", cat: "Document Editing", icon: "archive" },
+            { name: "PDF Converter", url: "converters.html", cat: "Document Editing", icon: "picture_as_pdf" },
+            { name: "Compressor", url: "pdfcompressor.html", cat: "Document Editing", icon: "compress" },
+            { name: "Context", url: "context-field.html", cat: "Document Editing", icon: "summarize" },
+            { name: "Metadata", url: "metadatainspector.html", cat: "Document Editing", icon: "movie_info" },
+            { name: "Gift Card", url: "gift-card-maker.html", cat: "Document Editing", icon: "card_giftcard" },
+            { name: "Share File", url: "docudrop.html", cat: "Document Editing", icon: "file_upload", onlineOnly: true },
+            { name: "Text Scanner", url: "text-extractor.html", cat: "Document Editing", icon: "document_scanner", onlineOnly: true },
+            { name: "Key Test", url: "keyboard-click-test.html", cat: "Document Editing", icon: "keyboard" },
 
-        // Handle Clicking a Tool
-        document.querySelectorAll('.tool-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const url = card.dataset.url;
-                if(url) {
-                    openTool(url);
-                }
-            });
-        });
+            // Code Editing
+            { name: "Frontend IDE", url: "frontend-ide.html", cat: "Code Editing", icon: "developer_mode" },
+            { name: "HTML Editor", url: "code-playground.html", cat: "Code Editing", icon: "code" },
+            { name: "HTML Writer", url: "html.html", cat: "Code Editing", icon: "html", onlineOnly: true },
+            { name: "Markdown", url: "mdeditor.html", cat: "Code Editing", icon: "markdown" },
+            { name: "Button Dev", url: "button-designer.html", cat: "Code Editing", icon: "smart_button" },
+            { name: "Splitter", url: "html-splitter.html", cat: "Code Editing", icon: "integration_instructions" },
+            { name: "GoTo Code", url: "goto-code.html", cat: "Code Editing", icon: "merge" },
+            { name: "Snipper", url: "code-snipper.html", cat: "Code Editing", icon: "content_cut" },
 
-        // Open Tool Function (SPA Feel)
-        function openTool(url) {
-            // Construct full URL relative to this file
-            const fullUrl = new URL(url, window.location.href).href;
+            // Image Editing
+            { name: "Img Editor", url: "image-editor.html", cat: "Image Editing", icon: "collections" },
+            { name: "Attrib Edit", url: "atbedt.html", cat: "Image Editing", icon: "display_settings" },
+            { name: "Draw", url: "draw.html", cat: "Image Editing", icon: "brush" },
+
+            // Collaboration (Online Only Category)
+            { name: "Collab Editor", url: "collab-document-editor.html", cat: "Collaboration", icon: "group", onlineOnly: true },
+            { name: "Text", url: "connect1.html", cat: "Collaboration", icon: "chat", onlineOnly: true },
+            { name: "Call", url: "connect.html", cat: "Collaboration", icon: "call", onlineOnly: true },
+        ];
+
+        // --- 2. CORE LOGIC ---
+        
+        // Navigation
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             
-            appFrame.src = fullUrl;
-            dashboardView.style.display = 'none';
-            toolView.style.display = 'block';
-            homeFab.style.display = 'flex';
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+            
+            if (tabId === 'home') renderRecents();
+            if (tabId === 'tools') renderTools();
         }
 
-        // Return Home Function
-        homeFab.addEventListener('click', () => {
-            appFrame.src = 'about:blank'; // Clear memory
-            toolView.style.display = 'none';
-            homeFab.style.display = 'none';
-            dashboardView.style.display = 'block';
+        // Online/Offline Detection
+        function updateOnlineStatus() {
+            const isOnline = navigator.onLine;
+            document.body.className = isOnline ? 'online' : 'offline';
+            
+            // Check cookie for banner
+            if (!isOnline && getCookie('bannerDismissed') === 'true') {
+                document.body.classList.add('banner-dismissed');
+            } else {
+                document.body.classList.remove('banner-dismissed');
+            }
+            
+            // Re-render tools if we are on tools tab
+            if (document.getElementById('tab-tools').classList.contains('active')) {
+                renderTools();
+            }
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // --- 3. TOOLS LOGIC ---
+        
+        let currentSort = 'All';
+
+        function renderTools() {
+            const container = document.getElementById('tools-list-container');
+            const searchTerm = document.getElementById('tool-search').value.toLowerCase();
+            const isOnline = navigator.onLine;
+            
+            container.innerHTML = '';
+            
+            // Group by Category
+            const categories = {};
+            
+            toolsDB.forEach(tool => {
+                // Filter by Offline
+                if (!isOnline && tool.onlineOnly) return;
+                // Collaboration category hidden entirely offline
+                if (!isOnline && tool.cat === "Collaboration") return;
+
+                // Filter by Search
+                if (searchTerm && !tool.name.toLowerCase().includes(searchTerm)) return;
+
+                // Filter by Sort
+                if (currentSort !== 'All' && tool.cat !== currentSort) return;
+
+                if (!categories[tool.cat]) categories[tool.cat] = [];
+                categories[tool.cat].push(tool);
+            });
+
+            // Render
+            for (const [catName, tools] of Object.entries(categories)) {
+                const catDiv = document.createElement('div');
+                catDiv.className = 'tool-category';
+                catDiv.innerHTML = `<h3>${catName}</h3>`;
+                
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'tools-grid';
+                
+                tools.forEach(tool => {
+                    const card = document.createElement('div');
+                    card.className = 'tool-card ' + (tool.onlineOnly ? 'online-only' : '');
+                    card.innerHTML = `<span class="material-symbols-outlined">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
+                    card.onclick = () => openTool(tool.url, tool.name);
+                    gridDiv.appendChild(card);
+                });
+                
+                catDiv.appendChild(gridDiv);
+                container.appendChild(catDiv);
+            }
+        }
+
+        document.getElementById('tool-search').addEventListener('keyup', renderTools);
+        
+        document.getElementById('sort-trigger').addEventListener('click', () => {
+            const sorts = ['All', 'Document Editing', 'Image Editing', 'Code Editing', 'Collaboration'];
+            let idx = sorts.indexOf(currentSort);
+            idx = (idx + 1) % sorts.length;
+            currentSort = sorts[idx];
+            // Simple toast/alert for now, ideal world nice popup
+            alert(`Sorting by: ${currentSort}`);
+            renderTools();
         });
 
-        // --- 2. SERVICE WORKER REGISTRATION ---
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('SW Registered', reg))
-                .catch(err => console.log('SW Failed', err));
+        // --- 4. RECENT TOOLS LOGIC ---
+        function openTool(url, name) {
+            // Add to Recents
+            if (name) { // Scan might not have name passed directly from nav, assume 'Scanner'
+                 addToRecents({ name, url, icon: getIconForTool(url) });
+            }
+            
+            // Show Iframe
+            const frame = document.getElementById('app-frame');
+            const container = document.getElementById('tool-iframe-container');
+            document.getElementById('iframe-title-text').textContent = name || 'Tool';
+            
+            frame.src = url;
+            container.style.display = 'flex';
         }
 
-        // --- 3. FIRST TIME SETUP / CACHING LOGIC ---
+        function closeTool() {
+            const container = document.getElementById('tool-iframe-container');
+            const frame = document.getElementById('app-frame');
+            container.style.display = 'none';
+            frame.src = 'about:blank';
+        }
+
+        function getIconForTool(url) {
+            const tool = toolsDB.find(t => t.url === url);
+            return tool ? tool.icon : 'extension';
+        }
+
+        function addToRecents(toolObj) {
+            let recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
+            // Remove if exists
+            recents = recents.filter(t => t.url !== toolObj.url);
+            // Add to front
+            recents.unshift(toolObj);
+            // Limit 7
+            if (recents.length > 7) recents.length = 7;
+            localStorage.setItem('recentTools', JSON.stringify(recents));
+        }
+
+        function renderRecents() {
+            const grid = document.getElementById('recent-grid');
+            const recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
+            
+            if (recents.length === 0) {
+                grid.innerHTML = '<div class="recent-placeholder">No recent tools used</div>';
+                return;
+            }
+            
+            grid.innerHTML = '';
+            recents.forEach(tool => {
+                const card = document.createElement('div');
+                card.className = 'tool-card';
+                card.innerHTML = `<span class="material-symbols-outlined">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
+                card.onclick = () => openTool(tool.url, tool.name);
+                grid.appendChild(card);
+            });
+        }
+
+        function clearRecents() {
+            localStorage.removeItem('recentTools');
+            renderRecents();
+        }
+
+        // --- 5. SETTINGS & QUICK ACTIONS ---
+        const btnNewDoc = document.getElementById('btn-new-doc');
+        const btnNewImg = document.getElementById('btn-new-img');
+        const btnNewCode = document.getElementById('btn-new-code');
+
+        // Load Settings
+        const sDoc = document.getElementById('setting-doc-editor');
+        const sImg = document.getElementById('setting-img-editor');
+        const sCode = document.getElementById('setting-code-editor');
+
+        function loadSettings() {
+            sDoc.value = localStorage.getItem('def_doc') || 'default';
+            sImg.value = localStorage.getItem('def_img') || 'default';
+            sCode.value = localStorage.getItem('def_code') || 'default';
+        }
+
+        [sDoc, sImg, sCode].forEach(el => el.addEventListener('change', saveSettings));
+
+        function saveSettings() {
+            localStorage.setItem('def_doc', sDoc.value);
+            localStorage.setItem('def_img', sImg.value);
+            localStorage.setItem('def_code', sCode.value);
+        }
+
+        // Action Handlers
+        btnNewDoc.onclick = () => {
+            const val = localStorage.getItem('def_doc');
+            openTool(val === 'sugarcane' ? 'sceditor.html' : 'document-writer.html', 'New Document');
+        }
+        btnNewImg.onclick = () => {
+            const val = localStorage.getItem('def_img');
+            openTool(val === 'attribution' ? 'atbedt.html' : 'image-editor.html', 'New Image');
+        }
+        btnNewCode.onclick = () => {
+            const val = localStorage.getItem('def_code');
+            openTool(val === 'ide' ? 'frontend-ide.html' : 'code-playground.html', 'New Code');
+        }
+
+
+        // --- 6. UTILS ---
+        function showOfflinePopup() {
+            document.getElementById('popup-overlay').style.display = 'flex';
+        }
+
+        function dismissBanner() {
+            setCookie('bannerDismissed', 'true', 365);
+            updateOnlineStatus();
+        }
+
+        function setCookie(name, value, days) {
+            const d = new Date();
+            d.setTime(d.getTime() + (days*24*60*60*1000));
+            document.cookie = name + "=" + value + ";" + "expires="+ d.toUTCString() + ";path=/";
+        }
+        
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i=0;i < ca.length;i++) {
+                let c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1,c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+            }
+            return null;
+        }
+
+        // --- 7. SETUP & SW ---
         const setupOverlay = document.getElementById('setup-overlay');
         const startSetupBtn = document.getElementById('start-setup-btn');
-        const setupProgress = document.getElementById('setup-progress');
+        const setupStatus = document.getElementById('setup-status');
 
-        // Check if setup is already done
-        if (localStorage.getItem('docuwrite_app_setup') === 'true') {
+        if (localStorage.getItem('app_setup_done') === 'true') {
             setupOverlay.classList.add('hidden');
         }
 
-        startSetupBtn.addEventListener('click', async () => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+
+        startSetupBtn.addEventListener('click', () => {
+            setupStatus.textContent = "Downloading all tools... Please wait.";
             startSetupBtn.disabled = true;
-            setupProgress.textContent = "Scanning tools...";
-            
-            // 1. Gather URLs from DOM
-            const urlsToCache = new Set();
-            
-            // Add core app files
-            urlsToCache.add(window.location.href); // app.html
-            urlsToCache.add('manifest.json');
-            
-            // Add all tool URLs found in cards
-            document.querySelectorAll('.tool-card').forEach(card => {
-                const relativeUrl = card.dataset.url;
-                if (relativeUrl) {
-                    const fullUrl = new URL(relativeUrl, window.location.href).href;
-                    urlsToCache.add(fullUrl);
-                }
-            });
 
-            const urlArray = Array.from(urlsToCache);
-            setupProgress.textContent = `Found ${urlArray.length} tools. Downloading...`;
+            // Gather all URLs from DB + Dependencies
+            const urls = toolsDB.map(t => t.url);
+            // Add app shell
+            urls.push('app.html', 'manifest.json');
+            // Add specific Dependencies mentioned
+            const deps = [
+                'ci.html', 'ct.html', 'ctpn.html', 'j2p.html', 
+                'p2j.html', 'pes.html', 'share.html', 'wawm.html', 
+                'webgen.html', 'web.html', 'scanner.html'
+            ];
+            const allUrls = [...new Set([...urls, ...deps])];
 
-            // 2. Send to Service Worker
             if (navigator.serviceWorker.controller) {
                 navigator.serviceWorker.controller.postMessage({
                     action: 'CACHE_URLS',
-                    urls: urlArray
+                    urls: allUrls
                 });
             } else {
-                // If SW isn't ready yet (first ever load), reload page to activate SW then try again
-                setupProgress.textContent = "Initializing System... Page will reload.";
-                setTimeout(() => location.reload(), 1500);
+                setupStatus.textContent = "Service Worker initializing... Reloading...";
+                setTimeout(() => location.reload(), 2000);
             }
         });
 
-        // Listen for SW completion
         navigator.serviceWorker.addEventListener('message', event => {
-            if (event.data && event.data.type === 'CACHE_COMPLETE') {
-                setupProgress.textContent = "Setup Complete! You can now use the app offline.";
-                localStorage.setItem('docuwrite_app_setup', 'true');
+            if (event.data.type === 'CACHE_COMPLETE') {
+                setupStatus.textContent = "Download Complete!";
+                localStorage.setItem('app_setup_done', 'true');
                 setTimeout(() => {
                     setupOverlay.classList.add('hidden');
+                    switchTab('home');
                 }, 1000);
             }
         });
+
+        // Init
+        loadSettings();
+        updateOnlineStatus();
+        switchTab('home');
 
     </script>
 </body>

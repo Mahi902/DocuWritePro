@@ -367,7 +367,8 @@ Sharing in the Sugercane edition works a bit differently and is handled through 
 
 
 ### Install Mobile App
-<img width="1717" height="795" alt="1000040484" src="https://github.com/user-attachments/assets/df27bb73-aa69-42bd-9cb2-a87c35323512" />
+<img width="1459" height="666" alt="1000042650" src="https://github.com/user-attachments/assets/b70ed873-7b0f-4171-b87e-241170021309" />
+
 
 
 ## Pricing

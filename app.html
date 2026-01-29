@@ -3,336 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DocuWrite Pro App</title>
+    <title>DocuWrite Pro</title>
     <meta name="description" content="DocuWrite Pro Mobile App">
     <link rel="manifest" href="manifest.json">
     
     <!-- Mobile Web App Capable -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#f2f2f7">
 
-    <!-- Fonts & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
 
     <style>
-        /* --- CORE APP STYLES --- */
+        /* --- 1. RESET & VARIABLES (THEMING) --- */
         :root {
-            --primary-color: #1a73e8;
-            --bg-color: #f8f9fa;
-            --surface-color: #ffffff;
-            --text-color: #202124;
-            --text-secondary: #5f6368;
-            --border-color: #dadce0;
-            --nav-height: 60px;
-            --header-height: 60px;
+            /* Default Light Mode Variables */
+            --primary-color: #007AFF;
+            --primary-light: rgba(0, 122, 255, 0.1);
+            --bg-body: #F2F2F7;
+            --bg-card: #FFFFFF;
+            --text-primary: #000000;
+            --text-secondary: #8E8E93;
+            --separator: #E5E5EA;
+            --danger: #FF3B30;
+            --danger-bg: rgba(255, 59, 48, 0.1);
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --nav-border: rgba(0,0,0,0.05);
+            --search-bg: rgba(142, 142, 147, 0.12);
+            --picker-overlay: rgba(0,0,0,0.4);
+            
+            /* Dimensions */
+            --nav-height: 84px;
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            
+            /* Shadows */
+            --shadow-card: 0 4px 12px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.04);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        /* Explicit Dark Mode Overrides */
+        html[data-theme="dark"] {
+            --primary-color: #0A84FF;
+            --primary-light: rgba(10, 132, 255, 0.2);
+            --bg-body: #000000;
+            --bg-card: #1C1C1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #98989D;
+            --separator: #38383A;
+            --nav-bg: rgba(28, 28, 30, 0.85);
+            --nav-border: rgba(255,255,255,0.1);
+            --search-bg: rgba(118, 118, 128, 0.24);
+            --picker-overlay: rgba(0,0,0,0.6);
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+
+        input, textarea, [contenteditable] { user-select: text; }
 
         body, html {
             margin: 0; padding: 0; height: 100%; width: 100%;
-            font-family: 'Roboto', sans-serif;
-            background-color: var(--bg-color);
-            overflow: hidden; /* App-like feel */
-            color: var(--text-color);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            overflow: hidden;
+            overscroll-behavior-y: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* --- LAYOUT CONTAINERS --- */
+        /* --- 2. LAYOUT --- */
         #app-container {
-            height: 100%;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            padding-bottom: var(--nav-height); /* Space for bottom nav */
-            overflow: hidden;
+            height: 100%; width: 100%;
+            display: flex; flex-direction: column;
+            padding-bottom: var(--nav-height);
+            position: relative;
         }
 
         .tab-view {
             flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-            display: none; /* Hidden by default */
-            padding: 15px;
-            /* Animation hooks */
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.2s ease-in-out, transform 0.2s ease-in-out;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            display: none;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top);
         }
 
-        .tab-view.active { 
-            display: block; 
-            opacity: 1;
-            transform: translateY(0);
+        .tab-view.active { display: block; animation: fadeIn 0.25s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
         }
 
-        /* --- BOTTOM NAVIGATION --- */
+        /* --- 3. BOTTOM NAV --- */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%;
             height: var(--nav-height);
-            background: var(--surface-color);
-            border-top: 1px solid var(--border-color);
-            display: flex; justify-content: space-around; align-items: center;
-            z-index: 1000;
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--nav-border);
+            display: flex; justify-content: space-around; align-items: flex-start;
+            padding-top: 12px; z-index: 1000;
             padding-bottom: env(safe-area-inset-bottom);
         }
 
         .nav-item {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: var(--text-secondary);
-            font-size: 10px;
-            padding: 5px;
-            flex: 1;
-            cursor: pointer;
+            color: var(--text-secondary); font-size: 11px; font-weight: 500;
+            flex: 1; cursor: pointer; transition: transform 0.1s;
         }
-
+        .nav-item:active { transform: scale(0.9); }
         .nav-item.active { color: var(--primary-color); }
-        .nav-item .material-symbols-outlined { font-size: 24px; margin-bottom: 2px; }
+        .nav-item .material-symbols-rounded { 
+            font-size: 26px; margin-bottom: 4px; 
+            font-variation-settings: 'FILL' 0, 'wght' 400;
+            transition: all 0.2s;
+        }
+        .nav-item.active .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 500; }
         
-        /* Scan Button (Online Only) */
         #nav-scan { display: none; } 
-        body.online #nav-scan { display: flex; color: var(--primary-color); }
+        body.online #nav-scan { display: flex; }
 
-        /* --- HOME TAB STYLES --- */
-        .home-header h2 { margin: 10px 0 15px 0; font-size: 22px; }
-        
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-        
+        /* --- 4. COMPONENTS --- */
+        h2 { font-size: 34px; font-weight: 700; margin: 20px 0 15px 0; letter-spacing: -0.5px; color: var(--text-primary); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin: 30px 0 15px 0; }
+        .section-title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
+        .clear-btn { color: var(--primary-color); font-size: 15px; font-weight: 600; padding: 8px 0; }
+
+        /* Quick Actions */
+        .quick-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px; }
         .action-btn {
-            display: flex; flex-direction: column; align-items: center;
-            text-align: center; cursor: pointer;
+            background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px;
+            display: flex; flex-direction: row; align-items: center;
+            box-shadow: var(--shadow-card); transition: transform 0.1s; cursor: pointer;
         }
-        
+        .action-btn:active { transform: scale(0.97); background: var(--separator); }
         .action-icon-circle {
-            width: 50px; height: 50px;
-            background: #e8f0fe;
-            color: var(--primary-color);
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            margin-bottom: 5px;
+            width: 44px; height: 44px; background: var(--primary-light); color: var(--primary-color);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;
         }
-        
-        .action-label { font-size: 12px; font-weight: 500; }
+        .action-label { font-size: 15px; font-weight: 600; text-align: left; line-height: 1.2; }
 
-        .section-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 15px;
+        /* Tool Grid */
+        .tools-grid, .recent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 15px; padding-bottom: 20px; }
+        .tool-card {
+            background: var(--bg-card); border-radius: var(--radius-xl); padding: 18px 10px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            box-shadow: var(--shadow-card); transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        .section-title { font-size: 18px; font-weight: 500; }
-        .clear-btn { color: var(--primary-color); font-size: 13px; font-weight: 500; cursor: pointer; }
+        .tool-card:active { transform: scale(0.95); opacity: 0.8; }
+        .tool-card span.material-symbols-rounded { 
+            font-size: 32px; color: var(--primary-color); margin-bottom: 12px;
+            background: var(--primary-light); padding: 10px; border-radius: 16px; 
+        }
+        .tool-name { font-size: 13px; line-height: 1.35; font-weight: 500; color: var(--text-primary); }
 
-        /* Templates Section */
-        #templates-section { margin-bottom: 25px; display: none; }
+        /* Templates (Horizontal) */
+        #templates-section { margin-bottom: 10px; }
         .templates-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
+            display: flex; overflow-x: auto; gap: 15px; padding: 5px 5px 20px 5px;
+            scroll-snap-type: x mandatory; scrollbar-width: none;
         }
+        .templates-grid::-webkit-scrollbar { display: none; }
         .template-card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            display: flex; flex-direction: column;
-            transition: transform 0.1s;
+            min-width: 140px; width: 140px; background: var(--bg-card); border-radius: var(--radius-lg);
+            overflow: hidden; box-shadow: var(--shadow-card); scroll-snap-align: start;
         }
-        .template-card:active { transform: scale(0.97); }
-        .template-img {
-            width: 100%;
-            height: 80px;
-            object-fit: cover;
-            background: #f1f3f4;
-        }
-        .template-name {
-            padding: 8px;
-            font-size: 12px;
-            font-weight: 500;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+        .template-img { width: 100%; height: 90px; object-fit: cover; background: #eee; }
+        .template-name { padding: 10px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .show-all-templates-btn {
-            grid-column: 1 / -1;
-            padding: 10px;
-            background: #e8f0fe;
-            color: var(--primary-color);
-            text-align: center;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            margin-top: 5px;
+            min-width: 60px; display: flex; align-items: center; justify-content: center;
+            background: var(--bg-card); color: var(--primary-color); border-radius: var(--radius-lg);
+            font-weight: 600; font-size: 13px; box-shadow: var(--shadow-card); cursor: pointer;
         }
 
-        .recent-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
-        }
-        .recent-placeholder {
-            grid-column: 1 / -1;
-            text-align: center; padding: 20px; color: var(--text-secondary); font-style: italic; font-size: 14px;
-        }
-
-        /* --- TOOLS TAB STYLES --- */
+        /* Tools Bar */
         .tools-top-bar {
-            display: flex; gap: 10px; margin-bottom: 15px; align-items: center;
+            position: sticky; top: -1px; z-index: 100;
+            background: var(--bg-body); backdrop-filter: blur(10px);
+            padding: 10px 0; display: flex; gap: 12px; margin-bottom: 10px; align-items: center;
         }
-        
         .search-box {
-            flex: 1;
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 8px 12px;
+            flex: 1; background: var(--search-bg); border-radius: 10px; padding: 10px 12px;
             display: flex; align-items: center;
         }
-        .search-box input { border: none; background: transparent; width: 100%; outline: none; margin-left: 8px; }
-        
-        .sort-btn { padding: 8px; background: var(--surface-color); border: 1px solid var(--border-color); border-radius: 8px; cursor: pointer; }
-
-        .tool-category { margin-bottom: 20px; }
-        .tool-category h3 { font-size: 16px; color: var(--text-secondary); margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        
-        /* Grid for tools */
-        .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
+        .search-box input { border: none; background: transparent; width: 100%; outline: none; margin-left: 8px; font-size: 16px; color: var(--text-primary); }
+        .sort-btn { 
+            width: 44px; height: 44px; background: var(--bg-card); border: none; border-radius: 50%; 
+            color: var(--primary-color); box-shadow: var(--shadow-card); display: flex; align-items: center; justify-content: center;
         }
+        .tool-category h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 25px 0 10px 5px; font-weight: 600; }
 
-        .tool-card {
-            background: var(--surface-color);
-            border: 1px solid var(--border-color);
+        /* --- 5. SETTINGS (CUSTOM LIST) --- */
+        #tab-settings { padding: 0; background: var(--bg-body); }
+        #tab-settings h2 { padding: 20px 20px 5px 20px; }
+        
+        /* Container for grouped settings */
+        .settings-group {
+            background: var(--bg-card);
             border-radius: 12px;
-            padding: 15px 10px;
-            display: flex; flex-direction: column; align-items: center; text-align: center;
+            margin: 0 16px 20px 16px;
+            overflow: hidden;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
         }
-        .tool-card:active { transform: scale(0.95); }
-        .tool-card span { font-size: 32px; color: var(--primary-color); margin-bottom: 8px; }
-        .tool-name { font-size: 12px; line-height: 1.3; font-weight: 500; }
 
-        /* Offline Styles */
-        body.offline .online-only { display: none !important; }
+        /* Individual Row */
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            cursor: pointer;
+            position: relative;
+        }
+        
+        /* Separator line between rows, but not after last */
+        .setting-row:not(:last-child)::after {
+            content: ""; position: absolute; bottom: 0; right: 0;
+            width: calc(100% - 20px); height: 1px; background: var(--separator);
+        }
+
+        .setting-row:active { background: var(--separator); }
+
+        .setting-label { font-size: 16px; color: var(--text-primary); font-weight: 500; }
+        
+        .setting-value-container { display: flex; align-items: center; gap: 8px; }
+        .setting-value { font-size: 16px; color: var(--text-secondary); }
+        .setting-chevron { color: var(--text-secondary); font-size: 20px; opacity: 0.5; }
+
+        .btn-danger {
+            margin: 30px 16px; width: calc(100% - 32px); background: var(--bg-card);
+            color: var(--danger); border: none; padding: 16px; border-radius: 12px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-danger:active { background: var(--danger-bg); }
+
+        /* --- 6. CUSTOM BOTTOM SHEET PICKER --- */
+        #picker-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--picker-overlay); z-index: 2500;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #picker-overlay.open { opacity: 1; pointer-events: auto; }
+
+        #picker-sheet {
+            background: var(--bg-body); /* Slightly distinct from card */
+            border-radius: 20px 20px 0 0;
+            padding: 20px 16px 40px 16px; /* Extra bottom padding for home indicator */
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            max-height: 70vh; display: flex; flex-direction: column;
+        }
+        #picker-overlay.open #picker-sheet { transform: translateY(0); }
+
+        .picker-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding: 0 5px;
+        }
+        .picker-title { font-size: 18px; font-weight: 700; }
+        .picker-close { 
+            width: 30px; height: 30px; background: rgba(120,120,120,0.2); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        .picker-options {
+            background: var(--bg-card); border-radius: 12px; overflow: hidden;
+        }
+        .picker-option {
+            padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+            font-size: 16px; border-bottom: 1px solid var(--separator); cursor: pointer;
+        }
+        .picker-option:last-child { border-bottom: none; }
+        .picker-option:active { background: var(--separator); }
+        .picker-option.selected { color: var(--primary-color); font-weight: 600; }
+        .picker-check { display: none; color: var(--primary-color); font-size: 20px; }
+        .picker-option.selected .picker-check { display: block; }
+
+        /* --- 7. TOOL IFRAME (Slide Up/Down) --- */
+        #tool-iframe-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 2000;
+            display: flex; flex-direction: column;
+            /* Transition handles both up and down */
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            box-shadow: -10px 0 20px rgba(0,0,0,0.1);
+        }
+        #tool-iframe-container.visible { transform: translateY(0); }
+        
+        .iframe-header {
+            height: 56px; background: var(--nav-bg); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--separator);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px; flex-shrink: 0; padding-top: env(safe-area-inset-top);
+        }
+        .close-tool-btn { 
+            color: var(--primary-color); font-weight: 600; font-size: 16px;
+            padding: 8px; cursor: pointer; 
+        }
+
+        /* Setup & Offline */
         .offline-banner {
-            background-color: #333; color: white;
-            padding: 10px 15px; font-size: 13px;
-            display: none; /* Controlled by JS */
-            justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 900;
+            background-color: #323232; color: white; padding: 12px 16px; font-size: 13px; font-weight: 500;
+            display: none; justify-content: space-between; align-items: center;
+            position: absolute; top: env(safe-area-inset-top); left: 16px; right: 16px;
+            border-radius: 8px; z-index: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         body.offline .offline-banner { display: flex; }
         body.offline.banner-dismissed .offline-banner { display: none; }
-        .banner-actions button { background: none; border: none; color: #8ab4f8; margin-left: 10px; font-weight: bold; cursor: pointer; }
-
-        /* --- SETTINGS TAB STYLES --- */
-        .settings-item {
-            background: var(--surface-color);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
-            border: 1px solid var(--border-color);
-        }
-        .settings-item label { display: block; font-weight: 500; margin-bottom: 8px; }
-        .settings-item select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); }
         
-        .btn-danger {
-            width: 100%;
-            background: #fce8e6;
-            color: #c5221f;
-            border: 1px solid #f2b2b0;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: 500;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
-        .btn-danger:active { background: #fad2cf; }
-
-        /* --- IFRAME OVERLAY (For Tools) --- */
-        #tool-iframe-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff; z-index: 2000;
-            display: flex; /* Always flex layout */
-            flex-direction: column;
-            transform: translateY(100%); /* Start hidden */
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            visibility: hidden;
-        }
-        #tool-iframe-container.visible {
-            transform: translateY(0);
-            visibility: visible;
-        }
-        
-        #app-frame { flex: 1; border: none; width: 100%; height: 100%; }
-        
-        .iframe-header {
-            height: 50px; background: #fff; border-bottom: 1px solid #eee;
-            display: flex; align-items: center; padding: 0 15px;
-        }
-        .close-tool-btn { font-size: 24px; margin-right: 15px; color: var(--text-color); cursor: pointer; }
-        .iframe-title { font-weight: 500; }
-
-        /* --- SETUP SCREEN --- */
         #setup-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 3000;
+            background: var(--bg-body); z-index: 3000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 30px; text-align: center;
+            padding: 40px; text-align: center;
         }
         #setup-overlay.hidden { display: none; }
         .setup-btn {
             background: var(--primary-color); color: white; border: none;
-            padding: 12px 30px; border-radius: 25px; font-size: 16px; margin-top: 20px;
+            padding: 16px 48px; border-radius: 30px; font-size: 17px; font-weight: 600; margin-top: 40px;
+            box-shadow: 0 4px 12px rgba(0,122,255,0.3); transition: transform 0.2s;
         }
+        .setup-btn:active { transform: scale(0.96); }
 
-        /* --- POPUP (Offline List) --- */
         #popup-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 2500; display: none;
-            align-items: flex-end;
+            background: rgba(0,0,0,0.4); z-index: 2500; display: none;
+            backdrop-filter: blur(4px); align-items: center; justify-content: center;
         }
         .popup-content {
-            background: white; width: 100%; max-height: 70%; overflow-y: auto;
-            border-radius: 20px 20px 0 0; padding: 20px;
-            animation: slideUp 0.3s ease;
+            background: var(--bg-card); width: 85%; max-width: 320px;
+            border-radius: 14px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); text-align: center;
         }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        /* Ripple Effect */
-        .ripple {
-            position: absolute;
-            background: rgba(26, 115, 232, 0.15);
-            border-radius: 50%;
-            transform: scale(0);
-            animation: rippleEffect 0.5s linear;
-            pointer-events: none;
-        }
-        @keyframes rippleEffect {
-            to { transform: scale(4); opacity: 0; }
-        }
+        
+        .online-only { opacity: 1; }
+        body.offline .online-only { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
 
     </style>
 </head>
-<body class="online"> <!-- Default to online -->
+<body class="online">
 
     <!-- --- SETUP OVERLAY --- -->
     <div id="setup-overlay">
-        <span class="material-symbols-outlined" style="font-size: 64px; color: var(--primary-color); margin-bottom: 20px;">cloud_sync</span>
-        <h2>Welcome to DocuWrite Pro</h2>
-        <p>To use this app offline, we need to download the necessary tools. This happens once.</p>
-        <button id="start-setup-btn" class="setup-btn">Start Setup</button>
-        <p id="setup-status" style="margin-top: 15px; font-size: 14px; color: #666;"></p>
+        <div style="width: 100px; height: 100px; background: white; border-radius: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px;">
+            <span class="material-symbols-rounded" style="font-size: 56px; color: var(--primary-color);">cloud_sync</span>
+        </div>
+        <h2 style="font-size: 28px; margin-bottom: 12px;">Welcome to<br>DocuWrite Pro</h2>
+        <p style="font-size: 17px; color: var(--text-secondary); line-height: 1.5; max-width: 300px;">
+            We need to download some tools to make the app work offline. This only happens once.
+        </p>
+        <button id="start-setup-btn" class="setup-btn">Get Started</button>
+        <p id="setup-status" style="margin-top: 24px; font-size: 13px; color: var(--text-secondary); font-weight: 500;"></p>
+    </div>
+
+    <!-- --- CUSTOM PICKER (BOTTOM SHEET) --- -->
+    <div id="picker-overlay" onclick="closePicker()">
+        <div id="picker-sheet" onclick="event.stopPropagation()">
+            <div class="picker-header">
+                <span class="picker-title" id="picker-title">Select</span>
+                <div class="picker-close" onclick="closePicker()">
+                    <span class="material-symbols-rounded" style="font-size: 20px; color: var(--text-secondary);">close</span>
+                </div>
+            </div>
+            <div class="picker-options" id="picker-options-container">
+                <!-- Options injected via JS -->
+            </div>
+        </div>
     </div>
 
     <!-- --- APP CONTAINER --- -->
@@ -340,107 +384,120 @@
         
         <!-- Offline Banner -->
         <div class="offline-banner" id="offline-banner">
-            <span>Some tools are not available in offline mode.</span>
+            <span style="display:flex; align-items:center; gap:8px;"><span class="material-symbols-rounded" style="font-size:16px">wifi_off</span> Offline Mode</span>
             <div class="banner-actions">
-                <button onclick="showOfflinePopup()">Show</button>
-                <button onclick="dismissBanner()">Got It</button>
+                <button onclick="showOfflinePopup()" style="background:rgba(255,255,255,0.1); border:none; color:white; border-radius:4px; padding:4px 8px;">Details</button>
+                <button onclick="dismissBanner()" style="background:rgba(255,255,255,0.1); border:none; color:white; border-radius:4px; padding:4px 8px; margin-left:5px;">✕</button>
             </div>
         </div>
 
         <!-- === HOME TAB === -->
         <div id="tab-home" class="tab-view active">
-            <div class="home-header">
-                <h2>New</h2>
-                <div class="quick-actions">
-                    <div class="action-btn" id="btn-new-doc">
-                        <div class="action-icon-circle"><span class="material-symbols-outlined">add</span></div>
-                        <span class="action-label">Document</span>
-                    </div>
-                    <div class="action-btn" id="btn-new-img">
-                        <div class="action-icon-circle"><span class="material-symbols-outlined">image</span></div>
-                        <span class="action-label">Image</span>
-                    </div>
-                    <div class="action-btn" id="btn-new-code">
-                        <div class="action-icon-circle"><span class="material-symbols-outlined">code</span></div>
-                        <span class="action-label">Code</span>
-                    </div>
-                    <div class="action-btn" onclick="switchTab('tools')">
-                        <div class="action-icon-circle"><span class="material-symbols-outlined">grid_view</span></div>
-                        <span class="action-label">All</span>
-                    </div>
+            <h2 class="home-header">Home</h2>
+            
+            <div class="quick-actions">
+                <div class="action-btn" id="btn-new-doc">
+                    <div class="action-icon-circle"><span class="material-symbols-rounded">note_add</span></div>
+                    <div class="action-label">New<br>Document</div>
+                </div>
+                <div class="action-btn" id="btn-new-img">
+                    <div class="action-icon-circle"><span class="material-symbols-rounded">add_photo_alternate</span></div>
+                    <div class="action-label">Edit<br>Image</div>
+                </div>
+                <div class="action-btn" id="btn-new-code">
+                    <div class="action-icon-circle"><span class="material-symbols-rounded">terminal</span></div>
+                    <div class="action-label">Write<br>Code</div>
+                </div>
+                <div class="action-btn" onclick="switchTab('tools')">
+                    <div class="action-icon-circle" style="background: var(--bg-body); color: var(--text-secondary);"><span class="material-symbols-rounded">apps</span></div>
+                    <div class="action-label">All<br>Tools</div>
                 </div>
             </div>
 
-            <!-- Templates Section (Hidden by default, shown for Sugarcane) -->
+            <!-- Templates Section -->
             <div id="templates-section">
                 <div class="section-header">
                     <span class="section-title">Templates</span>
                 </div>
-                <div class="templates-grid" id="templates-grid">
-                    <!-- Populated by JS -->
-                </div>
+                <div class="templates-grid" id="templates-grid"></div>
             </div>
 
             <div class="section-header">
-                <span class="section-title">Recent Tools</span>
+                <span class="section-title">Recents</span>
                 <span class="clear-btn" onclick="clearRecents()">Clear</span>
             </div>
             <div class="recent-grid" id="recent-grid">
-                <!-- Populated by JS -->
                 <div class="recent-placeholder">No recent tools used</div>
             </div>
+            <div style="height: 60px;"></div>
         </div>
 
         <!-- === TOOLS TAB === -->
         <div id="tab-tools" class="tab-view">
             <div class="tools-top-bar">
                 <div class="search-box">
-                    <span class="material-symbols-outlined">search</span>
-                    <input type="text" id="tool-search" placeholder="Search tools...">
+                    <span class="material-symbols-rounded" style="color:var(--text-secondary); opacity:0.7;">search</span>
+                    <input type="text" id="tool-search" placeholder="Search">
                 </div>
-                <button class="sort-btn" id="sort-trigger"><span class="material-symbols-outlined">sort</span></button>
+                <button class="sort-btn" id="sort-trigger"><span class="material-symbols-rounded">sort</span></button>
             </div>
-
-            <!-- Categories -->
-            <div id="tools-list-container">
-                <!-- Categories injected here -->
-            </div>
+            <div id="tools-list-container"></div>
+            <div style="height: 80px;"></div>
         </div>
 
-        <!-- === SETTINGS TAB === -->
+        <!-- === SETTINGS TAB (CUSTOM UI) === -->
         <div id="tab-settings" class="tab-view">
-            <h2 style="margin-top: 10px;">Settings</h2>
+            <h2>Settings</h2>
             
-            <div class="settings-item">
-                <label>Default Document Editor</label>
-                <select id="setting-doc-editor">
-                    <option value="default">Default (Writer)</option>
-                    <option value="sugarcane">Sugarcane (Advanced)</option>
-                </select>
-            </div>
+            <div style="margin-top: 10px;">
+                <h3 style="margin: 0 0 8px 20px; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Preferences</h3>
+                
+                <div class="settings-group">
+                    <!-- Manual Theme Selector -->
+                    <div class="setting-row" onclick="openThemePicker()">
+                        <span class="setting-label">Theme</span>
+                        <div class="setting-value-container">
+                            <span class="setting-value" id="display-theme">System</span>
+                            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                        </div>
+                    </div>
 
-            <div class="settings-item">
-                <label>Default Image Editor</label>
-                <select id="setting-img-editor">
-                    <option value="default">Basic Editor</option>
-                    <option value="attribution">Attribution Editor</option>
-                </select>
-            </div>
+                    <!-- Document Editor -->
+                    <div class="setting-row" onclick="openEditorPicker('doc')">
+                        <span class="setting-label">Document Editor</span>
+                        <div class="setting-value-container">
+                            <span class="setting-value" id="display-doc-editor">Default</span>
+                            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                        </div>
+                    </div>
 
-            <div class="settings-item">
-                <label>Default Code Editor</label>
-                <select id="setting-code-editor">
-                    <option value="default">HTML Editor (Offline)</option>
-                    <option value="ide">Frontend IDE</option>
-                </select>
+                    <!-- Image Editor -->
+                    <div class="setting-row" onclick="openEditorPicker('img')">
+                        <span class="setting-label">Image Editor</span>
+                        <div class="setting-value-container">
+                            <span class="setting-value" id="display-img-editor">Basic</span>
+                            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <!-- Code Editor -->
+                    <div class="setting-row" onclick="openEditorPicker('code')">
+                        <span class="setting-label">Code Editor</span>
+                        <div class="setting-value-container">
+                            <span class="setting-value" id="display-code-editor">HTML</span>
+                            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <button class="btn-danger" id="btn-update-app">
-                <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 5px;">system_update_alt</span>
-                Check and Update App
+                <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 8px;">system_update_alt</span>
+                Reset & Update App
             </button>
 
-            <p style="font-size: 12px; color: #999; text-align: center;">DocuWrite Pro App v5.1.0</p>
+            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.2.0 • Build 2024</p>
+            <div style="height: 80px;"></div>
         </div>
 
     </div>
@@ -448,19 +505,19 @@
     <!-- --- BOTTOM NAVIGATION --- -->
     <div class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('home')" id="nav-home">
-            <span class="material-symbols-outlined">home</span>
+            <span class="material-symbols-rounded">home</span>
             <span>Home</span>
         </div>
         <div class="nav-item" onclick="switchTab('tools')" id="nav-tools">
-            <span class="material-symbols-outlined">apps</span>
+            <span class="material-symbols-rounded">grid_view</span>
             <span>Tools</span>
         </div>
         <div class="nav-item online-only" id="nav-scan" onclick="openTool('scanner.html', 'Scanner')">
-            <span class="material-symbols-outlined">photo_camera</span>
+            <span class="material-symbols-rounded">qr_code_scanner</span>
             <span>Scan</span>
         </div>
         <div class="nav-item" onclick="switchTab('settings')" id="nav-settings">
-            <span class="material-symbols-outlined">settings</span>
+            <span class="material-symbols-rounded">settings</span>
             <span>Settings</span>
         </div>
     </div>
@@ -468,17 +525,18 @@
     <!-- --- TOOL IFRAME OVERLAY --- -->
     <div id="tool-iframe-container">
         <div class="iframe-header">
-            <span class="material-symbols-outlined close-tool-btn" onclick="closeTool()">keyboard_arrow_down</span>
-            <span class="iframe-title" id="iframe-title-text">Tool</span>
+            <div class="iframe-title" id="iframe-title-text">Tool</div>
+            <div class="close-tool-btn" onclick="closeTool()">Home</div>
         </div>
-        <iframe id="app-frame" src="about:blank"></iframe>
+        <iframe id="app-frame" src="about:blank" style="flex:1; border:none; width:100%; height:100%;"></iframe>
     </div>
 
     <!-- --- OFFLINE POPUP --- -->
     <div id="popup-overlay" onclick="this.style.display='none'">
         <div class="popup-content" onclick="event.stopPropagation()">
-            <h3>Unavailable in Offline Mode</h3>
-            <ul style="padding-left: 20px; line-height: 1.6;">
+            <span class="material-symbols-rounded" style="font-size: 40px; color: var(--text-secondary); margin-bottom: 10px;">wifi_off</span>
+            <h3 style="margin-top:0">Offline Unavailable</h3>
+            <ul style="padding-left: 20px; line-height: 1.6; font-size: 14px; text-align:left; color:var(--text-secondary); margin-bottom:20px;">
                 <li>Word Finder</li>
                 <li>Translator</li>
                 <li>Spell Checker</li>
@@ -488,7 +546,7 @@
                 <li>HTML Writer (AI)</li>
                 <li>All Collaboration Tools</li>
             </ul>
-            <button onclick="document.getElementById('popup-overlay').style.display='none'" style="width:100%; padding:10px; margin-top:15px; background:#eee; border:none; border-radius:8px;">Close</button>
+            <button onclick="document.getElementById('popup-overlay').style.display='none'" style="width:100%; padding:14px; background:var(--bg-body); color:var(--primary-color); border:none; border-radius:12px; font-weight:600; font-size:16px;">Close</button>
         </div>
     </div>
 
@@ -497,7 +555,6 @@
         const BASE_URL = "https://mahi902.github.io/DocuWritePro/";
         const TEMPLATE_JSON_URL = BASE_URL + "temp.json";
 
-        // Tool Database
         const toolsDB = [
             // Document Editing
             { name: "Editor", url: "document-writer.html", cat: "Document Editing", icon: "edit" },
@@ -531,7 +588,6 @@
             { name: "Share File", url: "docudrop.html", cat: "Document Editing", icon: "file_upload", onlineOnly: true },
             { name: "Text Scanner", url: "text-extractor.html", cat: "Document Editing", icon: "document_scanner", onlineOnly: true },
             { name: "Key Test", url: "keyboard-click-test.html", cat: "Document Editing", icon: "keyboard" },
-
             // Code Editing
             { name: "Frontend IDE", url: "frontend-ide.html", cat: "Code Editing", icon: "developer_mode" },
             { name: "HTML Editor", url: "code-playground.html", cat: "Code Editing", icon: "code" },
@@ -541,21 +597,17 @@
             { name: "Splitter", url: "html-splitter.html", cat: "Code Editing", icon: "integration_instructions" },
             { name: "GoTo Code", url: "goto-code.html", cat: "Code Editing", icon: "merge" },
             { name: "Snipper", url: "code-snipper.html", cat: "Code Editing", icon: "content_cut" },
-
             // Image Editing
             { name: "Img Editor", url: "image-editor.html", cat: "Image Editing", icon: "collections" },
             { name: "Attrib Edit", url: "atbedt.html", cat: "Image Editing", icon: "display_settings" },
             { name: "Draw", url: "draw.html", cat: "Image Editing", icon: "brush" },
-
-            // Collaboration (Online Only Category)
+            // Collaboration
             { name: "Collab Editor", url: "collab-document-editor.html", cat: "Collaboration", icon: "group", onlineOnly: true },
             { name: "Text", url: "connect1.html", cat: "Collaboration", icon: "chat", onlineOnly: true },
             { name: "Call", url: "connect.html", cat: "Collaboration", icon: "call", onlineOnly: true },
         ];
 
         // --- 2. CORE LOGIC ---
-        
-        // Navigation
         function switchTab(tabId) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -565,83 +617,57 @@
             
             if (tabId === 'home') {
                 renderRecents();
-                checkTemplateVisibility(); // Check templates whenever we go home
+                checkTemplateVisibility();
             }
             if (tabId === 'tools') renderTools();
         }
 
-        // Online/Offline Detection
         function updateOnlineStatus() {
             const isOnline = navigator.onLine;
             document.body.className = isOnline ? 'online' : 'offline';
-            
             if (!isOnline && getCookie('bannerDismissed') === 'true') {
                 document.body.classList.add('banner-dismissed');
             } else {
                 document.body.classList.remove('banner-dismissed');
             }
-            
-            if (document.getElementById('tab-tools').classList.contains('active')) {
-                renderTools();
-            }
+            if (document.getElementById('tab-tools').classList.contains('active')) renderTools();
         }
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
         
-        // --- 3. TOOLS & ANIMATION LOGIC ---
-        
-        // Opening Tool (Slide Up)
+        // --- 3. TOOLS & ANIMATION ---
         function openTool(url, name) {
-            if (name) { 
-                 addToRecents({ name, url, icon: getIconForTool(url) });
-            }
-            
+            if (name) addToRecents({ name, url, icon: getIconForTool(url) });
             const frame = document.getElementById('app-frame');
             const container = document.getElementById('tool-iframe-container');
             document.getElementById('iframe-title-text').textContent = name || 'Tool';
-            
-            // Handle external links for templates vs internal tool links
-            if(!url.startsWith('http')) {
-               // Internal tool, assumes relative to app or same dir
-            }
-
             frame.src = url;
-            
-            // Animation Trigger
             container.classList.add('visible');
         }
 
-        // Closing Tool (Slide Down + Clean up)
+        // UPDATED: Closing Animation Logic
         function closeTool() {
             const container = document.getElementById('tool-iframe-container');
             const frame = document.getElementById('app-frame');
-            
-            // 1. Start Slide Down Animation
+            // Remove visible class -> CSS transforms Y back to 100% (slides down)
             container.classList.remove('visible');
-            
-            // 2. Wait for animation (300ms) then clear source
-            setTimeout(() => {
-                frame.src = 'about:blank';
-            }, 300);
+            // Clear iframe after transition completes to save memory
+            setTimeout(() => { frame.src = 'about:blank'; }, 400); 
         }
 
         let currentSort = 'All';
-
         function renderTools() {
             const container = document.getElementById('tools-list-container');
             const searchTerm = document.getElementById('tool-search').value.toLowerCase();
             const isOnline = navigator.onLine;
-            
             container.innerHTML = '';
             
             const categories = {};
-            
             toolsDB.forEach(tool => {
                 if (!isOnline && tool.onlineOnly) return;
                 if (!isOnline && tool.cat === "Collaboration") return;
                 if (searchTerm && !tool.name.toLowerCase().includes(searchTerm)) return;
                 if (currentSort !== 'All' && tool.cat !== currentSort) return;
-
                 if (!categories[tool.cat]) categories[tool.cat] = [];
                 categories[tool.cat].push(tool);
             });
@@ -650,42 +676,32 @@
                 const catDiv = document.createElement('div');
                 catDiv.className = 'tool-category';
                 catDiv.innerHTML = `<h3>${catName}</h3>`;
-                
                 const gridDiv = document.createElement('div');
                 gridDiv.className = 'tools-grid';
-                
                 tools.forEach(tool => {
                     const card = document.createElement('div');
                     card.className = 'tool-card ' + (tool.onlineOnly ? 'online-only' : '');
-                    card.innerHTML = `<span class="material-symbols-outlined">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
+                    card.innerHTML = `<span class="material-symbols-rounded">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
                     card.onclick = () => openTool(tool.url, tool.name);
                     gridDiv.appendChild(card);
                 });
-                
                 catDiv.appendChild(gridDiv);
                 container.appendChild(catDiv);
             }
         }
-
         document.getElementById('tool-search').addEventListener('keyup', renderTools);
-        
         document.getElementById('sort-trigger').addEventListener('click', () => {
             const sorts = ['All', 'Document Editing', 'Image Editing', 'Code Editing', 'Collaboration'];
-            let idx = sorts.indexOf(currentSort);
-            idx = (idx + 1) % sorts.length;
-            currentSort = sorts[idx];
-            alert(`Sorting by: ${currentSort}`);
+            currentSort = sorts[(sorts.indexOf(currentSort) + 1) % sorts.length];
             renderTools();
         });
 
-        // --- 4. TEMPLATE LOGIC (Sugarcane) ---
+        // --- 4. TEMPLATE LOGIC ---
         let allTemplates = [];
         let templatesLoaded = false;
-
         function checkTemplateVisibility() {
             const setting = localStorage.getItem('def_doc');
             const container = document.getElementById('templates-section');
-            
             if (setting === 'sugarcane') {
                 container.style.display = 'block';
                 if (!templatesLoaded) fetchTemplates();
@@ -693,65 +709,45 @@
                 container.style.display = 'none';
             }
         }
-
         async function fetchTemplates() {
             try {
-                // If offline, this might fail unless cached. 
-                // In production, you'd cache this JSON in SW or store in localStorage
                 const resp = await fetch(TEMPLATE_JSON_URL);
                 const data = await resp.json();
                 allTemplates = data.templates;
                 templatesLoaded = true;
-                renderTemplates(5); // Show first 5
+                renderTemplates(5);
             } catch (e) {
-                console.error("Failed to load templates", e);
-                document.getElementById('templates-grid').innerHTML = '<div style="grid-column:1/-1;text-align:center;font-size:12px;color:#999">Could not load templates. Check connection.</div>';
+                document.getElementById('templates-grid').innerHTML = '<div style="padding:20px;font-size:12px;color:#999">Offline</div>';
             }
         }
-
         function renderTemplates(limit) {
             const grid = document.getElementById('templates-grid');
             grid.innerHTML = '';
-            
             const count = limit === -1 ? allTemplates.length : Math.min(allTemplates.length, limit);
-            
             for (let i = 0; i < count; i++) {
                 const t = allTemplates[i];
-                // Construct full URLs
                 const imgUrl = t.Image.startsWith('http') ? t.Image : BASE_URL + t.Image;
                 const linkUrl = t.Link.startsWith('http') ? t.Link : BASE_URL + t.Link;
-                
                 const card = document.createElement('div');
                 card.className = 'template-card';
-                card.innerHTML = `
-                    <img src="${imgUrl}" class="template-img" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='">
-                    <div class="template-name">${t.Name}</div>
-                `;
+                card.innerHTML = `<img src="${imgUrl}" class="template-img" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='"><div class="template-name">${t.Name}</div>`;
                 card.onclick = () => openTool(linkUrl, t.Name);
                 grid.appendChild(card);
             }
-
-            // Show All Button
             if (limit !== -1 && allTemplates.length > limit) {
                 const btn = document.createElement('div');
                 btn.className = 'show-all-templates-btn';
-                btn.innerText = `Show All Templates (${allTemplates.length})`;
-                btn.onclick = () => renderTemplates(-1); // -1 means all
+                btn.innerText = `View All`;
+                btn.onclick = () => renderTemplates(-1);
                 grid.appendChild(btn);
             }
         }
 
-
-        // --- 5. RECENT TOOLS & UTILS ---
+        // --- 5. RECENTS ---
         function getIconForTool(url) {
-            // Check toolsDB
             const tool = toolsDB.find(t => t.url === url);
-            if (tool) return tool.icon;
-            // Check templates (if url is one of the templates)
-            if (url.includes('templates')) return 'description';
-            return 'extension';
+            return tool ? tool.icon : (url.includes('templates') ? 'description' : 'extension');
         }
-
         function addToRecents(toolObj) {
             let recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
             recents = recents.filter(t => t.url !== toolObj.url);
@@ -759,193 +755,215 @@
             if (recents.length > 7) recents.length = 7;
             localStorage.setItem('recentTools', JSON.stringify(recents));
         }
-
         function renderRecents() {
             const grid = document.getElementById('recent-grid');
             const recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
-            
+            grid.innerHTML = '';
             if (recents.length === 0) {
-                grid.innerHTML = '<div class="recent-placeholder">No recent tools used</div>';
+                grid.innerHTML = '<div class="recent-placeholder"></div>';
                 return;
             }
-            
-            grid.innerHTML = '';
             recents.forEach(tool => {
                 const card = document.createElement('div');
                 card.className = 'tool-card';
-                card.innerHTML = `<span class="material-symbols-outlined">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
+                card.innerHTML = `<span class="material-symbols-rounded">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
                 card.onclick = () => openTool(tool.url, tool.name);
                 grid.appendChild(card);
             });
         }
-
         function clearRecents() {
             localStorage.removeItem('recentTools');
             renderRecents();
         }
 
-        // --- 6. SETTINGS & APP RESET ---
-        const btnNewDoc = document.getElementById('btn-new-doc');
-        const btnNewImg = document.getElementById('btn-new-img');
-        const btnNewCode = document.getElementById('btn-new-code');
-        const sDoc = document.getElementById('setting-doc-editor');
-        const sImg = document.getElementById('setting-img-editor');
-        const sCode = document.getElementById('setting-code-editor');
-
-        function loadSettings() {
-            sDoc.value = localStorage.getItem('def_doc') || 'default';
-            sImg.value = localStorage.getItem('def_img') || 'default';
-            sCode.value = localStorage.getItem('def_code') || 'default';
+        // --- 6. SETTINGS & CUSTOM PICKER LOGIC ---
+        
+        // Picker Globals
+        let activePickerCallback = null;
+        
+        function openPicker(title, options, selectedValue, onSelect) {
+            const overlay = document.getElementById('picker-overlay');
+            const container = document.getElementById('picker-options-container');
+            document.getElementById('picker-title').textContent = title;
+            
+            container.innerHTML = '';
+            
+            options.forEach(opt => {
+                const el = document.createElement('div');
+                el.className = `picker-option ${opt.value === selectedValue ? 'selected' : ''}`;
+                el.innerHTML = `<span>${opt.label}</span><span class="material-symbols-rounded picker-check">check</span>`;
+                el.onclick = () => {
+                    closePicker();
+                    onSelect(opt.value, opt.label);
+                };
+                container.appendChild(el);
+            });
+            
+            overlay.classList.add('open');
+            activePickerCallback = onSelect;
         }
 
-        function saveSettings() {
-            localStorage.setItem('def_doc', sDoc.value);
-            localStorage.setItem('def_img', sImg.value);
-            localStorage.setItem('def_code', sCode.value);
-            // Refresh home to check for templates setting change
-            if(document.getElementById('tab-home').classList.contains('active')) {
-                checkTemplateVisibility();
+        function closePicker() {
+            document.getElementById('picker-overlay').classList.remove('open');
+            activePickerCallback = null;
+        }
+
+        // Editor Settings Map
+        const editorMap = {
+            doc: { 
+                key: 'def_doc', displayId: 'display-doc-editor',
+                options: [{label: 'Default (Writer)', value: 'default'}, {label: 'Sugarcane (Advanced)', value: 'sugarcane'}]
+            },
+            img: { 
+                key: 'def_img', displayId: 'display-img-editor',
+                options: [{label: 'Basic Editor', value: 'default'}, {label: 'Attribution Editor', value: 'attribution'}]
+            },
+            code: { 
+                key: 'def_code', displayId: 'display-code-editor',
+                options: [{label: 'HTML Editor', value: 'default'}, {label: 'Frontend IDE', value: 'ide'}]
+            }
+        };
+
+        function openEditorPicker(type) {
+            const map = editorMap[type];
+            const current = localStorage.getItem(map.key) || 'default';
+            
+            openPicker(
+                document.querySelector(`#${map.displayId}`).parentElement.previousElementSibling.textContent, 
+                map.options, 
+                current,
+                (val, label) => {
+                    localStorage.setItem(map.key, val);
+                    document.getElementById(map.displayId).textContent = label.split(' (')[0];
+                    if (type === 'doc') {
+                        // Re-check templates if logic changes
+                        if(document.getElementById('tab-home').classList.contains('active')) checkTemplateVisibility();
+                    }
+                }
+            );
+        }
+
+        // --- 7. THEME LOGIC ---
+        function initTheme() {
+            const saved = localStorage.getItem('theme_pref') || 'system';
+            applyTheme(saved);
+        }
+
+        function applyTheme(theme) {
+            const html = document.documentElement;
+            const display = document.getElementById('display-theme');
+            
+            // UI Text Update
+            if(display) display.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+            
+            // Logic
+            if (theme === 'dark') {
+                html.setAttribute('data-theme', 'dark');
+            } else if (theme === 'light') {
+                html.setAttribute('data-theme', 'light'); // Explicit light
+            } else {
+                // System
+                html.removeAttribute('data-theme');
+                // Optional: ensure system changes are tracked immediately
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    // System is dark, remove attribute lets @media handle it? 
+                    // My CSS uses html[data-theme='dark'] override. 
+                    // If system is dark, I need to make sure the dark overrides apply if I want to support it without media queries in CSS
+                    // BUT, my CSS setup uses explicit class for dark. 
+                    // So for System: we need to detect.
+                    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                        html.setAttribute('data-theme', 'dark');
+                    } else {
+                        html.removeAttribute('data-theme');
+                    }
+                }
             }
         }
+        
+        // Listen for system changes if on system mode
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+            if ((localStorage.getItem('theme_pref') || 'system') === 'system') {
+                document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            }
+        });
 
-        [sDoc, sImg, sCode].forEach(el => el.addEventListener('change', saveSettings));
+        function openThemePicker() {
+            const current = localStorage.getItem('theme_pref') || 'system';
+            openPicker('Theme', [
+                {label: 'System', value: 'system'},
+                {label: 'Light', value: 'light'},
+                {label: 'Dark', value: 'dark'}
+            ], current, (val) => {
+                localStorage.setItem('theme_pref', val);
+                applyTheme(val);
+            });
+        }
 
-        btnNewDoc.onclick = () => {
+        // --- 8. INITIALIZATION ---
+        function loadSettings() {
+            // Editors
+            for(let k in editorMap) {
+                const map = editorMap[k];
+                const val = localStorage.getItem(map.key) || 'default';
+                const opt = map.options.find(o => o.value === val);
+                document.getElementById(map.displayId).textContent = opt ? opt.label.split(' (')[0] : 'Default';
+            }
+            // Theme
+            initTheme();
+        }
+
+        // New Item Buttons
+        document.getElementById('btn-new-doc').onclick = () => {
             const val = localStorage.getItem('def_doc');
             openTool(val === 'sugarcane' ? 'sceditor.html' : 'document-writer.html', 'New Document');
         }
-        btnNewImg.onclick = () => {
+        document.getElementById('btn-new-img').onclick = () => {
             const val = localStorage.getItem('def_img');
             openTool(val === 'attribution' ? 'atbedt.html' : 'image-editor.html', 'New Image');
         }
-        btnNewCode.onclick = () => {
+        document.getElementById('btn-new-code').onclick = () => {
             const val = localStorage.getItem('def_code');
             openTool(val === 'ide' ? 'frontend-ide.html' : 'code-playground.html', 'New Code');
         }
 
-        // UPDATE APP FUNCTION
         document.getElementById('btn-update-app').onclick = async () => {
-            if(!confirm("This will clear all offline data and restart the setup process. Continue?")) return;
-            
-            document.getElementById('btn-update-app').textContent = "Updating...";
-            
-            // 1. Clear LocalStorage flags
-            localStorage.removeItem('app_setup_done');
-            localStorage.removeItem('docuwrite_forced_preload_done');
-            
-            // 2. Unregister Service Workers
+            if(!confirm("Reset app and clear offline cache?")) return;
+            localStorage.clear();
             if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    await registration.unregister();
-                }
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (let r of regs) await r.unregister();
             }
-            
-            // 3. Delete Caches
             if ('caches' in window) {
-                const names = await caches.keys();
-                await Promise.all(names.map(name => caches.delete(name)));
+                const keys = await caches.keys();
+                await Promise.all(keys.map(k => caches.delete(k)));
             }
-            
-            // 4. Reload
             location.reload();
         };
 
-
-        // --- 7. UTILS ---
-        function showOfflinePopup() {
-            document.getElementById('popup-overlay').style.display = 'flex';
-        }
-
-        function dismissBanner() {
-            setCookie('bannerDismissed', 'true', 365);
-            updateOnlineStatus();
-        }
-
-        function setCookie(name, value, days) {
-            const d = new Date();
-            d.setTime(d.getTime() + (days*24*60*60*1000));
-            document.cookie = name + "=" + value + ";" + "expires="+ d.toUTCString() + ";path=/";
-        }
-        
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for(let i=0;i < ca.length;i++) {
-                let c = ca[i];
-                while (c.charAt(0)==' ') c = c.substring(1,c.length);
-                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
-            }
-            return null;
-        }
-
-        // --- 8. SETUP & INITIALIZATION ---
-        
-        // Passive Ripple (Safe Click Effect)
-        document.addEventListener('click', function(e) {
-            const target = e.target.closest('.nav-item, .action-btn, .tool-card, .setup-btn, .template-card, .btn-danger');
-            if (!target) return;
-
-            const ripple = document.createElement('span');
-            ripple.className = 'ripple';
-            target.style.position = (target.style.position === 'absolute' || target.style.position === 'fixed') ? target.style.position : 'relative';
-            target.style.overflow = 'hidden';
-            target.appendChild(ripple);
-            
-            const rect = target.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-            
-            setTimeout(() => ripple.remove(), 600);
-        });
-
+        // Setup Overlay
         const setupOverlay = document.getElementById('setup-overlay');
-        const startSetupBtn = document.getElementById('start-setup-btn');
-        const setupStatus = document.getElementById('setup-status');
-
         if (localStorage.getItem('app_setup_done') === 'true') {
             setupOverlay.classList.add('hidden');
         }
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
-        }
-
-        // Forced Preload Function (Warm up)
-        async function warmUpResources() {
-            const ASSET_LINKS = [
-                // Minimal core set for fast startup + dependencies
-                "document-writer.html", "viewer.html", "markup.html", "sceditor.html"
-            ];
-            // We can add the huge list here if we want the full experience cached
-            // For brevity in this consolidated code, I'm keeping the core logic:
-            
-            // Simulate progress for UI
-            const total = 10; 
-            for (let i = 0; i <= total; i++) {
-                if (setupStatus) setupStatus.textContent = `Warming up tools: ${Math.round((i/total)*100)}%`;
-                await new Promise(r => setTimeout(r, 100));
+        document.getElementById('start-setup-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('start-setup-btn');
+            const status = document.getElementById('setup-status');
+            btn.disabled = true;
+            for (let i = 0; i <= 10; i++) {
+                status.textContent = `Preparing environment... ${i*10}%`;
+                await new Promise(r => setTimeout(r, 150));
             }
-
             localStorage.setItem('app_setup_done', 'true');
-            setTimeout(() => {
-                setupOverlay.classList.add('hidden');
-                switchTab('home');
-            }, 500);
-        }
-
-        startSetupBtn.addEventListener('click', () => {
-            setupStatus.textContent = "Initializing Service Worker...";
-            startSetupBtn.disabled = true;
-
-            // Trigger caching in SW (if we had complex SW logic) or just start warmup
-            // Since we merged the logic, we'll just run warmup which sets the flag
-            warmUpResources();
+            setupOverlay.classList.add('hidden');
         });
 
-        // Initialize
+        // Utils
+        function showOfflinePopup() { document.getElementById('popup-overlay').style.display = 'flex'; }
+        function dismissBanner() { setCookie('bannerDismissed', 'true', 365); updateOnlineStatus(); }
+        function setCookie(n, v, d) { const date = new Date(); date.setTime(date.getTime() + (d*24*60*60*1000)); document.cookie = n + "=" + v + ";expires="+ date.toUTCString() + ";path=/"; }
+        function getCookie(n) { const v = "; " + document.cookie; const p = v.split("; " + n + "="); if (p.length == 2) return p.pop().split(";").shift(); }
+
+        // Start
         loadSettings();
         updateOnlineStatus();
         switchTab('home');

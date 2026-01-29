@@ -347,6 +347,28 @@
         .online-only { opacity: 1; }
         body.offline .online-only { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
 
+        /* --- CACHING IFRAME (Hidden) --- */
+        #caching-iframe {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+            border: none;
+        }
+
+        /* --- RIPPLE EFFECT --- */
+        .ripple {
+            position: absolute;
+            background: rgba(26, 115, 232, 0.15);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: rippleEffect 0.5s linear;
+            pointer-events: none;
+        }
+        @keyframes rippleEffect {
+            to { transform: scale(4); opacity: 0; }
+        }
     </style>
 </head>
 <body class="online">
@@ -358,10 +380,13 @@
         </div>
         <h2 style="font-size: 28px; margin-bottom: 12px;">Welcome to<br>DocuWrite Pro</h2>
         <p style="font-size: 17px; color: var(--text-secondary); line-height: 1.5; max-width: 300px;">
-            We need to download some tools to make the app work offline. This only happens once.
+            We're downloading all tools for offline use. This only happens once.
         </p>
         <button id="start-setup-btn" class="setup-btn">Get Started</button>
         <p id="setup-status" style="margin-top: 24px; font-size: 13px; color: var(--text-secondary); font-weight: 500;"></p>
+        <div id="caching-progress" style="margin-top: 15px; width: 200px; height: 4px; background: var(--separator); border-radius: 2px; overflow: hidden;">
+            <div id="progress-bar" style="width: 0%; height: 100%; background: var(--primary-color); transition: width 0.3s;"></div>
+        </div>
     </div>
 
     <!-- --- CUSTOM PICKER (BOTTOM SHEET) --- -->
@@ -550,11 +575,15 @@
         </div>
     </div>
 
+    <!-- --- HIDDEN IFRAME FOR PAGE CACHING --- -->
+    <iframe id="caching-iframe" title="Caching Frame"></iframe>
+
     <script>
         // --- 1. DATA & CONFIG ---
         const BASE_URL = "https://mahi902.github.io/DocuWritePro/";
         const TEMPLATE_JSON_URL = BASE_URL + "temp.json";
 
+        // Tool Database (from app 10)
         const toolsDB = [
             // Document Editing
             { name: "Editor", url: "document-writer.html", cat: "Document Editing", icon: "edit" },
@@ -607,7 +636,7 @@
             { name: "Call", url: "connect.html", cat: "Collaboration", icon: "call", onlineOnly: true },
         ];
 
-        // --- 2. CORE LOGIC ---
+        // --- 2. CORE LOGIC (From app 10) ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -635,7 +664,7 @@
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
         
-        // --- 3. TOOLS & ANIMATION ---
+        // --- 3. TOOLS & ANIMATION (From app 10) ---
         function openTool(url, name) {
             if (name) addToRecents({ name, url, icon: getIconForTool(url) });
             const frame = document.getElementById('app-frame');
@@ -645,14 +674,18 @@
             container.classList.add('visible');
         }
 
-        // UPDATED: Closing Animation Logic
+        // Closing Tool (Slide Down + Clean up)
         function closeTool() {
             const container = document.getElementById('tool-iframe-container');
             const frame = document.getElementById('app-frame');
-            // Remove visible class -> CSS transforms Y back to 100% (slides down)
+            
+            // 1. Start Slide Down Animation
             container.classList.remove('visible');
-            // Clear iframe after transition completes to save memory
-            setTimeout(() => { frame.src = 'about:blank'; }, 400); 
+            
+            // 2. Wait for animation (300ms) then clear source
+            setTimeout(() => {
+                frame.src = 'about:blank';
+            }, 300);
         }
 
         let currentSort = 'All';
@@ -696,7 +729,7 @@
             renderTools();
         });
 
-        // --- 4. TEMPLATE LOGIC ---
+        // --- 4. TEMPLATE LOGIC (From app 10) ---
         let allTemplates = [];
         let templatesLoaded = false;
         function checkTemplateVisibility() {
@@ -743,7 +776,7 @@
             }
         }
 
-        // --- 5. RECENTS ---
+        // --- 5. RECENTS (From app 10) ---
         function getIconForTool(url) {
             const tool = toolsDB.find(t => t.url === url);
             return tool ? tool.icon : (url.includes('templates') ? 'description' : 'extension');
@@ -760,7 +793,7 @@
             const recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
             grid.innerHTML = '';
             if (recents.length === 0) {
-                grid.innerHTML = '<div class="recent-placeholder"></div>';
+                grid.innerHTML = '<div class="recent-placeholder">No recent tools used</div>';
                 return;
             }
             recents.forEach(tool => {
@@ -776,9 +809,7 @@
             renderRecents();
         }
 
-        // --- 6. SETTINGS & CUSTOM PICKER LOGIC ---
-        
-        // Picker Globals
+        // --- 6. SETTINGS & CUSTOM PICKER LOGIC (Adapted from app 11) ---
         let activePickerCallback = null;
         
         function openPicker(title, options, selectedValue, onSelect) {
@@ -808,7 +839,7 @@
             activePickerCallback = null;
         }
 
-        // Editor Settings Map
+        // Editor Settings Map (from app 11)
         const editorMap = {
             doc: { 
                 key: 'def_doc', displayId: 'display-doc-editor',
@@ -836,14 +867,13 @@
                     localStorage.setItem(map.key, val);
                     document.getElementById(map.displayId).textContent = label.split(' (')[0];
                     if (type === 'doc') {
-                        // Re-check templates if logic changes
                         if(document.getElementById('tab-home').classList.contains('active')) checkTemplateVisibility();
                     }
                 }
             );
         }
 
-        // --- 7. THEME LOGIC ---
+        // --- 7. THEME LOGIC (From app 11) ---
         function initTheme() {
             const saved = localStorage.getItem('theme_pref') || 'system';
             applyTheme(saved);
@@ -853,34 +883,22 @@
             const html = document.documentElement;
             const display = document.getElementById('display-theme');
             
-            // UI Text Update
             if(display) display.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
             
-            // Logic
             if (theme === 'dark') {
                 html.setAttribute('data-theme', 'dark');
             } else if (theme === 'light') {
-                html.setAttribute('data-theme', 'light'); // Explicit light
+                html.setAttribute('data-theme', 'light');
             } else {
-                // System
                 html.removeAttribute('data-theme');
-                // Optional: ensure system changes are tracked immediately
                 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    // System is dark, remove attribute lets @media handle it? 
-                    // My CSS uses html[data-theme='dark'] override. 
-                    // If system is dark, I need to make sure the dark overrides apply if I want to support it without media queries in CSS
-                    // BUT, my CSS setup uses explicit class for dark. 
-                    // So for System: we need to detect.
-                    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                        html.setAttribute('data-theme', 'dark');
-                    } else {
-                        html.removeAttribute('data-theme');
-                    }
+                    html.setAttribute('data-theme', 'dark');
+                } else {
+                    html.removeAttribute('data-theme');
                 }
             }
         }
         
-        // Listen for system changes if on system mode
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
             if ((localStorage.getItem('theme_pref') || 'system') === 'system') {
                 document.documentElement.setAttribute('data-theme', e.matches ? 'dark' : 'light');
@@ -899,7 +917,90 @@
             });
         }
 
-        // --- 8. INITIALIZATION ---
+        // --- 8. PAGE CACHING FUNCTIONALITY (NEW) ---
+        async function cacheAllPages() {
+            const statusEl = document.getElementById('setup-status');
+            const progressBar = document.getElementById('progress-bar');
+            const cachingIframe = document.getElementById('caching-iframe');
+            const totalTools = toolsDB.length;
+            let cachedCount = 0;
+            
+            // Collect all unique URLs to cache
+            const urlsToCache = [];
+            
+            // Add all tool URLs
+            toolsDB.forEach(tool => {
+                if (!tool.onlineOnly) { // Only cache offline-capable tools
+                    urlsToCache.push(tool.url);
+                }
+            });
+            
+            // Add core pages
+            const corePages = [
+                'document-writer.html',
+                'image-editor.html',
+                'code-playground.html',
+                'sceditor.html',
+                'atbedt.html',
+                'frontend-ide.html'
+            ];
+            
+            corePages.forEach(page => {
+                if (!urlsToCache.includes(page)) {
+                    urlsToCache.push(page);
+                }
+            });
+            
+            // Cache each page in the hidden iframe
+            for (let i = 0; i < urlsToCache.length; i++) {
+                const url = urlsToCache[i];
+                cachedCount++;
+                
+                // Update progress
+                const progressPercent = Math.round((cachedCount / urlsToCache.length) * 100);
+                progressBar.style.width = `${progressPercent}%`;
+                statusEl.textContent = `Caching: ${url} (${cachedCount}/${urlsToCache.length})`;
+                
+                // Load page in hidden iframe to trigger caching
+                cachingIframe.src = url;
+                
+                // Wait for page to load (adjust timeout as needed)
+                await new Promise(resolve => {
+                    setTimeout(resolve, 300); // 300ms per page
+                });
+                
+                // Clear iframe src to free memory
+                cachingIframe.src = 'about:blank';
+            }
+            
+            // Also try to cache templates if available
+            try {
+                const resp = await fetch(TEMPLATE_JSON_URL);
+                const data = await resp.json();
+                if (data.templates && data.templates.length > 0) {
+                    statusEl.textContent = 'Caching templates...';
+                    // Cache first few template pages
+                    const templateLimit = Math.min(5, data.templates.length);
+                    for (let i = 0; i < templateLimit; i++) {
+                        const t = data.templates[i];
+                        const linkUrl = t.Link.startsWith('http') ? t.Link : BASE_URL + t.Link;
+                        cachingIframe.src = linkUrl;
+                        await new Promise(resolve => setTimeout(resolve, 200));
+                    }
+                }
+            } catch (e) {
+                console.log('Templates not available for caching');
+            }
+            
+            // Final cleanup
+            cachingIframe.src = 'about:blank';
+            statusEl.textContent = 'All tools cached! App is ready for offline use.';
+            progressBar.style.width = '100%';
+            
+            return true;
+        }
+
+        // --- 9. SETUP & INITIALIZATION ---
         function loadSettings() {
             // Editors
             for(let k in editorMap) {
@@ -926,6 +1027,7 @@
             openTool(val === 'ide' ? 'frontend-ide.html' : 'code-playground.html', 'New Code');
         }
 
+        // UPDATE APP FUNCTION (from app 10)
         document.getElementById('btn-update-app').onclick = async () => {
             if(!confirm("Reset app and clear offline cache?")) return;
             localStorage.clear();
@@ -940,34 +1042,77 @@
             location.reload();
         };
 
-        // Setup Overlay
+        // Setup Overlay (Enhanced with caching)
         const setupOverlay = document.getElementById('setup-overlay');
         if (localStorage.getItem('app_setup_done') === 'true') {
             setupOverlay.classList.add('hidden');
         }
+        
         document.getElementById('start-setup-btn').addEventListener('click', async () => {
             const btn = document.getElementById('start-setup-btn');
             const status = document.getElementById('setup-status');
             btn.disabled = true;
-            for (let i = 0; i <= 10; i++) {
-                status.textContent = `Preparing environment... ${i*10}%`;
-                await new Promise(r => setTimeout(r, 150));
+            btn.textContent = "Caching...";
+            
+            // Step 1: Register Service Worker
+            status.textContent = "Initializing Service Worker...";
+            if ('serviceWorker' in navigator) {
+                try {
+                    await navigator.serviceWorker.register('sw.js');
+                } catch (e) {
+                    console.log('Service worker registration failed:', e);
+                }
             }
+            
+            // Step 2: Cache all pages
+            await cacheAllPages();
+            
+            // Step 3: Mark setup as complete
             localStorage.setItem('app_setup_done', 'true');
+            
+            // Step 4: Show completion and hide overlay
+            status.textContent = "Setup complete! Launching app...";
+            await new Promise(resolve => setTimeout(resolve, 1000));
             setupOverlay.classList.add('hidden');
+            
+            // Initialize app
+            loadSettings();
+            updateOnlineStatus();
+            switchTab('home');
         });
 
-        // Utils
+        // --- 10. UTILS (From app 10) ---
         function showOfflinePopup() { document.getElementById('popup-overlay').style.display = 'flex'; }
         function dismissBanner() { setCookie('bannerDismissed', 'true', 365); updateOnlineStatus(); }
         function setCookie(n, v, d) { const date = new Date(); date.setTime(date.getTime() + (d*24*60*60*1000)); document.cookie = n + "=" + v + ";expires="+ date.toUTCString() + ";path=/"; }
         function getCookie(n) { const v = "; " + document.cookie; const p = v.split("; " + n + "="); if (p.length == 2) return p.pop().split(";").shift(); }
 
-        // Start
-        loadSettings();
-        updateOnlineStatus();
-        switchTab('home');
+        // --- 11. RIPPLE EFFECT (From app 10) ---
+        document.addEventListener('click', function(e) {
+            const target = e.target.closest('.nav-item, .action-btn, .tool-card, .setup-btn, .template-card, .btn-danger, .setting-row');
+            if (!target) return;
 
+            const ripple = document.createElement('span');
+            ripple.className = 'ripple';
+            target.style.position = (target.style.position === 'absolute' || target.style.position === 'fixed') ? target.style.position : 'relative';
+            target.style.overflow = 'hidden';
+            target.appendChild(ripple);
+            
+            const rect = target.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+            ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+            
+            setTimeout(() => ripple.remove(), 600);
+        });
+
+        // --- 12. START APP ---
+        if (localStorage.getItem('app_setup_done') === 'true') {
+            loadSettings();
+            updateOnlineStatus();
+            switchTab('home');
+        }
     </script>
 </body>
 </html>

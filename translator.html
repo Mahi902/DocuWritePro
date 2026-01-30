@@ -395,5 +395,73 @@
           });
       });
     </script>
+<!-- Theme Toggle Button -->
+<style>
+  #themeToggle {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 9999;
+    background: rgba(255,255,255,0.7);
+    backdrop-filter: blur(4px);
+    padding: 8px 11px;
+    border-radius: 50%;
+    transition: 0.3s ease;
+  }
+
+  body.dark-mode {
+    filter: invert(1) hue-rotate(180deg);
+  }
+
+  body.dark-mode img,
+  body.dark-mode iframe,
+  body.dark-mode video,
+  body.dark-mode svg {
+    filter: invert(1) hue-rotate(180deg);
+  }
+</style>
+
+<div id="themeToggle">
+  <i class="fas fa-adjust"></i>
+</div>
+
+<script>
+  function setCookie(name, value, days) {
+    let d = new Date();
+    d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+    document.cookie = `${name}=${value}; expires=${d.toUTCString()}; path=/`;
+  }
+
+  function getCookie(name) {
+    const cookies = document.cookie.split(";").map(c => c.trim());
+    for (let c of cookies) {
+      if (c.startsWith(name + "=")) {
+        return c.substring(name.length + 1);
+      }
+    }
+    return "";
+  }
+
+  // Apply saved theme on load
+  if (getCookie("theme") === "dark") {
+    document.body.classList.add("dark-mode");
+  }
+
+  const toggleBtn = document.getElementById("themeToggle");
+
+  toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark-mode");
+
+    // Save theme preference
+    if (document.body.classList.contains("dark-mode")) {
+      setCookie("theme", "dark", 365);
+    } else {
+      setCookie("theme", "light", 365);
+    }
+  });
+</script>
+    
   </body>
 </html>

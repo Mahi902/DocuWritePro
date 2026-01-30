@@ -37,7 +37,8 @@ self.addEventListener('fetch', (event) => {
             return fetch(event.request).catch(() => {
                 // Optional: Return a specific offline page if network fails and not in cache
                 // For now, we rely on the caching logic in message listener
-                return new Response("You are offline and this tool wasn't cached yet.");
+                return new Response("This tool isn’t fully installed yet, so it can’t run offline. Please connect to the internet using Wi-Fi or mobile data and open the tool once.
+It will automatically download everything it needs, and after that, you can use it normally offline.");
             });
         })
     );

@@ -2,1250 +2,849 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Document Signer</title>
-    <meta name="description" content="DocuWrite Pro is an all-in-one online workspace that lets you write, edit, convert, design, and manage documents and digital content instantly—no installation, no complexity.">
-  <meta name="keywords" content="DocuWrite Pro, Mohtadi Azad Mahi, AI writer, document editor, online text tool, GitHub project, DocuWritePro, Document Editor, Document, Editor, PDF, JPG, Edit, Text, Change File Type, File Changer, Format, Format Changer, Office, Docs, A4, Editor, General document editing, Collab, Editing documents together, Document Viewer, Viewing documents, Word Finder, Searching for specific words, Translator, Language translation, Document Signer, Electronically signing documents, Page Number Adder, Adding page numbers to documents, Chart Maker, Creating data charts, Table Maker, Creating tables, Watermark Adder, Adding watermarks to files, Email Writer, Assisting with writing emails, Spell Checker, Checking spelling and grammar, File Extractor, Extracting contents from files, QR Maker, Creating QR codes, ID Card Maker, Designing and creating ID cards, File Zipper, Compressing or zipping files, PDF Converter, Converting files to or from PDF format, Context Field, Analyzing text (e.g., word count, frequency), Gift Card Maker, Creating custom gift cards, Share File, Uploading or sharing a file, Text Extractor, Extracting text from sources (e.g., images), Keyboard Click Test, Testing keyboard functionality, Frontend IDE, Integrated Development Environment for frontend coding, HTML Editor, Editing HTML code, HTML Writer, Writing or generating HTML content, Button Designer, Designing user interface buttons, HTML Splitter, Splitting HTML files or elements, GoTo Code, Navigation feature in an IDE/editor, Code Snipper, Storing or managing code snippets, Image Editor, Editing images, Image Generator, Generating new images, Drawing Board, A simple drawing or sketching tool, HTML, CSS, JS, Online, Fast, Easy, No login, No signup, Free, No credit card required, Mohtadi, Azad, Mahi, Mohtadi Azad, Mohtadi Azad Mahi, mahi902">
-  <meta name="author" content="Mohtadi Azad Mahi">
-  <meta name="robots" content="index, follow">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkbg: '#000000', // Pure black
+                        darksurface: '#121212',
+                        primary: '#3b82f6'
+                    }
+                }
+            }
+        }
+    </script>
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <meta name="theme-color" content="#ffffff">
+    <!-- Google Material Symbols -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 
-  <!-- App & Brand Metadata -->
-  <meta property="og:site_name" content="DocuWrite Pro">
-  <meta name="application-name" content="DocuWrite Pro">
-  <meta name="apple-mobile-web-app-title" content="DocuWrite Pro">
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="DocuWrite Pro — Online Document Editor">
-  <meta property="og:description" content="Edit, format, and export documents easily with DocuWrite Pro by Mohtadi Azad Mahi.">
-  <meta property="og:url" content="https://mahi902.github.io/DocuWritePro/">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DocuWrite Pro — Online Document Editor">
-  <meta name="twitter:description" content="Create, format, and export documents easily with DocuWrite Pro. Built by Mohtadi Azad Mahi.">
-  <meta name="twitter:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-
-  <!-- Structured Data (Google Knowledge Graph) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "DocuWrite Pro",
-    "alternateName": "DocuWrite Pro — Online Document Editor",
-    "url": "https://mahi902.github.io/DocuWritePro/",
-    "creator": {
-      "@type": "Person",
-      "name": "Mohtadi Azad Mahi"
-    }
-  }
-  </script>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
     <style>
-        :root {
-            --primary-color: #4285f4;
-            --primary-light: #e8f0fe;
-            --background: #f8f9fa;
-            --surface: #ffffff;
-            --on-surface: #202124;
-            --on-surface-secondary: #5f6368;
-            --border: #dadce0;
-            --error: #d93025;
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Roboto', Arial, sans-serif;
+        ::-webkit-scrollbar-track {
+            background: transparent;
         }
-
-        body {
-            background-color: var(--background);
-            color: var(--on-surface);
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: var(--surface);
-            border-radius: 8px;
-            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 2px 6px 2px rgba(60,64,67,0.15);
-            padding: 24px;
-        }
-
-        h1 {
-            font-size: 24px;
-            font-weight: 400;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        h1 .material-icons {
-            color: var(--primary-color);
-        }
-
-        .upload-section {
-            border: 2px dashed var(--border);
-            border-radius: 8px;
-            padding: 40px;
-            text-align: center;
-            margin-bottom: 20px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .upload-section:hover {
-            border-color: var(--primary-color);
-            background-color: var(--primary-light);
-        }
-
-        .upload-section input {
-            display: none;
-        }
-
-        .upload-section .material-icons {
-            font-size: 48px;
-            color: var(--on-surface-secondary);
-            margin-bottom: 10px;
-        }
-
-        .upload-section p {
-            color: var(--on-surface-secondary);
-            margin-bottom: 10px;
-        }
-
-        .btn {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
+        ::-webkit-scrollbar-thumb {
+            background: #888;
             border-radius: 4px;
-            padding: 10px 24px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background-color 0.3s;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
         }
 
-        .btn:hover {
-            background-color: #3367d6;
-            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+        /* Prevent text selection while dragging */
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        .btn-outline {
-            background-color: transparent;
-            border: 1px solid var(--border);
-            color: var(--primary-color);
-        }
-
-        .btn-outline:hover {
-            background-color: var(--primary-light);
-        }
-
-        .btn .material-icons {
-            font-size: 18px;
-        }
-
-        .page-selector {
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        .page-thumbnails {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .page-thumbnail {
-            border: 2px solid var(--border);
-            border-radius: 4px;
-            cursor: pointer;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .page-thumbnail img {
-            width: 100px;
-            height: auto;
-            display: block;
-        }
-
-        .page-thumbnail.selected {
-            border-color: var(--primary-color);
-        }
-
-        .page-thumbnail .page-number {
+        /* Signature item styling */
+        .signature-item {
             position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: rgba(0,0,0,0.7);
-            color: white;
-            text-align: center;
-            padding: 2px 0;
-            font-size: 12px;
+            cursor: move;
+            border: 2px dashed #3b82f6;
+            touch-action: none; /* Crucial for mobile drag */
+            z-index: 50;
         }
-
-        .sign-options {
-            display: none;
-            margin-bottom: 20px;
+        .signature-item:hover, .signature-item.active {
+            border-color: #2563eb;
+            background-color: rgba(59, 130, 246, 0.1);
         }
-
-        .tab-buttons {
-            display: flex;
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .tab-btn {
-            padding: 10px 20px;
-            background: none;
-            border: none;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            font-size: 14px;
-            color: var(--on-surface-secondary);
-            transition: all 0.3s;
-        }
-
-        .tab-btn.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .sign-upload {
-            text-align: center;
-            padding: 20px;
-            border: 1px dashed var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        .sign-upload input {
-            display: none;
-        }
-
-        .sign-canvas-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
-        }
-
-        #signCanvas {
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            background-color: white;
-            cursor: crosshair;
-        }
-
-        .color-picker {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .color-option {
-            width: 24px;
-            height: 24px;
+        /* Resize handle */
+        .resize-handle {
+            width: 20px;
+            height: 20px;
+            background-color: #3b82f6;
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
             border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-        }
-
-        .color-option.selected {
-            border-color: var(--on-surface);
-        }
-
-        .editor-container {
+            cursor: nwse-resize;
             display: none;
-            margin-top: 20px;
+            z-index: 51;
         }
-
-        .editor-wrapper {
-            display: flex;
-            gap: 20px;
-        }
-
-        .document-canvas-container {
-            flex: 1;
-            position: relative;
-        }
-
-        #documentCanvas {
-            max-width: 100%;
-            max-height: 80vh;
-            border: 1px solid var(--border);
+        .signature-item:hover .resize-handle, .signature-item.active .resize-handle {
             display: block;
-            margin: 0 auto;
         }
-
-        .sign-properties {
-            width: 250px;
-            border-left: 1px solid var(--border);
-            padding-left: 20px;
-        }
-
-        .property-group {
-            margin-bottom: 20px;
-        }
-
-        .property-group h3 {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 10px;
-            color: var(--on-surface);
-        }
-
-        .slider-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        input[type="range"] {
-            flex: 1;
-        }
-
-        .action-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .error-message {
-            color: var(--error);
-            margin-top: 10px;
-            display: none;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .loading .material-icons {
-            font-size: 48px;
-            color: var(--primary-color);
+        
+        /* Loader */
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #3b82f6;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
         }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Canvas drawing cursor */
+        canvas.drawing-canvas {
+            cursor: crosshair;
+            touch-action: none;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1><span class="material-icons">edit_document</span> Document Signer</h1>
-        
-        <div class="upload-section" id="uploadSection">
-            <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg">
-            <div class="material-icons">cloud_upload</div>
-            <p>Upload a PDF or image file to sign</p>
-            <p>Supported formats: PDF, PNG, JPG</p>
-            <button class="btn" id="uploadBtn">
-                <span class="material-icons">upload</span>
-                Upload Document
+<body class="bg-gray-100 text-gray-900 dark:bg-darkbg dark:text-gray-100 transition-colors duration-200 min-h-screen flex flex-col font-sans">
+
+    <!-- Header Bar -->
+    <header class="h-16 bg-white dark:bg-darkbg border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-4 sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-3xl">ink_pen</span>
+            <h1 class="text-xl font-bold tracking-tight">Document Signer</h1>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- Theme Toggle -->
+            <button id="themeToggle" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors" title="Toggle Theme">
+                <span class="material-symbols-outlined dark:text-yellow-400">light_mode</span>
+            </button>
+            
+            <!-- Import Button -->
+            <button onclick="document.getElementById('fileInput').click()" class="flex items-center gap-2 px-4 py-2 bg-gray-200 dark:bg-gray-800 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-700 transition font-medium text-sm">
+                <span class="material-symbols-outlined text-lg">upload_file</span>
+                Import
+            </button>
+            <input type="file" id="fileInput" class="hidden" multiple accept=".pdf,.jpg,.jpeg,.png">
+
+            <!-- Export Button -->
+            <button id="exportBtn" disabled class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="material-symbols-outlined text-lg">download</span>
+                Export
             </button>
         </div>
+    </header>
 
-        <div class="loading" id="loadingIndicator">
-            <span class="material-icons">autorenew</span>
-            <p>Processing document...</p>
+    <!-- Main Content -->
+    <main class="flex-grow relative overflow-hidden flex flex-col" id="mainContainer">
+        
+        <!-- View 1: Initial Empty State -->
+        <div id="view-initial" class="flex-grow flex flex-col items-center justify-center p-8 text-center text-gray-500 dark:text-gray-400">
+            <span class="material-symbols-outlined text-6xl mb-4 text-gray-300 dark:text-gray-700">description</span>
+            <p class="text-lg">Click "Import" to upload PDF, JPG, or PNG files.</p>
         </div>
 
-        <div class="error-message" id="errorMessage"></div>
-
-        <div class="page-selector" id="pageSelector">
-            <h2>Select Page to Sign</h2>
-            <div class="page-thumbnails" id="pageThumbnails"></div>
-            <div class="action-buttons">
-                <button class="btn" id="confirmPageBtn">Continue</button>
-            </div>
-        </div>
-
-        <div class="sign-options" id="signOptions">
-            <h2>Add Your Signature</h2>
-            <div class="tab-buttons">
-                <button class="tab-btn active" data-tab="upload">Upload Signature</button>
-                <button class="tab-btn" data-tab="draw">Draw Signature</button>
-            </div>
-            <div class="tab-content active" id="uploadTab">
-                <div class="sign-upload" id="signUpload">
-                    <input type="file" id="signImageInput" accept=".png,.jpg,.jpeg">
-                    <div class="material-icons">image</div>
-                    <p>Click to upload your signature image</p>
-                    <p>Supported formats: PNG, JPG</p>
+        <!-- View 2: Page Selection -->
+        <div id="view-selection" class="hidden flex-col h-full absolute inset-0 bg-gray-50 dark:bg-darkbg z-10">
+            <div class="p-4 bg-white dark:bg-darkbg border-b dark:border-gray-800 flex justify-between items-center">
+                <h2 class="text-lg font-semibold">Select pages to sign</h2>
+                <div class="flex gap-2">
+                    <button onclick="app.selectAllPages()" class="text-sm text-blue-500 hover:underline">Select All</button>
+                    <button onclick="app.goToSignatureCreation()" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700">Next</button>
                 </div>
             </div>
-            <div class="tab-content" id="drawTab">
-                <div class="sign-canvas-container">
-                    <canvas id="signCanvas" width="400" height="200"></canvas>
-                    <div class="color-picker">
-                        <div class="color-option selected" style="background-color: #000000;" data-color="#000000"></div>
-                        <div class="color-option" style="background-color: #4285f4;" data-color="#4285f4"></div>
-                        <div class="color-option" style="background-color: #ea4335;" data-color="#ea4335"></div>
-                        <div class="color-option" style="background-color: #34a853;" data-color="#34a853"></div>
-                        <div class="color-option" style="background-color: #fbbc05;" data-color="#fbbc05"></div>
+            <div id="selection-grid" class="flex-grow overflow-y-auto p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <!-- Thumbnails injected here -->
+            </div>
+        </div>
+
+        <!-- View 3: Create/Upload Signature -->
+        <div id="view-create-sig" class="hidden flex-col h-full absolute inset-0 bg-gray-50 dark:bg-darkbg z-20">
+            <div class="p-4 bg-white dark:bg-darkbg border-b dark:border-gray-800 flex justify-between items-center">
+                <h2 class="text-lg font-semibold">Create your Signature</h2>
+                <button onclick="app.goToPlacement()" id="btn-sig-next" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 disabled:opacity-50">Next</button>
+            </div>
+            
+            <div class="flex-grow flex flex-col items-center justify-center p-4">
+                <div class="w-full max-w-lg bg-white dark:bg-gray-900 rounded-xl shadow-lg border dark:border-gray-800 overflow-hidden">
+                    
+                    <!-- Tabs -->
+                    <div class="flex border-b dark:border-gray-800">
+                        <button onclick="app.switchSigTab('draw')" id="tab-draw" class="flex-1 py-3 font-medium text-center bg-blue-50 dark:bg-gray-800 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600">Draw</button>
+                        <button onclick="app.switchSigTab('upload')" id="tab-upload" class="flex-1 py-3 font-medium text-center text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800">Upload Image</button>
                     </div>
-                    <button class="btn-outline" id="clearSignBtn">
-                        <span class="material-icons">clear</span>
-                        Clear
-                    </button>
-                </div>
-            </div>
-            <div class="action-buttons">
-                <button class="btn" id="saveSignBtn">Save Signature</button>
-            </div>
-        </div>
 
-        <div class="editor-container" id="editorContainer">
-            <h2>Place Your Signature</h2>
-            <p>Click on the document where you want to place your signature</p>
-            <div class="editor-wrapper">
-                <div class="document-canvas-container">
-                    <canvas id="documentCanvas"></canvas>
-                </div>
-                <div class="sign-properties">
-                    <div class="property-group">
-                        <h3>Signature Properties</h3>
-                        <div class="slider-container">
-                            <label>Size:</label>
-                            <input type="range" id="signSize" min="20" max="200" value="100">
+                    <!-- Draw Area -->
+                    <div id="area-draw" class="p-4 flex flex-col items-center gap-4">
+                        <div class="relative w-full h-64 border rounded bg-white touch-none" style="background-image: radial-gradient(#ddd 1px, transparent 1px); background-size: 20px 20px;">
+                            <canvas id="sigCanvas" class="w-full h-full drawing-canvas"></canvas>
                         </div>
-                        <div class="color-picker">
-                            <div class="color-option selected" style="background-color: #000000;" data-color="#000000"></div>
-                            <div class="color-option" style="background-color: #4285f4;" data-color="#4285f4"></div>
-                            <div class="color-option" style="background-color: #ea4335;" data-color="#ea4335"></div>
-                            <div class="color-option" style="background-color: #34a853;" data-color="#34a853"></div>
-                            <div class="color-option" style="background-color: #fbbc05;" data-color="#fbbc05"></div>
+                        <div class="flex items-center gap-4 w-full justify-between">
+                            <div class="flex gap-2">
+                                <button onclick="app.setPenColor('#000000')" class="w-8 h-8 rounded-full bg-black border-2 border-transparent hover:scale-110 transition"></button>
+                                <button onclick="app.setPenColor('#0000FF')" class="w-8 h-8 rounded-full bg-blue-700 border-2 border-transparent hover:scale-110 transition"></button>
+                                <button onclick="app.setPenColor('#FF0000')" class="w-8 h-8 rounded-full bg-red-600 border-2 border-transparent hover:scale-110 transition"></button>
+                            </div>
+                            <button onclick="app.clearCanvas()" class="flex items-center gap-1 text-sm text-red-500 hover:text-red-700">
+                                <span class="material-symbols-outlined text-lg">delete</span> Clear
+                            </button>
                         </div>
                     </div>
-                    <div class="property-group">
-                        <button class="btn-outline" id="placeAgainBtn">
-                            <span class="material-icons">edit_location</span>
-                            Place Signature Again
-                        </button>
+
+                    <!-- Upload Area -->
+                    <div id="area-upload" class="hidden p-8 flex flex-col items-center gap-4">
+                        <div class="w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition" onclick="document.getElementById('sigUploadInput').click()">
+                            <span class="material-symbols-outlined text-4xl text-gray-400">image</span>
+                            <span class="mt-2 text-sm text-gray-500">Click to upload signature</span>
+                        </div>
+                        <input type="file" id="sigUploadInput" class="hidden" accept="image/*" onchange="app.handleSigUpload(this)">
+                        <img id="uploadedSigPreview" class="max-h-24 hidden border rounded p-1">
                     </div>
+
                 </div>
             </div>
-            <div class="action-buttons">
-                <button class="btn-outline" id="cancelBtn">
-                    <span class="material-icons">cancel</span>
-                    Cancel
+        </div>
+
+        <!-- View 4: Placement (Sign the Docs) -->
+        <div id="view-placement" class="hidden flex-col h-full absolute inset-0 bg-gray-100 dark:bg-black z-30">
+            <!-- Toolbar -->
+            <div class="p-2 bg-white dark:bg-darkbg border-b dark:border-gray-800 flex justify-between items-center shadow-sm z-40 sticky top-0">
+                <button onclick="app.addSignatureToView()" class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition transform hover:scale-105">
+                    <span class="material-symbols-outlined">add</span>
+                    New Signature
                 </button>
-                <button class="btn" id="downloadBtn">
-                    <span class="material-icons">download</span>
-                    Download Signed Document
-                </button>
+                <div class="flex items-center gap-4">
+                     <span class="text-xs text-gray-500 hidden sm:inline">Drag off-page to delete</span>
+                    <button onclick="app.finishSigning()" class="px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 font-bold">Complete</button>
+                </div>
+            </div>
+
+            <!-- Scrollable Page Container -->
+            <div id="placement-container" class="flex-grow overflow-y-auto p-4 md:p-8 flex flex-col items-center gap-8 relative">
+                <!-- Pages injected here -->
             </div>
         </div>
-    </div>
+
+        <!-- View 5: Success -->
+        <div id="view-success" class="hidden flex-col h-full absolute inset-0 bg-white dark:bg-darkbg z-40 items-center justify-center text-center p-8">
+            <div class="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-6">
+                <span class="material-symbols-outlined text-4xl text-green-600 dark:text-green-400">check_circle</span>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Document Ready!</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-8">Now use the Export icon in the top right to download your signed document.</p>
+            <button onclick="location.reload()" class="text-blue-500 hover:underline">Start Over</button>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loadingOverlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[100] flex flex-col items-center justify-center text-white">
+            <div class="loader mb-4"></div>
+            <p id="loadingText">Processing...</p>
+        </div>
+
+    </main>
 
     <script>
-        // Initialize PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
-
-        // DOM elements
-        const uploadSection = document.getElementById('uploadSection');
-        const fileInput = document.getElementById('fileInput');
-        const uploadBtn = document.getElementById('uploadBtn');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const errorMessage = document.getElementById('errorMessage');
-        const pageSelector = document.getElementById('pageSelector');
-        const pageThumbnails = document.getElementById('pageThumbnails');
-        const confirmPageBtn = document.getElementById('confirmPageBtn');
-        const signOptions = document.getElementById('signOptions');
-        const signUpload = document.getElementById('signUpload');
-        const signImageInput = document.getElementById('signImageInput');
-        const signCanvas = document.getElementById('signCanvas');
-        const clearSignBtn = document.getElementById('clearSignBtn');
-        const saveSignBtn = document.getElementById('saveSignBtn');
-        const editorContainer = document.getElementById('editorContainer');
-        const documentCanvas = document.getElementById('documentCanvas');
-        const signSize = document.getElementById('signSize');
-        const placeAgainBtn = document.getElementById('placeAgainBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const colorOptions = document.querySelectorAll('.color-option');
-
-        // Application state
-        let state = {
-            documentFile: null,
-            documentType: null,
-            pdfDoc: null,
-            pages: [],
-            selectedPageIndex: 0,
-            signatureImage: null,
-            signatureColor: '#000000',
+        /**
+         * App Logic
+         */
+        const app = {
+            // State
+            pages: [], // { id, dataUrl, width, height, finalSignatures: [] }
+            selectedPageIndices: new Set(),
+            signatureDataUrl: null,
             isDrawing: false,
-            lastX: 0,
-            lastY: 0,
-            currentSignX: 0,
-            currentSignY: 0,
-            currentSignSize: 100,
-            currentSignColor: '#000000',
-            isPlacingSign: false,
-            ctx: null,
-            docCtx: null,
-            signCtx: null,
-            originalDocImage: null
+            
+            // DOM Elements
+            init: function() {
+                this.setupTheme();
+                this.setupEventListeners();
+                this.setupCanvas();
+            },
+
+            setupTheme: function() {
+                const theme = localStorage.getItem('docSignerTheme');
+                const btn = document.getElementById('themeToggle');
+                const icon = btn.querySelector('span');
+                
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    icon.textContent = 'dark_mode';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    icon.textContent = 'light_mode';
+                }
+
+                btn.addEventListener('click', () => {
+                    document.documentElement.classList.toggle('dark');
+                    const isDark = document.documentElement.classList.contains('dark');
+                    localStorage.setItem('docSignerTheme', isDark ? 'dark' : 'light');
+                    icon.textContent = isDark ? 'dark_mode' : 'light_mode';
+                });
+            },
+
+            setupEventListeners: function() {
+                document.getElementById('fileInput').addEventListener('change', (e) => this.handleFiles(e.target.files));
+                document.getElementById('exportBtn').addEventListener('click', () => this.exportDocument());
+            },
+
+            toggleLoading: function(show, text = "Loading...") {
+                const el = document.getElementById('loadingOverlay');
+                document.getElementById('loadingText').textContent = text;
+                el.classList.toggle('hidden', !show);
+            },
+
+            /**
+             * File Handling & Parsing
+             */
+            handleFiles: async function(files) {
+                if (files.length === 0) return;
+                this.toggleLoading(true, "Processing files...");
+                this.pages = []; // Reset
+                this.selectedPageIndices.clear();
+
+                try {
+                    for (let file of files) {
+                        if (file.type === 'application/pdf') {
+                            await this.processPDF(file);
+                        } else if (file.type.startsWith('image/')) {
+                            await this.processImage(file);
+                        }
+                    }
+                    this.renderSelectionView();
+                    this.switchView('view-selection');
+                } catch (e) {
+                    console.error(e);
+                    alert("Error processing files.");
+                } finally {
+                    this.toggleLoading(false);
+                }
+            },
+
+            processImage: function(file) {
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            this.pages.push({
+                                id: crypto.randomUUID(),
+                                dataUrl: e.target.result,
+                                width: img.width,
+                                height: img.height,
+                                finalSignatures: []
+                            });
+                            resolve();
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            },
+
+            processPDF: async function(file) {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 2.0 }); // High res for quality
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+                    
+                    this.pages.push({
+                        id: crypto.randomUUID(),
+                        dataUrl: canvas.toDataURL('image/jpeg', 0.8),
+                        width: viewport.width,
+                        height: viewport.height,
+                        finalSignatures: []
+                    });
+                }
+            },
+
+            /**
+             * View Management
+             */
+            switchView: function(viewId) {
+                ['view-initial', 'view-selection', 'view-create-sig', 'view-placement', 'view-success'].forEach(id => {
+                    document.getElementById(id).classList.add('hidden');
+                    document.getElementById(id).classList.remove('flex');
+                });
+                const el = document.getElementById(viewId);
+                el.classList.remove('hidden');
+                el.classList.add('flex');
+            },
+
+            /**
+             * Selection Logic
+             */
+            renderSelectionView: function() {
+                const grid = document.getElementById('selection-grid');
+                grid.innerHTML = '';
+                
+                this.pages.forEach((page, index) => {
+                    const div = document.createElement('div');
+                    div.className = "relative group cursor-pointer border-2 rounded-lg overflow-hidden transition-all " + 
+                                    (this.selectedPageIndices.has(index) ? "border-blue-500 ring-2 ring-blue-200" : "border-gray-200 dark:border-gray-700");
+                    div.onclick = () => this.togglePageSelection(index, div);
+
+                    const img = document.createElement('img');
+                    img.src = page.dataUrl;
+                    img.className = "w-full h-auto object-contain bg-white";
+                    
+                    const check = document.createElement('div');
+                    check.className = "absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center " +
+                                      (this.selectedPageIndices.has(index) ? "bg-blue-500 text-white" : "bg-gray-200 text-transparent");
+                    check.innerHTML = '<span class="material-symbols-outlined text-sm">check</span>';
+
+                    div.appendChild(img);
+                    div.appendChild(check);
+                    grid.appendChild(div);
+                });
+                // Auto select all initially
+                if(this.selectedPageIndices.size === 0) this.selectAllPages();
+            },
+
+            togglePageSelection: function(index, element) {
+                if (this.selectedPageIndices.has(index)) {
+                    this.selectedPageIndices.delete(index);
+                } else {
+                    this.selectedPageIndices.add(index);
+                }
+                this.renderSelectionView(); // Re-render for simplicity
+            },
+
+            selectAllPages: function() {
+                this.pages.forEach((_, i) => this.selectedPageIndices.add(i));
+                this.renderSelectionView();
+            },
+
+            goToSignatureCreation: function() {
+                if (this.selectedPageIndices.size === 0) {
+                    alert("Please select at least one page.");
+                    return;
+                }
+                this.switchView('view-create-sig');
+                // Resize canvas correctly after visibility change
+                setTimeout(() => {
+                    const canvas = document.getElementById('sigCanvas');
+                    const parent = canvas.parentElement;
+                    canvas.width = parent.clientWidth;
+                    canvas.height = parent.clientHeight;
+                    // Reset context styles
+                    const ctx = canvas.getContext('2d');
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = this.penColor || '#000000';
+                }, 50);
+            },
+
+            /**
+             * Signature Creation (Canvas & Upload)
+             */
+            switchSigTab: function(tab) {
+                if (tab === 'draw') {
+                    document.getElementById('tab-draw').classList.add('border-b-2', 'border-blue-600', 'bg-blue-50', 'dark:bg-gray-800', 'text-blue-600');
+                    document.getElementById('tab-draw').classList.remove('text-gray-500');
+                    document.getElementById('tab-upload').classList.remove('border-b-2', 'border-blue-600', 'bg-blue-50', 'dark:bg-gray-800', 'text-blue-600');
+                    document.getElementById('tab-upload').classList.add('text-gray-500');
+                    
+                    document.getElementById('area-draw').classList.remove('hidden');
+                    document.getElementById('area-upload').classList.add('hidden');
+                } else {
+                    document.getElementById('tab-upload').classList.add('border-b-2', 'border-blue-600', 'bg-blue-50', 'dark:bg-gray-800', 'text-blue-600');
+                    document.getElementById('tab-upload').classList.remove('text-gray-500');
+                    document.getElementById('tab-draw').classList.remove('border-b-2', 'border-blue-600', 'bg-blue-50', 'dark:bg-gray-800', 'text-blue-600');
+                    document.getElementById('tab-draw').classList.add('text-gray-500');
+
+                    document.getElementById('area-draw').classList.add('hidden');
+                    document.getElementById('area-upload').classList.remove('hidden');
+                }
+            },
+
+            setupCanvas: function() {
+                const canvas = document.getElementById('sigCanvas');
+                const ctx = canvas.getContext('2d');
+                this.penColor = '#000000';
+                let isDrawing = false;
+                let lastX = 0;
+                let lastY = 0;
+
+                const getPos = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    return {
+                        x: clientX - rect.left,
+                        y: clientY - rect.top
+                    };
+                };
+
+                const start = (e) => {
+                    e.preventDefault();
+                    isDrawing = true;
+                    const pos = getPos(e);
+                    lastX = pos.x;
+                    lastY = pos.y;
+                };
+
+                const move = (e) => {
+                    if (!isDrawing) return;
+                    e.preventDefault();
+                    const pos = getPos(e);
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                    lastX = pos.x;
+                    lastY = pos.y;
+                };
+
+                const end = () => { isDrawing = false; };
+
+                canvas.addEventListener('mousedown', start);
+                canvas.addEventListener('mousemove', move);
+                canvas.addEventListener('mouseup', end);
+                canvas.addEventListener('mouseout', end);
+
+                canvas.addEventListener('touchstart', start, {passive: false});
+                canvas.addEventListener('touchmove', move, {passive: false});
+                canvas.addEventListener('touchend', end);
+            },
+
+            setPenColor: function(color) {
+                this.penColor = color;
+                const ctx = document.getElementById('sigCanvas').getContext('2d');
+                ctx.strokeStyle = color;
+            },
+
+            clearCanvas: function() {
+                const canvas = document.getElementById('sigCanvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            },
+
+            handleSigUpload: function(input) {
+                if (input.files && input.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = document.getElementById('uploadedSigPreview');
+                        img.src = e.target.result;
+                        img.classList.remove('hidden');
+                        this.signatureDataUrl = e.target.result;
+                    };
+                    reader.readAsDataURL(input.files[0]);
+                }
+            },
+
+            goToPlacement: function() {
+                if (!document.getElementById('area-draw').classList.contains('hidden')) {
+                    const canvas = document.getElementById('sigCanvas');
+                    this.signatureDataUrl = canvas.toDataURL();
+                } else {
+                    if (!this.signatureDataUrl) {
+                        alert("Please upload a signature or draw one.");
+                        return;
+                    }
+                }
+
+                this.renderPlacementView();
+                this.switchView('view-placement');
+            },
+
+            /**
+             * Placement View & Interaction
+             */
+            renderPlacementView: function() {
+                const container = document.getElementById('placement-container');
+                container.innerHTML = '';
+
+                // Sort selected indices to maintain order
+                const sortedIndices = Array.from(this.selectedPageIndices).sort((a, b) => a - b);
+
+                sortedIndices.forEach(index => {
+                    const page = this.pages[index];
+                    
+                    // Wrapper for Page
+                    const wrapper = document.createElement('div');
+                    wrapper.id = `page-wrapper-${index}`;
+                    wrapper.className = "relative shadow-lg border border-gray-300 dark:border-gray-700 bg-white";
+                    wrapper.style.maxWidth = "100%";
+                    wrapper.setAttribute('data-page-index', index);
+
+                    const img = document.createElement('img');
+                    img.src = page.dataUrl;
+                    img.className = "block max-w-full h-auto select-none no-select";
+                    img.draggable = false;
+                    
+                    wrapper.appendChild(img);
+                    container.appendChild(wrapper);
+
+                    // Add click to deselect active signatures
+                    wrapper.addEventListener('mousedown', (e) => {
+                        if(e.target === img) this.deselectAllSignatures();
+                    });
+                });
+            },
+
+            addSignatureToView: function() {
+                const container = document.getElementById('placement-container');
+                const wrappers = container.querySelectorAll('[id^="page-wrapper-"]');
+                
+                // Find first wrapper currently in view
+                let targetWrapper = wrappers[0];
+                for(let w of wrappers) {
+                    const rect = w.getBoundingClientRect();
+                    if (rect.top > 0 && rect.top < window.innerHeight) {
+                        targetWrapper = w;
+                        break;
+                    }
+                }
+
+                this.createSignatureElement(targetWrapper);
+            },
+
+            createSignatureElement: function(wrapper) {
+                const sigId = 'sig-' + crypto.randomUUID();
+                const sigEl = document.createElement('div');
+                sigEl.className = 'signature-item';
+                sigEl.id = sigId;
+                
+                const initialWidth = 150; 
+                sigEl.style.width = initialWidth + 'px';
+                sigEl.style.height = 'auto';
+                sigEl.style.left = '50%';
+                sigEl.style.top = '50%';
+                sigEl.style.transform = 'translate(-50%, -50%)';
+
+                const img = document.createElement('img');
+                img.src = this.signatureDataUrl;
+                img.className = 'w-full h-full pointer-events-none select-none';
+                img.style.display = 'block'; 
+                
+                const resizeHandle = document.createElement('div');
+                resizeHandle.className = 'resize-handle';
+
+                sigEl.appendChild(img);
+                sigEl.appendChild(resizeHandle);
+                wrapper.appendChild(sigEl);
+
+                this.makeDraggableAndResizable(sigEl, wrapper);
+                this.selectSignature(sigEl);
+            },
+
+            makeDraggableAndResizable: function(el, wrapper) {
+                let isDragging = false;
+                let isResizing = false;
+                let startX, startY, startLeft, startTop, startWidth, startHeight;
+                let aspectRatio = 0;
+
+                const getCoords = (e) => {
+                    return {
+                        x: e.touches ? e.touches[0].clientX : e.clientX,
+                        y: e.touches ? e.touches[0].clientY : e.clientY
+                    };
+                };
+
+                const onMouseDown = (e) => {
+                    if (e.target.classList.contains('resize-handle')) {
+                        isResizing = true;
+                        e.stopPropagation();
+                    } else {
+                        isDragging = true;
+                    }
+                    
+                    this.selectSignature(el);
+                    
+                    const coords = getCoords(e);
+                    startX = coords.x;
+                    startY = coords.y;
+                    
+                    startLeft = el.offsetLeft;
+                    startTop = el.offsetTop;
+                    const rect = el.getBoundingClientRect();
+                    startWidth = rect.width;
+                    startHeight = rect.height;
+                    aspectRatio = startWidth / startHeight;
+
+                    document.addEventListener('mousemove', onMove);
+                    document.addEventListener('mouseup', onUp);
+                    document.addEventListener('touchmove', onMove, {passive: false});
+                    document.addEventListener('touchend', onUp);
+                };
+
+                const onMove = (e) => {
+                    if (!isDragging && !isResizing) return;
+                    e.preventDefault();
+
+                    const coords = getCoords(e);
+                    const dx = coords.x - startX;
+                    const dy = coords.y - startY;
+
+                    if (isDragging) {
+                        let newLeft = startLeft + dx;
+                        let newTop = startTop + dy;
+                        el.style.transform = 'none'; 
+                        el.style.left = newLeft + 'px';
+                        el.style.top = newTop + 'px';
+                    } else if (isResizing) {
+                        let newWidth = Math.max(30, startWidth + dx);
+                        let newHeight = newWidth / aspectRatio;
+                        el.style.width = newWidth + 'px';
+                        el.style.height = newHeight + 'px';
+                    }
+                };
+
+                const onUp = (e) => {
+                    isDragging = false;
+                    isResizing = false;
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    document.removeEventListener('touchmove', onMove);
+                    document.removeEventListener('touchend', onUp);
+
+                    const rect = el.getBoundingClientRect();
+                    const parentRect = wrapper.getBoundingClientRect();
+
+                    const centerX = rect.left + rect.width / 2;
+                    const centerY = rect.top + rect.height / 2;
+
+                    if (centerX < parentRect.left || centerX > parentRect.right || 
+                        centerY < parentRect.top || centerY > parentRect.bottom) {
+                        el.style.transition = 'opacity 0.2s, transform 0.2s';
+                        el.style.opacity = '0';
+                        el.style.transform = 'scale(0.5)';
+                        setTimeout(() => el.remove(), 200);
+                    }
+                };
+
+                el.addEventListener('mousedown', onMouseDown);
+                el.addEventListener('touchstart', onMouseDown, {passive: false});
+            },
+
+            selectSignature: function(el) {
+                this.deselectAllSignatures();
+                el.classList.add('active');
+            },
+
+            deselectAllSignatures: function() {
+                document.querySelectorAll('.signature-item.active').forEach(el => el.classList.remove('active'));
+            },
+
+            finishSigning: function() {
+                // CAPTURE STATE BEFORE HIDING VIEW
+                this.captureFinalState();
+                
+                this.switchView('view-success');
+                document.getElementById('exportBtn').disabled = false;
+                document.getElementById('themeToggle').scrollIntoView({ behavior: 'smooth' });
+            },
+
+            captureFinalState: function() {
+                 const sortedIndices = Array.from(this.selectedPageIndices).sort((a, b) => a - b);
+                 
+                 sortedIndices.forEach(pageIndex => {
+                     const wrapper = document.querySelector(`div[data-page-index="${pageIndex}"]`);
+                     if (!wrapper) return;
+
+                     const domImg = wrapper.querySelector('img');
+                     const domRect = domImg.getBoundingClientRect();
+                     const sigs = wrapper.querySelectorAll('.signature-item');
+                     
+                     // Reset previous signatures for this page
+                     this.pages[pageIndex].finalSignatures = [];
+
+                     sigs.forEach(sig => {
+                         const sigRect = sig.getBoundingClientRect();
+                         const sigImgSrc = sig.querySelector('img').src;
+
+                         // Calculate percentages relative to the displayed image
+                         const xPercent = (sigRect.left - domRect.left) / domRect.width;
+                         const yPercent = (sigRect.top - domRect.top) / domRect.height;
+                         const wPercent = sigRect.width / domRect.width;
+                         const hPercent = sigRect.height / domRect.height;
+
+                         this.pages[pageIndex].finalSignatures.push({
+                             src: sigImgSrc,
+                             xPercent,
+                             yPercent,
+                             wPercent,
+                             hPercent
+                         });
+                     });
+                 });
+            },
+
+            /**
+             * Export Logic
+             */
+            exportDocument: async function() {
+                this.toggleLoading(true, "Generating PDF...");
+                
+                await new Promise(r => setTimeout(r, 100));
+
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF();
+                    
+                    const sortedIndices = Array.from(this.selectedPageIndices).sort((a, b) => a - b);
+
+                    for (let i = 0; i < sortedIndices.length; i++) {
+                        const pageIndex = sortedIndices[i];
+                        const pageData = this.pages[pageIndex];
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.width = pageData.width;
+                        canvas.height = pageData.height;
+                        const ctx = canvas.getContext('2d');
+
+                        // Draw background
+                        const bgImg = new Image();
+                        bgImg.src = pageData.dataUrl;
+                        await new Promise(resolve => bgImg.onload = resolve);
+                        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+
+                        // Draw Signatures from captured state
+                        if (pageData.finalSignatures) {
+                            for (let sig of pageData.finalSignatures) {
+                                const sigObj = new Image();
+                                sigObj.src = sig.src;
+                                await new Promise(resolve => sigObj.onload = resolve);
+
+                                const x = sig.xPercent * canvas.width;
+                                const y = sig.yPercent * canvas.height;
+                                const w = sig.wPercent * canvas.width;
+                                const h = sig.hPercent * canvas.height;
+
+                                ctx.drawImage(sigObj, x, y, w, h);
+                            }
+                        }
+
+                        const imgData = canvas.toDataURL('image/jpeg', 0.85);
+                        
+                        const pdfW = pdf.internal.pageSize.getWidth();
+                        const pdfH = (pageData.height * pdfW) / pageData.width;
+                        
+                        if (i > 0) pdf.addPage();
+                        pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
+                    }
+
+                    pdf.save('signed_document.pdf');
+                } catch (e) {
+                    console.error(e);
+                    alert("Error generating PDF.");
+                } finally {
+                    this.toggleLoading(false);
+                }
+            }
         };
 
-        // Initialize canvases
-        function initCanvases() {
-            state.signCtx = signCanvas.getContext('2d');
-            state.docCtx = documentCanvas.getContext('2d');
-            
-            // Set up drawing on signature canvas
-            signCanvas.addEventListener('mousedown', startDrawing);
-            signCanvas.addEventListener('mousemove', draw);
-            signCanvas.addEventListener('mouseup', stopDrawing);
-            signCanvas.addEventListener('mouseout', stopDrawing);
-            
-            // Set up touch events for mobile
-            signCanvas.addEventListener('touchstart', handleTouchStart);
-            signCanvas.addEventListener('touchmove', handleTouchMove);
-            signCanvas.addEventListener('touchend', handleTouchEnd);
-            
-            // Set up document canvas for placing signature
-            documentCanvas.addEventListener('click', placeSignature);
-        }
+        window.addEventListener('DOMContentLoaded', () => app.init());
 
-        // Tab switching
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const tabId = button.getAttribute('data-tab');
-                
-                // Update active tab button
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-                
-                // Update active tab content
-                tabContents.forEach(content => content.classList.remove('active'));
-                document.getElementById(`${tabId}Tab`).classList.add('active');
-            });
-        });
-
-        // Color picker
-        colorOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                const color = option.getAttribute('data-color');
-                state.signatureColor = color;
-                
-                // Update selected state
-                colorOptions.forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                
-                // Update drawing color if in draw mode
-                if (state.signCtx) {
-                    state.signCtx.strokeStyle = color;
-                }
-            });
-        });
-
-        // Upload button click
-        uploadBtn.addEventListener('click', () => fileInput.click());
-        uploadSection.addEventListener('click', () => fileInput.click());
-
-        // File input change
-        fileInput.addEventListener('change', handleFileUpload);
-
-        // Sign upload click
-        signUpload.addEventListener('click', () => signImageInput.click());
-
-        // Sign image input change
-        signImageInput.addEventListener('change', handleSignUpload);
-
-        // Clear signature button
-        clearSignBtn.addEventListener('click', clearSignatureCanvas);
-
-        // Save signature button
-        saveSignBtn.addEventListener('click', saveSignature);
-
-        // Confirm page button
-        confirmPageBtn.addEventListener('click', () => {
-            pageSelector.style.display = 'none';
-            signOptions.style.display = 'block';
-        });
-
-        // Place again button
-        placeAgainBtn.addEventListener('click', () => {
-            state.isPlacingSign = true;
-            renderDocumentCanvas();
-        });
-
-        // Size slider change
-        signSize.addEventListener('input', () => {
-            state.currentSignSize = parseInt(signSize.value);
-            if (state.signatureImage) {
-                renderDocumentCanvas();
-                if (!state.isPlacingSign) {
-                    renderSignatureOnDocument();
-                }
-            }
-        });
-
-        // Color picker in properties
-        document.querySelectorAll('.sign-properties .color-option').forEach(option => {
-            option.addEventListener('click', () => {
-                const color = option.getAttribute('data-color');
-state.currentSignColor = color;
-// Update selected state
-                document.querySelectorAll('.sign-properties .color-option').forEach(opt => opt.classList.remove('selected'));
-                option.classList.add('selected');
-                
-                if (state.signatureImage) {
-                    renderDocumentCanvas();
-                    if (!state.isPlacingSign) {
-                        renderSignatureOnDocument();
-                    }
-                }
-            });
-        });
-
-        // Download button
-        downloadBtn.addEventListener('click', downloadSignedDocument);
-
-        // Cancel button
-        cancelBtn.addEventListener('click', resetApplication);
-
-        // Initialize the app
-        initCanvases();
-
-        // Handle file upload
-        function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            state.documentFile = file;
-            state.documentType = file.type === 'application/pdf' ? 'pdf' : 'image';
-            
-            showLoading(true);
-            errorMessage.style.display = 'none';
-
-            if (state.documentType === 'pdf') {
-                loadPDF(file);
-            } else {
-                loadImage(file);
-            }
-        }
-
-        // Load PDF document
-        function loadPDF(file) {
-            const fileReader = new FileReader();
-            
-            fileReader.onload = function() {
-                const typedArray = new Uint8Array(this.result);
-                
-                pdfjsLib.getDocument(typedArray).promise.then(function(pdf) {
-                    state.pdfDoc = pdf;
-                    state.pages = [];
-                    
-                    // Generate thumbnails for all pages
-                    const thumbnailsPromises = [];
-                    for (let i = 1; i <= pdf.numPages; i++) {
-                        thumbnailsPromises.push(generatePageThumbnail(pdf, i));
-                    }
-                    
-                    Promise.all(thumbnailsPromises).then(() => {
-                        showLoading(false);
-                        uploadSection.style.display = 'none';
-                        pageSelector.style.display = 'block';
-                    });
-                }).catch(function(error) {
-                    showError("Failed to load PDF: " + error.message);
-                    showLoading(false);
-                });
-            };
-            
-            fileReader.readAsArrayBuffer(file);
-        }
-
-        // Generate thumbnail for a PDF page
-        function generatePageThumbnail(pdf, pageNumber) {
-            return pdf.getPage(pageNumber).then(function(page) {
-                const viewport = page.getViewport({ scale: 0.2 });
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
-                
-                return page.render({
-                    canvasContext: ctx,
-                    viewport: viewport
-                }).promise.then(function() {
-                    state.pages.push({
-                        number: pageNumber,
-                        thumbnail: canvas.toDataURL('image/png')
-                    });
-                    
-                    // Update thumbnails display
-                    renderPageThumbnails();
-                });
-            });
-        }
-
-        // Render page thumbnails
-        function renderPageThumbnails() {
-            pageThumbnails.innerHTML = '';
-            
-            state.pages.forEach((page, index) => {
-                const thumbnailDiv = document.createElement('div');
-                thumbnailDiv.className = 'page-thumbnail' + (index === state.selectedPageIndex ? ' selected' : '');
-                thumbnailDiv.innerHTML = `
-                    <img src="${page.thumbnail}" alt="Page ${page.number}">
-                    <div class="page-number">Page ${page.number}</div>
-                `;
-                
-                thumbnailDiv.addEventListener('click', () => {
-                    document.querySelectorAll('.page-thumbnail').forEach(el => el.classList.remove('selected'));
-                    thumbnailDiv.classList.add('selected');
-                    state.selectedPageIndex = index;
-                });
-                
-                pageThumbnails.appendChild(thumbnailDiv);
-            });
-        }
-
-        // Load image document
-        function loadImage(file) {
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    state.pages = [{
-                        number: 1,
-                        image: img,
-                        thumbnail: e.target.result
-                    }];
-                    
-                    showLoading(false);
-                    uploadSection.style.display = 'none';
-                    
-                    // For single image, skip page selection
-                    state.selectedPageIndex = 0;
-                    signOptions.style.display = 'block';
-                };
-                img.src = e.target.result;
-            };
-            
-            reader.readAsDataURL(file);
-        }
-
-        // Handle signature upload
-        function handleSignUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    // Clear the draw canvas
-                    clearSignatureCanvas();
-                    
-                    // Set the uploaded image as signature
-                    state.signatureImage = img;
-                    saveSignature();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Signature drawing functions
-        function startDrawing(e) {
-            state.isDrawing = true;
-            const pos = getMousePos(signCanvas, e);
-            [state.lastX, state.lastY] = [pos.x, pos.y];
-        }
-
-        function draw(e) {
-            if (!state.isDrawing) return;
-            
-            const pos = getMousePos(signCanvas, e);
-            state.signCtx.beginPath();
-            state.signCtx.moveTo(state.lastX, state.lastY);
-            state.signCtx.lineTo(pos.x, pos.y);
-            state.signCtx.strokeStyle = state.signatureColor;
-            state.signCtx.lineWidth = 2;
-            state.signCtx.lineCap = 'round';
-            state.signCtx.stroke();
-            [state.lastX, state.lastY] = [pos.x, pos.y];
-        }
-
-        function stopDrawing() {
-            state.isDrawing = false;
-        }
-
-        // Touch event handlers for mobile
-        function handleTouchStart(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent('mousedown', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            signCanvas.dispatchEvent(mouseEvent);
-        }
-
-        function handleTouchMove(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const mouseEvent = new MouseEvent('mousemove', {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            });
-            signCanvas.dispatchEvent(mouseEvent);
-        }
-
-        function handleTouchEnd(e) {
-            e.preventDefault();
-            const mouseEvent = new MouseEvent('mouseup', {});
-            signCanvas.dispatchEvent(mouseEvent);
-        }
-
-        // Get mouse position relative to canvas
-        function getMousePos(canvas, evt) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: (evt.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
-                y: (evt.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
-            };
-        }
-
-        // Clear signature canvas
-        function clearSignatureCanvas() {
-            state.signCtx.clearRect(0, 0, signCanvas.width, signCanvas.height);
-        }
-
-        // Check if canvas is empty
-        function isCanvasEmpty(canvas) {
-            const ctx = canvas.getContext('2d');
-            const pixelBuffer = new Uint32Array(
-                ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
-            );
-            return !pixelBuffer.some(color => color !== 0);
-        }
-
-        // Save signature (from canvas or uploaded image)
-        function saveSignature() {
-            // Check if we have an uploaded signature
-            if (state.signatureImage) {
-                proceedToDocumentEditor();
-                return;
-            }
-            
-            // Check if something was drawn on canvas
-            if (!isCanvasEmpty(signCanvas)) {
-                const dataUrl = signCanvas.toDataURL('image/png');
-                const img = new Image();
-                img.onload = function() {
-                    state.signatureImage = img;
-                    proceedToDocumentEditor();
-                };
-                img.src = dataUrl;
-                return;
-            }
-            
-            // If we get here, no signature exists
-            signCanvas.style.border = "2px solid var(--error)";
-            setTimeout(() => signCanvas.style.border = "1px solid var(--border)", 1000);
-            showError("Please create or upload a signature first.");
-        }
-
-        // Proceed to document editor
-        function proceedToDocumentEditor() {
-            signOptions.style.display = 'none';
-            editorContainer.style.display = 'block';
-            
-            // Load the selected page/image
-            loadDocumentForEditing();
-        }
-
-        // Load document for editing
-        function loadDocumentForEditing() {
-            const selectedPage = state.pages[state.selectedPageIndex];
-            
-            if (state.documentType === 'pdf') {
-                // For PDF, render the selected page
-                state.pdfDoc.getPage(selectedPage.number).then(function(page) {
-                    const viewport = page.getViewport({ scale: 1.5 });
-                    documentCanvas.height = viewport.height;
-                    documentCanvas.width = viewport.width;
-                    
-                    page.render({
-                        canvasContext: state.docCtx,
-                        viewport: viewport
-                    }).promise.then(function() {
-                        // Save the original document image
-                        state.originalDocImage = new Image();
-                        state.originalDocImage.src = documentCanvas.toDataURL('image/png');
-                        
-                        // Ready to place signature
-                        state.isPlacingSign = true;
-                    });
-                });
-            } else {
-                // For image, render it directly
-                const img = selectedPage.image;
-                const scale = Math.min(800 / img.width, 600 / img.height);
-                documentCanvas.width = img.width * scale;
-                documentCanvas.height = img.height * scale;
-                
-                state.docCtx.drawImage(img, 0, 0, img.width, img.height, 0, 0, documentCanvas.width, documentCanvas.height);
-                
-                // Save the original document image
-                state.originalDocImage = new Image();
-                state.originalDocImage.src = documentCanvas.toDataURL('image/png');
-                
-                // Ready to place signature
-                state.isPlacingSign = true;
-            }
-        }
-
-        // Render document canvas (with or without signature)
-        function renderDocumentCanvas() {
-            // Draw the original document
-            state.docCtx.drawImage(state.originalDocImage, 0, 0, documentCanvas.width, documentCanvas.height);
-            
-            // If we're not in placing mode and have a signature, render it
-            if (!state.isPlacingSign && state.signatureImage) {
-                renderSignatureOnDocument();
-            }
-        }
-
-        // Place signature on document
-        function placeSignature(e) {
-            if (!state.isPlacingSign || !state.signatureImage) return;
-            
-            const rect = documentCanvas.getBoundingClientRect();
-            state.currentSignX = (e.clientX - rect.left) / rect.width * documentCanvas.width;
-            state.currentSignY = (e.clientY - rect.top) / rect.height * documentCanvas.height;
-            
-            state.isPlacingSign = false;
-            renderDocumentCanvas();
-        }
-
-        // Render signature on document
-        function renderSignatureOnDocument() {
-            if (!state.signatureImage) return;
-            
-            const size = state.currentSignSize;
-            const x = state.currentSignX - size / 2;
-            const y = state.currentSignY - size / 2;
-            
-            // Create a temporary canvas to apply color to the signature
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = state.signatureImage.width;
-            tempCanvas.height = state.signatureImage.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            
-            // Fill with the selected color
-            tempCtx.fillStyle = state.currentSignColor;
-            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-            
-            // Use source-in to apply the color to the signature
-            tempCtx.globalCompositeOperation = 'source-in';
-            tempCtx.drawImage(state.signatureImage, 0, 0);
-            
-            // Draw the colored signature onto the document
-            state.docCtx.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, x, y, size, size * (tempCanvas.height / tempCanvas.width));
-        }
-
-        // Download signed document
-        function downloadSignedDocument() {
-            let dataUrl, fileName;
-            
-            if (state.documentType === 'pdf') {
-                // For PDF, we just download the signed page as an image
-                dataUrl = documentCanvas.toDataURL('image/png');
-                fileName = 'signed_page.png';
-            } else {
-                // For image, download the signed image
-                dataUrl = documentCanvas.toDataURL('image/png');
-                fileName = 'signed_image.png';
-            }
-            
-            const link = document.createElement('a');
-            link.download = fileName;
-            link.href = dataUrl;
-            link.click();
-        }
-
-        // Reset application
-        function resetApplication() {
-            // Reset UI
-            uploadSection.style.display = 'block';
-            pageSelector.style.display = 'none';
-            signOptions.style.display = 'none';
-            editorContainer.style.display = 'none';
-            errorMessage.style.display = 'none';
-            
-            // Reset state
-            state = {
-                documentFile: null,
-                documentType: null,
-                pdfDoc: null,
-                pages: [],
-                selectedPageIndex: 0,
-                signatureImage: null,
-                signatureColor: '#000000',
-                isDrawing: false,
-                lastX: 0,
-                lastY: 0,
-                currentSignX: 0,
-                currentSignY: 0,
-                currentSignSize: 100,
-                currentSignColor: '#000000',
-                isPlacingSign: false,
-                originalDocImage: null
-            };
-            
-            // Clear canvases
-            if (state.signCtx) clearSignatureCanvas();
-            if (state.docCtx) state.docCtx.clearRect(0, 0, documentCanvas.width, documentCanvas.height);
-            
-            // Reset inputs
-            fileInput.value = '';
-            signImageInput.value = '';
-            signSize.value = 100;
-        }
-
-        // Show loading indicator
-        function showLoading(show) {
-            loadingIndicator.style.display = show ? 'block' : 'none';
-        }
-
-        // Show error message
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-        }
-    </script>
-    <script>
-(() => {
-  // Updated Storage Key for Document Signer
-  const STORAGE_KEY = "docuwritepro_document_signer_guide_seen";
-  if (localStorage.getItem(STORAGE_KEY)) return;
-
-  const tips = [
-    "Welcome to Document Signer! Start by uploading a PDF or an image (PNG/JPG) that needs your signature.",
-    "If you upload a multi-page PDF, use the 'Select Page' screen to pick the specific page you want to sign.",
-    "You have two ways to add a signature: 'Upload Signature' for an existing image or 'Draw Signature' to create one live.",
-    "When drawing, use the color picker below the canvas to switch between black, blue, red, green, or gold ink.",
-    "If you make a mistake while drawing, just click 'Clear' to reset the signature canvas and start over.",
-    "After saving your signature, click anywhere on the document preview to place it exactly where it needs to be.",
-    "Use the 'Signature Properties' sidebar to adjust the size of your signature using the slider.",
-    "Forgot to change the ink color? You can still update the signature color in the properties panel after placing it.",
-    "If you need to move the signature to a different spot, click 'Place Signature Again' to re-position it on the page.",
-    "Once finished, click 'Download' to save your signed document as a high-quality PNG image file."
-  ];
-
-  let index = 0;
-  let direction = 1;
-
-  /* Container */
-  const box = document.createElement("div");
-  box.id = "dwp-tip-box";
-  box.innerHTML = `
-    <div class="dwp-progress">
-      <div class="dwp-progress-bar"></div>
-    </div>
-
-    <div class="dwp-tip-wrapper">
-      <div class="dwp-tip-text"></div>
-    </div>
-
-    <div class="dwp-actions">
-      <button class="dwp-prev">Back</button>
-      <button class="dwp-next">Next</button>
-    </div>
-  `;
-  document.body.appendChild(box);
-
-  const textEl = box.querySelector(".dwp-tip-text");
-  const nextBtn = box.querySelector(".dwp-next");
-  const prevBtn = box.querySelector(".dwp-prev");
-  const progressBar = box.querySelector(".dwp-progress-bar");
-
-  function updateTip(animate = true) {
-    if (animate) {
-      textEl.classList.remove("slide-in-left", "slide-in-right");
-      void textEl.offsetWidth;
-      textEl.classList.add(direction > 0 ? "slide-in-right" : "slide-in-left");
-    }
-
-    textEl.textContent = tips[index];
-    progressBar.style.width = `${((index + 1) / tips.length) * 100}%`;
-
-    prevBtn.style.visibility = index === 0 ? "hidden" : "visible";
-    nextBtn.textContent = index === tips.length - 1 ? "Got it" : "Next";
-  }
-
-  nextBtn.onclick = () => {
-    if (index === tips.length - 1) {
-      localStorage.setItem(STORAGE_KEY, "true");
-      box.classList.add("fade-out");
-      setTimeout(() => box.remove(), 300);
-    } else {
-      direction = 1;
-      index++;
-      updateTip();
-    }
-  };
-
-  prevBtn.onclick = () => {
-    if (index > 0) {
-      direction = -1;
-      index--;
-      updateTip();
-    }
-  };
-
-  setTimeout(() => {
-    box.classList.add("show");
-    updateTip(false);
-  }, 1000);
-
-  /* Styles */
-  const style = document.createElement("style");
-  style.textContent = `
-    #dwp-tip-box {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      width: 320px;
-      background: #4285f4; /* Updated to match Document Signer primary color */
-      color: #fff;
-      border-radius: 14px;
-      padding: 14px;
-      box-shadow: 0 12px 35px rgba(0,0,0,.25);
-      font-family: 'Roboto', system-ui, sans-serif;
-      z-index: 99999;
-      opacity: 0;
-      transform: translateY(-6px);
-      transition: opacity .3s ease, transform .3s ease;
-    }
-
-    #dwp-tip-box.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    #dwp-tip-box.fade-out {
-      opacity: 0;
-      transform: translateY(-6px);
-    }
-
-    .dwp-progress {
-      height: 4px;
-      background: rgba(255,255,255,.25);
-      border-radius: 99px;
-      overflow: hidden;
-      margin-bottom: 12px;
-    }
-
-    .dwp-progress-bar {
-      height: 100%;
-      width: 0%;
-      background: #fff;
-      transition: width .35s ease;
-    }
-
-    .dwp-tip-wrapper {
-      overflow: hidden;
-      min-height: 48px;
-    }
-
-    .dwp-tip-text {
-      font-size: 14px;
-      line-height: 1.55;
-    }
-
-    .slide-in-right {
-      animation: slideRight .25s ease;
-    }
-
-    .slide-in-left {
-      animation: slideLeft .25s ease;
-    }
-
-    @keyframes slideRight {
-      from { opacity: 0; transform: translateX(14px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    @keyframes slideLeft {
-      from { opacity: 0; transform: translateX(-14px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    .dwp-actions {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 14px;
-    }
-
-    .dwp-actions button {
-      border: none;
-      padding: 6px 14px;
-      border-radius: 7px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .dwp-prev {
-      background: rgba(255,255,255,.25);
-      color: #fff;
-    }
-
-    .dwp-next {
-      background: #fff;
-      color: #4285f4;
-    }
-  `;
-  document.head.appendChild(style);
-})();
     </script>
 </body>
 </html>
-                
-                
-                
-                
+
+

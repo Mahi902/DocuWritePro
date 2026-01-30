@@ -991,7 +991,85 @@
   document.head.appendChild(style);
 })();
 </script>
+<script>
+(function() {
+    // 1. Define the Dark Theme styles
+    const darkThemeStyles = `
+        body.dark-mode {
+            --bg: #000000;
+            --panel: #111111;
+            --text: #ffffff;
+            --primary: #3498db;
+        }
+        body.dark-mode #toolbar {
+            background: #111111;
+            border-bottom: 1px solid #333;
+        }
+        body.dark-mode button {
+            background: #222;
+            color: #eee;
+            border-color: #444;
+        }
+        body.dark-mode button:hover {
+            background: #333;
+        }
+        body.dark-mode select, body.dark-mode input[type="number"] {
+            background: #222;
+            color: white;
+            border-color: #444;
+        }
+        body.dark-mode #filename-input {
+            color: white;
+        }
+    `;
 
+    // 2. Inject styles into Head
+    const styleSheet = document.createElement("style");
+    styleSheet.innerText = darkThemeStyles;
+    document.head.appendChild(styleSheet);
+
+    // 3. Create the Toggle Button
+    const toolbar = document.getElementById('toolbar');
+    const themeBtn = document.createElement('button');
+    themeBtn.id = 'theme-toggle';
+    themeBtn.innerHTML = '<i class="fas fa-moon"></i>';
+    themeBtn.title = "Toggle Dark Mode";
+    themeBtn.style.marginLeft = "auto"; // Pushes it to the VERY right
     
+    // Add to a new group or just append to toolbar
+    const themeGroup = document.createElement('div');
+    themeGroup.className = 'tool-group';
+    themeGroup.style.borderRight = "none";
+    themeGroup.appendChild(themeBtn);
+    toolbar.appendChild(themeGroup);
+
+    // 4. Logic & Persistence
+    const enableDarkMode = () => {
+        document.body.classList.add('dark-mode');
+        themeBtn.innerHTML = '<i class="fas fa-sun"></i>';
+        localStorage.setItem('pureBlackTheme', 'enabled');
+    };
+
+    const disableDarkMode = () => {
+        document.body.classList.remove('dark-mode');
+        themeBtn.innerHTML = '<i class="fas fa-moon"></i>';
+        localStorage.setItem('pureBlackTheme', 'disabled');
+    };
+
+    // Check saved preference
+    if (localStorage.getItem('pureBlackTheme') === 'enabled') {
+        enableDarkMode();
+    }
+
+    // Toggle on click
+    themeBtn.addEventListener('click', () => {
+        if (document.body.classList.contains('dark-mode')) {
+            disableDarkMode();
+        } else {
+            enableDarkMode();
+        }
+    });
+})();
+</script>
 </body>
 </html>

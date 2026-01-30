@@ -22,8 +22,186 @@
             padding: 20px;
             max-width: 1200px;
             margin: 0 auto;
+            transition: background-color 0.3s, color 0.3s;
         }
         
+        /* PURE BLACK DARK THEME */
+        body.dark-theme {
+            background: #000000;
+            color: #ffffff;
+        }
+        
+        body.dark-theme .logo h1 {
+            color: #ffffff;
+        }
+        
+        body.dark-theme .logo-icon {
+            color: #ffffff;
+        }
+        
+        body.dark-theme .search-box {
+            background: #000000;
+            color: #ffffff;
+            border-color: #333333;
+        }
+        
+        body.dark-theme .search-box:focus {
+            border-color: #ffffff;
+            box-shadow: 0 1px 6px rgba(255, 255, 255, 0.3);
+        }
+        
+        body.dark-theme .search-box::placeholder {
+            color: #888888;
+        }
+        
+        body.dark-theme .search-btn {
+            background: #ffffff;
+            color: #000000;
+        }
+        
+        body.dark-theme .search-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        body.dark-theme .result-container {
+            background: #000000;
+            box-shadow: 0 1px 2px rgba(255, 255, 255, 0.1), 0 1px 3px 1px rgba(255, 255, 255, 0.05);
+            border: 1px solid #333333;
+        }
+        
+        body.dark-theme .word-header {
+            background: #000000;
+            border-color: #333333;
+        }
+        
+        body.dark-theme .word-title {
+            color: #ffffff;
+        }
+        
+        body.dark-theme .phonetic {
+            color: #cccccc;
+        }
+        
+        body.dark-theme .audio-btn {
+            background: #ffffff;
+            color: #000000;
+        }
+        
+        body.dark-theme .audio-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        body.dark-theme .part-of-speech {
+            background: #222222;
+            color: #ffffff;
+            border: 1px solid #333333;
+        }
+        
+        body.dark-theme .definition {
+            color: #ffffff;
+        }
+        
+        body.dark-theme .definition:before {
+            color: #cccccc;
+        }
+        
+        body.dark-theme .example {
+            color: #cccccc;
+        }
+        
+        body.dark-theme .synonyms-antonyms {
+            background: #000000;
+            border-color: #333333;
+        }
+        
+        body.dark-theme .synonyms h4, 
+        body.dark-theme .antonyms h4 {
+            color: #ffffff;
+        }
+        
+        body.dark-theme .tag {
+            background: #222222;
+            color: #ffffff;
+            border: 1px solid #333333;
+        }
+        
+        body.dark-theme .section-title {
+            background: #000000;
+            border-color: #333333;
+            color: #ffffff;
+        }
+        
+        body.dark-theme .image-card {
+            background: #000000;
+            border: 1px solid #333333;
+        }
+        
+        body.dark-theme .placeholder {
+            color: #888888;
+        }
+        
+        body.dark-theme .placeholder .material-icons {
+            color: #333333;
+        }
+        
+        body.dark-theme .error-message {
+            background: #330000;
+            color: #ff9999;
+            border: 1px solid #660000;
+        }
+        
+        body.dark-theme .spinner {
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #ffffff;
+        }
+        
+        /* Dark theme toggle button */
+        .theme-toggle {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        body.dark-theme .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .theme-icon {
+            font-size: 24px;
+            color: #5f6368;
+            transition: transform 0.3s, color 0.3s;
+        }
+        
+        body.dark-theme .theme-icon {
+            color: #ffffff;
+        }
+        
+        .theme-toggle:hover .theme-icon {
+            color: #1a73e8;
+        }
+        
+        body.dark-theme .theme-toggle:hover .theme-icon {
+            color: #ffffff;
+        }
+        
+        /* Rotate animation for smooth transition */
+        .theme-icon.rotate {
+            transform: rotate(360deg);
+        }
+        
+        /* Rest of your existing styles remain the same */
         header {
             display: flex;
             justify-content: space-between;
@@ -31,6 +209,10 @@
             padding: 20px 0;
             border-bottom: 1px solid #dadce0;
             margin-bottom: 30px;
+        }
+        
+        body.dark-theme header {
+            border-color: #333333;
         }
         
         .logo {
@@ -300,6 +482,9 @@
             <span class="material-icons logo-icon">menu_book</span>
             <h1>Word Finder</h1>
         </div>
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
+            <span class="material-icons theme-icon" id="theme-icon">dark_mode</span>
+        </button>
     </header>
     
     <div class="search-container">
@@ -358,6 +543,60 @@
             const phonetic = document.getElementById('phonetic');
             const audioBtn = document.getElementById('audio-btn');
             const audioContainer = document.getElementById('audio-container');
+            
+            // Dark theme functionality
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = document.getElementById('theme-icon');
+            const body = document.body;
+            
+            // Check for saved theme preference or prefer-color-scheme
+            const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+            const savedTheme = localStorage.getItem('theme');
+            
+            // Set initial theme
+            if (savedTheme === 'dark' || (!savedTheme && prefersDarkScheme.matches)) {
+                enableDarkTheme();
+            }
+            
+            // Theme toggle click handler
+            themeToggle.addEventListener('click', () => {
+                const themeIcon = document.getElementById('theme-icon');
+                themeIcon.classList.add('rotate');
+                
+                setTimeout(() => {
+                    themeIcon.classList.remove('rotate');
+                }, 300);
+                
+                if (body.classList.contains('dark-theme')) {
+                    disableDarkTheme();
+                } else {
+                    enableDarkTheme();
+                }
+            });
+            
+            function enableDarkTheme() {
+                body.classList.add('dark-theme');
+                themeIcon.textContent = 'light_mode';
+                localStorage.setItem('theme', 'dark');
+            }
+            
+            function disableDarkTheme() {
+                body.classList.remove('dark-theme');
+                themeIcon.textContent = 'dark_mode';
+                localStorage.setItem('theme', 'light');
+            }
+            
+            // Listen for system theme changes
+            prefersDarkScheme.addEventListener('change', (e) => {
+                // Only auto-switch if user hasn't set a preference
+                if (!localStorage.getItem('theme')) {
+                    if (e.matches) {
+                        enableDarkTheme();
+                    } else {
+                        disableDarkTheme();
+                    }
+                }
+            });
             
             // Public Unsplash Access Key
             const UNSPLASH_KEY = 'zE9SiiMyCl5TxAqvpUIphoUSd72HIHrQFBmwUAm4hAg';

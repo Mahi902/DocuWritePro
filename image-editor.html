@@ -1202,5 +1202,111 @@ function hideModal() {
 }
 
     </script>
+<script>
+(function() {
+    // 1. Define Pure Black (OLED) Theme CSS
+    const pureBlackStyles = `
+        /* Main UI Backgrounds */
+        body.dark-mode, 
+        body.dark-mode #canvas-container,
+        body.dark-mode main { background: #000000 !important; }
+        
+        body.dark-mode header, 
+        body.dark-mode footer, 
+        body.dark-mode #sidebar { 
+            background: #000000 !important; 
+            border-color: #333 !important; 
+            color: #ffffff !important; 
+        }
+
+        /* Buttons & Icons */
+        body.dark-mode .material-symbols-outlined,
+        body.dark-mode .tool-btn,
+        body.dark-mode .subtool-btn { color: #ffffff !important; }
+
+        /* Hover States - Dark gray to keep text/icons visible */
+        body.dark-mode .hover\\:bg-gray-200:hover,
+        body.dark-mode .subtool-btn:hover { background-color: #222 !important; }
+        
+        /* Sidebar & Secondary Bar Controls */
+        body.dark-mode input:not([type="range"]):not([type="color"]),
+        body.dark-mode #ratio-w, 
+        body.dark-mode #ratio-h,
+        body.dark-mode #custom-watermark-text,
+        body.dark-mode #doodle-text-input {
+            background: #111 !important;
+            color: #fff !important;
+            border: 1px solid #444 !important;
+        }
+
+        /* Range Sliders */
+        body.dark-mode input[type="range"] { background: #333; }
+
+        /* Modals */
+        body.dark-mode #modal > div { background: #000 !important; border: 1px solid #333; }
+        body.dark-mode #modal-title { color: #fff !important; }
+        body.dark-mode #modal-text { color: #aaa !important; }
+        body.dark-mode #modal-cancel { background: #222 !important; color: #fff !important; }
+
+        /* Upload Placeholder */
+        body.dark-mode #upload-placeholder label { 
+            border-color: #333 !important; 
+            background: #050505 !important; 
+        }
+        body.dark-mode #upload-placeholder:hover label { background: #111 !important; }
+
+        /* Theme Toggle Icon Style */
+        .theme-toggle-icon {
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #5f6368;
+            transition: color 0.2s;
+        }
+        body.dark-mode .theme-toggle-icon { color: #ffffff; }
+    `;
+
+    const styleSheet = document.createElement("style");
+    styleSheet.textContent = pureBlackStyles;
+    document.head.appendChild(styleSheet);
+
+    // 2. Inject Theme Icon next to Save Button
+    const headerRight = document.querySelector('header .flex:last-child');
+    const themeBtn = document.createElement('button');
+    themeBtn.className = 'theme-toggle-icon';
+    themeBtn.innerHTML = `<span class="material-symbols-outlined">dark_mode</span>`;
+    
+    // Insert before the Save button
+    headerRight.insertBefore(themeBtn, headerRight.firstChild);
+
+    // 3. Logic & Persistence
+    const themeIcon = themeBtn.querySelector('.material-symbols-outlined');
+    
+    const applyTheme = (isDark) => {
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+            themeIcon.textContent = 'light_mode';
+        } else {
+            document.body.classList.remove('dark-mode');
+            themeIcon.textContent = 'dark_mode';
+        }
+    };
+
+    const toggleTheme = () => {
+        const isCurrentlyDark = document.body.classList.contains('dark-mode');
+        const newState = !isCurrentlyDark;
+        localStorage.setItem('image-editor-theme', newState ? 'dark' : 'light');
+        applyTheme(newState);
+    };
+
+    // Load saved preference
+    const savedTheme = localStorage.getItem('image-editor-theme');
+    if (savedTheme === 'dark') applyTheme(true);
+
+    themeBtn.addEventListener('click', toggleTheme);
+})();
+</script>
 </body>
 </html>

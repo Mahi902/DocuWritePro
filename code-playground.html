@@ -998,6 +998,121 @@ function setupKeyboardShortcuts() {
     });
 }
 </script>
+<script>
+(function() {
+    // 1. Define Pure Black (OLED) Theme CSS
+    const darkThemeStyles = `
+        /* Main Body & Layout */
+        body.dark-mode { 
+            background: #000000 !important; 
+            color: #ffffff !important; 
+        }
+
+        /* Header & Bottom Bar */
+        body.dark-mode header, 
+        body.dark-mode .bottom-bar { 
+            background: #000000 !important; 
+            border-color: #333 !important; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5) !important; 
+        }
+
+        /* Tabs & Buttons */
+        body.dark-mode .tab, 
+        body.dark-mode .icon-btn, 
+        body.dark-mode .status { color: #eee !important; }
+        
+        body.dark-mode .tab.active { background: #1a73e8 !important; color: #fff !important; }
+        
+        body.dark-mode .icon-btn { 
+            background: #111 !important; 
+            border: 1px solid #333 !important; 
+        }
+
+        /* Hover states - Dark gray to keep text/icons visible */
+        body.dark-mode .icon-btn:hover, 
+        body.dark-mode .tab:hover { background: #222 !important; }
+
+        /* Editor Area */
+        body.dark-mode .editor-container, 
+        body.dark-mode #editor { 
+            background: #000000 !important; 
+            color: #ffffff !important; 
+        }
+
+        /* Line Numbers */
+        body.dark-mode .line-numbers { 
+            background: #050505 !important; 
+            border-color: #222 !important; 
+            color: #555 !important; 
+        }
+
+        /* Console Sidebar */
+        body.dark-mode .console-sidebar { 
+            background: #000000 !important; 
+            border-left: 1px solid #333 !important; 
+        }
+        body.dark-mode .console-output { 
+            background: #050505 !important; 
+            border: 1px solid #222 !important; 
+            color: #ddd !important; 
+        }
+
+        /* Theme Toggle Icon Style */
+        .theme-toggle-icon {
+            cursor: pointer;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            color: var(--text-color);
+            transition: transform 0.2s ease;
+        }
+        body.dark-mode .theme-toggle-icon { color: #fff; }
+        .theme-toggle-icon:hover { transform: scale(1.1); }
+    `;
+
+    const styleSheet = document.createElement("style");
+    styleSheet.textContent = darkThemeStyles;
+    document.head.appendChild(styleSheet);
+
+    // 2. Inject Theme Icon besides Controls
+    const controls = document.querySelector('.controls');
+    const themeBtn = document.createElement('div');
+    themeBtn.className = 'theme-toggle-icon';
+    themeBtn.title = "Toggle Dark Mode";
+    themeBtn.innerHTML = `<span class="material-symbols-outlined">dark_mode</span>`;
+    
+    // Insert at the beginning of the controls group
+    controls.insertBefore(themeBtn, controls.firstChild);
+
+    // 3. Logic & Persistence
+    const themeIcon = themeBtn.querySelector('.material-symbols-outlined');
+    
+    const applyTheme = (isDark) => {
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+            themeIcon.textContent = 'light_mode';
+            updateStatus('Dark theme enabled');
+        } else {
+            document.body.classList.remove('dark-mode');
+            themeIcon.textContent = 'dark_mode';
+            updateStatus('Light theme enabled');
+        }
+    };
+
+    const toggleTheme = () => {
+        const isCurrentlyDark = document.body.classList.contains('dark-mode');
+        const newState = !isCurrentlyDark;
+        localStorage.setItem('playground-theme', newState ? 'dark' : 'light');
+        applyTheme(newState);
+    };
+
+    // Load saved preference
+    const savedTheme = localStorage.getItem('playground-theme');
+    if (savedTheme === 'dark') applyTheme(true);
+
+    themeBtn.addEventListener('click', toggleTheme);
+})();
+</script>
   </body>
 </html>
 

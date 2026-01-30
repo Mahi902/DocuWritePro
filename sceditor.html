@@ -2254,5 +2254,142 @@ function loadTemplateFromHash() {
     }, 100);
 })();
 </script>
+<script>
+(function() {
+    // 1. Define Pure Black (OLED) Theme CSS
+    const pureBlackStyles = `
+        /* Main UI Backgrounds */
+        body.dark-mode, 
+        body.dark-mode #editorContainer, 
+        body.dark-mode .editor-area-wrapper { background: #000000 !important; }
+        
+        body.dark-mode .top-bar, 
+        body.dark-mode .toolbar, 
+        body.dark-mode .sidebar { 
+            background: #000000; 
+            border-bottom: 1px solid #333; 
+            border-right: 1px solid #333; 
+            color: #ffffff; 
+        }
+
+        /* Inputs & Page Background Selector Fix */
+        body.dark-mode #docTitle,
+        body.dark-mode select, 
+        body.dark-mode input:not([type="color"]), 
+        body.dark-mode .font-selector { 
+            background: #111 !important; 
+            color: #fff !important; 
+            border: 1px solid #444 !important; 
+        }
+        
+        /* Sidebar Titles and Labels */
+        body.dark-mode .sidebar-title,
+        body.dark-mode .sidebar-control label,
+        body.dark-mode .loading-text,
+        body.dark-mode #wordCount { color: #aaa !important; }
+
+        /* Buttons: Toolbar & Sidebar Collapse/Expand */
+        body.dark-mode .toolbar-btn .material-symbols-outlined,
+        body.dark-mode .collapse-btn .material-symbols-outlined,
+        body.dark-mode .expand-btn .material-symbols-outlined { color: #fff; }
+
+        body.dark-mode .collapse-btn, 
+        body.dark-mode .expand-btn,
+        body.dark-mode .zoom-btn,
+        body.dark-mode .upload-font-btn { 
+            background: #111 !important; 
+            color: #fff !important; 
+            border: 1px solid #444 !important; 
+        }
+
+        /* Hover States - Fixed to dark gray so text remains visible */
+        body.dark-mode .toolbar-btn:hover,
+        body.dark-mode .collapse-btn:hover,
+        body.dark-mode .zoom-btn:hover,
+        body.dark-mode .upload-font-btn:hover,
+        body.dark-mode .font-option:hover { 
+            background: #333 !important; 
+        }
+
+        /* Add New Page Button - Pure Black Style */
+        body.dark-mode .add-page-btn { 
+            background: #000 !important; 
+            border: 2px dashed #444 !important; 
+            color: #888 !important; 
+        }
+        body.dark-mode .add-page-btn:hover { background: #111 !important; border-color: #1976d2 !important; color: #fff !important; }
+
+        /* Modals & Drop Zones */
+        body.dark-mode .modal-content { background: #000; border: 1px solid #333; color: #fff; }
+        body.dark-mode .drop-zone { background: #111 !important; border-color: #444 !important; color: #888; }
+        body.dark-mode .drop-zone:hover { border-color: #1976d2 !important; color: #fff; }
+        body.dark-mode .modal-input { background: #111; color: #fff; border: 1px solid #444; }
+        
+        /* Dropdown Menus */
+        body.dark-mode .font-menu { background: #111; border: 1px solid #444; }
+        
+        /* Theme Icon Button (No BG) */
+        .theme-toggle-icon {
+            background: none !important;
+            border: none !important;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            margin-right: 12px;
+            color: #1976d2; /* Primary blue for light mode visibility */
+        }
+        body.dark-mode .theme-toggle-icon { color: #ffffff; }
+    `;
+
+    const styleSheet = document.createElement("style");
+    styleSheet.textContent = pureBlackStyles;
+    document.head.appendChild(styleSheet);
+
+    // 2. Inject the Theme Icon Button
+    const topBar = document.querySelector('.top-bar');
+    const docTitle = document.getElementById('docTitle');
+    
+    // Create a container for title + theme toggle
+    const titleGroup = document.createElement('div');
+    titleGroup.style.display = 'flex';
+    titleGroup.style.alignItems = 'center';
+    
+    const themeBtn = document.createElement('button');
+    themeBtn.className = 'theme-toggle-icon';
+    themeBtn.innerHTML = `<span class="material-symbols-outlined">dark_mode</span>`;
+    
+    // Position it besides the Export button area
+    const exportBtn = document.querySelector('.export-btn');
+    topBar.insertBefore(themeBtn, exportBtn);
+
+    // 3. Theme Toggle & Memory Logic
+    const themeIcon = themeBtn.querySelector('.material-symbols-outlined');
+    
+    const applyTheme = (isDark) => {
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+            themeIcon.textContent = 'light_mode';
+        } else {
+            document.body.classList.remove('dark-mode');
+            themeIcon.textContent = 'dark_mode';
+        }
+    };
+
+    const toggleTheme = () => {
+        const isCurrentlyDark = document.body.classList.contains('dark-mode');
+        const newState = !isCurrentlyDark;
+        localStorage.setItem('sceditor-theme', newState ? 'dark' : 'light');
+        applyTheme(newState);
+    };
+
+    // Load saved preference on startup
+    const savedTheme = localStorage.getItem('sceditor-theme');
+    applyTheme(savedTheme === 'dark');
+
+    themeBtn.addEventListener('click', toggleTheme);
+})();
+</script>
 </body>
 </html>

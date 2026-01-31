@@ -149,9 +149,128 @@
             <div class="bg-indigo-600 p-1.5 rounded-lg shadow-inner">
                 <span class="material-symbols-outlined text-white text-xl leading-none block">grid_view</span>
             </div>
-            <input type="text" id="sheet-title" value="Spreadsheet" class="text-lg font-semibold outline-none border-b-2 border-transparent focus:border-indigo-500 transition-all px-1 bg-transparent">
+            <input type="text" id="sheet-title" value="Untitled Spreadsheet" class="text-lg font-semibold outline-none border-b-2 border-transparent focus:border-indigo-500 transition-all px-1 bg-transparent">
         </div>
         <div class="flex gap-2">
+<style>
+    /* PURE BLACK THEME DEFINITIONS */
+    body.dark-mode {
+        --grid-border: #1a1a1a;
+        --header-bg: #000000;
+        --selection-bg: rgba(99, 102, 241, 0.2);
+        --selection-border: #6366f1;
+        background-color: #000000 !important;
+        color: #e2e8f0 !important;
+    }
+
+    /* Global Overrides for Dark Mode */
+    .dark-mode header, 
+    .dark-mode .toolbar, 
+    .dark-mode .formula-bar, 
+    .dark-mode footer,
+    .dark-mode .spreadsheet-container,
+    .dark-mode table {
+        background-color: #000000 !important;
+        border-color: #1a1a1a !important;
+        color: #f8fafc !important;
+    }
+
+    .dark-mode th, .dark-mode td {
+        background-color: #000000 !important;
+        border-color: #1a1a1a !important;
+        color: #cbd5e1 !important;
+    }
+
+    .dark-mode th { background-color: #0a0a0a !important; }
+    
+    /* Inputs & Buttons */
+    .dark-mode input, .dark-mode #formula-input { 
+        background: transparent !important; 
+        color: white !important; 
+    }
+    
+    .dark-mode .tool-btn { color: #94a3b8 !important; }
+    .dark-mode .tool-btn:hover { background: #111 !important; color: #818cf8 !important; }
+
+    /* Export Dropdown & Popups */
+    .dark-mode .group-hover\:block, 
+    .dark-mode [style*="position: absolute"] {
+        background-color: #000000 !important;
+        border: 1px solid #1a1a1a !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.7) !important;
+    }
+    .dark-mode .group-hover\:block button { color: #cbd5e1 !important; }
+    .dark-mode .group-hover\:block button:hover { background-color: #111 !important; }
+
+    /* Auto-Select Toggle */
+    .dark-mode #auto-select-toggle { background-color: #1a1a1a !important; }
+    .dark-mode #auto-select-toggle.toggle-active { background-color: #3730a3 !important; }
+
+    /* Delete Row/Col Buttons */
+    .dark-mode button[onclick*="delete"] {
+        background-color: #1a0a0a !important;
+        color: #f87171 !important;
+        border: 1px solid #450a0a !important;
+    }
+
+    /* Subtle Theme Toggle Button */
+    #theme-toggle {
+        opacity: 0.4;
+        transition: opacity 0.2s, color 0.2s;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        color: inherit;
+    }
+    #theme-toggle:hover { opacity: 1; }
+    .dark-mode #theme-toggle { color: #64748b; }
+</style>
+
+
+<button onclick="toggleTheme()" id="theme-toggle" title="Toggle Dark Mode">
+    <span class="material-symbols-outlined text-xl" id="theme-icon">dark_mode</span>
+</button>
+
+
+<script>
+    function toggleTheme() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('opensheet-theme', isDark ? 'dark' : 'light');
+        updateThemeUI(isDark);
+    }
+
+    function updateThemeUI(isDark) {
+        const icon = document.getElementById('theme-icon');
+        const root = document.documentElement;
+        
+        if (icon) icon.innerText = isDark ? 'light_mode' : 'dark_mode';
+        
+        // Target any dynamic panels (like the Formula Center)
+        const panels = document.querySelectorAll('div[style*="max-height"]');
+        panels.forEach(p => {
+            if(isDark) {
+                p.style.backgroundColor = '#000000';
+                p.style.color = '#ffffff';
+                p.style.borderColor = '#1a1a1a';
+            } else {
+                p.style.backgroundColor = '';
+                p.style.color = '';
+                p.style.borderColor = '';
+            }
+        });
+    }
+
+    // Load preference and apply on startup
+    (function() {
+        const savedTheme = localStorage.getItem('opensheet-theme');
+        if (savedTheme === 'dark') {
+            document.body.classList.add('dark-mode');
+            updateThemeUI(true);
+        }
+    })();
+</script>
 <div class="flex items-center gap-2 px-3 py-1.5 border border-slate-300 rounded-md bg-white">
     <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Auto Select</span>
     <button id="auto-select-toggle" onclick="toggleAutoSelect()" class="relative inline-flex h-5 w-9 items-center rounded-full bg-slate-200 transition-colors focus:outline-none">
@@ -163,7 +282,7 @@
             </button>
             <div class="relative group">
                 <button class="px-4 py-1.5 bg-indigo-600 text-white rounded-md text-sm font-medium hover:bg-indigo-700 transition-all flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">download</span> Export
+                    <span class="material-symbols-outlined text-sm">download</span> Drag down to Export
                 </button>
                 <div class="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded shadow-lg hidden group-hover:block z-50">
                     <button onclick="exportFile('json')" class="w-full text-left px-4 py-2 text-sm hover:bg-slate-50 flex items-center gap-2">
@@ -1614,6 +1733,7 @@
         }
     })();
 </script>
+
 </body>
 </html>
 

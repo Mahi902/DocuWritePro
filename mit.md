@@ -4,7 +4,7 @@ Copyright (c) 2026 Mahi902
 
 Original Creator: Mohtadi Azad Mahi
 Creator Profile: github.com/Mahi902
-Offcicial GitHub Repository: github.com/Mahi902/DocuWritePro
+Official GitHub Repository: github.com/Mahi902/DocuWritePro
 
 ---
 

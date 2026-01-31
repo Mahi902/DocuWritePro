@@ -788,6 +788,96 @@
   document.head.appendChild(style);
 })();
     </script>
+    <script>
+(() => {
+    const STORAGE_KEY = 'dwp_pure_black_theme';
+    
+    // 1. Load Material Symbols
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0';
+    document.head.appendChild(link);
+
+    // 2. Inject Styles (Theme + Responsive Header)
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Responsive Scrollable Header */
+        header {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        header::-webkit-scrollbar { display: none; } /* Hide scrollbar for clean UI */
+
+        /* Pure Black Theme Styles */
+        body.dark-mode { background-color: #000000 !important; color: #ffffff; }
+        body.dark-mode header, 
+        body.dark-mode main > div { 
+            background-color: #0a0a0a !important; 
+            border: 1px solid #222; 
+            color: #eeeeee; 
+        }
+        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4,
+        body.dark-mode .text-gray-700, body.dark-mode .text-gray-800, body.dark-mode .text-gray-600 { 
+            color: #f3f4f6 !important; 
+        }
+        body.dark-mode .bg-gray-50 { background-color: #111111 !important; }
+        body.dark-mode .page-container { background-color: #1a1a1a !important; border-color: #333; }
+        
+        /* Theme Toggle Button Styling */
+        #themeToggle { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            width: 42px; 
+            height: 42px; 
+            min-width: 42px; /* Prevent shrinking in scrollable header */
+            padding: 0; 
+        }
+        body.dark-mode #themeToggle { background-color: #222; color: #fff; border: 1px solid #444; }
+        
+        /* File Input Styling for Dark Mode */
+        body.dark-mode #fileInput { color: #9ca3af; }
+        body.dark-mode #fileInput::file-selector-button {
+            background-color: #1e293b;
+            color: #38bdf8;
+            border: 1px solid #334155;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // 3. Create the Toggle Button
+    const headerActions = document.querySelector('header .flex.items-center.space-x-4');
+    const themeBtn = document.createElement('button');
+    themeBtn.id = 'themeToggle';
+    themeBtn.className = 'bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg shadow-md transition duration-200 ease-in-out focus:outline-none';
+    themeBtn.innerHTML = `<span class="material-symbols-outlined" id="themeIcon">dark_mode</span>`;
+    headerActions.prepend(themeBtn);
+
+    const iconEl = document.getElementById('themeIcon');
+
+    // 4. Theme Logic
+    const enableDarkMode = () => {
+        document.body.classList.add('dark-mode');
+        iconEl.textContent = 'light_mode';
+        localStorage.setItem(STORAGE_KEY, 'enabled');
+    };
+
+    const disableDarkMode = () => {
+        document.body.classList.remove('dark-mode');
+        iconEl.textContent = 'dark_mode';
+        localStorage.setItem(STORAGE_KEY, 'disabled');
+    };
+
+    if (localStorage.getItem(STORAGE_KEY) === 'enabled') {
+        enableDarkMode();
+    }
+
+    themeBtn.addEventListener('click', () => {
+        document.body.classList.contains('dark-mode') ? disableDarkMode() : enableDarkMode();
+    });
+})();
+    </script>
 </body>
 </html>
 

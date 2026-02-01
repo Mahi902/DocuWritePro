@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DocuWrite Pro</title>
+    <title>DocuWrite Pro 5.0.3.1</title>
     <meta name="description" content="DocuWrite Pro Mobile App">
     <link rel="manifest" href="manifest.json">
     
@@ -56,6 +56,12 @@
             --nav-border: rgba(255,255,255,0.1);
             --search-bg: rgba(118, 118, 128, 0.24);
             --picker-overlay: rgba(0,0,0,0.6);
+        }
+
+        /* Animation Control */
+        html.no-animations * {
+            transition: none !important;
+            animation: none !important;
         }
 
         * { 
@@ -127,14 +133,15 @@
         }
         .nav-item.active .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 500; }
         
-        #nav-scan { display: none; } 
+        #nav-scan, #nav-tabs { display: none; } 
         body.online #nav-scan { display: flex; }
+        .tabs-enabled #nav-tabs { display: flex; }
 
         /* --- 4. COMPONENTS --- */
         h2 { font-size: 34px; font-weight: 700; margin: 20px 0 15px 0; letter-spacing: -0.5px; color: var(--text-primary); }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin: 30px 0 15px 0; }
         .section-title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
-        .clear-btn { color: var(--primary-color); font-size: 15px; font-weight: 600; padding: 8px 0; }
+        .clear-btn { color: var(--primary-color); font-size: 15px; font-weight: 600; padding: 8px 0; float: right;}
 
         /* Quick Actions */
         .quick-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px; }
@@ -150,7 +157,7 @@
         }
         .action-label { font-size: 15px; font-weight: 600; text-align: left; line-height: 1.2; }
 
-        /* Tool Grid */
+        /* Tool Grid (Default) */
         .tools-grid, .recent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 15px; padding-bottom: 20px; }
         .tool-card {
             background: var(--bg-card); border-radius: var(--radius-xl); padding: 18px 10px;
@@ -163,6 +170,24 @@
             background: var(--primary-light); padding: 10px; border-radius: 16px; 
         }
         .tool-name { font-size: 13px; line-height: 1.35; font-weight: 500; color: var(--text-primary); }
+
+        /* Tool List (Card View) */
+        .tools-list, .recents-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
+        .list-card {
+            background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: var(--shadow-card); transition: all 0.2s; cursor: pointer;
+        }
+        .list-card:active { background: var(--separator); transform: scale(0.99); }
+        .list-card-left { display: flex; align-items: center; gap: 12px; }
+        .list-card-icon {
+            width: 40px; height: 40px; background: var(--primary-light); color: var(--primary-color);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+        }
+        .list-card-details { display: flex; flex-direction: column; }
+        .list-card-name { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .list-card-category { font-size: 13px; color: var(--text-secondary); }
+        .list-card-chevron { color: var(--text-secondary); opacity: 0.5; }
 
         /* Templates (Horizontal) */
         #templates-section { margin-bottom: 10px; }
@@ -255,9 +280,9 @@
         #picker-overlay.open { opacity: 1; pointer-events: auto; }
 
         #picker-sheet {
-            background: var(--bg-body); /* Slightly distinct from card */
+            background: var(--bg-body);
             border-radius: 20px 20px 0 0;
-            padding: 20px 16px 40px 16px; /* Extra bottom padding for home indicator */
+            padding: 20px 16px 40px 16px;
             transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
             max-height: 70vh; display: flex; flex-direction: column;
         }
@@ -292,7 +317,6 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-body); z-index: 2000;
             display: flex; flex-direction: column;
-            /* Transition handles both up and down */
             transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
             box-shadow: -10px 0 20px rgba(0,0,0,0.1);
@@ -368,6 +392,188 @@
         }
         @keyframes rippleEffect {
             to { transform: scale(4); opacity: 0; }
+        }
+
+        /* --- 8. ABOUT APP OFFLINE STATE --- */
+        .offline-content {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+        .offline-icon {
+            font-size: 64px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+        .offline-message {
+            font-size: 17px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            max-width: 300px;
+        }
+
+        /* --- 9. TABS FEATURE --- */
+        #tab-tabs {
+            padding: 0;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tabs-container {
+            height: 100%;
+            width: 100%;
+            position: relative;
+            display: none;
+        }
+
+        .tabs-container.active {
+            display: block;
+        }
+
+        .tab-split {
+            position: absolute;
+            border: 1px solid var(--separator);
+            overflow: hidden;
+            background: var(--bg-body);
+        }
+
+        .tab-content {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-header {
+            height: 44px;
+            background: var(--nav-bg);
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 12px;
+            border-bottom: 1px solid var(--separator);
+        }
+
+        .tab-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .tab-close {
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .tab-tool-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-tab-btn {
+            width: 60px;
+            height: 60px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+        }
+
+        .tab-divider {
+            position: absolute;
+            background: var(--primary-color);
+            z-index: 100;
+        }
+
+        .tab-divider.horizontal {
+            height: 4px;
+            width: 100%;
+            cursor: ns-resize;
+        }
+
+        .tab-divider.vertical {
+            width: 4px;
+            height: 100%;
+            cursor: ew-resize;
+        }
+
+        .tab-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            z-index: 100;
+        }
+
+        .tab-control-btn {
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--separator);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* --- 10. VIEW SELECTOR --- */
+        .view-selector {
+            display: flex;
+            background: var(--search-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-left: 8px;
+            height: 36px;
+        }
+
+        .view-option {
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            min-width: 70px;
+        }
+
+        .view-option.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* --- 11. LOADER --- */
+        .loader {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--separator);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -448,12 +654,19 @@
             </div>
 
             <div class="section-header">
-                <span class="section-title">Recents</span>
-                <span class="clear-btn" onclick="clearRecents()">Clear</span>
+
+                <span class="section-title">Recents      
+     </span>
+<div class="view-selector" style="margin-left: auto; margin-right: 0;">
+                <span class="clear-btn" onclick="clearRecents()">‎‎ ‎  Clear‎‎ ‎ ‎  </span>
+
+                
+                </div>
+
             </div>
-            <div class="recent-grid" id="recent-grid">
-                <div class="recent-placeholder">No recent tools used</div>
-            </div>
+
+            <div class="recent-grid" id="recent-grid"></div>
+            <div class="recents-list" id="recents-list" style="display: none;"></div>
             <div style="height: 60px;"></div>
         </div>
 
@@ -464,10 +677,39 @@
                     <span class="material-symbols-rounded" style="color:var(--text-secondary); opacity:0.7;">search</span>
                     <input type="text" id="tool-search" placeholder="Search">
                 </div>
+                
                 <button class="sort-btn" id="sort-trigger"><span class="material-symbols-rounded">sort</span></button>
             </div>
             <div id="tools-list-container"></div>
             <div style="height: 80px;"></div>
+        </div>
+
+        <!-- === TABS TAB === -->
+        <div id="tab-tabs" class="tab-view">
+            <div class="tabs-container" id="tabs-container">
+                <!-- Tabs will be dynamically added here -->
+            </div>
+            <div id="tabs-setup" style="padding: 40px 20px; text-align: center;">
+                <h2>Multi-Tab Workspace</h2>
+                <p style="color: var(--text-secondary); margin: 20px 0 40px 0;">Open multiple tools side by side in resizable tabs</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; max-width: 300px; margin: 0 auto;">
+                    <div class="action-btn" onclick="initTabs(2)">
+                        <div class="action-icon-circle"><span class="material-symbols-rounded">view_agenda</span></div>
+                        <div class="action-label">2 Tabs</div>
+                    </div>
+                    <div class="action-btn" onclick="initTabs(3)">
+                        <div class="action-icon-circle"><span class="material-symbols-rounded">view_column</span></div>
+                        <div class="action-label">3 Tabs</div>
+                    </div>
+                    <div class="action-btn" onclick="initTabs(4)" style="grid-column: span 2; max-width: 200px; margin: 0 auto;">
+                        <div class="action-icon-circle"><span class="material-symbols-rounded">grid_view</span></div>
+                        <div class="action-label">4 Tabs</div>
+                    </div>
+                </div>
+                
+                <p style="font-size: 13px; color: var(--text-secondary); margin-top: 30px;">Maximum 4 tabs • Drag to resize • Close session to remove tabs</p>
+            </div>
         </div>
 
         <!-- === SETTINGS TAB (CUSTOM UI) === -->
@@ -478,6 +720,16 @@
                 <h3 style="margin: 0 0 8px 20px; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Preferences</h3>
                 
                 <div class="settings-group">
+                    <!-- About App moved to top -->
+                    <div class="setting-row" onclick="openAboutApp()">
+                        <span class="setting-label">About App</span>
+                        <div class="setting-value-container">
+                            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                        </div>
+                    </div>
+
+
+
                     <!-- Manual Theme Selector -->
                     <div class="setting-row" onclick="openThemePicker()">
                         <span class="setting-label">Theme</span>
@@ -487,11 +739,40 @@
                         </div>
                     </div>
 
+                    <!-- View Mode -->
+                    <div class="setting-row" onclick="openViewModePicker()">
+                        <span class="setting-label">Tool View</span>
+                        <div class="setting-value-container">
+                            <span class="setting-value" id="display-view-mode">Grid View</span>
+                            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <!-- Animations -->
+                    <div class="setting-row" onclick="openAnimationsPicker()">
+                        <span class="setting-label">Animations</span>
+                        <div class="setting-value-container">
+                            <span class="setting-value" id="display-animations">Enabled</span>
+                            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                        </div>
+                    </div>
+
+
+
                     <!-- Document Editor -->
                     <div class="setting-row" onclick="openEditorPicker('doc')">
                         <span class="setting-label">Document Editor</span>
                         <div class="setting-value-container">
                             <span class="setting-value" id="display-doc-editor">Default</span>
+                            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                        </div>
+                    </div>
+
+                    <!-- Templates Setting (only when Sugarcane is selected) -->
+                    <div class="setting-row" id="templates-setting" style="display: none;" onclick="openTemplatesPicker()">
+                        <span class="setting-label">Templates</span>
+                        <div class="setting-value-container">
+                            <span class="setting-value" id="display-templates">Enabled</span>
                             <span class="material-symbols-rounded setting-chevron">chevron_right</span>
                         </div>
                     </div>
@@ -513,27 +794,24 @@
                             <span class="material-symbols-rounded setting-chevron">chevron_right</span>
                         </div>
                     </div>
+
+                    <!-- Tabs Feature -->
+                    <div class="setting-row" onclick="openTabsPicker()">
+                        <span class="setting-label">Multi-Tabs</span>
+                        <div class="setting-value-container">
+                            <span class="setting-value" id="display-tabs">Disabled</span>
+                            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-<div style="margin-top: 10px;">
-    <h3 style="margin: 0 0 8px 20px; font-size: 13px; color: var(--text-secondary); text-transform: uppercase;">Information</h3>
-    <div class="settings-group">
-        <div class="setting-row" onclick="openAboutApp()">
-            <span class="setting-label">About App</span>
-            <div class="setting-value-container">
-                <span class="material-symbols-rounded setting-chevron">chevron_right</span>
-            </div>
-        </div>
-    </div>
-</div>
 
             <button class="btn-danger" id="btn-update-app">
                 <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 8px;">system_update_alt</span>
                 Reset & Update App
             </button>
 
-            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.0.3 • Build 2026</p>
+            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.0.3.1 • Build 2026</p>
             <div style="height: 80px;"></div>
         </div>
 
@@ -548,6 +826,10 @@
         <div class="nav-item" onclick="switchTab('tools')" id="nav-tools">
             <span class="material-symbols-rounded">grid_view</span>
             <span>Tools</span>
+        </div>
+        <div class="nav-item" id="nav-tabs" onclick="switchTab('tabs')">
+            <span class="material-symbols-rounded">tab</span>
+            <span>Tabs</span>
         </div>
         <div class="nav-item online-only" id="nav-scan" onclick="openTool('scanner.html', 'Scanner')">
             <span class="material-symbols-rounded">qr_code_scanner</span>
@@ -568,11 +850,44 @@
         <iframe id="app-frame" src="about:blank" style="flex:1; border:none; width:100%; height:100%;"></iframe>
     </div>
 
+    <!-- --- ABOUT APP IFRAME (Hidden) --- -->
+<div id="about-iframe-container"
+     style="display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: var(--bg-body);
+            z-index: 2001; display: flex; flex-direction: column;">
+
+    <!-- HEADER ALWAYS STAYS AT TOP -->
+    <div class="iframe-header" 
+         style="width: 100%; flex-shrink: 0;">
+        <div class="iframe-title">About DocuWrite Pro</div>
+        <div class="close-tool-btn" onclick="closeAboutApp()">Close</div>
+    </div>
+
+    <!-- Loader (optional) -->
+    <div id="about-loader" class="offline-content">
+        <div class="loader"></div>
+        <p style="color: var(--text-secondary);">Loading...</p>
+    </div>
+
+    <!-- Offline message -->
+    <div id="about-offline" class="offline-content">
+        <span class="material-symbols-rounded offline-icon">wifi_off</span>
+        <p class="offline-message">Connect to the internet to view app information.</p>
+    </div>
+
+    <!-- Iframe takes the remaining space -->
+    <iframe id="about-frame"
+            src="about:blank"
+            style="border:none; width:100%; height:100%; flex: 1;">
+    </iframe>
+</div>
+
+
     <!-- --- OFFLINE POPUP --- -->
     <div id="popup-overlay" onclick="this.style.display='none'">
         <div class="popup-content" onclick="event.stopPropagation()">
             <span class="material-symbols-rounded" style="font-size: 40px; color: var(--text-secondary); margin-bottom: 10px;">wifi_off</span>
-            <h3 style="margin-top:0">Unavailable In Offline Mdoe</h3>
+            <h3 style="margin-top:0">Unavailable In Offline Mode</h3>
             <ul style="padding-left: 20px; line-height: 1.6; font-size: 14px; text-align:left; color:var(--text-secondary); margin-bottom:20px;">
                 <li>Word Finder</li>
                 <li>Markup</li>
@@ -591,12 +906,23 @@
     <!-- --- HIDDEN IFRAME FOR PAGE CACHING --- -->
     <iframe id="caching-iframe" title="Caching Frame"></iframe>
 
+    <!-- --- TOOL SELECTOR FOR TABS --- -->
+    <div id="tool-selector-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--picker-overlay); z-index: 2501; align-items: center; justify-content: center;">
+        <div style="background: var(--bg-card); width: 85%; max-width: 300px; border-radius: 14px; padding: 20px; max-height: 70vh; overflow-y: auto;">
+            <h3 style="margin-top: 0; margin-bottom: 15px;">Select Tool</h3>
+            <div id="tool-selector-list" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Tools will be populated here -->
+            </div>
+            <button onclick="document.getElementById('tool-selector-overlay').style.display='none'" style="width:100%; padding:12px; background:var(--bg-body); color:var(--primary-color); border:none; border-radius:10px; font-weight:600; margin-top:15px;">Cancel</button>
+        </div>
+    </div>
+
     <script>
         // --- 1. DATA & CONFIG ---
         const BASE_URL = "https://mahi902.github.io/DocuWritePro/";
         const TEMPLATE_JSON_URL = BASE_URL + "temp.json";
 
-        // Tool Database (from app 10)
+        // Tool Database
         const toolsDB = [
             // Document Editing
             { name: "Editor", url: "document-writer.html", cat: "Document Editing", icon: "edit" },
@@ -649,7 +975,14 @@
             { name: "Call", url: "connect.html", cat: "Collaboration", icon: "call", onlineOnly: true },
         ];
 
-        // --- 2. CORE LOGIC (From app 10) ---
+        // --- 2. CORE STATE VARIABLES ---
+        let currentSort = 'All';
+        let activeTabs = [];
+        let draggingDivider = null;
+        let dragStart = null;
+        let selectedTabIndex = null;
+
+        // --- 3. CORE FUNCTIONS ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -660,13 +993,29 @@
             if (tabId === 'home') {
                 renderRecents();
                 checkTemplateVisibility();
+                updateViewMode();
             }
-            if (tabId === 'tools') renderTools();
+            if (tabId === 'tools') {
+                renderTools();
+                updateViewMode();
+            }
+            if (tabId === 'tabs') {
+                if (activeTabs.length > 0) {
+                    document.getElementById('tabs-container').style.display = 'block';
+                    document.getElementById('tabs-setup').style.display = 'none';
+                } else {
+                    document.getElementById('tabs-container').style.display = 'none';
+                    document.getElementById('tabs-setup').style.display = 'block';
+                }
+            }
         }
 
         function updateOnlineStatus() {
             const isOnline = navigator.onLine;
             document.body.className = isOnline ? 'online' : 'offline';
+            if (localStorage.getItem('tabs_enabled') === 'true') {
+                document.body.classList.add('tabs-enabled');
+            }
             if (!isOnline && getCookie('bannerDismissed') === 'true') {
                 document.body.classList.add('banner-dismissed');
             } else {
@@ -677,7 +1026,7 @@
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
         
-        // --- 3. TOOLS & ANIMATION (From app 10) ---
+        // --- 4. TOOL OPENING ---
         function openTool(url, name) {
             if (name) addToRecents({ name, url, icon: getIconForTool(url) });
             const frame = document.getElementById('app-frame');
@@ -687,25 +1036,47 @@
             container.classList.add('visible');
         }
 
-        // Closing Tool (Slide Down + Clean up)
         function closeTool() {
             const container = document.getElementById('tool-iframe-container');
             const frame = document.getElementById('app-frame');
-            
-            // 1. Start Slide Down Animation
             container.classList.remove('visible');
-            
-            // 2. Wait for animation (300ms) then clear source
             setTimeout(() => {
                 frame.src = 'about:blank';
             }, 300);
         }
 
-        let currentSort = 'All';
+        // --- 5. SORTING FUNCTIONALITY ---
+        function openSortPicker() {
+            const options = [
+                {label: 'All Tools', value: 'All'},
+                {label: 'Document Editing', value: 'Document Editing'},
+                {label: 'Image Editing', value: 'Image Editing'},
+                {label: 'Code Editing', value: 'Code Editing'}
+            ];
+            
+            if (navigator.onLine) {
+                options.push({label: 'Collaboration', value: 'Collaboration'});
+            }
+            
+            openPicker(
+                'Sort by Category',
+                options,
+                currentSort,
+                (val) => {
+                    currentSort = val;
+                    renderTools();
+                    renderRecents();
+                }
+            );
+        }
+
+        // --- 6. TOOL RENDERING WITH VIEW MODES ---
         function renderTools() {
             const container = document.getElementById('tools-list-container');
             const searchTerm = document.getElementById('tool-search').value.toLowerCase();
             const isOnline = navigator.onLine;
+            const viewMode = localStorage.getItem('view_mode') || 'grid';
+            
             container.innerHTML = '';
             
             const categories = {};
@@ -722,39 +1093,524 @@
                 const catDiv = document.createElement('div');
                 catDiv.className = 'tool-category';
                 catDiv.innerHTML = `<h3>${catName}</h3>`;
-                const gridDiv = document.createElement('div');
-                gridDiv.className = 'tools-grid';
-                tools.forEach(tool => {
-                    const card = document.createElement('div');
-                    card.className = 'tool-card ' + (tool.onlineOnly ? 'online-only' : '');
-                    card.innerHTML = `<span class="material-symbols-rounded">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
-                    card.onclick = () => openTool(tool.url, tool.name);
-                    gridDiv.appendChild(card);
-                });
-                catDiv.appendChild(gridDiv);
+                
+                if (viewMode === 'grid') {
+                    const gridDiv = document.createElement('div');
+                    gridDiv.className = 'tools-grid';
+                    tools.forEach(tool => {
+                        const card = document.createElement('div');
+                        card.className = 'tool-card ' + (tool.onlineOnly ? 'online-only' : '');
+                        card.innerHTML = `<span class="material-symbols-rounded">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
+                        card.onclick = () => openTool(tool.url, tool.name);
+                        gridDiv.appendChild(card);
+                    });
+                    catDiv.appendChild(gridDiv);
+                } else {
+                    const listDiv = document.createElement('div');
+                    listDiv.className = 'tools-list';
+                    tools.forEach(tool => {
+                        const card = document.createElement('div');
+                        card.className = 'list-card ' + (tool.onlineOnly ? 'online-only' : '');
+                        card.innerHTML = `
+                            <div class="list-card-left">
+                                <div class="list-card-icon">
+                                    <span class="material-symbols-rounded">${tool.icon}</span>
+                                </div>
+                                <div class="list-card-details">
+                                    <div class="list-card-name">${tool.name}</div>
+                                    <div class="list-card-category">${tool.cat}</div>
+                                </div>
+                            </div>
+                            <span class="material-symbols-rounded list-card-chevron">chevron_right</span>
+                        `;
+                        card.onclick = () => openTool(tool.url, tool.name);
+                        listDiv.appendChild(card);
+                    });
+                    catDiv.appendChild(listDiv);
+                }
                 container.appendChild(catDiv);
             }
         }
+
+        // Update event listeners for search and sort
         document.getElementById('tool-search').addEventListener('keyup', renderTools);
-        document.getElementById('sort-trigger').addEventListener('click', () => {
-            const sorts = ['All', 'Document Editing', 'Image Editing', 'Code Editing', 'Collaboration'];
-            currentSort = sorts[(sorts.indexOf(currentSort) + 1) % sorts.length];
-            renderTools();
+        document.getElementById('sort-trigger').addEventListener('click', openSortPicker);
+
+        // --- 7. VIEW MODE FUNCTIONALITY ---
+        function updateViewMode() {
+            const viewMode = localStorage.getItem('view_mode') || 'grid';
+            const gridViews = document.querySelectorAll('.recent-grid, .tools-grid');
+            const listViews = document.querySelectorAll('.recents-list, .tools-list');
+            const viewSelectors = document.querySelectorAll('.view-selector .view-option');
+            
+            if (viewMode === 'grid') {
+                gridViews.forEach(el => el.style.display = '');
+                listViews.forEach(el => el.style.display = 'none');
+                viewSelectors.forEach(option => {
+                    option.classList.toggle('active', option.dataset.view === 'grid');
+                });
+            } else {
+                gridViews.forEach(el => el.style.display = 'none');
+                listViews.forEach(el => el.style.display = '');
+                viewSelectors.forEach(option => {
+                    option.classList.toggle('active', option.dataset.view === 'list');
+                });
+                // Re-render recents in list view
+                if (document.getElementById('tab-home').classList.contains('active')) {
+                    renderRecentsList();
+                }
+            }
+        }
+
+        // Add event listeners to view selector buttons
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.view-option')) {
+                const option = e.target.closest('.view-option');
+                const view = option.dataset.view;
+                localStorage.setItem('view_mode', view);
+                updateViewMode();
+                renderTools();
+                if (document.getElementById('tab-home').classList.contains('active')) {
+                    renderRecents();
+                }
+            }
         });
 
-        // --- 4. TEMPLATE LOGIC (From app 10) ---
-        let allTemplates = [];
-        let templatesLoaded = false;
+        function openViewModePicker() {
+            const current = localStorage.getItem('view_mode') || 'grid';
+            openPicker('Tool View', [
+                {label: 'Grid View', value: 'grid'},
+                {label: 'List View', value: 'list'}
+            ], current, (val, label) => {
+                localStorage.setItem('view_mode', val);
+                document.getElementById('display-view-mode').textContent = label;
+                updateViewMode();
+                renderTools();
+                if (document.getElementById('tab-home').classList.contains('active')) {
+                    renderRecents();
+                }
+            });
+        }
+
+        // --- 8. ANIMATIONS SETTING ---
+        function openAnimationsPicker() {
+            const current = localStorage.getItem('animations_enabled') || 'true';
+            openPicker('Animations', [
+                {label: 'Enabled', value: 'true'},
+                {label: 'Disabled', value: 'false'}
+            ], current, (val, label) => {
+                localStorage.setItem('animations_enabled', val);
+                document.getElementById('display-animations').textContent = label;
+                if (val === 'true') {
+                    document.documentElement.classList.remove('no-animations');
+                } else {
+                    document.documentElement.classList.add('no-animations');
+                }
+            });
+        }
+
+        // --- 9. TEMPLATES SETTING ---
+        function openTemplatesPicker() {
+            const current = localStorage.getItem('templates_enabled') || 'true';
+            openPicker('Templates', [
+                {label: 'Enabled', value: 'true'},
+                {label: 'Disabled', value: 'false'}
+            ], current, (val, label) => {
+                localStorage.setItem('templates_enabled', val);
+                document.getElementById('display-templates').textContent = label;
+                checkTemplateVisibility();
+            });
+        }
+
+        // Update template visibility check
         function checkTemplateVisibility() {
-            const setting = localStorage.getItem('def_doc');
+            const editor = localStorage.getItem('def_doc');
+            const templatesEnabled = localStorage.getItem('templates_enabled') !== 'false';
             const container = document.getElementById('templates-section');
-            if (setting === 'sugarcane') {
+            const settingRow = document.getElementById('templates-setting');
+            
+            if (editor === 'sugarcane' && templatesEnabled) {
                 container.style.display = 'block';
                 if (!templatesLoaded) fetchTemplates();
             } else {
                 container.style.display = 'none';
             }
+            
+            // Show/hide templates setting
+            if (editor === 'sugarcane') {
+                settingRow.style.display = 'flex';
+                document.getElementById('display-templates').textContent = 
+                    templatesEnabled ? 'Enabled' : 'Disabled';
+            } else {
+                settingRow.style.display = 'none';
+            }
         }
+
+        // --- 10. TABS FEATURE ---
+        function openTabsPicker() {
+            const current = localStorage.getItem('tabs_enabled') || 'false';
+            openPicker('Multi-Tabs', [
+                {label: 'Disabled', value: 'false'},
+                {label: 'Enabled', value: 'true'}
+            ], current, (val, label) => {
+                localStorage.setItem('tabs_enabled', val);
+                document.getElementById('display-tabs').textContent = label;
+                if (val === 'true') {
+                    document.body.classList.add('tabs-enabled');
+                } else {
+                    document.body.classList.remove('tabs-enabled');
+                    activeTabs = [];
+                    if (document.getElementById('tab-tabs').classList.contains('active')) {
+                        switchTab('home');
+                    }
+                }
+            });
+        }
+
+        function initTabs(count) {
+            activeTabs = [];
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+            
+            // Create tabs based on count
+            for (let i = 0; i < count; i++) {
+                activeTabs.push({
+                    id: i,
+                    tool: null,
+                    toolName: '',
+                    toolUrl: ''
+                });
+                
+                // Calculate position and size
+                let left, top, width, height;
+                if (count === 2) {
+                    width = '50%';
+                    height = '100%';
+                    left = i === 0 ? '0' : '50%';
+                    top = '0';
+                } else if (count === 3) {
+                    if (i === 0) {
+                        width = '50%';
+                        height = '100%';
+                        left = '0';
+                        top = '0';
+                    } else {
+                        width = '50%';
+                        height = '50%';
+                        left = '50%';
+                        top = (i - 1) * 50 + '%';
+                    }
+                } else if (count === 4) {
+                    width = '50%';
+                    height = '50%';
+                    left = (i % 2) * 50 + '%';
+                    top = Math.floor(i / 2) * 50 + '%';
+                }
+                
+                const tab = document.createElement('div');
+                tab.className = 'tab-split';
+                tab.id = `tab-${i}`;
+                tab.style.cssText = `left: ${left}; top: ${top}; width: ${width}; height: ${height};`;
+                
+                tab.innerHTML = `
+                    <div class="tab-content">
+                        <div class="tab-header">
+                            <div class="tab-title">Tab ${i + 1}</div>
+                            <div class="tab-close" onclick="closeTab(${i})">
+                                <span class="material-symbols-rounded">close</span>
+                            </div>
+                        </div>
+                        <div class="tab-tool-area">
+                            <div class="add-tab-btn" onclick="openToolSelector(${i})">
+                                <span class="material-symbols-rounded">add</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(tab);
+            }
+            
+            // Add dividers
+            createDividers(count);
+            
+            // Show tabs interface
+            document.getElementById('tabs-container').style.display = 'block';
+            document.getElementById('tabs-setup').style.display = 'none';
+            
+            // Add control buttons
+            const controls = document.createElement('div');
+            controls.className = 'tab-controls';
+            controls.innerHTML = `
+                <button class="tab-control-btn" onclick="addNewTab()">Add Tab</button>
+                <button class="tab-control-btn" onclick="closeAllTabs()">Close Session</button>
+            `;
+            container.appendChild(controls);
+        }
+
+        function createDividers(count) {
+            const container = document.getElementById('tabs-container');
+            
+            // Remove existing dividers
+            document.querySelectorAll('.tab-divider').forEach(el => el.remove());
+            
+            if (count === 2) {
+                // Vertical divider
+                const divider = document.createElement('div');
+                divider.className = 'tab-divider vertical';
+                divider.style.cssText = 'left: 50%; top: 0; width: 4px; height: 100%;';
+                container.appendChild(divider);
+                
+                // Make draggable
+                makeDividerDraggable(divider, 'vertical');
+                
+            } else if (count === 3) {
+                // Vertical divider
+                const vDivider = document.createElement('div');
+                vDivider.className = 'tab-divider vertical';
+                vDivider.style.cssText = 'left: 50%; top: 0; width: 4px; height: 100%;';
+                container.appendChild(vDivider);
+                
+                // Horizontal divider for right side
+                const hDivider = document.createElement('div');
+                hDivider.className = 'tab-divider horizontal';
+                hDivider.style.cssText = 'left: 50%; top: 50%; width: 50%; height: 4px;';
+                container.appendChild(hDivider);
+                
+                makeDividerDraggable(vDivider, 'vertical');
+                makeDividerDraggable(hDivider, 'horizontal');
+                
+            } else if (count === 4) {
+                // Vertical divider
+                const vDivider = document.createElement('div');
+                vDivider.className = 'tab-divider vertical';
+                vDivider.style.cssText = 'left: 50%; top: 0; width: 4px; height: 100%;';
+                container.appendChild(vDivider);
+                
+                // Horizontal divider
+                const hDivider = document.createElement('div');
+                hDivider.className = 'tab-divider horizontal';
+                hDivider.style.cssText = 'left: 0; top: 50%; width: 100%; height: 4px;';
+                container.appendChild(hDivider);
+                
+                makeDividerDraggable(vDivider, 'vertical');
+                makeDividerDraggable(hDivider, 'horizontal');
+            }
+        }
+
+        function makeDividerDraggable(divider, type) {
+            divider.addEventListener('mousedown', startDrag);
+            divider.addEventListener('touchstart', startDrag);
+            
+            function startDrag(e) {
+                e.preventDefault();
+                draggingDivider = divider;
+                dragStart = type === 'vertical' ? e.clientX || e.touches[0].clientX : e.clientY || e.touches[0].clientY;
+                
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('touchmove', drag);
+                document.addEventListener('mouseup', stopDrag);
+                document.addEventListener('touchend', stopDrag);
+            }
+            
+            function drag(e) {
+                if (!draggingDivider) return;
+                
+                const currentPos = type === 'vertical' ? 
+                    e.clientX || e.touches[0].clientX : 
+                    e.clientY || e.touches[0].clientY;
+                const delta = currentPos - dragStart;
+                
+                // Update divider position
+                const container = document.getElementById('tabs-container');
+                const containerRect = container.getBoundingClientRect();
+                
+                if (type === 'vertical') {
+                    let newLeft = (parseFloat(divider.style.left) || 50) + (delta / containerRect.width * 100);
+                    newLeft = Math.max(20, Math.min(80, newLeft));
+                    divider.style.left = newLeft + '%';
+                    
+                    // Update tab sizes
+                    document.querySelectorAll('.tab-split').forEach(tab => {
+                        const tabRect = tab.getBoundingClientRect();
+                        if (parseFloat(tab.style.left) < newLeft) {
+                            tab.style.width = newLeft + '%';
+                        } else {
+                            tab.style.width = (100 - newLeft) + '%';
+                            tab.style.left = newLeft + '%';
+                        }
+                    });
+                } else {
+                    let newTop = (parseFloat(divider.style.top) || 50) + (delta / containerRect.height * 100);
+                    newTop = Math.max(20, Math.min(80, newTop));
+                    divider.style.top = newTop + '%';
+                    
+                    // Update tab sizes
+                    document.querySelectorAll('.tab-split').forEach(tab => {
+                        const tabRect = tab.getBoundingClientRect();
+                        if (parseFloat(tab.style.top) < newTop) {
+                            tab.style.height = newTop + '%';
+                        } else {
+                            tab.style.height = (100 - newTop) + '%';
+                            tab.style.top = newTop + '%';
+                        }
+                    });
+                }
+                
+                dragStart = currentPos;
+            }
+            
+            function stopDrag() {
+                draggingDivider = null;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('touchmove', drag);
+                document.removeEventListener('mouseup', stopDrag);
+                document.removeEventListener('touchend', stopDrag);
+            }
+        }
+
+        function openToolSelector(tabIndex) {
+            selectedTabIndex = tabIndex;
+            const overlay = document.getElementById('tool-selector-overlay');
+            const list = document.getElementById('tool-selector-list');
+            
+            list.innerHTML = '';
+            
+            toolsDB.forEach(tool => {
+                if (!navigator.onLine && tool.onlineOnly) return;
+                
+                const item = document.createElement('div');
+                item.className = 'list-card';
+                item.innerHTML = `
+                    <div class="list-card-left">
+                        <div class="list-card-icon">
+                            <span class="material-symbols-rounded">${tool.icon}</span>
+                        </div>
+                        <div class="list-card-details">
+                            <div class="list-card-name">${tool.name}</div>
+                            <div class="list-card-category">${tool.cat}</div>
+                        </div>
+                    </div>
+                `;
+                item.onclick = () => {
+                    loadToolIntoTab(tabIndex, tool);
+                    overlay.style.display = 'none';
+                };
+                list.appendChild(item);
+            });
+            
+            overlay.style.display = 'flex';
+        }
+
+        function loadToolIntoTab(tabIndex, tool) {
+            const tab = activeTabs[tabIndex];
+            if (!tab) return;
+            
+            tab.tool = tool.name;
+            tab.toolName = tool.name;
+            tab.toolUrl = tool.url;
+            
+            const tabElement = document.getElementById(`tab-${tabIndex}`);
+            const toolArea = tabElement.querySelector('.tab-tool-area');
+            
+            toolArea.innerHTML = `
+                <iframe src="${tool.url}" style="width:100%; height:100%; border:none;"></iframe>
+            `;
+            
+            tabElement.querySelector('.tab-title').textContent = tool.name;
+        }
+
+        function closeTab(tabIndex) {
+            if (!confirm("Are you sure you want to close this tab? The tool will be removed.")) return;
+            
+            const tab = document.getElementById(`tab-${tabIndex}`);
+            if (tab) {
+                tab.remove();
+            }
+            
+            activeTabs[tabIndex] = null;
+            
+            // Check if all tabs are closed
+            const hasActiveTabs = activeTabs.some(tab => tab !== null);
+            if (!hasActiveTabs) {
+                document.getElementById('tabs-container').style.display = 'none';
+                document.getElementById('tabs-setup').style.display = 'block';
+            }
+        }
+
+        function addNewTab() {
+            if (activeTabs.length >= 4) {
+                alert("Maximum 4 tabs allowed");
+                return;
+            }
+            
+            const newIndex = activeTabs.length;
+            activeTabs.push({
+                id: newIndex,
+                tool: null,
+                toolName: '',
+                toolUrl: ''
+            });
+            
+            // Simple implementation - just reset with new count
+            initTabs(activeTabs.length);
+        }
+
+        function closeAllTabs() {
+            if (!confirm("Close all tabs and end this session?")) return;
+            
+            activeTabs = [];
+            document.getElementById('tabs-container').style.display = 'none';
+            document.getElementById('tabs-setup').style.display = 'block';
+        }
+
+        // --- 11. ABOUT APP WITH OFFLINE SUPPORT ---
+        async function openAboutApp() {
+            const container = document.getElementById('about-iframe-container');
+            const loader = document.getElementById('about-loader');
+            const offline = document.getElementById('about-offline');
+            const frame = document.getElementById('about-frame');
+            
+            container.style.display = 'flex';
+            loader.style.display = 'flex';
+            offline.style.display = 'none';
+            frame.style.display = 'none';
+            
+            if (!navigator.onLine) {
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    offline.style.display = 'flex';
+                }, 1000);
+                return;
+            }
+            
+            try {
+                const aboutUrl = BASE_URL + "aboutapp.html";
+                frame.src = aboutUrl;
+                
+                frame.onload = () => {
+                    setTimeout(() => {
+                        loader.style.display = 'none';
+                        frame.style.display = 'block';
+                    }, 1000);
+                };
+            } catch (error) {
+                loader.style.display = 'none';
+                offline.style.display = 'flex';
+            }
+        }
+
+        function closeAboutApp() {
+            const container = document.getElementById('about-iframe-container');
+            const frame = document.getElementById('about-frame');
+            container.style.display = 'none';
+            frame.src = 'about:blank';
+        }
+
+        // --- 12. TEMPLATE LOGIC ---
+        let allTemplates = [];
+        let templatesLoaded = false;
+        
         async function fetchTemplates() {
             try {
                 const resp = await fetch(TEMPLATE_JSON_URL);
@@ -766,6 +1622,7 @@
                 document.getElementById('templates-grid').innerHTML = '<div style="padding:20px;font-size:12px;color:#999">Offline</div>';
             }
         }
+        
         function renderTemplates(limit) {
             const grid = document.getElementById('templates-grid');
             grid.innerHTML = '';
@@ -789,11 +1646,12 @@
             }
         }
 
-        // --- 5. RECENTS (From app 10) ---
+        // --- 13. RECENTS ---
         function getIconForTool(url) {
             const tool = toolsDB.find(t => t.url === url);
             return tool ? tool.icon : (url.includes('templates') ? 'description' : 'extension');
         }
+        
         function addToRecents(toolObj) {
             let recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
             recents = recents.filter(t => t.url !== toolObj.url);
@@ -801,14 +1659,31 @@
             if (recents.length > 7) recents.length = 7;
             localStorage.setItem('recentTools', JSON.stringify(recents));
         }
+        
         function renderRecents() {
+            const viewMode = localStorage.getItem('view_mode') || 'grid';
+            
+            if (viewMode === 'grid') {
+                renderRecentsGrid();
+            } else {
+                renderRecentsList();
+            }
+        }
+        
+        function renderRecentsGrid() {
             const grid = document.getElementById('recent-grid');
+            const list = document.getElementById('recents-list');
             const recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
+            
             grid.innerHTML = '';
+            list.style.display = 'none';
+            grid.style.display = '';
+            
             if (recents.length === 0) {
                 grid.innerHTML = '<div class="recent-placeholder">No recent tools used</div>';
                 return;
             }
+            
             recents.forEach(tool => {
                 const card = document.createElement('div');
                 card.className = 'tool-card';
@@ -817,12 +1692,48 @@
                 grid.appendChild(card);
             });
         }
+        
+        function renderRecentsList() {
+            const grid = document.getElementById('recent-grid');
+            const list = document.getElementById('recents-list');
+            const recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
+            
+            grid.style.display = 'none';
+            list.style.display = '';
+            list.innerHTML = '';
+            
+            if (recents.length === 0) {
+                list.innerHTML = '<div class="recent-placeholder" style="padding: 20px; text-align: center; color: var(--text-secondary);">No recent tools used</div>';
+                return;
+            }
+            
+            recents.forEach(tool => {
+                const toolInfo = toolsDB.find(t => t.name === tool.name) || { cat: 'Unknown' };
+                const card = document.createElement('div');
+                card.className = 'list-card';
+                card.innerHTML = `
+                    <div class="list-card-left">
+                        <div class="list-card-icon">
+                            <span class="material-symbols-rounded">${tool.icon}</span>
+                        </div>
+                        <div class="list-card-details">
+                            <div class="list-card-name">${tool.name}</div>
+                            <div class="list-card-category">${toolInfo.cat}</div>
+                        </div>
+                    </div>
+                    <span class="material-symbols-rounded list-card-chevron">chevron_right</span>
+                `;
+                card.onclick = () => openTool(tool.url, tool.name);
+                list.appendChild(card);
+            });
+        }
+        
         function clearRecents() {
             localStorage.removeItem('recentTools');
             renderRecents();
         }
 
-        // --- 6. SETTINGS & CUSTOM PICKER LOGIC (Adapted from app 11) ---
+        // --- 14. SETTINGS & CUSTOM PICKER LOGIC ---
         let activePickerCallback = null;
         
         function openPicker(title, options, selectedValue, onSelect) {
@@ -852,7 +1763,7 @@
             activePickerCallback = null;
         }
 
-        // Editor Settings Map (from app 11)
+        // Editor Settings Map
         const editorMap = {
             doc: { 
                 key: 'def_doc', displayId: 'display-doc-editor',
@@ -886,7 +1797,7 @@
             );
         }
 
-        // --- 7. THEME LOGIC (From app 11) ---
+        // --- 15. THEME LOGIC ---
         function initTheme() {
             const saved = localStorage.getItem('theme_pref') || 'system';
             applyTheme(saved);
@@ -930,7 +1841,7 @@
             });
         }
 
-        // --- 8. PAGE CACHING FUNCTIONALITY (NEW) ---
+        // --- 16. PAGE CACHING FUNCTIONALITY ---
         async function cacheAllPages() {
             const statusEl = document.getElementById('setup-status');
             const progressBar = document.getElementById('progress-bar');
@@ -938,17 +1849,14 @@
             const totalTools = toolsDB.length;
             let cachedCount = 0;
             
-            // Collect all unique URLs to cache
             const urlsToCache = [];
             
-            // Add all tool URLs
             toolsDB.forEach(tool => {
-                if (!tool.onlineOnly) { // Only cache offline-capable tools
+                if (!tool.onlineOnly) {
                     urlsToCache.push(tool.url);
                 }
             });
             
-            // Add core pages
             const corePages = [
                 'document-writer.html',
                 'image-editor.html',
@@ -964,35 +1872,28 @@
                 }
             });
             
-            // Cache each page in the hidden iframe
             for (let i = 0; i < urlsToCache.length; i++) {
                 const url = urlsToCache[i];
                 cachedCount++;
                 
-                // Update progress
                 const progressPercent = Math.round((cachedCount / urlsToCache.length) * 100);
                 progressBar.style.width = `${progressPercent}%`;
                 statusEl.textContent = `Caching: ${url} (${cachedCount}/${urlsToCache.length})`;
                 
-                // Load page in hidden iframe to trigger caching
                 cachingIframe.src = url;
                 
-                // Wait for page to load (adjust timeout as needed)
                 await new Promise(resolve => {
-                    setTimeout(resolve, 300); // 300ms per page
+                    setTimeout(resolve, 300);
                 });
                 
-                // Clear iframe src to free memory
                 cachingIframe.src = 'about:blank';
             }
             
-            // Also try to cache templates if available
             try {
                 const resp = await fetch(TEMPLATE_JSON_URL);
                 const data = await resp.json();
                 if (data.templates && data.templates.length > 0) {
                     statusEl.textContent = 'Caching templates...';
-                    // Cache first few template pages
                     const templateLimit = Math.min(5, data.templates.length);
                     for (let i = 0; i < templateLimit; i++) {
                         const t = data.templates[i];
@@ -1005,7 +1906,6 @@
                 console.log('Templates not available for caching');
             }
             
-            // Final cleanup
             cachingIframe.src = 'about:blank';
             statusEl.textContent = 'All tools cached! App is ready for offline use.';
             progressBar.style.width = '100%';
@@ -1013,8 +1913,23 @@
             return true;
         }
 
-        // --- 9. SETUP & INITIALIZATION ---
+        // --- 17. SETUP & INITIALIZATION ---
         function loadSettings() {
+            // View mode
+            const viewMode = localStorage.getItem('view_mode') || 'grid';
+            document.getElementById('display-view-mode').textContent = viewMode === 'grid' ? 'Grid View' : 'List View';
+            
+            // Animations
+            const animations = localStorage.getItem('animations_enabled') || 'true';
+            document.getElementById('display-animations').textContent = animations === 'true' ? 'Enabled' : 'Disabled';
+            if (animations === 'false') {
+                document.documentElement.classList.add('no-animations');
+            }
+            
+            // Tabs
+            const tabsEnabled = localStorage.getItem('tabs_enabled') || 'false';
+            document.getElementById('display-tabs').textContent = tabsEnabled === 'true' ? 'Enabled' : 'Disabled';
+            
             // Editors
             for(let k in editorMap) {
                 const map = editorMap[k];
@@ -1022,8 +1937,12 @@
                 const opt = map.options.find(o => o.value === val);
                 document.getElementById(map.displayId).textContent = opt ? opt.label.split(' (')[0] : 'Default';
             }
+            
             // Theme
             initTheme();
+            
+            // Check template visibility
+            checkTemplateVisibility();
         }
 
         // New Item Buttons
@@ -1040,7 +1959,7 @@
             openTool(val === 'ide' ? 'frontend-ide.html' : 'code-playground.html', 'New Code');
         }
 
-        // UPDATE APP FUNCTION (from app 10)
+        // UPDATE APP FUNCTION
         document.getElementById('btn-update-app').onclick = async () => {
             if(!confirm("Reset app and clear offline cache?")) return;
             localStorage.clear();
@@ -1055,7 +1974,7 @@
             location.reload();
         };
 
-        // Setup Overlay (Enhanced with caching)
+        // Setup Overlay
         const setupOverlay = document.getElementById('setup-overlay');
         if (localStorage.getItem('app_setup_done') === 'true') {
             setupOverlay.classList.add('hidden');
@@ -1067,7 +1986,6 @@
             btn.disabled = true;
             btn.textContent = "Caching...";
             
-            // Step 1: Register Service Worker
             status.textContent = "Initializing Service Worker...";
             if ('serviceWorker' in navigator) {
                 try {
@@ -1077,32 +1995,28 @@
                 }
             }
             
-            // Step 2: Cache all pages
             await cacheAllPages();
             
-            // Step 3: Mark setup as complete
             localStorage.setItem('app_setup_done', 'true');
             
-            // Step 4: Show completion and hide overlay
             status.textContent = "Setup complete! Launching app...";
             await new Promise(resolve => setTimeout(resolve, 1000));
             setupOverlay.classList.add('hidden');
             
-            // Initialize app
             loadSettings();
             updateOnlineStatus();
             switchTab('home');
         });
 
-        // --- 10. UTILS (From app 10) ---
+        // --- 18. UTILS ---
         function showOfflinePopup() { document.getElementById('popup-overlay').style.display = 'flex'; }
         function dismissBanner() { setCookie('bannerDismissed', 'true', 365); updateOnlineStatus(); }
         function setCookie(n, v, d) { const date = new Date(); date.setTime(date.getTime() + (d*24*60*60*1000)); document.cookie = n + "=" + v + ";expires="+ date.toUTCString() + ";path=/"; }
         function getCookie(n) { const v = "; " + document.cookie; const p = v.split("; " + n + "="); if (p.length == 2) return p.pop().split(";").shift(); }
 
-        // --- 11. RIPPLE EFFECT (From app 10) ---
+        // --- 19. RIPPLE EFFECT ---
         document.addEventListener('click', function(e) {
-            const target = e.target.closest('.nav-item, .action-btn, .tool-card, .setup-btn, .template-card, .btn-danger, .setting-row');
+            const target = e.target.closest('.nav-item, .action-btn, .tool-card, .setup-btn, .template-card, .btn-danger, .setting-row, .list-card');
             if (!target) return;
 
             const ripple = document.createElement('span');
@@ -1120,20 +2034,12 @@
             setTimeout(() => ripple.remove(), 600);
         });
 
-        // --- 12. START APP ---
+        // --- 20. START APP ---
         if (localStorage.getItem('app_setup_done') === 'true') {
             loadSettings();
             updateOnlineStatus();
             switchTab('home');
         }
-
-function openAboutApp() {
-    // Uses your existing logic to open the iframe overlay
-    // URL: https://mahi902.github.io/DocuWritePro/aboutapp.html
-    const aboutUrl = BASE_URL + "aboutapp.html";
-    openTool(aboutUrl, "About DocuWrite Pro");
-}
-
     </script>
 </body>
 </html>

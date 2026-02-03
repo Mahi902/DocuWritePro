@@ -2412,6 +2412,113 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
                 </script>
-    
+    <script>
+(function() {
+    // 1. Add the Searchable Font Modal to the body
+    const fontModalHTML = `
+    <div class="modal" id="searchableFontModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Select Font</h2>
+                <button class="close-btn" onclick="closeModal('searchableFontModal')">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="sidebar-control">
+                    <input type="text" id="fontSearchInput" class="modal-input" placeholder="Search fonts..." style="margin-bottom: 15px;">
+                </div>
+                <div id="fontListContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeModal('searchableFontModal')">Cancel</button>
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', fontModalHTML);
+
+    // 2. Override the existing toggleFontMenu function
+    window.toggleFontMenu = function(e) {
+        if (e) e.stopPropagation();
+        openFontModal();
+    };
+
+    function openFontModal() {
+        const modal = document.getElementById('searchableFontModal');
+        const container = document.getElementById('fontListContainer');
+        const searchInput = document.getElementById('fontSearchInput');
+        
+        // Clear search
+        searchInput.value = '';
+        modal.style.display = 'flex';
+        
+        renderFontList();
+        searchInput.focus();
+
+        // Add search listener
+        searchInput.oninput = function() {
+            renderFontList(this.value.toLowerCase());
+        };
+    }
+
+    function renderFontList(filter = '') {
+        const container = document.getElementById('fontListContainer');
+        container.innerHTML = '';
+        
+        // Combine default fonts with uploaded ones
+        const defaultFonts = ['Arial'];
+        const customFonts = Object.keys(uploadedFonts || {});
+        const allFonts = [...new Set([...defaultFonts, ...customFonts])].sort();
+
+        allFonts.forEach(font => {
+            if (font.toLowerCase().includes(filter)) {
+                const item = document.createElement('div');
+                item.className = 'font-option';
+                item.style.fontFamily = font;
+                item.style.padding = '12px 16px';
+                item.style.cursor = 'pointer';
+                item.style.borderBottom = '1px solid #f0f0f0';
+                item.textContent = font;
+                
+                if (document.getElementById('selectedFont').textContent === font) {
+                    item.style.background = '#bbdefb';
+                    item.style.fontWeight = 'bold';
+                }
+
+                item.onclick = function() {
+                    selectFont(font);
+                    closeModal('searchableFontModal');
+                };
+                
+                container.appendChild(item);
+            }
+        });
+
+        if (container.innerHTML === '') {
+            container.innerHTML = '<div style="padding: 20px; text-align: center; color: #999;">No fonts found</div>';
+        }
+    }
+
+    // 3. Optional: Add hover styling for the list items via JS if not in CSS
+    const style = document.createElement('style');
+    style.textContent = `
+        #fontListContainer .font-option:hover {
+            background-color: #e3f2fd !important;
+        }
+        body.dark-mode #fontListContainer {
+            border-color: #444;
+        }
+        body.dark-mode #fontListContainer .font-option {
+            border-bottom: 1px solid #222;
+            color: #fff;
+        }
+        body.dark-mode #fontListContainer .font-option:hover {
+            background-color: #333 !important;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+</script>
 </body>
 </html>

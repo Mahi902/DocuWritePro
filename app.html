@@ -2099,6 +2099,788 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 150); // 150ms safety delay
 });
     </script>
+    <style>
+/* ============================================= */
+/* ANIMATION PACK - RESPECTS NO-ANIMATIONS TOGGLE */
+/* ============================================= */
+
+/* ----- VIEW ALL BUTTON ANIMATION ----- */
+html:not(.no-animations) .show-all-templates-btn {
+    position: relative;
+    overflow: hidden;
+}
+
+html:not(.no-animations) .show-all-templates-btn::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(var(--primary-rgb, 0, 122, 255), 0.1), 
+        transparent);
+    transform: translateX(-100%);
+}
+
+html:not(.no-animations) .show-all-templates-btn:hover::after,
+html:not(.no-animations) .show-all-templates-btn:focus::after {
+    animation: viewAllShimmer 2s ease-out;
+}
+
+@keyframes viewAllShimmer {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+}
+
+/* Hover effect for view all button */
+html:not(.no-animations) .show-all-templates-btn {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+html:not(.no-animations) .show-all-templates-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 122, 255, 0.15);
+}
+
+/* ----- CLEAR RECENTS ANIMATION ----- */
+html:not(.no-animations) .clear-btn {
+    position: relative;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+html:not(.no-animations) .clear-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    background: var(--primary-light);
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+    z-index: -1;
+}
+
+html:not(.no-animations) .clear-btn:hover::before {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Clear animation for recents items */
+html:not(.no-animations) .clear-recents-active .tool-card,
+html:not(.no-animations) .clear-recents-active .list-card {
+    animation: slideOutRight 0.5s cubic-bezier(0.55, 0.085, 0.68, 0.53) forwards;
+    animation-delay: calc(var(--item-index, 0) * 0.05s);
+}
+
+@keyframes slideOutRight {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100px);
+        opacity: 0;
+        height: 0;
+        margin: 0;
+        padding: 0;
+        border: none;
+    }
+}
+
+/* ----- TOOL SORT ANIMATION ----- */
+html:not(.no-animations) .sort-btn {
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+html:not(.no-animations) .sort-btn:hover {
+    transform: rotate(15deg) scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.2);
+}
+
+html:not(.no-animations) .sort-btn:active {
+    transform: rotate(90deg) scale(0.95);
+    transition: transform 0.2s ease;
+}
+
+/* Sort picker opening animation */
+html:not(.no-animations) .picker-option {
+    transition: all 0.2s ease;
+}
+
+html:not(.no-animations) .picker-option:hover {
+    transform: translateX(8px);
+    background: var(--primary-light);
+}
+
+/* ----- ALL TOOLS BUTTON ANIMATION ----- */
+html:not(.no-animations) .action-btn[onclick*="switchTab('tools')"] {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Floating animation */
+html:not(.no-animations) .action-btn[onclick*="switchTab('tools')"]:hover {
+    animation: toolsFloat 3s ease-in-out infinite;
+}
+
+@keyframes toolsFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Particle effect */
+html:not(.no-animations) .action-btn[onclick*="switchTab('tools')"]::before {
+    content: "apps";
+    font-family: "Material Symbols Rounded";
+    position: absolute;
+    font-size: 20px;
+    color: var(--primary-color);
+    opacity: 0;
+    pointer-events: none;
+}
+
+html:not(.no-animations) .action-btn[onclick*="switchTab('tools')"]:hover::before {
+    animation: toolsParticles 2s ease-out;
+}
+
+@keyframes toolsParticles {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.7;
+    }
+    100% {
+        transform: translate(var(--tx, 0), var(--ty, -30px)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* Generate multiple particles */
+html:not(.no-animations) .action-btn[onclick*="switchTab('tools')"]:hover::before {
+    animation: toolsParticles 2s ease-out;
+}
+
+html:not(.no-animations) .action-btn[onclick*="switchTab('tools')"]:hover::after {
+    content: "apps";
+    font-family: "Material Symbols Rounded";
+    position: absolute;
+    font-size: 16px;
+    color: var(--primary-color);
+    opacity: 0;
+    pointer-events: none;
+    animation: toolsParticles 2s ease-out 0.1s;
+}
+
+/* ----- ENHANCED RIPPLE EFFECT ----- */
+html:not(.no-animations) .ripple-enhanced {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, 
+        rgba(var(--primary-rgb, 0, 122, 255), 0.3) 0%,
+        rgba(var(--primary-rgb, 0, 122, 255), 0.2) 40%,
+        rgba(var(--primary-rgb, 0, 122, 255), 0.1) 70%,
+        transparent 100%);
+    transform: scale(0);
+    animation: rippleEnhanced 0.6s linear;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes rippleEnhanced {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* ----- PAGE TRANSITION ANIMATIONS ----- */
+html:not(.no-animations) .tab-view {
+    animation-duration: 0.3s;
+    animation-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+html:not(.no-animations) .tab-view.active {
+    animation-name: pageSlideIn;
+}
+
+@keyframes pageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ----- LOADING PULSE ANIMATION ----- */
+html:not(.no-animations) .loading-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ----- SUCCESS CHECKMARK ANIMATION ----- */
+html:not(.no-animations) .success-check {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+}
+
+html:not(.no-animations) .success-check::after {
+    content: "";
+    display: block;
+    width: 6px;
+    height: 12px;
+    border: solid var(--primary-color);
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg) scale(0);
+    animation: checkmark 0.3s ease-out forwards;
+    animation-delay: 0.1s;
+}
+
+@keyframes checkmark {
+    0% {
+        transform: rotate(45deg) scale(0);
+    }
+    50% {
+        transform: rotate(45deg) scale(1.2);
+    }
+    100% {
+        transform: rotate(45deg) scale(1);
+    }
+}
+
+/* ----- TOOL CARD HOVER EFFECTS ----- */
+html:not(.no-animations) .tool-card {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+html:not(.no-animations) .tool-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* ----- SCALE IN ANIMATION FOR NEW ITEMS ----- */
+@keyframes scaleIn {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+html:not(.no-animations) .tool-card,
+html:not(.no-animations) .list-card,
+html:not(.no-animations) .template-card {
+    animation: scaleIn 0.3s ease-out;
+}
+
+/* ----- BREATHING ANIMATION FOR OFFLINE INDICATOR ----- */
+html:not(.no-animations) .offline-banner {
+    animation: breathe 3s ease-in-out infinite;
+}
+
+@keyframes breathe {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(50, 50, 50, 0.2);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(50, 50, 50, 0.4);
+    }
+}
+
+/* ----- SETTINGS ROW HOVER EFFECT ----- */
+html:not(.no-animations) .setting-row {
+    transition: all 0.2s ease;
+}
+
+html:not(.no-animations) .setting-row:hover {
+    background: var(--primary-light);
+    padding-left: 24px;
+}
+
+/* ----- NAVIGATION INDICATOR ANIMATION ----- */
+html:not(.no-animations) .nav-item.active::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    animation: navPulse 2s ease-in-out infinite;
+}
+
+@keyframes navPulse {
+    0%, 100% {
+        opacity: 0.7;
+        transform: translateX(-50%) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.5);
+    }
+}
+
+/* ----- SCROLL INDICATOR ANIMATION ----- */
+html:not(.no-animations) .scroll-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 50px;
+    border: 2px solid var(--text-secondary);
+    border-radius: 15px;
+    opacity: 0.7;
+}
+
+html:not(.no-animations) .scroll-hint::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 10px;
+    background: var(--text-secondary);
+    border-radius: 2px;
+    animation: scrollHint 2s infinite;
+}
+
+@keyframes scrollHint {
+    0%, 100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(0);
+    }
+    50% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(20px);
+    }
+}
+
+/* ----- BADGE NOTIFICATION ANIMATION ----- */
+html:not(.no-animations) .notification-badge {
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.7);
+    }
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 6px rgba(255, 59, 48, 0);
+    }
+}
+
+/* ----- THEME TRANSITION ----- */
+html:not(.no-animations) * {
+    transition: background-color 0.3s ease, 
+                color 0.3s ease, 
+                border-color 0.3s ease,
+                box-shadow 0.3s ease;
+}
+
+/* ----- DISABLE ALL ANIMATIONS WHEN TOGGLED OFF ----- */
+html.no-animations * {
+    animation: none !important;
+    transition: none !important;
+}
+</style>
+
+<script>
+// =============================================
+// ANIMATION PACK - JAVASCRIPT CONTROLLERS
+// =============================================
+
+// Store original functions to extend them
+const originalFunctions = {
+    clearRecents: window.clearRecents,
+    openSortPicker: window.openSortPicker,
+    switchTab: window.switchTab,
+    openTool: window.openTool
+};
+
+// ----- ENHANCED CLEAR RECENTS WITH ANIMATION -----
+window.clearRecents = function() {
+    const isAnimationsEnabled = !document.documentElement.classList.contains('no-animations');
     
+    if (!isAnimationsEnabled) {
+        // Run original function if animations disabled
+        originalFunctions.clearRecents();
+        return;
+    }
+    
+    const recentGrid = document.getElementById('recent-grid');
+    const recentList = document.getElementById('recents-list');
+    
+    // Determine which view is active
+    const isGridView = recentGrid.style.display !== 'none';
+    const container = isGridView ? recentGrid : recentList;
+    
+    if (!container.children.length || container.children[0].classList.contains('recent-placeholder')) {
+        originalFunctions.clearRecents();
+        return;
+    }
+    
+    // Add animation class to container
+    container.classList.add('clear-recents-active');
+    
+    // Apply animation delay to each item
+    Array.from(container.children).forEach((item, index) => {
+        if (!item.classList.contains('recent-placeholder')) {
+            item.style.setProperty('--item-index', index);
+        }
+    });
+    
+    // Clear after animation completes
+    setTimeout(() => {
+        localStorage.removeItem('recentTools');
+        
+        // Remove animation class
+        container.classList.remove('clear-recents-active');
+        
+        // Re-render
+        if (document.getElementById('tab-home').classList.contains('active')) {
+            renderRecents();
+        }
+        
+        // Show success feedback
+        showAnimationFeedback('Recents cleared successfully', 'success');
+    }, 500 + (container.children.length * 50));
+};
+
+// ----- ENHANCED SORT PICKER WITH ANIMATION -----
+window.openSortPicker = function() {
+    const isAnimationsEnabled = !document.documentElement.classList.contains('no-animations');
+    const sortButton = document.getElementById('sort-trigger');
+    
+    if (isAnimationsEnabled && sortButton) {
+        // Add rotation animation
+        sortButton.style.transform = 'rotate(90deg) scale(0.95)';
+        
+        // Return to normal after animation
+        setTimeout(() => {
+            sortButton.style.transform = '';
+        }, 200);
+        
+        // Add ripple effect
+        addEnhancedRipple(sortButton);
+        
+        // Show tooltip feedback
+        showAnimationFeedback('Sorting options', 'info');
+    }
+    
+    // Call original function
+    setTimeout(() => {
+        originalFunctions.openSortPicker();
+    }, isAnimationsEnabled ? 100 : 0);
+};
+
+// ----- ENHANCED SWITCH TAB WITH ANIMATION -----
+window.switchTab = function(tabId) {
+    const isAnimationsEnabled = !document.documentElement.classList.contains('no-animations');
+    const navItem = document.getElementById(`nav-${tabId}`);
+    
+    if (isAnimationsEnabled && navItem) {
+        // Add enhanced ripple to nav item
+        addEnhancedRipple(navItem);
+    }
+    
+    // Call original function
+    originalFunctions.switchTab(tabId);
+};
+
+// ----- ENHANCED OPEN TOOL WITH ANIMATION -----
+window.openTool = function(url, name) {
+    const isAnimationsEnabled = !document.documentElement.classList.contains('no-animations');
+    
+    // Check if this is the "All Tools" button (special case)
+    const allToolsBtn = document.querySelector('.action-btn[onclick*="switchTab(\'tools\')"]');
+    const event = window.event || {};
+    
+    if (isAnimationsEnabled && event.target && allToolsBtn && 
+        (event.target === allToolsBtn || allToolsBtn.contains(event.target))) {
+        
+        // Create particle effects for "All Tools" button
+        createParticleEffect(allToolsBtn);
+        
+        // Show feedback
+        showAnimationFeedback('Opening all tools', 'info');
+    }
+    
+    // Call original function
+    originalFunctions.openTool(url, name);
+};
+
+// ----- PARTICLE EFFECT FOR ALL TOOLS BUTTON -----
+function createParticleEffect(element) {
+    if (document.documentElement.classList.contains('no-animations')) return;
+    
+    const rect = element.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    // Create multiple particles
+    for (let i = 0; i < 8; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.cssText = `
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            left: ${centerX}px;
+            top: ${centerY}px;
+            opacity: 0.8;
+        `;
+        
+        document.body.appendChild(particle);
+        
+        // Random direction
+        const angle = (i / 8) * Math.PI * 2;
+        const distance = 20 + Math.random() * 30;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance;
+        
+        // Animate particle
+        particle.animate([
+            { transform: 'translate(0, 0) scale(1)', opacity: 0.8 },
+            { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+        ], {
+            duration: 600,
+            easing: 'ease-out'
+        }).onfinish = () => particle.remove();
+    }
+}
+
+// ----- ENHANCED RIPPLE EFFECT -----
+function addEnhancedRipple(element) {
+    if (document.documentElement.classList.contains('no-animations')) return;
+    
+    const ripple = document.createElement('span');
+    ripple.className = 'ripple-enhanced';
+    
+    // Position ripple
+    const rect = element.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = (window.event ? window.event.clientX : rect.left + rect.width / 2) - rect.left;
+    const y = (window.event ? window.event.clientY : rect.top + rect.height / 2) - rect.top;
+    
+    ripple.style.cssText = `
+        width: ${size}px;
+        height: ${size}px;
+        left: ${x - size / 2}px;
+        top: ${y - size / 2}px;
+    `;
+    
+    element.style.position = 'relative';
+    element.style.overflow = 'hidden';
+    element.appendChild(ripple);
+    
+    // Remove after animation
+    setTimeout(() => {
+        if (ripple.parentNode === element) {
+            element.removeChild(ripple);
+        }
+    }, 600);
+}
+
+// ----- ANIMATION FEEDBACK TOAST -----
+function showAnimationFeedback(message, type = 'info') {
+    if (document.documentElement.classList.contains('no-animations')) return;
+    
+    // Remove existing feedback
+    const existing = document.getElementById('animation-feedback');
+    if (existing) existing.remove();
+    
+    // Create feedback element
+    const feedback = document.createElement('div');
+    feedback.id = 'animation-feedback';
+    feedback.className = `animation-feedback animation-feedback-${type}`;
+    feedback.textContent = message;
+    
+    // Style feedback
+    feedback.style.cssText = `
+        position: fixed;
+        top: 100px;
+        right: 20px;
+        background: ${type === 'success' ? '#34C759' : type === 'error' ? '#FF3B30' : '#007AFF'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 9999;
+        transform: translateX(120%);
+        transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        max-width: 300px;
+        word-wrap: break-word;
+    `;
+    
+    document.body.appendChild(feedback);
+    
+    // Animate in
+    requestAnimationFrame(() => {
+        feedback.style.transform = 'translateX(0)';
+    });
+    
+    // Remove after delay
+    setTimeout(() => {
+        feedback.style.transform = 'translateX(120%)';
+        setTimeout(() => {
+            if (feedback.parentNode) {
+                feedback.parentNode.removeChild(feedback);
+            }
+        }, 300);
+    }, 2000);
+}
+
+// ----- INITIALIZE ANIMATION PACK -----
+function initAnimationPack() {
+    console.log('Animation Pack v1.0 loaded');
+    
+    // Add CSS variables for animations
+    if (!document.documentElement.classList.contains('no-animations')) {
+        const style = document.createElement('style');
+        style.textContent = `
+            :root {
+                --primary-rgb: 0, 122, 255;
+            }
+            
+            html[data-theme="dark"] {
+                --primary-rgb: 10, 132, 255;
+            }
+            
+            /* Add hover effects for view all button */
+            .show-all-templates-btn:hover::before {
+                --tx: ${Math.random() * 40 - 20}px;
+                --ty: ${Math.random() * 40 - 20}px;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    // Add event listeners for animations
+    document.addEventListener('click', function(e) {
+        // Enhanced ripple for clickable elements
+        const clickableSelectors = '.nav-item, .action-btn, .tool-card, .template-card, .list-card, .setting-row, .btn-danger, .sort-btn, .clear-btn';
+        const clickable = e.target.closest(clickableSelectors);
+        
+        if (clickable && !document.documentElement.classList.contains('no-animations')) {
+            addEnhancedRipple(clickable);
+        }
+        
+        // Special handling for "View All" button
+        if (e.target.closest('.show-all-templates-btn')) {
+            const btn = e.target.closest('.show-all-templates-btn');
+            if (!document.documentElement.classList.contains('no-animations')) {
+                // Add bounce effect
+                btn.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    btn.style.transform = '';
+                }, 150);
+            }
+        }
+    });
+    
+    // Initialize tool cards with staggered animation
+    setTimeout(() => {
+        if (!document.documentElement.classList.contains('no-animations')) {
+            const toolCards = document.querySelectorAll('.tool-card, .list-card');
+            toolCards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.05}s`;
+            });
+        }
+    }, 100);
+}
+
+// ----- EXTEND TEMPLATE RENDERING FOR ANIMATIONS -----
+const originalFetchTemplates = window.fetchTemplates;
+window.fetchTemplates = async function() {
+    const result = await originalFetchTemplates();
+    
+    // Add animations to template cards
+    setTimeout(() => {
+        if (!document.documentElement.classList.contains('no-animations')) {
+            const templateCards = document.querySelectorAll('.template-card');
+            templateCards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.style.animation = 'scaleIn 0.4s ease-out';
+                card.style.animationFillMode = 'both';
+            });
+        }
+    }, 100);
+    
+    return result;
+};
+
+// ----- ANIMATION TOGGLE SUPPORT -----
+function toggleAnimations(enabled) {
+    if (enabled) {
+        document.documentElement.classList.remove('no-animations');
+        localStorage.setItem('animations_enabled', 'true');
+    } else {
+        document.documentElement.classList.add('no-animations');
+        localStorage.setItem('animations_enabled', 'false');
+    }
+    
+    // Update display
+    document.getElementById('display-animations').textContent = enabled ? 'Enabled' : 'Disabled';
+}
+
+// Initialize when DOM is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAnimationPack);
+} else {
+    initAnimationPack();
+}
+</script>
 </body>
 </html>

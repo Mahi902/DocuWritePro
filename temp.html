@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuWritePro Templates</title>
+    <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --card-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --card-border: 1px solid #e0e0e0;
+            --accent-color: #007bff;
+            --overlay-bg: #ffffff;
+        }
+
+        /* Pure Black Dark Theme */
+        body.dark-theme {
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --card-bg: #111111;
+            --card-shadow: 0 4px 6px rgba(255,255,255,0.1);
+            --card-border: 1px solid #333333;
+            --accent-color: #4da3ff;
+            --overlay-bg: #000000;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Header */
+        header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Main Grid */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        /* Template Card */
+        .card {
+            background-color: var(--card-bg);
+            border: var(--card-border);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-shadow);
+        }
+
+        .card-image-container {
+            width: 100%;
+            height: 250px; /* Portrait aspect ratio for document feel */
+            overflow: hidden;
+            background-color: #eee;
+            position: relative;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s ease;
+        }
+
+        .card-content {
+            padding: 15px;
+            text-align: center;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 500;
+            margin: 0;
+        }
+
+        /* Loading State */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            opacity: 0.6;
+        }
+
+        /* Iframe Overlay (Slide Up Animation) */
+        .overlay-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--overlay-bg);
+            z-index: 1000;
+            transform: translateY(100%); /* Start off-screen (bottom) */
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* iOS-style slide */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .overlay-container.active {
+            transform: translateY(0);
+        }
+
+        /* Overlay Header */
+        .overlay-header {
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border-bottom: 1px solid var(--card-border);
+            background-color: var(--bg-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background-color: rgba(128, 128, 128, 0.2);
+        }
+
+        .close-btn:hover {
+            opacity: 0.8;
+        }
+
+        iframe {
+            flex-grow: 1;
+            width: 100%;
+            border: none;
+        }
+
+        /* Hide Scrollbar for clean look but allow scrolling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Templates</h1>
+    </header>
+
+    <div class="container">
+        <div id="loading" class="loading">Loading templates...</div>
+        <div id="grid" class="grid"></div>
+    </div>
+
+    <!-- Slide Up Overlay -->
+    <div id="overlay" class="overlay-container">
+        <div class="overlay-header">
+            <span id="overlay-title" style="font-weight: bold;">Preview</span>
+            <button class="close-btn" onclick="closeOverlay()">Close ✕</button>
+        </div>
+        <iframe id="preview-frame" src=""></iframe>
+    </div>
+
+    <script>
+        const API_URL = "https://mahi902.github.io/DocuWritePro/temp.json";
+        const gridElement = document.getElementById('grid');
+        const loadingElement = document.getElementById('loading');
+        const overlay = document.getElementById('overlay');
+        const iframe = document.getElementById('preview-frame');
+        const overlayTitle = document.getElementById('overlay-title');
+
+        // 1. Theme Handling
+        function applyTheme() {
+            const hash = window.location.hash;
+            if (hash === '#dark') {
+                document.body.classList.add('dark-theme');
+            } else {
+                document.body.classList.remove('dark-theme');
+            }
+        }
+
+        // Listen for hash changes and initial load
+        window.addEventListener('hashchange', applyTheme);
+        window.addEventListener('DOMContentLoaded', () => {
+            applyTheme();
+            fetchTemplates();
+        });
+
+        // 2. Fetch Data
+        async function fetchTemplates() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error("Failed to fetch data");
+                
+                const data = await response.json();
+                renderTemplates(data.templates);
+            } catch (error) {
+                loadingElement.innerText = "Error loading templates. Please try again later.";
+                console.error(error);
+            }
+        }
+
+        // 3. Render Grid
+        function renderTemplates(templates) {
+            loadingElement.style.display = 'none';
+            
+            templates.forEach(item => {
+                // Filter out empty items based on Name or Link availability
+                if (!item.Name || !item.Link || item.Name.trim() === "") return;
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                // Fallback image if link is broken or empty
+                const imageUrl = item.Image ? item.Image : 'https://via.placeholder.com/200x250?text=No+Image';
+
+                card.innerHTML = `
+                    <div class="card-image-container">
+                        <img class="card-image" src="${imageUrl}" alt="${item.Name}" loading="lazy">
+                    </div>
+                    <div class="card-content">
+                        <h3 class="card-title">${item.Name}</h3>
+                    </div>
+                `;
+
+                // Add click event to open overlay
+                card.onclick = () => openOverlay(item.Link, item.Name);
+
+                gridElement.appendChild(card);
+            });
+        }
+
+        // 4. Overlay Interactions
+        function openOverlay(url, title) {
+            // Apply current theme hash to the iframe URL if needed by the target page
+            // (Assuming the target page also supports #dark/#light)
+            let targetUrl = url;
+            if(window.location.hash === '#dark') {
+                 // Check if URL already has a hash
+                 if(targetUrl.includes('#')) {
+                     // Sometimes URLs have complex hashes (like the data in the JSON). 
+                     // We might not want to append #dark if it breaks the data payload.
+                     // However, the prompt asks to pass it. 
+                     // Since the data link is complex, let's just use the link as is 
+                     // unless the target page specifically looks for a separate query param.
+                 } 
+            }
+
+            iframe.src = targetUrl;
+            overlayTitle.innerText = title;
+            overlay.classList.add('active');
+            
+            // Prevent body scrolling behind iframe
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeOverlay() {
+            overlay.classList.remove('active');
+            
+            // Clear src after animation to stop memory usage/media playing
+            setTimeout(() => {
+                iframe.src = "";
+            }, 400); // Match CSS transition time
+
+            // Restore scrolling
+            document.body.style.overflow = 'auto';
+        }
+
+    </script>
+</body>
+</html>

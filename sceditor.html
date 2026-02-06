@@ -2521,5 +2521,833 @@ document.addEventListener("DOMContentLoaded", () => {
 })();
 </script>
     <script>document.head.insertAdjacentHTML('beforeend', '<style>body.dark-mode #selectedFont, body.dark-mode .font-option, body.dark-mode .modal-title { color: #ffffff !important; }</style>');</script>
+    <script>
+(function() {
+    // Global variable to track if editor has content
+    let hasContent = false;
+    let exportFormat = 'pdf'; // Default export format
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(initImportExportUI, 500);
+    });
+
+    function initImportExportUI() {
+        const topBar = document.querySelector('.top-bar');
+        const exportBtn = document.querySelector('.export-btn');
+        
+        // Create import/export container
+        const importExportContainer = document.createElement('div');
+        importExportContainer.style.display = 'flex';
+        importExportContainer.style.alignItems = 'center';
+        importExportContainer.style.gap = '12px';
+        importExportContainer.style.marginRight = '12px';
+        
+        // Create import button (initially visible)
+        const importBtn = document.createElement('button');
+        importBtn.id = 'importBtn';
+        importBtn.className = 'import-btn';
+        importBtn.style.background = '#1E88E5';
+        importBtn.style.color = 'white';
+        importBtn.style.border = 'none';
+        importBtn.style.padding = '10px 16px';
+        importBtn.style.borderRadius = '8px';
+        importBtn.style.cursor = 'pointer';
+        importBtn.style.display = 'flex';
+        importBtn.style.alignItems = 'center';
+        importBtn.style.gap = '8px';
+        importBtn.style.fontSize = '14px';
+        importBtn.innerHTML = `
+            <span class="material-symbols-outlined">upload</span>
+            Import
+        `;
+        importBtn.onclick = openImportModal;
+        
+        // Create export format button (initially hidden)
+        const formatBtn = document.createElement('button');
+        formatBtn.id = 'formatBtn';
+        formatBtn.className = 'import-btn';
+        formatBtn.style.background = '#00BCD4';
+        formatBtn.style.color = 'white';
+        formatBtn.style.border = 'none';
+        formatBtn.style.padding = '10px 16px';
+        formatBtn.style.borderRadius = '8px';
+        formatBtn.style.cursor = 'pointer';
+        formatBtn.style.display = 'none';
+        formatBtn.style.alignItems = 'center';
+        formatBtn.style.gap = '8px';
+        formatBtn.style.fontSize = '14px';
+        formatBtn.innerHTML = `
+            <span class="material-symbols-outlined">file_present</span>
+            Format: PDF
+        `;
+        formatBtn.onclick = openFormatModal;
+        
+        // Add to container
+        importExportContainer.appendChild(importBtn);
+        importExportContainer.appendChild(formatBtn);
+        
+        // Insert before export button
+        topBar.insertBefore(importExportContainer, exportBtn);
+        
+        // Check initial content state
+        checkContentState();
+        
+        // Listen for content changes
+        document.querySelectorAll('.page-content').forEach(page => {
+            page.addEventListener('input', function() {
+                hasContent = true;
+                updateImportExportUI();
+            });
+        });
+        
+        // Also check for images
+        const observer = new MutationObserver(function(mutations) {
+            checkContentState();
+        });
+        
+        document.querySelectorAll('.page-content').forEach(page => {
+            observer.observe(page, { childList: true, subtree: true });
+        });
+    }
+
+    function checkContentState() {
+        const pages = document.querySelectorAll('.page-content');
+        let contentFound = false;
+        
+        pages.forEach(page => {
+            const content = page.innerHTML.trim();
+            // Check if there's real content (not just empty tags or whitespace)
+            if (content && 
+                content !== '' && 
+                content !== '<br>' && 
+                content !== '<div><br></div>' &&
+                !content.startsWith('<!--')) {
+                contentFound = true;
+            }
+        });
+        
+        // Also check for images
+        const images = document.querySelectorAll('.page-content img');
+        if (images.length > 0) {
+            contentFound = true;
+        }
+        
+        // Check for tables
+        const tables = document.querySelectorAll('.page-content table');
+        if (tables.length > 0) {
+            contentFound = true;
+        }
+        
+        hasContent = contentFound;
+        updateImportExportUI();
+    }
+
+    function updateImportExportUI() {
+        const importBtn = document.getElementById('importBtn');
+        const formatBtn = document.getElementById('formatBtn');
+        
+        if (hasContent) {
+            // Hide import button, show format button
+            importBtn.style.display = 'none';
+            formatBtn.style.display = 'flex';
+        } else {
+            // Show import button, hide format button
+            importBtn.style.display = 'flex';
+            formatBtn.style.display = 'none';
+        }
+        
+        // Update format button text
+        formatBtn.innerHTML = `
+            <span class="material-symbols-outlined">file_present</span>
+            Format: ${exportFormat.toUpperCase()}
+        `;
+    }
+
+    // Center-screen Format Modal
+    function openFormatModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.id = 'formatModal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 400px; text-align: center;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Choose Export Format</h2>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div style="display: flex; flex-direction: column; gap: 16px; margin: 24px 0;">
+                        <button class="format-option-btn" data-format="pdf" 
+                                style="background: ${exportFormat === 'pdf' ? '#1976d2' : '#f5f5f5'}; 
+                                       color: ${exportFormat === 'pdf' ? 'white' : '#333'};
+                                       padding: 16px;
+                                       border-radius: 12px;
+                                       border: 2px solid ${exportFormat === 'pdf' ? '#1565c0' : '#e0e0e0'};
+                                       font-size: 16px;
+                                       font-weight: 600;
+                                       cursor: pointer;
+                                       display: flex;
+                                       align-items: center;
+                                       justify-content: center;
+                                       gap: 12px;
+                                       transition: all 0.2s;">
+                            <span class="material-symbols-outlined">picture_as_pdf</span>
+                            PDF Document
+                            <span style="font-size: 14px; opacity: 0.8;">(Standard)</span>
+                        </button>
+                        
+                        <button class="format-option-btn" data-format="scd" 
+                                style="background: ${exportFormat === 'scd' ? '#1976d2' : '#f5f5f5'}; 
+                                       color: ${exportFormat === 'scd' ? 'white' : '#333'};
+                                       padding: 16px;
+                                       border-radius: 12px;
+                                       border: 2px solid ${exportFormat === 'scd' ? '#1565c0' : '#e0e0e0'};
+                                       font-size: 16px;
+                                       font-weight: 600;
+                                       cursor: pointer;
+                                       display: flex;
+                                       align-items: center;
+                                       justify-content: center;
+                                       gap: 12px;
+                                       transition: all 0.2s;">
+                            <span class="material-symbols-outlined">description</span>
+                            Sugercane Document
+                            <span style="font-size: 14px; opacity: 0.8;">(.scd)</span>
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e0e0e0;">
+                        <p style="color: #666; font-size: 14px; margin-bottom: 16px;">
+                            ${exportFormat === 'pdf' 
+                                ? 'PDF: Best for printing and sharing. Cannot be re-edited.' 
+                                : 'SCD: Save your work in Sugercane format for future editing.'}
+                        </p>
+                        
+                        <div style="display: flex; gap: 12px; justify-content: center;">
+                            <button class="modal-btn modal-btn-secondary" 
+                                    onclick="this.closest('.modal').remove()"
+                                    style="padding: 10px 24px;">
+                                Cancel
+                            </button>
+                            <button class="modal-btn modal-btn-primary" 
+                                    onclick="selectFormatAndClose()"
+                                    style="padding: 10px 24px;">
+                                Confirm & Export
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add click handlers for format options
+        setTimeout(() => {
+            document.querySelectorAll('.format-option-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const selectedFormat = this.getAttribute('data-format');
+                    
+                    // Update visual selection
+                    document.querySelectorAll('.format-option-btn').forEach(b => {
+                        b.style.background = '#f5f5f5';
+                        b.style.color = '#333';
+                        b.style.borderColor = '#e0e0e0';
+                    });
+                    
+                    this.style.background = '#1976d2';
+                    this.style.color = 'white';
+                    this.style.borderColor = '#1565c0';
+                    
+                    // Update export format
+                    exportFormat = selectedFormat;
+                    
+                    // Update description
+                    const desc = modal.querySelector('p');
+                    desc.textContent = selectedFormat === 'pdf' 
+                        ? 'PDF: Best for printing and sharing. Cannot be re-edited.' 
+                        : 'SCD: Save your work in Sugercane format for future editing.';
+                });
+            });
+            
+            // Add enter key support
+            modal.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    selectFormatAndClose();
+                } else if (e.key === 'Escape') {
+                    modal.remove();
+                }
+            });
+        }, 10);
+    }
+
+    // Global function to be called from modal
+    window.selectFormatAndClose = function() {
+        const modal = document.getElementById('formatModal');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // Update format button
+        const formatBtn = document.getElementById('formatBtn');
+        if (formatBtn) {
+            formatBtn.innerHTML = `
+                <span class="material-symbols-outlined">file_present</span>
+                Format: ${exportFormat.toUpperCase()}
+            `;
+        }
+        
+        // Trigger export
+        exportDocument();
+    };
+
+    // Modify existing exportDocument function
+    const originalExportDocument = window.exportDocument;
+    window.exportDocument = function() {
+        if (exportFormat === 'scd') {
+            exportSCD();
+        } else {
+            originalExportDocument();
+        }
+    };
+
+    // SCD Export Function
+    function exportSCD() {
+        try {
+            // Show loading state
+            const exportBtn = document.querySelector('.export-btn');
+            const originalHTML = exportBtn.innerHTML;
+            exportBtn.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span> Exporting...';
+            exportBtn.disabled = true;
+            
+            // Generate template data
+            const templateData = {
+                title: document.getElementById('docTitle').value || 'Untitled Document',
+                settings: {
+                    margin: document.getElementById('pageMargin').value,
+                    bgType: document.getElementById('bgType').value,
+                    bgColor: document.getElementById('bgColor').value,
+                    bgColor2: document.getElementById('bgColor2').value,
+                    angle: document.getElementById('gradientAngle').value,
+                    spacing: document.getElementById('lineSpacing').value,
+                    font: document.getElementById('selectedFont').textContent,
+                    zoom: currentZoom || 100,
+                    watermark: document.getElementById('watermarkText').value || ''
+                },
+                pages: Array.from(document.querySelectorAll('.page-content')).map(p => p.innerHTML),
+                metadata: {
+                    exportedAt: new Date().toISOString(),
+                    version: '1.0',
+                    app: 'Sugercane Editor',
+                    pageCount: pageCount
+                }
+            };
+
+            // Create JSON string with indentation
+            const jsonStr = JSON.stringify(templateData, null, 2);
+            
+            // Convert to Blob with custom MIME type
+            const blob = new Blob([jsonStr], { 
+                type: 'application/x-sugercane-document' 
+            });
+            
+            // Create download link
+            let fileName = (document.getElementById('docTitle').value || 'Untitled Document')
+                .replace(/[<>:"/\\|?*]/g, '_') // Remove invalid characters
+                .replace(/\s+/g, '_') + '.scd';
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            
+            // Trigger download
+            document.body.appendChild(a);
+            a.click();
+            
+            // Cleanup
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // Restore button
+                exportBtn.innerHTML = originalHTML;
+                exportBtn.disabled = false;
+                
+                // Show success toast
+                showToast('Document exported as .scd file!', 'success');
+            }, 100);
+            
+        } catch (error) {
+            console.error('SCD Export Error:', error);
+            
+            // Restore button
+            const exportBtn = document.querySelector('.export-btn');
+            exportBtn.innerHTML = '<span class="material-symbols-outlined">download</span> Export';
+            exportBtn.disabled = false;
+            
+            showToast('Export failed: ' + error.message, 'error');
+        }
+    }
+
+    // Import Modal - FIXED: Use accept="*" to allow all files, then filter by extension
+    function openImportModal() {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.id = 'importModal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">Import Sugercane Document</h2>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="drop-zone" id="scdDropZone" style="margin-bottom: 20px; min-height: 200px; display: flex; flex-direction: column; justify-content: center;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <span class="material-symbols-outlined" style="font-size: 64px; color: #1976d2; margin-bottom: 16px;">upload_file</span>
+                            <h3 style="margin-bottom: 8px; color: #333;">Drag & Drop .scd file here</h3>
+                            <p style="color: #666;">or click to browse all files</p>
+                            <p style="color: #999; font-size: 12px; margin-top: 8px;">(Select any .scd file you've exported)</p>
+                        </div>
+                        <input type="file" id="scdFile" accept="*/*" style="display:none" />
+                    </div>
+                    <div class="progress-bar" id="scdProgressBar" style="display: none;">
+                        <div class="progress-fill" id="scdProgressFill" style="width: 0%"></div>
+                    </div>
+                    <p id="scdStatus" style="color: #666; font-size: 14px; margin-top: 10px; text-align: center;">
+                        Import .scd files created with Sugercane Editor
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button class="modal-btn modal-btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        setupSCDImport();
+    }
+
+    function setupSCDImport() {
+        const dropZone = document.getElementById('scdDropZone');
+        const fileInput = document.getElementById('scdFile');
+        const progressBar = document.getElementById('scdProgressBar');
+        const progressFill = document.getElementById('scdProgressFill');
+        const status = document.getElementById('scdStatus');
+
+        dropZone.onclick = () => fileInput.click();
+
+        dropZone.ondragover = (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+            dropZone.style.borderColor = '#1976d2';
+            dropZone.style.background = '#e3f2fd';
+        };
+
+        dropZone.ondragleave = () => {
+            dropZone.classList.remove('dragover');
+            dropZone.style.borderColor = '#1976d2';
+            dropZone.style.background = '#f5f5f5';
+        };
+
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            dropZone.style.borderColor = '#1976d2';
+            dropZone.style.background = '#f5f5f5';
+            
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                handleSCDFile(file);
+            } else {
+                status.textContent = 'Please select a file';
+                status.style.color = '#d32f2f';
+            }
+        };
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                handleSCDFile(file);
+            } else {
+                status.textContent = 'Please select a file';
+                status.style.color = '#d32f2f';
+            }
+        };
+    }
+
+    function handleSCDFile(file) {
+        const progressBar = document.getElementById('scdProgressBar');
+        const progressFill = document.getElementById('scdProgressFill');
+        const status = document.getElementById('scdStatus');
+        
+        // Check if file is SCD by extension (case insensitive)
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.scd')) {
+            status.textContent = 'Error: Please select a .scd file (Sugercane Document)';
+            status.style.color = '#d32f2f';
+            progressBar.style.display = 'block';
+            progressFill.style.width = '100%';
+            progressFill.style.background = '#d32f2f';
+            return;
+        }
+        
+        progressBar.style.display = 'block';
+        progressFill.style.width = '30%';
+        status.textContent = 'Reading .scd file...';
+        status.style.color = '#1976d2';
+
+        const reader = new FileReader();
+        
+        reader.onprogress = (e) => {
+            if (e.lengthComputable) {
+                const percent = (e.loaded / e.total) * 100;
+                progressFill.style.width = percent + '%';
+            }
+        };
+        
+        reader.onload = function(e) {
+            progressFill.style.width = '70%';
+            status.textContent = 'Processing document...';
+            
+            try {
+                const content = e.target.result;
+                const data = JSON.parse(content);
+                
+                // Validate SCD file - check for required fields
+                if (!data || typeof data !== 'object') {
+                    throw new Error('Invalid file: Not a valid JSON file');
+                }
+                
+                // Check if it has our expected structure
+                const isSCDFormat = (
+                    (data.pages && Array.isArray(data.pages)) ||
+                    (data.title !== undefined) ||
+                    (data.settings !== undefined)
+                );
+                
+                if (!isSCDFormat) {
+                    // Try to see if it's the template link format
+                    if (content.includes('#TMP=')) {
+                        // It's a template link, handle differently
+                        handleTemplateLink(content);
+                        return;
+                    }
+                    throw new Error('Invalid SCD file format: Missing required fields');
+                }
+                
+                progressFill.style.width = '90%';
+                status.textContent = 'Loading into editor...';
+                
+                // Load into editor
+                loadSCDData(data);
+                
+                progressFill.style.width = '100%';
+                status.textContent = 'Import successful!';
+                status.style.color = '#2196F3';
+                progressFill.style.background = '#2196F3';
+                
+                // Close modal after 1.5 seconds
+                setTimeout(() => {
+                    const modal = document.getElementById('importModal');
+                    if (modal) modal.remove();
+                    
+                    hasContent = true;
+                    updateImportExportUI();
+                    
+                    showToast('Document imported successfully!', 'success');
+                }, 1500);
+                
+            } catch (error) {
+                console.error('SCD Import Error:', error);
+                status.textContent = 'Error: ' + error.message;
+                status.style.color = '#d32f2f';
+                progressFill.style.width = '100%';
+                progressFill.style.background = '#d32f2f';
+            }
+        };
+        
+        reader.onerror = function() {
+            status.textContent = 'Error reading file';
+            status.style.color = '#d32f2f';
+            progressFill.style.width = '100%';
+            progressFill.style.background = '#d32f2f';
+        };
+        
+        reader.readAsText(file);
+    }
+
+    function handleTemplateLink(content) {
+        try {
+            // Extract the base64 encoded part
+            const match = content.match(/#TMP=(.+)/);
+            if (match && match[1]) {
+                const encodedData = match[1];
+                const jsonStr = decodeURIComponent(escape(atob(encodedData)));
+                const data = JSON.parse(jsonStr);
+                
+                // Load the template data
+                loadSCDData(data);
+                
+                // Show success
+                document.getElementById('scdProgressFill').style.width = '100%';
+                document.getElementById('scdProgressFill').style.background = '#4CAF50';
+                document.getElementById('scdStatus').textContent = 'Template imported successfully!';
+                document.getElementById('scdStatus').style.color = '#4CAF50';
+                
+                setTimeout(() => {
+                    const modal = document.getElementById('importModal');
+                    if (modal) modal.remove();
+                    
+                    hasContent = true;
+                    updateImportExportUI();
+                    
+                    showToast('Template imported successfully!', 'success');
+                }, 1500);
+            } else {
+                throw new Error('Invalid template link format');
+            }
+        } catch (error) {
+            document.getElementById('scdStatus').textContent = 'Error importing template: ' + error.message;
+            document.getElementById('scdStatus').style.color = '#d32f2f';
+            document.getElementById('scdProgressFill').style.width = '100%';
+            document.getElementById('scdProgressFill').style.background = '#d32f2f';
+        }
+    }
+
+    function loadSCDData(data) {
+        // Set document title
+        if (data.title) {
+            document.getElementById('docTitle').value = data.title;
+        }
+        
+        // Apply settings
+        if (data.settings) {
+            const settings = data.settings;
+            
+            if (settings.margin) {
+                document.getElementById('pageMargin').value = settings.margin;
+                updateMargins(settings.margin);
+            }
+            
+            if (settings.bgType) {
+                document.getElementById('bgType').value = settings.bgType;
+                if (settings.bgColor) {
+                    document.getElementById('bgColor').value = settings.bgColor;
+                }
+                if (settings.bgColor2) {
+                    document.getElementById('bgColor2').value = settings.bgColor2;
+                }
+                if (settings.angle) {
+                    document.getElementById('gradientAngle').value = settings.angle;
+                }
+                updateBackground();
+            }
+            
+            if (settings.spacing) {
+                document.getElementById('lineSpacing').value = settings.spacing;
+                updateLineSpacing(settings.spacing);
+            }
+            
+            if (settings.font) {
+                document.getElementById('selectedFont').textContent = settings.font;
+                currentFont = settings.font;
+                // Update font dropdown if exists
+                const fontMenu = document.getElementById('fontMenu');
+                if (fontMenu) {
+                    document.querySelectorAll('.font-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                        if (opt.textContent === settings.font) {
+                            opt.classList.add('selected');
+                        }
+                    });
+                }
+            }
+            
+            if (settings.zoom) {
+                currentZoom = settings.zoom;
+                applyZoom();
+            }
+            
+            if (settings.watermark) {
+                document.getElementById('watermarkText').value = settings.watermark;
+                updateWatermark();
+            }
+        }
+        
+        // Clear existing pages except first
+        const pages = document.querySelectorAll('.page');
+        for (let i = pages.length - 1; i > 0; i--) {
+            pages[i].remove();
+        }
+        
+        // Reset to single page with content
+        const pageContent1 = document.getElementById('pageContent1');
+        pageContent1.innerHTML = '';
+        pageCount = 1;
+        
+        // Load pages
+        if (data.pages && Array.isArray(data.pages)) {
+            for (let i = 0; i < data.pages.length; i++) {
+                if (i === 0) {
+                    // First page
+                    pageContent1.innerHTML = data.pages[i] || '';
+                } else {
+                    // Additional pages
+                    addNewPage();
+                    const newPage = document.getElementById(`pageContent${i + 1}`);
+                    if (newPage) {
+                        newPage.innerHTML = data.pages[i];
+                    }
+                }
+            }
+        }
+        
+        // Reattach event listeners
+        setupPageContentEditable();
+        
+        // Update UI
+        updatePageIndicator();
+        updateWordCount();
+        
+        // Reinitialize image drag/drop for imported images
+        setTimeout(() => {
+            document.querySelectorAll('.page-content img').forEach(img => {
+                img.addEventListener('mousedown', (e) => startImageDrag(e, img));
+                img.addEventListener('touchstart', (e) => startImageDrag(e, img));
+                img.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectImage(img);
+                });
+            });
+            
+            // Reinitialize tables if any
+            document.querySelectorAll('.page-content table').forEach(table => {
+                table.style.borderCollapse = 'collapse';
+                table.style.width = '100%';
+                table.style.margin = '10px 0';
+                
+                table.querySelectorAll('td, th').forEach(cell => {
+                    cell.style.border = '1px solid #ddd';
+                    cell.style.padding = '8px';
+                    cell.style.minWidth = '50px';
+                });
+            });
+        }, 100);
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#d32f2f' : '#1976d2'};
+            color: white;
+            padding: 14px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10002;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: all 0.3s ease;
+        `;
+        
+        const icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+        toast.innerHTML = `
+            <span class="material-symbols-outlined" style="font-size: 20px;">${icon}</span>
+            <span>${message}</span>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        }, 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(-20px)';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // Dark mode support
+    const style = document.createElement('style');
+    style.textContent = `
+        .import-btn:hover {
+            background: #1976D2 !important;
+            transform: translateY(-1px);
+            transition: all 0.2s;
+        }
+        
+        #formatBtn:hover {
+            background: #00ACC1 !important;
+            transform: translateY(-1px);
+            transition: all 0.2s;
+        }
+        
+        body.dark-mode .import-btn {
+            background: #1565C0 !important;
+        }
+        
+        body.dark-mode .import-btn:hover {
+            background: #0D47A1 !important;
+        }
+        
+        body.dark-mode #formatBtn {
+            background: #0097A7 !important;
+        }
+        
+        body.dark-mode #formatBtn:hover {
+            background: #00838F !important;
+        }
+        
+        .format-option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        body.dark-mode .format-option-btn {
+            background: #222 !important;
+            color: #fff !important;
+            border-color: #444 !important;
+        }
+        
+        body.dark-mode .format-option-btn[data-format="pdf"] {
+            background: ${exportFormat === 'pdf' ? '#1976d2' : '#222'} !important;
+        }
+        
+        body.dark-mode .format-option-btn[data-format="scd"] {
+            background: ${exportFormat === 'scd' ? '#1976d2' : '#222'} !important;
+        }
+        
+        body.dark-mode .toast-notification {
+            background: #333 !important;
+            border: 1px solid #444;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+</script>
 </body>
 </html>

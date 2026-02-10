@@ -26,6 +26,7 @@ This application incorporates various third-party software libraries and service
 | **OpenCV** | Apache 2.0 | [View License](https://opencv.org/license/) |
 | **MyMemory** | MIT | [View License](https://github.com/0xdolan/mymemory/blob/main/LICENSE) |
 | **IndexedDB** | W3C | [View License](https://github.com/w3c/IndexedDB/blob/main/LICENSE.md) |
+| **Material Icons** | Apache 2.0 | [View License](https://github.com/google/material-design-icons/blob/master/LICENSE) |
 
 ---
 

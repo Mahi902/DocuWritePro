@@ -23,6 +23,7 @@ This application incorporates various third-party software libraries and service
 | **Fuse.js** | Apache 2.0 | [View License](https://github.com/krisk/Fuse/blob/master/LICENSE) |
 | **Day.js** | MIT | [View License](https://github.com/iamkun/dayjs/blob/dev/LICENSE) |
 | **PeerJS** | MIT | [View License](https://github.com/peers/peerjs/blob/master/LICENSE) |
+| **OpenCV** | Apache 2.0 | [View License](https://opencv.org/license/) |
 
 ---
 

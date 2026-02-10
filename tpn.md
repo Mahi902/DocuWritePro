@@ -24,6 +24,7 @@ This application incorporates various third-party software libraries and service
 | **Day.js** | MIT | [View License](https://github.com/iamkun/dayjs/blob/dev/LICENSE) |
 | **PeerJS** | MIT | [View License](https://github.com/peers/peerjs/blob/master/LICENSE) |
 | **OpenCV** | Apache 2.0 | [View License](https://opencv.org/license/) |
+| **MyMemory** | MIT | [View License](https://github.com/0xdolan/mymemory/blob/main/LICENSE) |
 
 ---
 

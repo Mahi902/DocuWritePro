@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DyNote</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        
+        body {
+            background-color: #000;
+            color: #e5e5e5;
+            overflow: hidden;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        /* Sidebar & Editor Transitions */
+        #sidebar, #editor-view { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s ease; }
+        .editor-open { transform: translateX(0) !important; }
+        .sidebar-collapsed { width: 0 !important; transform: translateX(-100%) !important; }
+
+        /* Rich Text Editor Styling */
+        #note-body {
+            outline: none;
+            min-height: 200px;
+            color: #d1d5db;
+            line-height: 1.6;
+        }
+        #note-body b, #note-body strong { font-weight: bold; color: white; }
+        #note-body i, #note-body em { font-style: italic; }
+        #note-body u { text-decoration: underline; }
+        #note-body strike { text-decoration: line-through; }
+        #note-body mark { background-color: #facc15; color: black; border-radius: 2px; padding: 0 2px; }
+        
+        #note-body ul { list-style-type: disc; padding-left: 1.5rem; margin: 0.5rem 0; }
+        #note-body ol { list-style-type: decimal; padding-left: 1.5rem; margin: 0.5rem 0; }
+        
+        /* Checkbox styling */
+        .todo-item { display: flex; align-items: flex-start; gap: 8px; margin: 4px 0; }
+        .todo-checkbox { 
+            appearance: none; width: 18px; height: 18px; border: 2px solid #525252; 
+            border-radius: 4px; cursor: pointer; position: relative; top: 3px; shrink: 0;
+        }
+        .todo-checkbox:checked { background-color: #eab308; border-color: #eab308; }
+        .todo-checkbox:checked::after {
+            content: '✓'; color: black; font-size: 12px; position: absolute; 
+            top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold;
+        }
+
+        /* Resizable Image Styling */
+        .resizable-img-container {
+            position: relative;
+            display: inline-block;
+            margin: 10px 0;
+            max-width: 100%;
+        }
+        .resizable-img-container img {
+            display: block;
+            border-radius: 8px;
+            max-width: 100%;
+        }
+        .resizer {
+            width: 12px; height: 12px; background: #eab308; position: absolute;
+            right: -6px; bottom: -6px; cursor: nwse-resize; border-radius: 50%;
+            display: none; border: 2px solid #000;
+        }
+        .resizable-img-container:hover .resizer, .resizable-img-container.selected .resizer { display: block; }
+
+        #user-folders-list.collapsed { display: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="h-screen w-screen flex overflow-hidden font-sans" oncontextmenu="return false;">
+
+    <div id="global-overlay" class="fixed inset-0 bg-black/60 z-[60] hidden transition-opacity opacity-0" onclick="closeAllModals()"></div>
+
+    <!-- CONTEXT MENU -->
+    <div id="context-menu" class="fixed z-[70] hidden bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl p-2 w-48">
+        <button onclick="handleRenameClick()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-white hover:bg-neutral-800 rounded-xl">
+            <i class="ph ph-pencil-line text-lg"></i> Rename
+        </button>
+        <button onclick="handleDeleteFolderClick()" class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 rounded-xl">
+            <i class="ph ph-trash text-lg"></i> Delete
+        </button>
+    </div>
+
+    <!-- DIALOG MODAL -->
+    <div id="dialog-modal" class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[80] hidden bg-neutral-900 border border-neutral-800 rounded-3xl shadow-2xl p-6 w-[90%] max-w-sm">
+        <h3 id="dialog-title" class="text-xl font-bold mb-4">Title</h3>
+        <div id="dialog-input-wrapper" class="mb-6">
+            <input type="text" id="dialog-input" class="w-full bg-black border border-neutral-800 rounded-xl py-3 px-4 text-white focus:border-yellow-500 transition-colors">
+        </div>
+        <p id="dialog-message" class="text-neutral-400 mb-6 hidden"></p>
+        <div class="flex gap-3 justify-end">
+            <button onclick="closeAllModals()" class="px-5 py-2.5 rounded-xl text-neutral-400 hover:bg-neutral-800">Cancel</button>
+            <button id="dialog-confirm-btn" class="px-5 py-2.5 rounded-xl bg-yellow-500 text-black">Confirm</button>
+        </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="w-72 bg-black border-r border-neutral-800 flex flex-col h-full shrink-0 overflow-hidden">
+        <div class="p-6 flex items-center gap-3">
+            <i class="ph-fill ph-notebook text-yellow-500 text-2xl"></i>
+            <span class="font-bold text-xl tracking-wide">DyNote</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto py-2 px-2 space-y-1 no-scrollbar">
+            <div onclick="selectFolder('folder-notes')" class="nav-item group flex items-center justify-between px-4 py-3 rounded-full cursor-pointer hover:bg-neutral-900" data-id="folder-notes">
+                <div class="flex items-center gap-4">
+                    <i class="ph ph-article text-xl text-gray-400 group-hover:text-yellow-500 icon-active"></i>
+                    <span class="font-medium text-gray-300 group-hover:text-white">All Notes</span>
+                </div>
+                <span class="text-xs text-gray-600 font-bold" id="count-notes">0</span>
+            </div>
+
+            <div class="mt-6 mb-2 px-4 flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-wider cursor-pointer hover:text-gray-300" onclick="toggleFolderList()">
+                <span>Folders</span>
+                <i id="folder-list-caret" class="ph ph-caret-down transition-transform"></i>
+            </div>
+            <div id="user-folders-list" class="space-y-1"></div>
+
+            <div onclick="selectFolder('folder-trash')" class="nav-item group flex items-center justify-between px-4 py-3 rounded-full cursor-pointer hover:bg-neutral-900 mt-4" data-id="folder-trash">
+                <div class="flex items-center gap-4">
+                    <i class="ph ph-trash text-xl text-gray-400 group-hover:text-red-500 icon-active"></i>
+                    <span class="font-medium text-gray-300 group-hover:text-white">Trash</span>
+                </div>
+                <span class="text-xs text-gray-600 font-bold" id="count-trash">0</span>
+            </div>
+
+            <button onclick="openFolderCreateDialog()" class="w-full flex items-center gap-4 px-4 py-4 text-yellow-500 hover:bg-neutral-900 rounded-full mt-2 transition-colors">
+                <i class="ph ph-plus text-xl"></i>
+                <span class="font-medium">New folder</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN VIEW -->
+    <main class="flex-1 flex flex-col relative overflow-hidden h-full">
+        <section id="note-list-view" class="flex-1 bg-black flex flex-col h-full overflow-hidden relative">
+            <div class="p-4 bg-black space-y-4">
+                <div class="flex items-center justify-between">
+                    <button onclick="toggleSidebar()" class="text-gray-400 p-2 -ml-2 hover:text-white">
+                        <i id="sidebar-toggle-icon" class="ph ph-layout text-2xl"></i>
+                    </button>
+                    <span class="font-semibold text-lg" id="current-folder-title">All Notes</span>
+                    <div class="w-10"></div>
+                </div>
+                <div class="relative group">
+                    <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" id="search-input" placeholder="Search notes" class="w-full bg-neutral-900 rounded-full py-3 pl-12 pr-4 text-sm text-white focus:ring-1 focus:ring-yellow-500/50">
+                </div>
+            </div>
+            <div id="notes-container" class="flex-1 overflow-y-auto px-3 pb-24 space-y-2 no-scrollbar"></div>
+            <button onclick="createNewNote()" class="fixed bottom-6 right-6 w-14 h-14 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg shadow-yellow-500/30 z-[40] active:scale-90 hover:bg-yellow-400 text-black">
+                <i class="ph-bold ph-plus text-2xl"></i>
+            </button>
+        </section>
+
+        <!-- EDITOR VIEW -->
+        <section id="editor-view" class="absolute inset-0 bg-black translate-x-full flex flex-col h-full overflow-hidden">
+            <div id="editor-content" class="flex flex-col h-full">
+                <!-- Toolbar Top -->
+                <div class="flex items-center justify-between p-4 bg-black border-b border-neutral-900">
+                    <button onclick="closeEditor()" class="text-gray-300 hover:text-white p-2 -ml-2">
+                        <i class="ph ph-arrow-left text-2xl"></i>
+                    </button>
+                    <div class="flex items-center gap-4 text-gray-400">
+                        <button id="restore-btn" onclick="restoreCurrentNote()" class="hidden hover:text-yellow-500"><i class="ph ph-arrow-counter-clockwise text-xl"></i></button>
+                        <button onclick="deleteCurrentNote()" class="hover:text-red-500"><i class="ph ph-trash text-xl"></i></button>
+                        <button onclick="closeEditor()" class="text-yellow-500"><i class="ph ph-check text-2xl"></i></button>
+                    </div>
+                </div>
+
+                <!-- Content Area -->
+                <div class="flex-1 overflow-y-auto px-6 py-6 md:px-12 no-scrollbar" onclick="focusEditor(event)">
+                    <input type="text" id="note-title" placeholder="Title" class="w-full bg-transparent text-3xl font-bold text-white placeholder-neutral-800 border-none mb-2">
+                    <div class="flex items-center gap-3 text-xs text-gray-500 mb-6 font-medium">
+                        <span id="note-date">...</span>
+                        <span class="text-neutral-800">|</span>
+                        <span id="note-char-count">0 chars</span>
+                    </div>
+                    
+                    <!-- RICH TEXT AREA -->
+                    <div id="note-body" contenteditable="true" placeholder="Start typing..." class="w-full text-gray-200 text-lg font-light pb-20"></div>
+                </div>
+
+                <!-- Rich Text Bar -->
+                <div class="bg-neutral-900/60 px-4 py-2 border-t border-neutral-800 backdrop-blur-md flex flex-col gap-2">
+                    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar py-1">
+                        <button onclick="exec('bold')" class="tool-btn"><i class="ph ph-text-b"></i></button>
+                        <button onclick="exec('italic')" class="tool-btn"><i class="ph ph-text-italic"></i></button>
+                        <button onclick="exec('underline')" class="tool-btn"><i class="ph ph-text-underline"></i></button>
+                        <button onclick="exec('strikeThrough')" class="tool-btn"><i class="ph ph-text-strikethrough"></i></button>
+                        <button onclick="exec('hiliteColor', '#facc15')" class="tool-btn"><i class="ph ph-highlighter"></i></button>
+                        <div class="w-px h-6 bg-neutral-700 mx-2"></div>
+                        <button onclick="insertTodo()" class="tool-btn"><i class="ph ph-check-square"></i></button>
+                        <button onclick="exec('insertUnorderedList')" class="tool-btn"><i class="ph ph-list-bullets"></i></button>
+                        <button onclick="exec('insertOrderedList')" class="tool-btn"><i class="ph ph-list-numbers"></i></button>
+                        <div class="w-px h-6 bg-neutral-700 mx-2"></div>
+                        <button onclick="document.getElementById('img-upload').click()" class="tool-btn"><i class="ph ph-image"></i></button>
+                        <input type="file" id="img-upload" class="hidden" accept="image/*" onchange="handleImageUpload(event)">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const state = {
+            notes: [],
+            folders: [],
+            activeFolderId: 'folder-notes',
+            selectedNoteId: null,
+            searchQuery: '',
+            sidebarCollapsed: false,
+            foldersCollapsed: false,
+            gesture: { startX: 0, holding: false, timer: null, id: null }
+        };
+
+        const DB_NAME = 'DyNote_Rich_V1';
+        let db;
+
+        async function initDB() {
+            return new Promise((resolve) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    db.createObjectStore('notes', { keyPath: 'id' });
+                    db.createObjectStore('folders', { keyPath: 'id' });
+                };
+                request.onsuccess = (e) => { db = e.target.result; resolve(); };
+            });
+        }
+
+        async function dbOp(storeName, mode, callback) {
+            const tx = db.transaction(storeName, mode);
+            const store = tx.objectStore(storeName);
+            const request = callback(store);
+            return new Promise((res) => { request.onsuccess = () => res(request.result); });
+        }
+
+        async function initApp() {
+            await initDB();
+            let folders = await dbOp('folders', 'readonly', s => s.getAll());
+            if (!folders.length) {
+                const defaults = [{ id: 'folder-notes', name: 'All Notes', type: 'system' }, { id: 'folder-trash', name: 'Trash', type: 'system' }];
+                for (const f of defaults) await dbOp('folders', 'readwrite', s => s.put(f));
+                folders = defaults;
+            }
+            state.folders = folders;
+            state.notes = await dbOp('notes', 'readonly', s => s.getAll());
+            renderSidebar();
+            renderNoteList();
+
+            // Auto-save
+            const body = document.getElementById('note-body');
+            const title = document.getElementById('note-title');
+            const saver = debounce(saveCurrentNote, 800);
+            
+            body.oninput = saver;
+            title.oninput = saver;
+            
+            // Delegate checkbox clicks within body
+            body.addEventListener('change', (e) => {
+                if(e.target.classList.contains('todo-checkbox')) {
+                    if(e.target.checked) e.target.setAttribute('checked', '');
+                    else e.target.removeAttribute('checked');
+                    saveCurrentNote();
+                }
+            });
+
+            document.getElementById('search-input').oninput = (e) => {
+                state.searchQuery = e.target.value.toLowerCase();
+                renderNoteList();
+            };
+        }
+
+        /* --- RICH TEXT ACTIONS --- */
+        function exec(cmd, val = null) {
+            document.execCommand(cmd, false, val);
+            saveCurrentNote();
+        }
+
+        function focusEditor(e) {
+            if(e.target === e.currentTarget) document.getElementById('note-body').focus();
+        }
+
+        function insertTodo() {
+            const id = 'todo-' + Date.now();
+            const html = `<div class="todo-item" contenteditable="false"><input type="checkbox" class="todo-checkbox"> <span contenteditable="true" style="flex:1">New Task</span></div><div><br></div>`;
+            document.execCommand('insertHTML', false, html);
+            saveCurrentNote();
+        }
+
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const id = 'img-' + Date.now();
+                const html = `
+                    <div class="resizable-img-container" id="${id}" contenteditable="false">
+                        <img src="${event.target.result}" style="width: 200px;">
+                        <div class="resizer" onmousedown="initResize(event, '${id}')" ontouchstart="initResize(event, '${id}')"></div>
+                    </div>
+                    <div><br></div>`;
+                document.execCommand('insertHTML', false, html);
+                saveCurrentNote();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /* --- IMAGE RESIZING --- */
+        function initResize(e, containerId) {
+            e.preventDefault();
+            e.stopPropagation();
+            const container = document.getElementById(containerId);
+            const img = container.querySelector('img');
+            const startX = e.clientX || e.touches[0].clientX;
+            const startWidth = img.clientWidth;
+
+            const onMove = (moveEvent) => {
+                const currentX = moveEvent.clientX || moveEvent.touches[0].clientX;
+                const newWidth = Math.max(50, startWidth + (currentX - startX));
+                img.style.width = newWidth + 'px';
+            };
+
+            const onEnd = () => {
+                window.removeEventListener('mousemove', onMove);
+                window.removeEventListener('mouseup', onEnd);
+                window.removeEventListener('touchmove', onMove);
+                window.removeEventListener('touchend', onEnd);
+                saveCurrentNote();
+            };
+
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onEnd);
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('touchend', onEnd);
+        }
+
+        async function saveCurrentNote() {
+            if(!state.selectedNoteId) return;
+            const note = state.notes.find(n => n.id === state.selectedNoteId);
+            note.title = document.getElementById('note-title').value;
+            note.content = document.getElementById('note-body').innerHTML;
+            note.updatedAt = Date.now();
+            await dbOp('notes', 'readwrite', s => s.put(note));
+            updateCharCount();
+            renderNoteList();
+        }
+
+        /* --- CORE LOGIC --- */
+        function renderSidebar() {
+            const container = document.getElementById('user-folders-list');
+            container.innerHTML = '';
+            const counts = {};
+            counts['folder-notes'] = state.notes.filter(n => n.folderId !== 'folder-trash').length;
+            counts['folder-trash'] = state.notes.filter(n => n.folderId === 'folder-trash').length;
+            state.notes.filter(n => n.folderId !== 'folder-trash' && n.folderId !== 'folder-notes').forEach(n => {
+                counts[n.folderId] = (counts[n.folderId] || 0) + 1;
+            });
+
+            document.getElementById('count-notes').innerText = counts['folder-notes'];
+            document.getElementById('count-trash').innerText = counts['folder-trash'];
+
+            state.folders.filter(f => f.type === 'user').forEach(folder => {
+                const isActive = state.activeFolderId === folder.id;
+                const div = document.createElement('div');
+                div.className = `nav-item flex items-center justify-between px-4 py-3 rounded-full cursor-pointer transition-colors ${isActive ? 'bg-neutral-900' : 'hover:bg-neutral-800'}`;
+                
+                div.onmousedown = (e) => startGesture(e, folder.id);
+                div.onmousemove = (e) => moveGesture(e);
+                div.onmouseup = endGesture;
+                div.ontouchstart = (e) => startGesture(e, folder.id);
+                div.ontouchmove = (e) => moveGesture(e);
+                div.ontouchend = endGesture;
+
+                div.onclick = () => selectFolder(folder.id);
+                div.innerHTML = `<div class="flex items-center gap-4"><i class="ph ph-folder text-xl ${isActive ? 'text-yellow-500' : 'text-gray-400'}"></i><span class="font-medium ${isActive ? 'text-white' : 'text-gray-300'}">${folder.name}</span></div><span class="text-xs text-gray-600 font-bold">${counts[folder.id] || 0}</span>`;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('current-folder-title').innerText = state.folders.find(f => f.id === state.activeFolderId)?.name || 'All Notes';
+        }
+
+        function renderNoteList() {
+            const container = document.getElementById('notes-container');
+            container.innerHTML = '';
+            const filtered = state.notes.filter(n => {
+                const search = (n.title + n.content).toLowerCase().includes(state.searchQuery);
+                if (state.activeFolderId === 'folder-notes') return n.folderId !== 'folder-trash' && search;
+                return n.folderId === state.activeFolderId && search;
+            }).sort((a,b) => b.updatedAt - a.updatedAt);
+
+            filtered.forEach(note => {
+                const isSelected = state.selectedNoteId === note.id;
+                const div = document.createElement('div');
+                div.className = `p-4 rounded-3xl cursor-pointer border ${isSelected ? 'bg-neutral-800 border-yellow-500/30' : 'bg-neutral-900/40 border-transparent hover:bg-neutral-900'}`;
+                div.onclick = () => openNote(note.id);
+                // Strip HTML for preview
+                const textPreview = note.content.replace(/<[^>]*>/g, '').substring(0, 100);
+                div.innerHTML = `<h3 class="font-bold text-lg truncate ${!note.title ? 'text-neutral-600 italic' : ''}">${note.title || 'Untitled'}</h3><p class="text-neutral-400 text-sm truncate">${textPreview || 'No text content'}</p>`;
+                container.appendChild(div);
+            });
+        }
+
+        function openNote(id) {
+            state.selectedNoteId = id;
+            const note = state.notes.find(n => n.id === id);
+            document.getElementById('note-title').value = note.title;
+            document.getElementById('note-body').innerHTML = note.content;
+            document.getElementById('note-date').innerText = new Date(note.updatedAt).toLocaleString();
+            
+            document.getElementById('restore-btn').classList.toggle('hidden', note.folderId !== 'folder-trash');
+            document.getElementById('editor-view').classList.add('editor-open');
+            updateCharCount();
+document.querySelector('#note-list-view button[onclick="createNewNote()"]').style.display = 'none';
+        }
+
+        function closeEditor() {
+            document.getElementById('editor-view').classList.remove('editor-open');
+            state.selectedNoteId = null;
+            renderNoteList();
+document.querySelector('#note-list-view button[onclick="createNewNote()"]').style.display = 'flex';
+        }
+
+        async function createNewNote() {
+            const note = { id: 'note-'+Date.now(), title: '', content: '', folderId: (state.activeFolderId === 'folder-trash' ? 'folder-notes' : state.activeFolderId), createdAt: Date.now(), updatedAt: Date.now() };
+            state.notes.push(note);
+            await dbOp('notes', 'readwrite', s => s.put(note));
+            selectFolder(note.folderId);
+            openNote(note.id);
+        }
+
+        async function restoreCurrentNote() {
+            const note = state.notes.find(n => n.id === state.selectedNoteId);
+            note.folderId = 'folder-notes';
+            await dbOp('notes', 'readwrite', s => s.put(note));
+            closeEditor();
+            renderSidebar();
+        }
+
+        async function deleteCurrentNote() {
+            const note = state.notes.find(n => n.id === state.selectedNoteId);
+            if(note.folderId === 'folder-trash') {
+                openDialog("Delete Forever", "Permanently delete this note?", null, true, async () => {
+                    await dbOp('notes', 'readwrite', s => s.delete(note.id));
+                    state.notes = state.notes.filter(n => n.id !== note.id);
+                    closeEditor();
+                    renderSidebar();
+                });
+            } else {
+                note.folderId = 'folder-trash';
+                await dbOp('notes', 'readwrite', s => s.put(note));
+                closeEditor();
+                renderSidebar();
+            }
+        }
+
+        /* --- GESTURES & UI --- */
+        function startGesture(e, id) {
+            state.gesture.startX = (e.clientX || e.touches[0].clientX);
+            state.gesture.id = id;
+            state.gesture.timer = setTimeout(() => state.gesture.ready = true, 300);
+        }
+        function moveGesture(e) {
+            if(!state.gesture.ready) return;
+            const x = (e.clientX || e.touches[0].clientX);
+            if(x - state.gesture.startX > 50) {
+                showContextMenu(e, state.gesture.id);
+                endGesture();
+            }
+        }
+        function endGesture() { clearTimeout(state.gesture.timer); state.gesture.ready = false; }
+
+        function showContextMenu(e, id) {
+            state.contextTargetFolder = id;
+            const menu = document.getElementById('context-menu');
+            const x = (e.clientX || (e.touches?.[0].clientX) || 100);
+            const y = (e.clientY || (e.touches?.[0].clientY) || 100);
+            menu.style.left = Math.min(x, window.innerWidth - 200) + 'px';
+            menu.style.top = Math.min(y, window.innerHeight - 150) + 'px';
+            menu.classList.remove('hidden');
+            document.getElementById('global-overlay').classList.remove('hidden');
+            document.getElementById('global-overlay').classList.add('opacity-100');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('#context-menu, #dialog-modal, #global-overlay').forEach(el => el.classList.add('hidden'));
+            document.getElementById('global-overlay').classList.remove('opacity-100');
+        }
+
+        function openDialog(title, msg, inputVal, isDanger, onConfirm) {
+            document.getElementById('dialog-title').innerText = title;
+            const input = document.getElementById('dialog-input');
+            const message = document.getElementById('dialog-message');
+            if(inputVal !== null) { input.value = inputVal; input.parentElement.classList.remove('hidden'); message.classList.add('hidden'); }
+            else { message.innerText = msg; message.classList.remove('hidden'); input.parentElement.classList.add('hidden'); }
+            const btn = document.getElementById('dialog-confirm-btn');
+            btn.className = isDanger ? "px-5 py-2.5 rounded-xl bg-red-600 text-white" : "px-5 py-2.5 rounded-xl bg-yellow-500 text-black";
+            btn.onclick = () => { onConfirm(input.value); closeAllModals(); };
+            document.getElementById('dialog-modal').classList.remove('hidden');
+            document.getElementById('global-overlay').classList.remove('hidden');
+        }
+
+        function handleRenameClick() {
+            const folder = state.folders.find(f => f.id === state.contextTargetFolder);
+            closeAllModals();
+            openDialog("Rename", null, folder.name, false, async (n) => { folder.name = n; await dbOp('folders', 'readwrite', s => s.put(folder)); renderSidebar(); });
+        }
+
+        function handleDeleteFolderClick() {
+            closeAllModals();
+            openDialog("Delete Folder", "Remove folder and move contents to All Notes?", null, true, async () => {
+                await dbOp('folders', 'readwrite', s => s.delete(state.contextTargetFolder));
+                state.folders = state.folders.filter(f => f.id !== state.contextTargetFolder);
+                state.notes.forEach(async n => { if(n.folderId === state.contextTargetFolder) { n.folderId = 'folder-notes'; await dbOp('notes', 'readwrite', s => s.put(n)); } });
+                state.activeFolderId = 'folder-notes';
+                renderSidebar();
+                renderNoteList();
+            });
+        }
+
+        function openFolderCreateDialog() {
+            openDialog("New Folder", null, "", false, async (n) => {
+                if(!n) return;
+                const f = { id: 'folder-'+Date.now(), name: n, type: 'user' };
+                state.folders.push(f);
+                await dbOp('folders', 'readwrite', s => s.put(f));
+                renderSidebar();
+            });
+        }
+
+        function toggleSidebar() {
+            state.sidebarCollapsed = !state.sidebarCollapsed;
+            document.getElementById('sidebar').classList.toggle('sidebar-collapsed', state.sidebarCollapsed);
+            document.getElementById('sidebar-toggle-icon').className = state.sidebarCollapsed ? 'ph ph-caret-right text-2xl' : 'ph ph-layout text-2xl';
+        }
+
+        function toggleFolderList() {
+            state.foldersCollapsed = !state.foldersCollapsed;
+            document.getElementById('user-folders-list').classList.toggle('hidden', state.foldersCollapsed);
+            document.getElementById('folder-list-caret').style.transform = state.foldersCollapsed ? 'rotate(-90deg)' : '';
+        }
+
+        function selectFolder(id) { state.activeFolderId = id; renderSidebar(); renderNoteList(); }
+        function updateCharCount() {
+            const text = document.getElementById('note-body').innerText;
+            document.getElementById('note-char-count').innerText = `${text.trim().length} chars`;
+        }
+        function debounce(f, w) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => f(...a), w); }; }
+
+        window.onload = initApp;
+
+        // Custom UI Styles for toolbar
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .tool-btn { 
+                padding: 10px; border-radius: 12px; color: #a3a3a3; transition: all 0.2s;
+                display: flex; align-items: center; justify-content: center; font-size: 1.25rem;
+                min-width: 44px; height: 44px;
+            }
+            .tool-btn:hover { background-color: #262626; color: white; }
+            .tool-btn:active { background-color: #404040; transform: scale(0.95); }
+        `;
+        document.head.appendChild(style);
+    </script>
+<!-- Theme CSS Variables & Enhanced Global Selectors -->
+<style>
+    :root {
+        --bg-primary: #000; --bg-secondary: #0a0a0a; --text-main: #e5e5e5;
+        --text-dim: #a3a3a3; --border: #262626; --accent: #eab308;
+    }
+    .light-theme {
+        --bg-primary: #fff; --bg-secondary: #f5f5f5; --text-main: #171717;
+        --text-dim: #525252; --border: #e2e2e2; --accent: #ca8a04;
+    }
+
+    /* Target Every UI Element */
+    body, aside, main, section, #editor-view, #editor-content, 
+    #note-list-view, #export-container, .bg-black { 
+        background-color: var(--bg-primary) !important; 
+        color: var(--text-main) !important; 
+    }
+
+    /* Top Bars and Headers */
+    .bg-neutral-900, .bg-neutral-900\/40, .bg-neutral-900\/60, 
+    #search-input, .nav-item:hover, .tool-btn:hover { 
+        background-color: var(--bg-secondary) !important; 
+    }
+
+    /* Borders */
+    #sidebar, section, div, header, .border-r, .border-b, .border-t, 
+    .border-neutral-800, .border-neutral-900, #search-input { 
+        border-color: var(--border) !important; 
+    }
+
+    /* Text and Inputs */
+    input, #note-body, #note-title, .nav-item span, #current-folder-title, h3 { 
+        color: var(--text-main) !important; 
+    }
+    
+    #note-title::placeholder, #search-input::placeholder, #note-body:empty:before {
+        color: var(--text-dim) !important;
+        opacity: 0.5;
+    }
+
+    .text-gray-300, .text-gray-400, .text-gray-500, .text-neutral-400 { 
+        color: var(--text-dim) !important; 
+    }
+
+    /* Note Cards in List */
+    #notes-container > div {
+        background-color: var(--bg-secondary) !important;
+        border-color: var(--border) !important;
+    }
+
+    #notes-container > div:hover {
+        border-color: var(--accent) !important;
+    }
+</style>
+
+<script>
+    // 1. Inject the Theme Button into the Sidebar
+    const sidebar = document.getElementById('sidebar');
+    if (sidebar && !document.getElementById('theme-toggle-btn')) {
+        const themeBtnHtml = `
+            <div class="p-4 border-t border-[var(--border)] mt-auto">
+                <button id="theme-toggle-btn" class="w-full flex items-center gap-4 px-4 py-3 rounded-2xl bg-[var(--bg-secondary)] hover:opacity-80 transition-all">
+                    <i id="theme-icon" class="ph ph-moon text-xl text-[var(--accent)]"></i>
+                    <span id="theme-text" class="font-medium">Dark Mode</span>
+                </button>
+            </div>
+        `;
+        sidebar.insertAdjacentHTML('beforeend', themeBtnHtml);
+    }
+
+    // 2. Patch functions to hide/show Plus Icon
+    const plusBtn = document.querySelector('button[onclick="createNewNote()"]');
+    
+    if (window.openNote && !window.openNote._patched) {
+        const originalOpen = window.openNote;
+        window.openNote = function(id) {
+            if(plusBtn) plusBtn.style.setProperty('display', 'none', 'important');
+            originalOpen(id);
+        };
+        window.openNote._patched = true;
+    }
+
+    if (window.closeEditor && !window.closeEditor._patched) {
+        const originalClose = window.closeEditor;
+        window.closeEditor = function() {
+            if(plusBtn) plusBtn.style.setProperty('display', 'flex', 'important');
+            originalClose();
+        };
+        window.closeEditor._patched = true;
+    }
+
+    // 3. Theme Toggle Logic
+    function applyTheme(theme) {
+        const icon = document.getElementById('theme-icon');
+        const text = document.getElementById('theme-text');
+        if (theme === 'light') {
+            document.body.classList.add('light-theme');
+            if(icon) icon.className = 'ph ph-sun text-xl text-[var(--accent)]';
+            if(text) text.innerText = 'Light Mode';
+        } else {
+            document.body.classList.remove('light-theme');
+            if(icon) icon.className = 'ph ph-moon text-xl text-[var(--accent)]';
+            if(text) text.innerText = 'Dark Mode';
+        }
+        localStorage.setItem('dynote-theme', theme);
+    }
+
+    const tBtn = document.getElementById('theme-toggle-btn');
+    if (tBtn) {
+        tBtn.onclick = () => {
+            const isLight = document.body.classList.contains('light-theme');
+            applyTheme(isLight ? 'dark' : 'light');
+        };
+    }
+
+    // Init
+    applyTheme(localStorage.getItem('dynote-theme') || 'dark');
+</script>
+</body>
+</html>

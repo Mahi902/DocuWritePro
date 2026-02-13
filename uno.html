@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>UNO PeerJS + God Mode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        /* Card Designs */
+        .card {
+            width: 70px;
+            height: 100px;
+            border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: -2px 2px 5px rgba(0,0,0,0.2);
+            transition: transform 0.2s, margin 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            border: 4px solid white;
+            flex-shrink: 0;
+            user-select: none;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            z-index: 10;
+        }
+
+        .card-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Colors */
+        .bg-red { background: #ff5555; }
+        .bg-blue { background: #5555ff; }
+        .bg-green { background: #55aa55; }
+        .bg-yellow { background: #ffaa00; }
+        .bg-black { background: #333; }
+
+        .text-shadow { text-shadow: 1px 1px 0 #000; }
+
+        /* Card Content */
+        .card-value {
+            font-size: 32px;
+            color: white;
+            text-shadow: 2px 2px 0px black;
+            z-index: 2;
+        }
+        
+        .card-small {
+            position: absolute;
+            font-size: 12px;
+            color: white;
+            text-shadow: 1px 1px 0 black;
+        }
+        .top-left { top: 2px; left: 4px; }
+        .bottom-right { bottom: 2px; right: 4px; transform: rotate(180deg); }
+
+        .center-oval {
+            position: absolute;
+            width: 80%;
+            height: 60%;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transform: rotate(-45deg);
+            z-index: 1;
+        }
+
+        /* Opponent Card Back */
+        .card-back {
+            background: #333;
+            background-image: repeating-linear-gradient(45deg, #444 0, #444 10px, #333 10px, #333 20px);
+            border: 2px solid white;
+        }
+
+        /* Scrollbar for hand */
+        .hand-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .hand-scroll::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        /* God Mode Trigger Area */
+        #god-trigger {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 60px;
+            height: 60px;
+            z-index: 9999;
+            /* background: rgba(255,0,0,0.1); Debugging */
+        }
+    </style>
+</head>
+<body class="bg-gray-800 h-screen w-screen overflow-hidden flex flex-col text-white">
+
+    <!-- God Mode Trigger -->
+    <div id="god-trigger"></div>
+
+    <!-- Lobby Screen -->
+    <div id="lobby" class="flex-1 flex flex-col items-center justify-center space-y-6">
+        <h1 class="text-6xl font-black text-yellow-400 tracking-tighter" style="text-shadow: 4px 4px 0 #c00;">UNO!</h1>
+        <div class="bg-gray-700 p-8 rounded-xl shadow-2xl w-full max-w-md space-y-4">
+            <div class="space-y-2">
+                <button id="btn-host" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded font-bold text-xl transition">Host Game</button>
+                <div id="host-info" class="hidden text-center p-4 bg-gray-800 rounded">
+                    <p class="text-sm text-gray-400">Share this ID:</p>
+                    <p id="my-id" class="text-2xl font-mono text-green-400 select-all cursor-pointer">Loading...</p>
+                    <p class="text-xs text-gray-500 mt-2">Waiting for player...</p>
+                </div>
+            </div>
+            
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-gray-600"></div>
+                <span class="flex-shrink-0 mx-4 text-gray-400">OR</span>
+                <div class="flex-grow border-t border-gray-600"></div>
+            </div>
+
+            <div class="space-y-2">
+                <input id="input-dest-id" type="text" placeholder="Enter Host ID" class="w-full p-3 bg-gray-900 border border-gray-600 rounded text-center font-mono text-white focus:outline-none focus:border-yellow-500">
+                <button id="btn-join" class="w-full bg-green-600 hover:bg-green-500 py-3 rounded font-bold text-xl transition">Join Game</button>
+            </div>
+            <p id="status-msg" class="text-center text-red-400 text-sm h-5"></p>
+        </div>
+        <div class="text-gray-500 text-sm">Tap top-left 5x for secrets...</div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game" class="hidden flex-col h-full w-full relative">
+        
+        <!-- Top: Opponent -->
+        <div class="h-1/4 flex flex-col items-center justify-center relative bg-gray-900/50">
+            <div class="flex items-center space-x-2 mb-2">
+                <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center font-bold">OP</div>
+                <span id="turn-indicator-op" class="text-gray-400 font-bold">Opponent</span>
+            </div>
+            <div id="op-hand" class="flex -space-x-4">
+                <!-- Opponent cards rendered here -->
+            </div>
+        </div>
+
+        <!-- Center: Board -->
+        <div class="flex-1 flex items-center justify-center space-x-8 bg-gray-700/30 relative">
+            
+            <!-- Deck -->
+            <div id="deck" class="card card-back transform hover:scale-105 transition active:scale-95">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-2xl text-white opacity-20 font-black">UNO</span>
+                </div>
+            </div>
+
+            <!-- Discard Pile -->
+            <div id="discard-pile" class="relative">
+                <!-- Active card rendered here -->
+            </div>
+
+            <!-- Current Turn Badge -->
+            <div id="turn-badge" class="absolute top-4 bg-yellow-500 text-black font-bold px-4 py-1 rounded-full shadow-lg hidden">
+                YOUR TURN
+            </div>
+
+            <!-- Color Indicator (for Wilds) -->
+            <div id="color-indicator" class="absolute top-4 right-4 w-8 h-8 rounded-full border-2 border-white shadow shadow-black"></div>
+        </div>
+
+        <!-- Bottom: My Hand -->
+        <div class="h-1/3 bg-gray-800 p-4 flex flex-col items-center relative z-20">
+            <div class="w-full flex justify-between items-center mb-2 px-4">
+                <span id="turn-indicator-me" class="font-bold text-green-400">You</span>
+                <button id="btn-uno" class="bg-yellow-500 text-black font-black text-xs px-2 py-1 rounded hover:bg-yellow-400">SAY UNO!</button>
+            </div>
+            <div id="my-hand" class="w-full flex overflow-x-auto hand-scroll p-4 space-x-[-30px] items-center h-full">
+                <!-- My cards rendered here -->
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <!-- Wild Color Picker -->
+        <div id="modal-color" class="hidden absolute inset-0 bg-black/80 z-50 flex items-center justify-center">
+            <div class="bg-gray-800 p-6 rounded-xl shadow-2xl text-center">
+                <h2 class="text-xl font-bold mb-4">Choose Color</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <button onclick="pickColor('red')" class="w-20 h-20 bg-red-500 rounded hover:scale-110 transition"></button>
+                    <button onclick="pickColor('blue')" class="w-20 h-20 bg-blue-500 rounded hover:scale-110 transition"></button>
+                    <button onclick="pickColor('green')" class="w-20 h-20 bg-green-500 rounded hover:scale-110 transition"></button>
+                    <button onclick="pickColor('yellow')" class="w-20 h-20 bg-yellow-500 rounded hover:scale-110 transition"></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- God Mode Creator -->
+        <div id="modal-god" class="hidden absolute inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+            <div class="bg-gray-800 w-full max-w-lg p-6 rounded-xl shadow-2xl h-[80vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold text-yellow-400">GOD MODE: CREATE CARD</h2>
+                    <button onclick="closeGodModal()" class="text-gray-400 hover:text-white">✕</button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto space-y-6">
+                    <!-- Colors -->
+                    <div>
+                        <h3 class="mb-2 text-sm text-gray-400">Select Color</h3>
+                        <div class="flex space-x-2" id="god-colors">
+                            <button onclick="setGodColor('red')" class="god-btn-color flex-1 h-12 bg-red-500 rounded ring-2 ring-transparent focus:ring-white"></button>
+                            <button onclick="setGodColor('blue')" class="god-btn-color flex-1 h-12 bg-blue-500 rounded ring-2 ring-transparent focus:ring-white"></button>
+                            <button onclick="setGodColor('green')" class="god-btn-color flex-1 h-12 bg-green-500 rounded ring-2 ring-transparent focus:ring-white"></button>
+                            <button onclick="setGodColor('yellow')" class="god-btn-color flex-1 h-12 bg-yellow-500 rounded ring-2 ring-transparent focus:ring-white"></button>
+                            <button onclick="setGodColor('black')" class="god-btn-color flex-1 h-12 bg-gray-900 border border-gray-600 rounded ring-2 ring-transparent focus:ring-white">Wild</button>
+                        </div>
+                    </div>
+
+                    <!-- Values -->
+                    <div>
+                        <h3 class="mb-2 text-sm text-gray-400">Select Value</h3>
+                        <div class="grid grid-cols-4 gap-2" id="god-values">
+                            <!-- Filled by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="confirmGodDraw()" class="mt-4 w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 rounded text-xl">ADD TO HAND</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GAME STATE & VARIABLES ---
+        const CARDS = {
+            colors: ['red', 'blue', 'green', 'yellow'],
+            values: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'skip', 'reverse', '+2'],
+            wilds: ['wild', '+4']
+        };
+
+        let myId = null;
+        let peer = null;
+        let conn = null;
+        let isHost = false;
+        
+        // Game State
+        let deck = [];
+        let discardPile = [];
+        let myHand = [];
+        let opHandCount = 0;
+        let isMyTurn = false;
+        let currentTurnColor = ''; // For Wilds
+        
+        // God Mode
+        let godModeActive = false;
+        let godTriggerCount = 0;
+        let godSelectedColor = 'red';
+        let godSelectedValue = '1';
+
+        // --- DOM ELEMENTS ---
+        const els = {
+            lobby: document.getElementById('lobby'),
+            game: document.getElementById('game'),
+            myId: document.getElementById('my-id'),
+            hostInfo: document.getElementById('host-info'),
+            status: document.getElementById('status-msg'),
+            deck: document.getElementById('deck'),
+            discard: document.getElementById('discard-pile'),
+            myHand: document.getElementById('my-hand'),
+            opHand: document.getElementById('op-hand'),
+            turnBadge: document.getElementById('turn-badge'),
+            colorModal: document.getElementById('modal-color'),
+            godModal: document.getElementById('modal-god'),
+            colorIndicator: document.getElementById('color-indicator')
+        };
+
+        // --- GOD MODE TRIGGER ---
+        document.getElementById('god-trigger').addEventListener('click', () => {
+            godTriggerCount++;
+            if (godTriggerCount === 5) {
+                godModeActive = !godModeActive;
+                alert(godModeActive ? "GOD MODE ACTIVATED: Tap deck to choose cards." : "GOD MODE DEACTIVATED");
+                godTriggerCount = 0;
+            }
+        });
+
+        // --- PEERJS SETUP ---
+        function initPeer() {
+            peer = new Peer(null, { debug: 2 });
+
+            peer.on('open', (id) => {
+                myId = id;
+                els.myId.innerText = id;
+            });
+
+            // HOST LOGIC: Incoming Connection
+            peer.on('connection', (c) => {
+                if (conn) {
+                    c.close(); 
+                    return;
+                }
+                conn = c;
+                isHost = true;
+                
+                // IMPORTANT: Wait for connection to be OPEN before sending initial data
+                conn.on('open', () => {
+                    setupConnectionListeners();
+                    // Slight delay to ensure PeerJS handles the channel ready state on both ends
+                    setTimeout(startGameHost, 500); 
+                });
+            });
+
+            peer.on('error', (err) => {
+                els.status.innerText = "Connection Error: " + err.type;
+            });
+        }
+
+        document.getElementById('btn-host').addEventListener('click', () => {
+            if (!peer) initPeer();
+            els.hostInfo.classList.remove('hidden');
+        });
+
+        // JOINER LOGIC: Outgoing Connection
+        document.getElementById('btn-join').addEventListener('click', () => {
+            const destId = document.getElementById('input-dest-id').value;
+            if (!destId) return;
+            
+            if (!peer) {
+                peer = new Peer(null, { debug: 2 });
+                peer.on('open', () => {
+                    connectToHost(destId);
+                });
+            } else {
+                connectToHost(destId);
+            }
+        });
+
+        function connectToHost(destId) {
+            conn = peer.connect(destId);
+            isHost = false;
+            
+            conn.on('open', () => {
+                setupConnectionListeners();
+                // Joiner just waits for INIT_GAME
+                els.lobby.classList.add('hidden');
+                els.game.classList.remove('hidden');
+                els.game.classList.add('flex');
+            });
+        }
+
+        function setupConnectionListeners() {
+            // Common listeners for both Host and Joiner
+            conn.on('data', (data) => {
+                handleData(data);
+            });
+
+            conn.on('close', () => {
+                alert("Opponent disconnected!");
+                location.reload();
+            });
+            
+            // Host specific UI transition (happens when open)
+            if(isHost) {
+                els.lobby.classList.add('hidden');
+                els.game.classList.remove('hidden');
+                els.game.classList.add('flex');
+            }
+        }
+
+        function send(type, payload) {
+            if (conn && conn.open) {
+                conn.send({ type, payload });
+            } else {
+                console.error("Cannot send, connection not open:", type);
+            }
+        }
+
+        // --- GAME LOGIC ---
+
+        function generateDeck() {
+            let d = [];
+            // Numbers & Actions
+            CARDS.colors.forEach(c => {
+                d.push({ color: c, value: '0', uid: Math.random() });
+                for(let i=0; i<2; i++) {
+                    for(let j=1; j<=9; j++) d.push({ color: c, value: String(j), uid: Math.random() });
+                    d.push({ color: c, value: 'skip', uid: Math.random() });
+                    d.push({ color: c, value: 'reverse', uid: Math.random() });
+                    d.push({ color: c, value: '+2', uid: Math.random() });
+                }
+            });
+            // Wilds
+            for(let i=0; i<4; i++) {
+                d.push({ color: 'black', value: 'wild', uid: Math.random() });
+                d.push({ color: 'black', value: '+4', uid: Math.random() });
+            }
+            return d.sort(() => Math.random() - 0.5);
+        }
+
+        function startGameHost() {
+            deck = generateDeck();
+            // Deal 7 cards each
+            const p1Hand = deck.splice(0, 7);
+            const p2Hand = deck.splice(0, 7);
+            
+            // Initial Discard
+            let firstCard = deck.pop();
+            while(firstCard.color === 'black') {
+                deck.unshift(firstCard);
+                firstCard = deck.pop();
+            }
+            discardPile = [firstCard];
+            currentTurnColor = firstCard.color;
+
+            // Host is P1. 
+            myHand = p1Hand;
+            opHandCount = 7;
+            isMyTurn = true; // Host starts for simplicity
+
+            updateUI();
+            
+            // Send Initial State to Joiner
+            console.log("Sending INIT_GAME to opponent...");
+            send('INIT_GAME', {
+                hand: p2Hand,
+                topCard: firstCard,
+                turnColor: currentTurnColor
+            });
+        }
+
+        function handleData(data) {
+            console.log("Received Data:", data.type);
+            switch(data.type) {
+                case 'INIT_GAME':
+                    myHand = data.payload.hand;
+                    opHandCount = 7;
+                    discardPile = [data.payload.topCard];
+                    currentTurnColor = data.payload.turnColor;
+                    isMyTurn = false; // Host started
+                    updateUI();
+                    break;
+                
+                case 'PLAYED_CARD':
+                    const card = data.payload.card;
+                    discardPile.push(card);
+                    currentTurnColor = data.payload.color; 
+                    opHandCount--;
+                    
+                    let passTurn = true;
+                    if (card.value === 'skip' || card.value === 'reverse') {
+                        passTurn = false; 
+                        showToast("Opponent played " + card.value + "! They go again.");
+                    } else if (card.value === '+2') {
+                        passTurn = false;
+                        drawCardsLocally(2);
+                        showToast("Opponent played +2! You drew 2. They go again.");
+                    } else if (card.value === '+4') {
+                        passTurn = false;
+                        drawCardsLocally(4);
+                        showToast("Opponent played +4! You drew 4. They go again.");
+                    }
+
+                    if (passTurn) {
+                        isMyTurn = true;
+                    }
+                    updateUI();
+                    break;
+
+                case 'OP_DREW':
+                    opHandCount += data.payload.count;
+                    updateUI();
+                    if (data.payload.passTurn) {
+                        isMyTurn = true;
+                        updateUI();
+                    }
+                    break;
+            }
+        }
+
+        // --- LOCAL ACTIONS ---
+
+        function drawCardsLocally(count) {
+            const newCards = [];
+            for(let i=0; i<count; i++) {
+                newCards.push(createRandomCard());
+            }
+            myHand.push(...newCards);
+            updateUI();
+        }
+
+        els.deck.addEventListener('click', () => {
+            if (!isMyTurn) return;
+
+            if (godModeActive) {
+                openGodModal();
+            } else {
+                const newCard = createRandomCard();
+                myHand.push(newCard);
+                send('OP_DREW', { count: 1, passTurn: true });
+                isMyTurn = false;
+                updateUI();
+            }
+        });
+
+        function createRandomCard() {
+             const colors = ['red', 'blue', 'green', 'yellow'];
+             const vals = ['0','1','2','3','4','5','6','7','8','9','skip','reverse','+2'];
+             if(Math.random() > 0.9) {
+                 return { color: 'black', value: Math.random()>0.5 ? 'wild':'+4', uid: Math.random() };
+             }
+             return { color: colors[Math.floor(Math.random()*4)], value: vals[Math.floor(Math.random()*vals.length)], uid: Math.random() };
+        }
+
+        function playCard(index) {
+            if (!isMyTurn) return;
+
+            const card = myHand[index];
+            const topCard = discardPile[discardPile.length-1];
+
+            // Validation
+            let isValid = false;
+            if (card.color === 'black') isValid = true;
+            else if (card.color === currentTurnColor) isValid = true;
+            else if (card.value === topCard.value) isValid = true;
+
+            if (!isValid) return;
+
+            if (card.color === 'black') {
+                pendingCardIndex = index;
+                els.colorModal.classList.remove('hidden');
+                return;
+            }
+
+            executePlay(index, card.color);
+        }
+
+        let pendingCardIndex = -1;
+        window.pickColor = (color) => {
+            els.colorModal.classList.add('hidden');
+            if (pendingCardIndex !== -1) {
+                executePlay(pendingCardIndex, color);
+                pendingCardIndex = -1;
+            }
+        }
+
+        function executePlay(index, chosenColor) {
+            const card = myHand.splice(index, 1)[0];
+            discardPile.push(card);
+            currentTurnColor = chosenColor;
+            
+            // Check Win
+            if (myHand.length === 0) {
+                alert("YOU WON!");
+                location.reload();
+            }
+
+            let passTurn = true;
+            if (card.value === 'skip' || card.value === 'reverse' || card.value === '+2' || card.value === '+4') {
+                passTurn = false; 
+            }
+
+            send('PLAYED_CARD', {
+                card: card,
+                color: chosenColor
+            });
+
+            if (passTurn) {
+                isMyTurn = false;
+            }
+
+            updateUI();
+        }
+
+        // --- UI UPDATES ---
+
+        function updateUI() {
+            // My Hand
+            els.myHand.innerHTML = '';
+            myHand.forEach((card, index) => {
+                const el = renderCard(card);
+                el.onclick = () => playCard(index);
+                // Highlight valid cards
+                const topCard = discardPile[discardPile.length-1];
+                let isValid = (card.color === 'black' || card.color === currentTurnColor || card.value === topCard.value);
+                if (isMyTurn && isValid) {
+                    el.classList.add('transform', '-translate-y-4');
+                } else if (isMyTurn) {
+                    el.classList.add('opacity-50');
+                }
+                els.myHand.appendChild(el);
+            });
+
+            // Opponent Hand
+            els.opHand.innerHTML = '';
+            for(let i=0; i<opHandCount; i++) {
+                const el = document.createElement('div');
+                el.className = 'card card-back w-10 h-14 rounded bg-gray-600 border border-white';
+                els.opHand.appendChild(el);
+            }
+
+            // Discard Pile
+            const top = discardPile[discardPile.length-1];
+            if(top) {
+                els.discard.innerHTML = '';
+                els.discard.appendChild(renderCard(top));
+            }
+
+            // Turn Indicator
+            if (isMyTurn) {
+                els.turnBadge.classList.remove('hidden');
+                els.deck.classList.add('cursor-pointer', 'hover:scale-105');
+            } else {
+                els.turnBadge.classList.add('hidden');
+                els.deck.classList.remove('cursor-pointer', 'hover:scale-105');
+            }
+
+            // Color Indicator (for Wilds)
+            els.colorIndicator.className = `absolute top-4 right-4 w-8 h-8 rounded-full border-2 border-white shadow shadow-black bg-${currentTurnColor}`;
+        }
+
+        function renderCard(card) {
+            const el = document.createElement('div');
+            el.className = `card bg-${card.color}`;
+            if (card.color === 'black') el.className = `card bg-black`;
+
+            let displayVal = card.value;
+            let icon = displayVal;
+
+            if (displayVal === 'skip') icon = '⊘';
+            if (displayVal === 'reverse') icon = '⇄';
+            if (displayVal === 'wild') icon = '';
+
+            const inner = document.createElement('div');
+            inner.className = 'card-inner';
+            
+            const oval = document.createElement('div');
+            oval.className = 'center-oval';
+            inner.appendChild(oval);
+
+            const valEl = document.createElement('div');
+            valEl.className = 'card-value';
+            
+            if (card.value === 'wild' || card.value === '+4') {
+                valEl.innerHTML = `<div class="grid grid-cols-2 w-8 h-8"><div class="bg-red-500"></div><div class="bg-blue-500"></div><div class="bg-yellow-500"></div><div class="bg-green-500"></div></div>`;
+                if(card.value === '+4') {
+                     valEl.innerHTML += `<span class="absolute text-white text-lg font-black inset-0 flex items-center justify-center drop-shadow-md">+4</span>`;
+                }
+            } else {
+                valEl.innerText = icon.toUpperCase();
+            }
+            inner.appendChild(valEl);
+
+            const smallTL = document.createElement('div');
+            smallTL.className = 'card-small top-left';
+            smallTL.innerText = (card.value === 'wild' || card.value === '+4') ? 'W' : icon.toUpperCase();
+            inner.appendChild(smallTL);
+
+            const smallBR = document.createElement('div');
+            smallBR.className = 'card-small bottom-right';
+            smallBR.innerText = (card.value === 'wild' || card.value === '+4') ? 'W' : icon.toUpperCase();
+            inner.appendChild(smallBR);
+
+            el.appendChild(inner);
+            return el;
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.className = 'fixed top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-2 rounded-full shadow-xl z-50 animate-bounce';
+            t.innerText = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2000);
+        }
+
+        // --- GOD MODE UI LOGIC ---
+        
+        const godVals = ['0','1','2','3','4','5','6','7','8','9','skip','reverse','+2','wild','+4'];
+        const valContainer = document.getElementById('god-values');
+        godVals.forEach(v => {
+            const btn = document.createElement('button');
+            btn.className = 'h-10 bg-gray-700 hover:bg-gray-600 rounded text-white font-bold text-sm uppercase';
+            btn.innerText = v;
+            btn.onclick = () => {
+                godSelectedValue = v;
+                document.querySelectorAll('#god-values button').forEach(b => b.classList.remove('ring-2', 'ring-yellow-500'));
+                btn.classList.add('ring-2', 'ring-yellow-500');
+            };
+            valContainer.appendChild(btn);
+        });
+
+        window.setGodColor = (c) => {
+            godSelectedColor = c;
+            document.querySelectorAll('.god-btn-color').forEach(b => b.classList.remove('ring-2', 'ring-white'));
+            // In a real app we'd use 'this' or e.target, but this is simple enough
+        };
+
+        function openGodModal() {
+            els.godModal.classList.remove('hidden');
+        }
+
+        window.closeGodModal = () => {
+            els.godModal.classList.add('hidden');
+        }
+
+        window.confirmGodDraw = () => {
+            let finalColor = godSelectedColor;
+            if (godSelectedValue === 'wild' || godSelectedValue === '+4') finalColor = 'black';
+            
+            const card = {
+                color: finalColor,
+                value: godSelectedValue,
+                uid: Math.random()
+            };
+
+            myHand.push(card);
+            closeGodModal();
+            updateUI();
+            
+            send('OP_DREW', { count: 1, passTurn: true });
+            isMyTurn = false;
+            updateUI();
+        }
+
+    </script>
+</body>
+</html>

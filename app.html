@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DocuWrite Pro 5.0.3.4</title>
+    <title>DocuWrite Pro 5.0.3.5</title>
     <meta name="description" content="DocuWrite Pro Mobile App">
     <link rel="manifest" href="manifest.json">
     
@@ -41,6 +41,7 @@
             
             /* Shadows */
             --shadow-card: 0 4px 12px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-float: 0 8px 24px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.1);
         }
 
         /* Explicit Dark Mode Overrides */
@@ -155,6 +156,12 @@
             border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;
         }
         .action-label { font-size: 15px; font-weight: 600; text-align: left; line-height: 1.2; }
+        
+        .action-btn.full-width {
+            grid-column: 1 / -1;
+            /* Extra visual distinction */
+            background: var(--bg-card);
+        }
 
         /* Tool Grid (Default) */
         .tools-grid, .recent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 15px; padding-bottom: 20px; }
@@ -461,7 +468,6 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-body); z-index: 5000;
             display: flex; flex-direction: column; 
-            /* Improved positioning to fit all screens */
             justify-content: center; align-items: center;
             padding: 20px;
             overflow-y: auto;
@@ -469,11 +475,10 @@
         }
         .fullscreen-overlay.active { transform: translateY(0); }
         
-        /* Container for lock screen content to ensure centering */
         .lock-content-wrapper {
             display: flex; flex-direction: column; align-items: center;
             width: 100%; max-width: 350px;
-            margin: auto; /* Centers vertically in scroll view */
+            margin: auto;
         }
         
         .pin-display {
@@ -502,7 +507,6 @@
             color: var(--text-primary); cursor: pointer; margin: 0 auto;
             transition: background 0.2s;
         }
-        /* Make keys slightly smaller on very small screens if needed */
         @media (max-height: 600px) {
             .key { width: 60px; height: 60px; font-size: 20px; }
             .lock-icon { font-size: 40px; margin-bottom: 10px; }
@@ -520,6 +524,70 @@
         .lock-desc { color: var(--text-secondary); font-size: 15px; text-align: center; max-width: 300px; line-height: 1.5; }
         
         #lock-screen-overlay { z-index: 9999; background: var(--bg-body); }
+
+        /* --- 12. DYNOTE & FLOATING WINDOW --- */
+        #quick-note-fab {
+            position: fixed;
+            bottom: 30%; right: 0;
+            width: 50px; height: 50px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50% 0 0 50%;
+            display: none; /* Toggled by JS */
+            align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+            z-index: 2200; /* Higher than tool iframe */
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #quick-note-fab:active { transform: scale(0.9); }
+        
+        #quick-note-window {
+            position: fixed;
+            width: 320px; height: 400px;
+            top: 20%; left: 10%;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-float);
+            z-index: 2201; /* Higher than FAB */
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--separator);
+            resize: both;
+            min-width: 250px; min-height: 200px;
+            max-width: 90vw; max-height: 90vh;
+        }
+        
+        .qn-header {
+            height: 36px;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--separator);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 10px;
+            cursor: move;
+            flex-shrink: 0;
+        }
+        
+        .qn-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        .qn-close { 
+            cursor: pointer; padding: 4px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .qn-close:hover { background: rgba(128,128,128,0.1); }
+        
+        #qn-iframe { border: none; flex: 1; width: 100%; height: 100%; }
+        
+        /* Resize handle visual cue */
+        #quick-note-window::after {
+            content: "";
+            position: absolute; bottom: 2px; right: 2px;
+            width: 12px; height: 12px;
+            background: linear-gradient(135deg, transparent 50%, var(--text-secondary) 50%);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
     </style>
 </head>
 <body class="online">
@@ -656,6 +724,21 @@
         </div>
     </div>
 
+    <!-- --- QUICK NOTE FLOATING COMPONENTS --- -->
+    <div id="quick-note-fab" onclick="toggleQuickNoteWindow()">
+        <span class="material-symbols-rounded" style="font-size: 28px;">add</span>
+    </div>
+
+    <div id="quick-note-window">
+        <div class="qn-header" id="qn-header">
+            <span class="qn-title">Quick Note</span>
+            <div class="qn-close" onclick="toggleQuickNoteWindow()">
+                <span class="material-symbols-rounded" style="font-size: 18px; color: var(--text-secondary);">close</span>
+            </div>
+        </div>
+        <iframe id="qn-iframe" src="about:blank"></iframe>
+    </div>
+
     <!-- --- APP CONTAINER --- -->
     <div id="app-container">
         
@@ -688,6 +771,14 @@
                 <div class="action-btn" onclick="switchTab('tools')">
                     <div class="action-icon-circle" style="background: var(--bg-body); color: var(--text-secondary);"><span class="material-symbols-rounded">apps</span></div>
                     <div class="action-label">All<br>Tools</div>
+                </div>
+                
+                <!-- NEW DYNOTE BUTTON (Conditionally Shown) -->
+                <div class="action-btn full-width" id="btn-dynote" style="display: none;" onclick="openDyNoteTool()">
+                    <div class="action-icon-circle" style="background: rgba(142, 142, 147, 0.15); color: var(--text-secondary);">
+                        <span class="material-symbols-rounded">sticky_note_2</span>
+                    </div>
+                    <div class="action-label">My DyNotes</div>
                 </div>
             </div>
 
@@ -725,7 +816,7 @@
             <div style="height: 80px;"></div>
         </div>
 
-        <!-- === SETTINGS TAB (UPDATED UI) === -->
+        <!-- === SETTINGS TAB === -->
         <div id="tab-settings" class="tab-view">
             <h2>Settings</h2>
             
@@ -810,7 +901,7 @@
                 </div>
             </div>
 
-            <!-- SECURITY -->
+            <!-- SECURITY & EXTRA -->
             <div class="settings-section-title">Security</div>
             <div class="settings-group">
                 <div class="setting-row" onclick="openLockApp()">
@@ -821,13 +912,34 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- EXTRA DIVISION (DYNOTE) -->
+            <div class="settings-section-title">Extra</div>
+            <div class="settings-group">
+                <!-- DyNote Toggle -->
+                <div class="setting-row" onclick="openDyNotePicker()">
+                    <span class="setting-label">DyNote Functionality</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-dynote">Disabled</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+                <!-- Quick Note Toggle (Nested) -->
+                <div class="setting-row" id="quick-note-setting" style="display: none;" onclick="openQuickNotePicker()">
+                    <span class="setting-label">Quick Note</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-quick-note">Disabled</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+            </div>
 
             <button class="btn-danger" id="btn-update-app">
                 <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 8px;">system_update_alt</span>
                 Reset & Update App
             </button>
 
-            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.0.3.4 • Build 2026</p>
+            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.0.3.5 • Build 2026</p>
             <div style="height: 80px;"></div>
         </div>
 
@@ -906,6 +1018,7 @@
         // --- 1. DATA & CONFIG ---
         const BASE_URL = "https://mahi902.github.io/DocuWritePro/";
         const TEMPLATE_JSON_URL = BASE_URL + "temp.json";
+        const DYNOTE_URL = BASE_URL + "dynote.html";
 
         // Tool Database (Updated with IDs for pinning)
         const toolsDB = [
@@ -975,6 +1088,7 @@
             if (tabId === 'home') {
                 renderRecents();
                 checkTemplateVisibility();
+                checkDyNoteVisibility(); // Check DyNote button visibility
                 updateViewMode();
             }
             if (tabId === 'tools') {
@@ -1238,16 +1352,9 @@
             
             // Render remaining tools
             if (searchTerm || currentSort !== 'All') {
-                // If searching or filtering, ignore strict order categories, just show result
-                // But exclude pinned ones if we are showing all (to avoid dupes), 
-                // UNLESS searching/filtering specific cat where we want to see everything that matches.
-                // Simpler approach: if searching/filtering, show everything matching in one group (or grouped by cat if sorting allows)
-                // If Pinned is shown above, we should exclude from below if 'All' view.
-                
                 let toolsToShow = currentSort === 'All' && !searchTerm ? otherTools : displayTools;
                 
                 if (currentSort === 'All') {
-                    // Group by category with strict order
                     const categories = {};
                     toolsToShow.forEach(t => {
                         if (!categories[t.cat]) categories[t.cat] = [];
@@ -1263,7 +1370,6 @@
                      renderGroup(currentSort, toolsToShow);
                 }
             } else {
-                // Default View: Pinned already rendered. Now render others by strict category order.
                 const categories = {};
                 otherTools.forEach(t => {
                     if (!categories[t.cat]) categories[t.cat] = [];
@@ -1430,7 +1536,7 @@
         // --- 11. RECENTS ---
         function getIconForTool(url) {
             const tool = toolsDB.find(t => t.url === url);
-            return tool ? tool.icon : (url.includes('templates') ? 'description' : 'extension');
+            return tool ? tool.icon : (url.includes('templates') ? 'description' : (url.includes('dynote') ? 'sticky_note_2' : 'extension'));
         }
         
         function addToRecents(toolObj) {
@@ -1517,7 +1623,7 @@
             }
         }
 
-        // --- 12. EDITOR SETTINGS ---
+        // --- 12. EDITOR & SETTINGS PICKERS ---
         function openPicker(title, options, selectedValue, onSelect) {
             const overlay = document.getElementById('picker-overlay');
             const container = document.getElementById('picker-options-container');
@@ -1561,15 +1667,162 @@
             );
         }
 
-        // --- 13. THEME ---
-        function initTheme() {
-            // Updated to handle first time load correcty
-            const saved = localStorage.getItem('theme_pref');
+        // --- 13. DYNOTE & QUICK NOTE SETTINGS LOGIC ---
+        function openDyNotePicker() {
+            const current = localStorage.getItem('dynote_enabled') || 'false';
+            openPicker('DyNote Functionality', [
+                {label: 'Enabled', value: 'true'},
+                {label: 'Disabled', value: 'false'}
+            ], current, (val, label) => {
+                localStorage.setItem('dynote_enabled', val);
+                document.getElementById('display-dynote').textContent = label;
+                checkDyNoteVisibility(); // Update UI
+                
+                // If disabling DyNote, also disable Quick Note visually/logic
+                if (val === 'false') {
+                    // We don't change the preference, just hide it
+                    checkQuickNoteVisibility();
+                }
+            });
+        }
+
+        function openQuickNotePicker() {
+            const current = localStorage.getItem('quick_note_enabled') || 'false';
+            openPicker('Quick Note', [
+                {label: 'Enabled', value: 'true'},
+                {label: 'Disabled', value: 'false'}
+            ], current, (val, label) => {
+                localStorage.setItem('quick_note_enabled', val);
+                document.getElementById('display-quick-note').textContent = label;
+                checkQuickNoteVisibility(); // Update FAB
+            });
+        }
+
+        function getDyNoteUrl(prefix = '') {
+            // Determine theme (light/dark)
+            const theme = document.documentElement.getAttribute('data-theme');
+            let isDark = false;
             
+            if (theme === 'dark') isDark = true;
+            else if (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) isDark = true;
+            
+            const hash = prefix + (isDark ? 'd' : 'l');
+            return DYNOTE_URL + '#' + hash;
+        }
+
+        function checkDyNoteVisibility() {
+            const isEnabled = localStorage.getItem('dynote_enabled') === 'true';
+            
+            // 1. Home Screen Button
+            const btn = document.getElementById('btn-dynote');
+            if (btn) btn.style.display = isEnabled ? 'flex' : 'none';
+            
+            // 2. Settings Quick Note Toggle
+            const qnSetting = document.getElementById('quick-note-setting');
+            if (qnSetting) qnSetting.style.display = isEnabled ? 'flex' : 'none';
+
+            // 3. Quick Note FAB Logic
+            checkQuickNoteVisibility();
+        }
+
+        function checkQuickNoteVisibility() {
+            const dyNoteOn = localStorage.getItem('dynote_enabled') === 'true';
+            const qnOn = localStorage.getItem('quick_note_enabled') === 'true';
+            
+            const fab = document.getElementById('quick-note-fab');
+            const win = document.getElementById('quick-note-window');
+            
+            if (dyNoteOn && qnOn) {
+                fab.style.display = 'flex';
+            } else {
+                fab.style.display = 'none';
+                win.style.display = 'none'; // Close window if feature disabled
+            }
+        }
+
+        function openDyNoteTool() {
+            openTool(getDyNoteUrl(), 'My DyNotes');
+        }
+
+        function toggleQuickNoteWindow() {
+            const win = document.getElementById('quick-note-window');
+            const iframe = document.getElementById('qn-iframe');
+            
+            if (win.style.display === 'flex') {
+                win.style.display = 'none';
+            } else {
+                iframe.src = getDyNoteUrl('quick'); // #quickl or #quickd
+                win.style.display = 'flex';
+                // Ensure it's on screen if it was dragged off
+                // (optional reset logic could go here)
+            }
+        }
+        
+        // --- DRAG & RESIZE LOGIC FOR QUICK NOTE ---
+        const qnWindow = document.getElementById('quick-note-window');
+        const qnHeader = document.getElementById('qn-header');
+        
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        qnHeader.addEventListener('mousedown', startDrag);
+        qnHeader.addEventListener('touchstart', startDrag, {passive: false});
+
+        function startDrag(e) {
+            if(e.target.closest('.qn-close')) return; // Don't drag on close button
+            
+            isDragging = true;
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+            
+            const rect = qnWindow.getBoundingClientRect();
+            dragOffsetX = clientX - rect.left;
+            dragOffsetY = clientY - rect.top;
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, {passive: false});
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+            
+            let newX = clientX - dragOffsetX;
+            let newY = clientY - dragOffsetY;
+            
+            // Simple bounds check (optional, prevents losing window completely)
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            
+            if (newY < 0) newY = 0;
+            if (newY > winH - 50) newY = winH - 50;
+            if (newX < -200) newX = -200;
+            if (newX > winW - 50) newX = winW - 50;
+            
+            qnWindow.style.left = newX + 'px';
+            qnWindow.style.top = newY + 'px';
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+
+        // --- 14. THEME ---
+        function initTheme() {
+            const saved = localStorage.getItem('theme_pref');
             if (saved) {
                 applyTheme(saved);
             } else {
-                // If no preference saved, default to system
                 localStorage.setItem('theme_pref', 'system');
                 applyTheme('system');
             }
@@ -1585,22 +1838,22 @@
             } else if (theme === 'light') {
                 html.setAttribute('data-theme', 'light');
             } else {
-                // System default
                 html.removeAttribute('data-theme');
-                // Check if system is dark
                 if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                    html.setAttribute('data-theme', 'dark'); // Force dark att for CSS var support if needed, or rely on root vars
+                    html.setAttribute('data-theme', 'dark'); 
                 } else {
                     html.removeAttribute('data-theme');
                 }
             }
+            
+            // Refresh DyNote URLs if open, as they depend on theme
+            // Only necessary if the tool or window is currently open, but harmless to leave until next open
         }
         
-        // Listen for system theme changes
         if (window.matchMedia) {
             window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
                 if (localStorage.getItem('theme_pref') === 'system') {
-                    applyTheme('system'); // Re-apply to catch system change
+                    applyTheme('system');
                 }
             });
         }
@@ -1610,7 +1863,7 @@
             localStorage.getItem('theme_pref') || 'system', (val) => { localStorage.setItem('theme_pref', val); applyTheme(val); });
         }
 
-        // --- 14. APP LOCK & SECURITY ---
+        // --- 15. APP LOCK & SECURITY ---
         let pinSetupStep = 0; // 0: None, 1: Enter, 2: Confirm
         let tempPin = '';
         let pinInput = '';
@@ -1646,7 +1899,6 @@
             document.getElementById('unlock-keypad').style.opacity = '0.5';
             document.getElementById('lock-msg').style.color = 'var(--danger)';
             
-            // Clear existing if any
             if (lockoutInterval) clearInterval(lockoutInterval);
             
             const updateTimer = () => {
@@ -1684,9 +1936,7 @@
             document.getElementById('no-pin-actions').style.display = hasPin ? 'none' : 'block';
             document.getElementById('has-pin-actions').style.display = hasPin ? 'block' : 'none';
             
-            // If has PIN, require unlock first to view settings
             if (hasPin && !sessionStorage.getItem('settings_unlocked')) {
-                // Trigger unlock flow with callback for settings
                 startUnlockFlowForAccess(() => {
                     overlay.classList.add('active');
                     sessionStorage.setItem('settings_unlocked', 'true');
@@ -1700,7 +1950,6 @@
             document.getElementById('lock-info-overlay').classList.remove('active');
         }
 
-        // --- UNLOCK FLOW ---
         function showLockScreen() {
             document.getElementById('lock-screen-overlay').classList.add('active');
             pinInput = '';
@@ -1722,39 +1971,29 @@
             }
         }
         
-        // Global var for temp callback
         window.tempUnlockCallback = null;
 
         function verifyUnlockPin() {
             const savedPin = localStorage.getItem('app_pin');
             if (pinInput === savedPin) {
-                // Success
-                
-                // Check if we have a callback (e.g. for opening settings)
                 if (window.tempUnlockCallback) {
                     window.tempUnlockCallback();
                     window.tempUnlockCallback = null;
                     document.getElementById('lock-screen-overlay').classList.remove('active');
-                    // Reset message
                     document.getElementById('lock-msg').textContent = "Enter PIN to unlock";
                 } else {
-                    // Standard App Unlock
                     document.getElementById('lock-screen-overlay').classList.remove('active');
                 }
-                
                 failedAttempts = 0;
                 localStorage.removeItem('failed_attempts');
             } else {
-                // Fail
                 animateError('unlock-pin-display');
                 pinInput = '';
                 updatePinDisplay('unlock-pin-display', 0);
-                
                 failedAttempts++;
                 localStorage.setItem('failed_attempts', failedAttempts);
-                
                 if (failedAttempts >= 10) {
-                    const lockTime = Date.now() + 60000; // 1 minute
+                    const lockTime = Date.now() + 60000;
                     localStorage.setItem('lockout_until', lockTime);
                     startLockoutTimer(lockTime);
                 } else {
@@ -1764,7 +2003,6 @@
             }
         }
         
-        // --- SETUP FLOW ---
         function startPinSetup() {
             pinSetupStep = 1;
             tempPin = '';
@@ -1783,7 +2021,6 @@
             if (pinInput.length < 4) {
                 pinInput += digit;
                 updatePinDisplay('setup-pin-display', pinInput.length);
-                
                 if (pinInput.length === 4) {
                     setTimeout(handleSetupStep, 200);
                 }
@@ -1799,7 +2036,6 @@
         
         function handleSetupStep() {
             if (pinSetupStep === 1) {
-                // First entry done
                 tempPin = pinInput;
                 pinInput = '';
                 pinSetupStep = 2;
@@ -1807,21 +2043,17 @@
                 document.getElementById('setup-desc').textContent = 'Enter the PIN again to confirm';
                 updatePinDisplay('setup-pin-display', 0);
             } else if (pinSetupStep === 2) {
-                // Confirmation
                 if (pinInput === tempPin) {
-                    // Success
                     localStorage.setItem('app_pin', pinInput);
                     document.getElementById('setup-title').textContent = 'Password Set Successfully';
                     document.getElementById('setup-icon').textContent = 'check_circle';
                     document.getElementById('setup-keypad').style.display = 'none';
                     document.getElementById('setup-pin-display').style.display = 'none';
-                    
                     setTimeout(() => {
                         closePinSetup();
                         updateLockSettingsUI();
                     }, 2000);
                 } else {
-                    // Mismatch
                     animateError('setup-pin-display');
                     document.getElementById('setup-desc').textContent = 'PINs did not match. Try again.';
                     document.getElementById('setup-desc').style.color = 'var(--danger)';
@@ -1833,16 +2065,13 @@
         
         function closePinSetup() {
             document.getElementById('pin-setup-overlay').classList.remove('active');
-            // Reset UI state
             document.getElementById('setup-keypad').style.display = 'grid';
             document.getElementById('setup-pin-display').style.display = 'flex';
             document.getElementById('setup-icon').textContent = 'lock_open';
             document.getElementById('setup-desc').style.color = 'var(--text-secondary)';
         }
         
-        function startPinChange() {
-            startPinSetup();
-        }
+        function startPinChange() { startPinSetup(); }
         
         function resetPinFlow() {
             if(confirm("This will remove the current PIN code. Continue?")) {
@@ -1852,7 +2081,6 @@
             }
         }
 
-        // --- HELPERS ---
         function updatePinDisplay(elementId, count) {
             const dots = document.getElementById(elementId).children;
             for(let i=0; i<4; i++) {
@@ -1871,23 +2099,20 @@
         
         function startUnlockFlowForAccess(callback) {
             window.tempUnlockCallback = callback;
-            
-            // Show overlay with specific text
             document.getElementById('lock-screen-overlay').classList.add('active');
             document.getElementById('lock-msg').textContent = "Enter PIN to access settings";
-            // Ensure visual state is clean
             pinInput = '';
             updatePinDisplay('unlock-pin-display', 0);
         }
 
-        // --- 15. CACHING ---
+        // --- 16. CACHING ---
         async function cacheAllPages() {
             const statusEl = document.getElementById('setup-status');
             const progressBar = document.getElementById('progress-bar');
             const cachingIframe = document.getElementById('caching-iframe');
             
             const urlsToCache = toolsDB.filter(t => !t.onlineOnly).map(t => t.url);
-            urlsToCache.push('document-writer.html', 'image-editor.html', 'code-playground.html', 'sceditor.html', 'atbedt.html', 'frontend-ide.html');
+            urlsToCache.push('document-writer.html', 'image-editor.html', 'code-playground.html', 'sceditor.html', 'atbedt.html', 'frontend-ide.html', 'dynote.html');
             const uniqueUrls = [...new Set(urlsToCache)];
             
             let cachedCount = 0;
@@ -1904,7 +2129,7 @@
             return true;
         }
 
-        // --- 16. INIT ---
+        // --- 17. INIT ---
         function loadSettings() {
             // View Mode
             const viewMode = localStorage.getItem('view_mode') || 'grid';
@@ -1923,9 +2148,17 @@
                 document.getElementById(map.displayId).textContent = opt ? opt.label.split(' (')[0] : 'Default';
             }
             
+            // DyNote Settings
+            const dyEnabled = localStorage.getItem('dynote_enabled') || 'false';
+            document.getElementById('display-dynote').textContent = dyEnabled === 'true' ? 'Enabled' : 'Disabled';
+            
+            const qnEnabled = localStorage.getItem('quick_note_enabled') || 'false';
+            document.getElementById('display-quick-note').textContent = qnEnabled === 'true' ? 'Enabled' : 'Disabled';
+
             initTheme();
             checkTemplateVisibility();
             updateLockSettingsUI();
+            checkDyNoteVisibility(); // Check and apply UI for DyNote
         }
 
         document.getElementById('btn-new-doc').onclick = () => {
@@ -1988,14 +2221,13 @@
         function getCookie(n) { const v = "; " + document.cookie; const p = v.split("; " + n + "="); if (p.length == 2) return p.pop().split(";").shift(); }
 
         // Boot
-        initLockSystem(); // Check lock before UI
+        initLockSystem();
         if (localStorage.getItem('app_setup_done') === 'true') {
             loadSettings();
             updateOnlineStatus();
             switchTab('home');
         }
         
-        // Auto-close About
         document.addEventListener("DOMContentLoaded", () => {
             setTimeout(() => {
                 const aboutBox = document.getElementById("about-iframe-container");

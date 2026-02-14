@@ -1948,5 +1948,56 @@
     });
 })();
 </script>
+
+
+
+<script>
+/**
+ * DyNote Hash Handler
+ * Supports: 
+ * #quickl - New note + Light mode
+ * #quickd - New note + Dark mode
+ * #l      - Light mode
+ * #d      - Dark mode
+ */
+(function() {
+    function handleHashAction() {
+        const hash = window.location.hash.toLowerCase();
+        if (!hash) return;
+
+        // Determine actions based on hash
+        switch (hash) {
+            case '#quickl':
+                if (typeof createNewNote === 'function') createNewNote();
+                if (typeof applyTheme === 'function') applyTheme('light');
+                break;
+            case '#quickd':
+                if (typeof createNewNote === 'function') createNewNote();
+                if (typeof applyTheme === 'function') applyTheme('dark');
+                break;
+            case '#l':
+                if (typeof applyTheme === 'function') applyTheme('light');
+                break;
+            case '#d':
+                if (typeof applyTheme === 'function') applyTheme('dark');
+                break;
+        }
+
+        // Optional: Clear hash after action to prevent re-triggering on refresh
+        // history.replaceState(null, null, ' ');
+    }
+
+    // Run on initial load
+    window.addEventListener('load', handleHashAction);
+    
+    // Run if the hash changes while the page is open
+    window.addEventListener('hashchange', handleHashAction);
+})();
+</script>
+
+
+
+
+    
 </body>
 </html>

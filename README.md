@@ -369,6 +369,15 @@ Sharing in the Sugercane edition works a bit differently and is handled through 
 ### Install Mobile App
 <img width="1459" height="666" alt="1000042650" src="https://github.com/user-attachments/assets/b70ed873-7b0f-4171-b87e-241170021309" />
 
+Comparison between the DocuWrite Pro app and website:
+| Feature                     | Web Version | App Version |
+|------------------------------|:-----------:|:----------:|
+| DyNote & Note Compatibility  | X           | ✓          |
+| Templates                    | X           | ✓          |
+| Scanner Compatibility        | X           | ✓          |
+| Pin Lock Compatibility       | X           | ✓          |
+| Offline Compatibility        | X           | ✓          |
+| No Ads                       | X           | ✓          |
 
 
 ## Pricing

@@ -3,6 +3,7 @@
 
 ## Premium Document Editing Suite
 
+<span style="color: red;">This is red text</span>
 
 
 ### 🔹mahi902.GitHub.io/DocuWritePro

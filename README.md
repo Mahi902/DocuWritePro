@@ -377,7 +377,7 @@ Comparison between the DocuWrite Pro app and website:
 | Scanner Compatibility        | X           | ✓          |
 | Pin Lock Compatibility       | X           | ✓          |
 | Offline Compatibility        | X           | ✓          |
-| No Ads                       | X           | ✓          |
+| No Ads                       | ✓           | ✓          |
 
 
 ## Pricing

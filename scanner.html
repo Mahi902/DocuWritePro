@@ -1,692 +1,1418 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">   
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Scanner Pro</title>
-    <meta name="description" content="Advanced Document Scanner with OCR and Translation capabilities.">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load OpenCV.js -->
-    <script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
-    <!-- Load jsPDF for PDF export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- Load Tesseract.js for OCR -->
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-    <style>
-        body { touch-action: none; overscroll-behavior: none; background-color: #f3f4f6; color: #1f2937; font-family: sans-serif; }
-        
-        /* Canvas Container */
-        #canvas-container { 
-            position: relative; 
-            width: 100%; 
-            height: 75vh; 
-            overflow-x: hidden;
-            overflow-y: auto; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            background: #e5e7eb; 
-            border-bottom: 1px solid #d1d5db;
-        }
-        
-        canvas { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); transition: all 0.3s ease-in-out;}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Scanner</title>
+<script async src="https://docs.opencv.org/4.8.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0ede8;
+    --surface: #ffffff;
+    --surface2: #f7f5f2;
+    --border: rgba(0,0,0,0.09);
+    --text: #1a1a1a;
+    --text2: #888;
+    --accent: #1a1a1a;
+    --accent-fg: #ffffff;
+    --btn-bg: rgba(0,0,0,0.06);
+    --btn-hover: rgba(0,0,0,0.1);
+    --btn-active: rgba(0,0,0,0.15);
+    --overlay-bg: rgba(255,255,255,0.92);
+    --modal-bg: #ffffff;
+    --shadow: 0 2px 16px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.15);
+    --scan-col: rgba(0,0,0,0.75);
+  }
+  html[data-theme="dark"] {
+    --bg: #000;
+    --surface: #111;
+    --surface2: #1a1a1a;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f0;
+    --text2: #555;
+    --accent: #f0f0f0;
+    --accent-fg: #000;
+    --btn-bg: rgba(255,255,255,0.07);
+    --btn-hover: rgba(255,255,255,0.12);
+    --btn-active: rgba(255,255,255,0.18);
+    --overlay-bg: rgba(0,0,0,0.88);
+    --modal-bg: #111;
+    --shadow: 0 2px 16px rgba(0,0,0,0.5);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+    --scan-col: rgba(255,255,255,0.85);
+  }
 
-        /* Loading Spinner */
-        .loader { border: 4px solid #e5e7eb; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-        /* Scanning Animation */
-        .scan-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 40;
-            display: none;
-            background: rgba(0,0,0,0.2);
-        }
-        .scan-line {
-            width: 100%;
-            height: 10px;
-            background: linear-gradient(to bottom, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.8), rgba(59, 130, 246, 0));
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.8);
-            position: absolute;
-            top: -10%;
-            animation: scanMove 2s linear infinite;
-        }
-        @keyframes scanMove {
-            0% { top: -10%; }
-            100% { top: 110%; }
-        }
-    </style>
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+  }
+
+  #app {
+    width: 100vw; height: 100dvh;
+    display: flex; flex-direction: column;
+    position: relative;
+    background: var(--bg);
+  }
+
+  /* VIEWPORT */
+  #viewport {
+    position: relative; flex: 1; min-height: 0;
+    overflow: hidden; background: #000;
+    display: flex; align-items: center; justify-content: center;
+  }
+  video { display: none; position: absolute; }
+  #main-canvas {
+    display: block;
+    max-width: 100%; max-height: 100%;
+  }
+
+  /* LOADING */
+  #loading-screen {
+    position: absolute; inset: 0; z-index: 90;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px;
+    transition: opacity 0.4s;
+  }
+  #loading-screen.hidden { opacity: 0; pointer-events: none; }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border);
+    border-top-color: var(--text);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .load-label { font-size: 12px; color: var(--text2); letter-spacing: 0.06em; }
+
+  /* SCAN LINE */
+  #scan-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--scan-col) 30%, var(--scan-col) 70%, transparent);
+    box-shadow: 0 0 10px var(--scan-col);
+    z-index: 25; display: none;
+    top: 0; animation: scanAnim 1.8s ease-in-out infinite;
+  }
+  @keyframes scanAnim {
+    0%   { top: 8%;  opacity: 0; }
+    8%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { top: 92%; opacity: 0; }
+  }
+
+  /* CROP OVERLAY */
+  #crop-overlay {
+    position: absolute; inset: 0;
+    z-index: 20;
+    display: none; pointer-events: none;
+  }
+  #crop-overlay.active { display: block; pointer-events: all; }
+  #crop-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+  .handle {
+    position: absolute; width: 26px; height: 26px;
+    border-radius: 50%; background: #fff;
+    border: 2px solid rgba(0,0,0,0.25);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+    transform: translate(-50%, -50%);
+    cursor: grab; touch-action: none; z-index: 30;
+  }
+  .handle:active { cursor: grabbing; transform: translate(-50%, -50%) scale(1.15); }
+
+  /* PROC OVERLAY */
+  #proc-overlay {
+    position: absolute; inset: 0; z-index: 60;
+    background: var(--overlay-bg);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+  }
+  #proc-overlay.active { display: flex; }
+  #proc-label { font-size: 13px; color: var(--text2); }
+
+  /* TOOLBAR */
+  #toolbar {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 10px 14px env(safe-area-inset-bottom, 16px);
+    flex-shrink: 0; z-index: 40;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  /* Camera row */
+  #camera-row { display: flex; align-items: center; justify-content: space-between; }
+  .side-btns { display: flex; flex-direction: column; gap: 10px; align-items: center; min-width: 56px; }
+  .ibw { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .ibw span { font-size: 10px; color: var(--text2); }
+  .ib {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--btn-bg); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); transition: background 0.15s, transform 0.1s;
+  }
+  .ib:hover { background: var(--btn-hover); }
+  .ib:active { background: var(--btn-active); transform: scale(0.92); }
+  .ib.on { background: var(--accent); color: var(--accent-fg); }
+
+  #shutter-wrap { flex: 1; display: flex; align-items: center; justify-content: center; }
+  #snapBtn {
+    width: 66px; height: 66px; border-radius: 50%;
+    background: var(--surface); border: 3px solid var(--text);
+    cursor: pointer; position: relative;
+    transition: transform 0.1s, opacity 0.2s;
+    box-shadow: var(--shadow);
+  }
+  #snapBtn:disabled { opacity: 0.3; cursor: default; }
+  #snapBtn::after {
+    content: ''; position: absolute; inset: 6px;
+    border-radius: 50%; background: var(--text);
+  }
+  #snapBtn:not(:disabled):active { transform: scale(0.91); }
+
+  /* Result controls */
+  #result-row { display: none; flex-direction: column; gap: 9px; }
+  #result-row.show { display: flex; }
+
+  .ftabs {
+    display: flex; gap: 5px;
+    background: var(--surface2); border-radius: 10px; padding: 3px;
+  }
+  .ftab {
+    flex: 1; padding: 6px 0; border-radius: 7px;
+    border: none; cursor: pointer; background: transparent;
+    font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+    color: var(--text2); transition: all 0.15s;
+  }
+  .ftab.on { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+
+  .arow { display: flex; gap: 7px; }
+  .abtn {
+    flex: 1; padding: 10px 0; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--btn-bg);
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    transition: background 0.12s, transform 0.1s;
+  }
+  .abtn:hover { background: var(--btn-hover); }
+  .abtn:active { transform: scale(0.96); }
+  .abtn.pri { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+  .abtn.pri:hover { opacity: 0.86; }
+  .abtn.toggled { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+
+  /* Sliders */
+  #adj-panel { display: none; flex-direction: column; gap: 8px; padding: 4px 0; }
+  #adj-panel.show { display: flex; }
+  .srow { display: flex; align-items: center; gap: 10px; }
+  .slbl { font-size: 11px; color: var(--text2); width: 68px; flex-shrink: 0; }
+  input[type=range] {
+    flex: 1; height: 3px; -webkit-appearance: none;
+    background: var(--border); border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 16px; height: 16px;
+    border-radius: 50%; background: var(--text);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2); cursor: pointer;
+  }
+  .sval { font-size: 11px; color: var(--text2); width: 26px; text-align: right; }
+
+  /* MODALS */
+  .backdrop {
+    display: none; position: fixed; inset: 0; z-index: 80;
+    background: rgba(0,0,0,0.4);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+    align-items: flex-end; justify-content: center;
+  }
+  .backdrop.open { display: flex; }
+  .sheet {
+    background: var(--modal-bg); border-radius: 20px 20px 0 0;
+    width: 100%; max-width: 500px; padding: 18px 18px 36px;
+    box-shadow: var(--shadow-lg); max-height: 88dvh; overflow-y: auto;
+    animation: slideUp 0.22s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(32px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+  .pill { width: 34px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+  .mtitle { font-size: 16px; font-weight: 600; margin-bottom: 14px; }
+  .mlabel { font-size: 12px; color: var(--text2); margin-bottom: 5px; margin-top: 12px; }
+  select {
+    width: 100%; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface2); color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    outline: none; -webkit-appearance: none; cursor: pointer;
+  }
+  .mactions { display: flex; gap: 8px; margin-top: 18px; }
+  textarea.rtext {
+    width: 100%; height: 200px;
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface2); color: var(--text);
+    font-size: 13px; line-height: 1.6; padding: 10px 12px;
+    resize: vertical; outline: none;
+    font-family: 'DM Sans', sans-serif; margin-top: 6px;
+  }
+
+  /* Gallery */
+  .gal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .gal-count { font-size: 12px; color: var(--text2); }
+  .upload-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 7px 12px; border-radius: 8px;
+    background: var(--btn-bg); border: 1px solid var(--border);
+    color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500; cursor: pointer;
+    transition: background 0.12s;
+  }
+  .upload-btn:hover { background: var(--btn-hover); }
+  #gal-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px; margin-bottom: 6px;
+  }
+  .gthumb {
+    aspect-ratio: 3/4; border-radius: 8px; overflow: hidden;
+    background: var(--surface2); cursor: pointer;
+    border: 2px solid transparent; transition: border-color 0.14s;
+    position: relative;
+  }
+  .gthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gthumb.sel { border-color: var(--text); }
+  .gthumb-del {
+    position: absolute; top: 4px; right: 4px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: rgba(0,0,0,0.55); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 10px; line-height: 1;
+  }
+  .gal-empty { text-align: center; padding: 32px 0; color: var(--text2); font-size: 13px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed; bottom: 130px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: var(--accent-fg);
+    padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-lg); z-index: 200;
+    pointer-events: none; opacity: 0;
+    transition: opacity 0.18s; white-space: nowrap;
+  }
+  #toast.show { opacity: 1; }
+
+  /* Hidden file input */
+  #file-input { display: none; }
+</style>
 </head>
-<body class="h-screen flex flex-col">
+<body>
+<div id="app">
 
-    <!-- Header -->
-    <div class="px-4 py-3 bg-white shadow-sm flex justify-between items-center shrink-0 z-30">
-        <h1 class="text-xl font-bold text-gray-800 tracking-tight">Scanner</h1>
-        <div id="status" class="text-xs font-medium text-orange-500">Loading Engine...</div>
+  <!-- Loading screen -->
+  <div id="loading-screen">
+    <div class="spinner"></div>
+    <div class="load-label">Loading vision engine</div>
+  </div>
+
+  <!-- Viewport -->
+  <div id="viewport">
+    <video id="video" playsinline></video>
+    <canvas id="main-canvas"></canvas>
+
+    <!-- Crop overlay -->
+    <div id="crop-overlay">
+      <canvas id="crop-canvas"></canvas>
+      <div class="handle" id="h0"></div>
+      <div class="handle" id="h1"></div>
+      <div class="handle" id="h2"></div>
+      <div class="handle" id="h3"></div>
     </div>
 
-    <!-- Main Viewport -->
-    <div id="canvas-container" class="flex-grow relative">
-        <!-- Loading Overlay -->
-        <div id="loading" class="absolute inset-0 flex flex-col items-center justify-center z-50 bg-gray-50">
-            <div class="loader mb-4"></div>
-            <p class="text-gray-500 text-sm">Initializing Vision Engine...</p>
+    <!-- Scan line (OCR animation) -->
+    <div id="scan-line"></div>
+
+    <!-- Processing overlay -->
+    <div id="proc-overlay">
+      <div class="spinner"></div>
+      <div id="proc-label">Processing…</div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div id="toolbar">
+
+    <!-- Camera mode row -->
+    <div id="camera-row">
+      <div class="side-btns">
+        <div class="ibw">
+          <button class="ib" id="galleryBtn" title="Gallery">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+              <polyline points="21 15 16 10 5 21"/>
+            </svg>
+          </button>
+          <span>Gallery</span>
         </div>
+      </div>
 
-        <!-- Scanning Overlay Effect -->
-        <div id="scanOverlay" class="scan-overlay">
-            <div class="scan-line"></div>
-            <div class="absolute inset-0 flex items-center justify-center">
-                <div class="bg-black/70 text-white px-4 py-2 rounded-full text-sm font-semibold backdrop-blur-sm" id="scanText">
-                    Processing...
-                </div>
-            </div>
+      <div id="shutter-wrap">
+        <button id="snapBtn" disabled></button>
+      </div>
+
+      <div class="side-btns">
+        <div class="ibw">
+          <button class="ib" id="flipBtn" title="Flip camera">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 7h5l3-3 3 3h5"/><path d="M3 17h5l3 3 3-3h5"/><line x1="12" y1="4" x2="12" y2="20"/>
+            </svg>
+          </button>
+          <span>Flip</span>
         </div>
-
-        <!-- Video Source (Hidden) -->
-        <video id="videoInput" class="hidden" playsinline></video>
-
-        <!-- Display Canvas -->
-        <canvas id="displayCanvas"></canvas> 
+        <div class="ibw">
+          <button class="ib" id="flashBtn" title="Flashlight">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </button>
+          <span>Flash</span>
+        </div>
+      </div>
     </div>
 
-    <!-- Controls Area -->
-    <div class="p-6 bg-white shrink-0 flex flex-col justify-center items-center gap-4 z-30 min-h-[120px] shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        
-        <!-- Camera Mode (Primary and only capture state) -->
-        <div id="camera-controls" class="flex flex-col items-center w-full gap-2">
-            <p class="text-xs text-gray-400 mb-2">Align document in view and snap</p>
-            <button id="snapBtn" class="w-16 h-16 bg-white rounded-full border-[6px] border-blue-500 shadow-lg active:bg-blue-50 active:scale-95 transition-transform disabled:opacity-50 disabled:border-gray-300" disabled></button>
+    <!-- Result mode row -->
+    <div id="result-row">
+      <!-- Filter tabs -->
+      <div class="ftabs">
+        <button class="ftab on" data-f="bw">B&amp;W</button>
+        <button class="ftab" data-f="color">Color</button>
+        <button class="ftab" data-f="enhanced">Enhanced</button>
+        <button class="ftab" data-f="sketch">Sketch</button>
+      </div>
+
+      <!-- Tool buttons -->
+      <div class="arow">
+        <button class="abtn" id="adjBtn">⚙ Adjust</button>
+        <button class="abtn" id="cropBtn">✂ Crop</button>
+        <button class="abtn" id="rotBtn">↺ Rotate</button>
+      </div>
+
+      <!-- Sliders -->
+      <div id="adj-panel">
+        <div class="srow">
+          <span class="slbl">Brightness</span>
+          <input type="range" id="sl-br" min="-100" max="100" value="0">
+          <span class="sval" id="vl-br">0</span>
         </div>
-
-        <!-- Result Mode (After processing) -->
-        <div id="result-controls" class="hidden w-full max-w-lg flex flex-col gap-3">
-            <!-- Filter Options -->
-            <div class="flex justify-center gap-3">
-                <button id="colorBtn" onclick="toggleFilter('color')" class="px-4 py-2 rounded-full font-semibold transition-colors border">Color</button>
-                <button id="bwBtn" onclick="toggleFilter('bw')" class="px-4 py-2 rounded-full font-semibold transition-colors border bg-blue-600 text-white border-blue-600">B&W</button>
-            </div>
-
-            <!-- OCR & Translate Buttons -->
-            <div class="flex gap-2 w-full">
-                <button onclick="openLanguageModal('extract')" class="flex-1 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-                    Extract Text
-                </button>
-                <button onclick="openLanguageModal('translate')" class="flex-1 py-2 bg-teal-100 hover:bg-teal-200 text-teal-700 rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 5-5 5 5"/><path d="M12 18V3"/><path d="m20 21-3-3 3-3"/></svg>
-                    Translate
-                </button>
-            </div>
-
-             <!-- Action Buttons -->
-             <div class="flex gap-3 w-full">
-                <button onclick="retake()" class="flex-1 py-3 border border-gray-300 rounded-lg text-gray-600 font-medium hover:bg-gray-50">Retake</button>
-                <a id="downloadLink" download="scan.png" class="flex-1 py-3 bg-gray-800 hover:bg-gray-900 rounded-lg text-white font-medium text-center shadow-lg cursor-pointer">Save Img</a>
-            </div>
-            <button onclick="savePDF()" class="w-full py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-medium shadow-lg shadow-red-100 transition-colors">Save as PDF</button>
+        <div class="srow">
+          <span class="slbl">Contrast</span>
+          <input type="range" id="sl-co" min="-100" max="100" value="0">
+          <span class="sval" id="vl-co">0</span>
         </div>
+        <div class="srow">
+          <span class="slbl">Sharpen</span>
+          <input type="range" id="sl-sh" min="0" max="10" value="0">
+          <span class="sval" id="vl-sh">0</span>
+        </div>
+      </div>
+
+      <!-- OCR / Translate -->
+      <div class="arow">
+        <button class="abtn" id="ocrBtn">Extract Text</button>
+        <button class="abtn" id="transBtn">Translate</button>
+      </div>
+
+      <!-- Save / Retake -->
+      <div class="arow">
+        <button class="abtn" id="retakeBtn">Retake</button>
+        <button class="abtn" id="savePngBtn">Save PNG</button>
+        <button class="abtn pri" id="savePdfBtn">Save PDF</button>
+      </div>
     </div>
 
-    <!-- Language Selection Modal -->
-    <div id="languageModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-sm p-6">
-            <h3 id="modalTitle" class="text-lg font-bold mb-4">Select Language</h3>
-            
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Document Language</label>
-                    <select id="sourceLang" class="w-full p-2 border rounded-lg bg-gray-50">
-                        <!-- Populated by JS -->
-                    </select>
-                </div>
+  </div>
 
-                <div id="targetLangContainer" class="hidden">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Translate To</label>
-                    <select id="targetLang" class="w-full p-2 border rounded-lg bg-gray-50">
-                        <!-- Populated by JS -->
-                    </select>
-                </div>
+  <div id="toast"></div>
+</div>
 
-                <div class="flex gap-3 mt-6">
-                    <button onclick="closeModal('languageModal')" class="flex-1 py-2 border rounded-lg text-gray-600">Cancel</button>
-                    <button id="startProcessBtn" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow-md">Start</button>
-                </div>
-            </div>
-        </div>
+<!-- Hidden file input for gallery upload -->
+<input type="file" id="file-input" accept="image/*">
+
+<!-- Language modal -->
+<div class="backdrop" id="lang-modal">
+  <div class="sheet">
+    <div class="pill"></div>
+    <div class="mtitle" id="lang-title">Extract Text</div>
+    <div class="mlabel">Document language</div>
+    <select id="src-lang"></select>
+    <div id="tgt-wrap" style="display:none">
+      <div class="mlabel">Translate to</div>
+      <select id="tgt-lang"></select>
     </div>
-
-    <!-- Text Result Modal -->
-    <div id="textResultModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div class="bg-white rounded-xl shadow-xl w-full max-w-lg h-[80vh] flex flex-col">
-            <div class="flex justify-between items-center p-4 border-b">
-                <h3 class="text-lg font-bold" id="resultTitle">Result</h3>
-                <button onclick="closeModal('textResultModal')" class="text-gray-500 hover:text-gray-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-            </div>
-            
-            <textarea id="resultText" class="flex-grow p-4 resize-none focus:outline-none font-mono text-sm leading-relaxed" readonly></textarea>
-            
-            <div class="p-4 border-t bg-gray-50 rounded-b-xl flex gap-3">
-                <button onclick="copyText()" class="flex-1 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium shadow-sm hover:bg-gray-100">Copy Text</button>
-                <button onclick="closeModal('textResultModal')" class="flex-1 py-2 bg-blue-600 text-white rounded-lg font-medium shadow-md hover:bg-blue-700">Done</button>
-            </div>
-        </div>
+    <div class="mactions">
+      <button class="abtn" onclick="closeModal('lang-modal')">Cancel</button>
+      <button class="abtn pri" id="doOcrBtn">Extract</button>
     </div>
+  </div>
+</div>
+
+<!-- Text result modal -->
+<div class="backdrop" id="text-modal">
+  <div class="sheet">
+    <div class="pill"></div>
+    <div class="mtitle" id="text-title">Result</div>
+    <textarea class="rtext" id="result-ta" readonly></textarea>
+    <div class="mactions">
+      <button class="abtn" id="copyBtn">Copy</button>
+      <button class="abtn pri" onclick="closeModal('text-modal')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gallery modal -->
+<div class="backdrop" id="gal-modal">
+  <div class="sheet">
+    <div class="pill"></div>
+    <div class="gal-header">
+      <div>
+        <div class="mtitle" style="margin-bottom:2px">Gallery</div>
+        <div class="gal-count" id="gal-count">0 images</div>
+      </div>
+      <label class="upload-btn" for="file-input">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Upload Image
+      </label>
+    </div>
+    <div id="gal-grid"></div>
+    <div id="gal-empty" class="gal-empty" style="display:none">No images yet. Snap or upload one.</div>
+    <div class="mactions">
+      <button class="abtn" onclick="closeModal('gal-modal')">Close</button>
+      <button class="abtn pri" id="loadGalBtn">Load Selected</button>
+    </div>
+  </div>
+</div>
 
 <script>
-    // --- Variables ---
-    let video = document.getElementById('videoInput');
-    let displayCanvas = document.getElementById('displayCanvas');
-    let ctx = displayCanvas.getContext('2d');
-    let statusDiv = document.getElementById('status');
-    let snapBtn = document.getElementById('snapBtn');
-    let canvasContainer = document.getElementById('canvas-container');
+/* ============================================================
+   THEME
+============================================================ */
+(function(){
+  const h = location.hash.replace('#','').toLowerCase();
+  const theme = h === 'dark' ? 'dark' : h === 'light' ? 'light'
+    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  window.addEventListener('hashchange', () => {
+    const hh = location.hash.replace('#','').toLowerCase();
+    if (hh === 'dark' || hh === 'light') document.documentElement.setAttribute('data-theme', hh);
+  });
+})();
 
-    let stream = null;
-    let isStreaming = false;
-    let isOpenCvReady = false;
-    let mode = 'camera'; 
-    let animationId = null;
+/* ============================================================
+   GLOBALS
+============================================================ */
+const video       = document.getElementById('video');
+const mainCanvas  = document.getElementById('main-canvas');
+const ctx         = mainCanvas.getContext('2d');
+const viewport    = document.getElementById('viewport');
+const cropOverlay = document.getElementById('crop-overlay');
+const cropCanvas  = document.getElementById('crop-canvas');
+const cropCtx     = cropCanvas.getContext('2d');
+const snapBtn     = document.getElementById('snapBtn');
+const scanLine    = document.getElementById('scan-line');
+const procOverlay = document.getElementById('proc-overlay');
+const procLabel   = document.getElementById('proc-label');
 
-    // --- Core Data Storage ---
-    let snappedCanvas = document.createElement('canvas');
-    snappedCanvas.style.display = 'none';
-    document.body.appendChild(snappedCanvas);
-    let snappedCtx = snappedCanvas.getContext('2d');
+let stream        = null;
+let isStreaming   = false;
+let cvReady       = false;
+let animId        = null;
+let facingMode    = 'environment';
+let flashOn       = false;
+let appMode       = 'camera'; // 'camera' | 'result' | 'crop'
+let currentFilter = 'bw';
+let rotAngle      = 0;         // cumulative 0,90,180,270
+let sBright = 0, sContrast = 0, sSharpen = 0;
 
-    let warpedColorMat = null; 
-    let currentFilter = 'bw'; 
-    let corners = [{x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}];
+// Source canvas — always holds the latest ORIGINAL colour capture or upload
+const srcCanvas = document.createElement('canvas');
+const srcCtx    = srcCanvas.getContext('2d');
 
-    // --- Supported Languages for Tesseract & Translation ---
-    const LANGUAGES = [
-        { name: 'English', code: 'eng', trans: 'en' },
-        { name: 'Spanish', code: 'spa', trans: 'es' },
-        { name: 'French', code: 'fra', trans: 'fr' },
-        { name: 'German', code: 'deu', trans: 'de' },
-        { name: 'Italian', code: 'ita', trans: 'it' },
-        { name: 'Portuguese', code: 'por', trans: 'pt' },
-        { name: 'Chinese (Simp)', code: 'chi_sim', trans: 'zh' },
-        { name: 'Japanese', code: 'jpn', trans: 'ja' },
-        { name: 'Russian', code: 'rus', trans: 'ru' },
-        { name: 'Hindi', code: 'hin', trans: 'hi' },
-        { name: 'Bengali', code: 'ben', trans: 'bn' },
-        { name: 'Arabic', code: 'ara', trans: 'ar' }
-    ];
+// warpedMat — RGBA colour Mat produced by warpPerspective on srcCanvas
+// This is the "base" for all filter/adjust/rotate operations
+// On crop → we re-warp from srcCanvas with new corners, replacing warpedMat
+// On rotate → we bake rotation into warpedMat so repeated rotates stack
+let warpedMat = null;
 
-    // --- Init ---
-    function onOpenCvReady() {
-        isOpenCvReady = true;
-        document.getElementById('loading').classList.add('hidden');
-        statusDiv.innerText = "Camera Ready";
-        statusDiv.className = "text-xs font-medium text-green-600";
-        startCamera();
-        populateLanguages();
-    }
+let gallery = [];
+let selGalIdx = -1;
 
-    function populateLanguages() {
-        const sourceSelect = document.getElementById('sourceLang');
-        const targetSelect = document.getElementById('targetLang');
-        
-        LANGUAGES.forEach(lang => {
-            let opt1 = new Option(lang.name, lang.code);
-            let opt2 = new Option(lang.name, lang.trans); // Target uses ISO codes
-            sourceSelect.add(opt1);
-            targetSelect.add(opt2);
-        });
-        
-        // Defaults
-        sourceSelect.value = 'eng';
-        targetSelect.value = 'es';
-    }
+// Crop corners in DISPLAY-pixel space (relative to mainCanvas element)
+let cropCorners = [];
+let dragIdx     = -1;
 
-    function displayMessage(message, isError = false) {
-        statusDiv.innerText = message;
-        statusDiv.className = `text-xs font-medium ${isError ? 'text-red-600' : 'text-blue-600'}`;
-        setTimeout(() => {
-            if (mode === 'camera') {
-                statusDiv.innerText = "Align document in view";
-                statusDiv.className = "text-xs font-medium text-green-600";
-            } else if (mode === 'result') {
-                statusDiv.innerText = (currentFilter === 'bw' ? "B&W Document" : "Color Photo") + " Ready";
-                statusDiv.className = "text-xs font-medium text-blue-600";
-            }
-        }, 3000);
-    }
+const LANGUAGES = [
+  { name:'English', code:'eng', iso:'en' },
+  { name:'Spanish', code:'spa', iso:'es' },
+  { name:'French',  code:'fra', iso:'fr' },
+  { name:'German',  code:'deu', iso:'de' },
+  { name:'Italian', code:'ita', iso:'it' },
+  { name:'Portuguese', code:'por', iso:'pt' },
+  { name:'Chinese (Simplified)', code:'chi_sim', iso:'zh' },
+  { name:'Japanese', code:'jpn', iso:'ja' },
+  { name:'Russian',  code:'rus', iso:'ru' },
+  { name:'Hindi',    code:'hin', iso:'hi' },
+  { name:'Bengali',  code:'ben', iso:'bn' },
+  { name:'Arabic',   code:'ara', iso:'ar' },
+];
 
-    async function startCamera() {
-        if (!isOpenCvReady) return;
-        
-        try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: 'environment' }, 
-                audio: false 
-            });
-            video.srcObject = stream;
-            video.play();
-            
-            video.onloadedmetadata = () => {
-                isStreaming = true;
-                resizeCanvasToFitVideo();
-                snapBtn.disabled = false;
-                requestAnimationFrame(scanLoop);
-            };
-        } catch (err) {
-            console.error(err);
-            statusDiv.innerText = "Error: Camera Access Denied";
-            statusDiv.className = "text-xs font-bold text-red-500";
-            displayMessage("Please allow camera access to use the scanner.", true);
-        }
-    }
+/* ============================================================
+   INIT
+============================================================ */
+function onOpenCvReady() {
+  cvReady = true;
+  const ls = document.getElementById('loading-screen');
+  ls.classList.add('hidden');
+  setTimeout(() => ls.style.display = 'none', 450);
+  populateLangs();
+  startCamera();
+}
 
-    function stopCamera() {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-            isStreaming = false;
-        }
-        cancelAnimationFrame(animationId);
-    }
+function populateLangs() {
+  const s = document.getElementById('src-lang');
+  const t = document.getElementById('tgt-lang');
+  LANGUAGES.forEach(l => {
+    s.add(new Option(l.name, l.code));
+    t.add(new Option(l.name, l.iso));
+  });
+  s.value = 'eng'; t.value = 'es';
+}
 
-    function resizeCanvasToFitVideo() {
-        if (!isStreaming && mode !== 'camera') return;
-        
-        const containerW = canvasContainer.clientWidth;
-        const containerH = canvasContainer.clientHeight;
-        const videoW = video.videoWidth;
-        const videoH = video.videoHeight;
-        
-        const scale = Math.min(containerW / videoW, containerH / videoH);
-        
-        const w = videoW * scale;
-        const h = videoH * scale;
-
-        displayCanvas.width = videoW;
-        displayCanvas.height = videoH;
-        
-        displayCanvas.style.width = w + "px";
-        displayCanvas.style.height = h + "px";
-    }
-
-    // --- Detection Loop ---
-    function scanLoop() {
-        if (!isStreaming || mode !== 'camera') return;
-
-        ctx.drawImage(video, 0, 0, displayCanvas.width, displayCanvas.height);
-
-        try {
-            let src = cv.imread(displayCanvas);
-            let gray = new cv.Mat();
-            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-            cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
-            cv.Canny(gray, gray, 75, 200);
-
-            let contours = new cv.MatVector();
-            let hierarchy = new cv.Mat();
-            cv.findContours(gray, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
-
-            let maxArea = 0;
-            let currentPoints = null;
-
-            for (let i = 0; i < contours.size(); ++i) {
-                let cnt = contours.get(i);
-                let area = cv.contourArea(cnt);
-                if (area < (displayCanvas.width * displayCanvas.height * 0.1)) continue; 
-
-                let peri = cv.arcLength(cnt, true);
-                let approx = new cv.Mat();
-                cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
-
-                if (approx.rows === 4 && area > maxArea) {
-                    maxArea = area;
-                    currentPoints = [];
-                    for(let j=0; j<4; j++) {
-                        currentPoints.push({
-                            x: approx.intPtr(j, 0)[0],
-                            y: approx.intPtr(j, 0)[1]
-                        });
-                    }
-                }
-                approx.delete();
-            }
-
-            if (currentPoints) {
-                // Draw Blue Overlay Preview
-                const orderedPts = orderPoints(currentPoints);
-                
-                ctx.beginPath();
-                ctx.moveTo(orderedPts[0].x, orderedPts[0].y);
-                for(let i=1; i<4; i++) ctx.lineTo(orderedPts[i].x, orderedPts[i].y);
-                ctx.closePath();
-
-                // Fill with transparent blue
-                ctx.fillStyle = 'rgba(59, 130, 246, 0.2)'; 
-                ctx.fill();
-
-                // Stroke with solid blue
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = 'rgba(59, 130, 246, 1)'; 
-                ctx.stroke();
-                
-                // Draw corners
-                ctx.fillStyle = 'rgba(59, 130, 246, 1)';
-                for(let i=0; i<4; i++) {
-                     ctx.beginPath();
-                     ctx.arc(orderedPts[i].x, orderedPts[i].y, 6, 0, 2*Math.PI);
-                     ctx.fill();
-                }
-            }
-
-            src.delete(); gray.delete(); contours.delete(); hierarchy.delete();
-        } catch (e) { }
-
-        animationId = requestAnimationFrame(scanLoop);
-    }
-
-    // --- Capture & Process ---
-    snapBtn.addEventListener('click', () => {
-        snappedCanvas.width = video.videoWidth;
-        snappedCanvas.height = video.videoHeight;
-        snappedCtx.drawImage(video, 0, 0, snappedCanvas.width, snappedCanvas.height);
-        
-        stopCamera();
-        detectForCapture(); 
-        captureAndWarp(); 
-        
-        mode = 'result';
-        document.getElementById('camera-controls').classList.add('hidden');
-        document.getElementById('result-controls').classList.remove('hidden');
-        toggleFilter('bw');
+/* ============================================================
+   CAMERA
+============================================================ */
+async function startCamera() {
+  if (!cvReady) return;
+  stopCamera();
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode, width:{ ideal:1920 }, height:{ ideal:1080 } },
+      audio: false
     });
+    video.srcObject = stream;
+    await video.play();
+    video.addEventListener('loadedmetadata', () => {
+      isStreaming = true;
+      fitCanvas(video.videoWidth, video.videoHeight);
+      snapBtn.disabled = false;
+      cancelAnimationFrame(animId);
+      scanLoop();
+    }, { once: true });
+  } catch(e) {
+    toast('Camera access denied', 3000);
+  }
+}
 
-    function detectForCapture() {
-        let src = cv.imread(snappedCanvas);
-        let gray = new cv.Mat();
-        cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-        cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0, 0, cv.BORDER_DEFAULT);
-        cv.Canny(gray, gray, 75, 200);
+function stopCamera() {
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  isStreaming = false;
+  cancelAnimationFrame(animId);
+  animId = null;
+}
 
-        let contours = new cv.MatVector();
-        let hierarchy = new cv.Mat();
-        cv.findContours(gray, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+function fitCanvas(w, h) {
+  const vw = viewport.clientWidth, vh = viewport.clientHeight;
+  const sc = Math.min(vw/w, vh/h);
+  mainCanvas.width  = w;
+  mainCanvas.height = h;
+  mainCanvas.style.width  = (w*sc) + 'px';
+  mainCanvas.style.height = (h*sc) + 'px';
+}
 
-        let maxArea = 0;
-        let bestPoints = null;
+/* ============================================================
+   SCAN LOOP (camera preview + outline detection)
+============================================================ */
+function scanLoop() {
+  if (!isStreaming || appMode !== 'camera') return;
+  ctx.drawImage(video, 0, 0, mainCanvas.width, mainCanvas.height);
 
-        for (let i = 0; i < contours.size(); ++i) {
-            let cnt = contours.get(i);
-            let area = cv.contourArea(cnt);
-            if (area < (snappedCanvas.width * snappedCanvas.height * 0.05)) continue; 
-            
-            let peri = cv.arcLength(cnt, true);
-            let approx = new cv.Mat();
-            cv.approxPolyDP(cnt, approx, 0.02 * peri, true);
+  if (cvReady) {
+    try {
+      let src  = cv.imread(mainCanvas);
+      let gray = new cv.Mat();
+      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+      cv.GaussianBlur(gray, gray, new cv.Size(5,5), 0, 0, cv.BORDER_DEFAULT);
+      cv.Canny(gray, gray, 75, 200);
 
-            if (approx.rows === 4 && area > maxArea) {
-                maxArea = area;
-                bestPoints = [];
-                for(let j=0; j<4; j++) {
-                    bestPoints.push({
-                        x: approx.intPtr(j, 0)[0],
-                        y: approx.intPtr(j, 0)[1]
-                    });
-                }
-            }
-            approx.delete();
+      let conts = new cv.MatVector(), hier = new cv.Mat();
+      cv.findContours(gray, conts, hier, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+      let maxA = 0, bestPts = null;
+      for (let i = 0; i < conts.size(); i++) {
+        let cnt  = conts.get(i);
+        let area = cv.contourArea(cnt);
+        if (area < mainCanvas.width * mainCanvas.height * 0.08) continue;
+        let peri   = cv.arcLength(cnt, true);
+        let approx = new cv.Mat();
+        cv.approxPolyDP(cnt, approx, 0.02*peri, true);
+        if (approx.rows === 4 && area > maxA) {
+          maxA = area; bestPts = [];
+          for (let j=0;j<4;j++) bestPts.push({ x:approx.intPtr(j,0)[0], y:approx.intPtr(j,0)[1] });
         }
+        approx.delete();
+      }
+      if (bestPts) drawOutline(orderPts(bestPts));
+      src.delete(); gray.delete(); conts.delete(); hier.delete();
+    } catch(e) {}
+  }
+  animId = requestAnimationFrame(scanLoop);
+}
 
-        src.delete(); gray.delete(); contours.delete(); hierarchy.delete();
+function drawOutline(pts) {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i=1;i<4;i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+  ctx.fillStyle = dark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
+  ctx.fill();
+  ctx.strokeStyle = dark ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.8)';
+  ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = ctx.strokeStyle;
+  pts.forEach(p => { ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2); ctx.fill(); });
+}
 
-        if (bestPoints) {
-            corners = orderPoints(bestPoints);
-        } else {
-            let w = snappedCanvas.width;
-            let h = snappedCanvas.height;
-            let px = w * 0.1;
-            let py = h * 0.1;
-            corners = [{x: px, y: py}, {x: w - px, y: py}, {x: w - px, y: h - py}, {x: px, y: h - py}];
-        }
+/* ============================================================
+   SNAP
+============================================================ */
+snapBtn.addEventListener('click', () => {
+  if (!isStreaming || appMode !== 'camera') return;
+  flashEffect();
+  srcCanvas.width  = video.videoWidth;
+  srcCanvas.height = video.videoHeight;
+  srcCtx.drawImage(video, 0, 0);
+  stopCamera();
+  rotAngle = 0;
+  processCapture();
+});
+
+function flashEffect() {
+  const f = document.createElement('div');
+  f.style.cssText = 'position:absolute;inset:0;z-index:50;background:#fff;pointer-events:none;opacity:0.9;transition:opacity 0.3s;';
+  viewport.appendChild(f);
+  requestAnimationFrame(() => { f.style.opacity = '0'; setTimeout(() => f.remove(), 320); });
+}
+
+function processCapture() {
+  setProc(true, 'Processing…');
+  setTimeout(() => {
+    try {
+      detectAndWarp();
+      renderImage();
+      addToGallery();
+    } catch(e) {
+      console.error(e);
+      toast('Processing error — showing raw', 2500);
+      loadRawToWarped();
+      renderImage();
     }
+    setProc(false);
+    enterResultMode();
+  }, 60);
+}
 
-    function orderPoints(pts) {
-        let sum = (p) => p.x + p.y;
-        let diff = (p) => p.y - p.x;
-        let tl = pts.reduce((prev, curr) => sum(curr) < sum(prev) ? curr : prev);
-        let br = pts.reduce((prev, curr) => sum(curr) > sum(prev) ? curr : prev);
-        let remaining = pts.filter(p => p !== tl && p !== br);
-        let tr = remaining.reduce((prev, curr) => diff(curr) < diff(prev) ? curr : prev);
-        let bl = remaining.reduce((prev, curr) => diff(curr) > diff(prev) ? curr : prev);
-        return [tl, tr, br, bl];
+// Load raw srcCanvas into warpedMat without perspective transform
+function loadRawToWarped() {
+  if (warpedMat) { warpedMat.delete(); warpedMat = null; }
+  warpedMat = cv.imread(srcCanvas);
+}
+
+/* ============================================================
+   DETECT + WARP
+============================================================ */
+function detectAndWarp() {
+  let src  = cv.imread(srcCanvas);
+  let gray = new cv.Mat();
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+  cv.GaussianBlur(gray, gray, new cv.Size(5,5), 0);
+  cv.Canny(gray, gray, 75, 200);
+
+  let conts = new cv.MatVector(), hier = new cv.Mat();
+  cv.findContours(gray, conts, hier, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+  let maxA = 0, bestPts = null;
+  for (let i=0;i<conts.size();i++) {
+    let cnt  = conts.get(i);
+    let area = cv.contourArea(cnt);
+    if (area < srcCanvas.width*srcCanvas.height*0.04) continue;
+    let peri = cv.arcLength(cnt, true);
+    let ap   = new cv.Mat();
+    cv.approxPolyDP(cnt, ap, 0.02*peri, true);
+    if (ap.rows === 4 && area > maxA) {
+      maxA = area; bestPts = [];
+      for (let j=0;j<4;j++) bestPts.push({ x:ap.intPtr(j,0)[0], y:ap.intPtr(j,0)[1] });
     }
+    ap.delete();
+  }
+  src.delete(); gray.delete(); conts.delete(); hier.delete();
 
-    function captureAndWarp() {
-        if (warpedColorMat) warpedColorMat.delete();
-        try {
-            let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
-                corners[0].x, corners[0].y, corners[1].x, corners[1].y,
-                corners[2].x, corners[2].y, corners[3].x, corners[3].y
-            ]);
+  const W = srcCanvas.width, H = srcCanvas.height;
+  const pts = bestPts ? orderPts(bestPts) : defaultPts(W, H);
+  warpFromSrc(pts);
+}
 
-            let widthTop = Math.hypot(corners[0].x - corners[1].x, corners[0].y - corners[1].y);
-            let widthBottom = Math.hypot(corners[2].x - corners[3].x, corners[2].y - corners[3].y);
-            let maxWidth = Math.round(Math.max(widthTop, widthBottom));
+// Warp srcCanvas using given 4 corner points in src-pixel space → store in warpedMat
+function warpFromSrc(pts) {
+  if (warpedMat) { warpedMat.delete(); warpedMat = null; }
 
-            let heightLeft = Math.hypot(corners[0].x - corners[3].x, corners[0].y - corners[3].y);
-            let heightRight = Math.hypot(corners[1].x - corners[2].x, corners[1].y - corners[2].y);
-            let maxHeight = Math.round(Math.max(heightLeft, heightRight));
+  const wT = Math.round(Math.max(
+    Math.hypot(pts[1].x-pts[0].x, pts[1].y-pts[0].y),
+    Math.hypot(pts[2].x-pts[3].x, pts[2].y-pts[3].y)
+  ));
+  const hT = Math.round(Math.max(
+    Math.hypot(pts[3].x-pts[0].x, pts[3].y-pts[0].y),
+    Math.hypot(pts[2].x-pts[1].x, pts[2].y-pts[1].y)
+  ));
 
-            let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, maxWidth, 0, maxWidth, maxHeight, 0, maxHeight]);
+  if (wT < 4 || hT < 4) throw new Error('Degenerate crop');
 
-            let M = cv.getPerspectiveTransform(srcTri, dstTri);
-            let src = cv.imread(snappedCanvas);
-            warpedColorMat = new cv.Mat();
-            cv.warpPerspective(src, warpedColorMat, M, new cv.Size(maxWidth, maxHeight), cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+  const srcTri = cv.matFromArray(4,1,cv.CV_32FC2,
+    [pts[0].x,pts[0].y, pts[1].x,pts[1].y, pts[2].x,pts[2].y, pts[3].x,pts[3].y]);
+  const dstTri = cv.matFromArray(4,1,cv.CV_32FC2, [0,0, wT,0, wT,hT, 0,hT]);
+  const M      = cv.getPerspectiveTransform(srcTri, dstTri);
+  const src2   = cv.imread(srcCanvas);
+  warpedMat    = new cv.Mat();
+  cv.warpPerspective(src2, warpedMat, M, new cv.Size(wT, hT));
+  src2.delete(); M.delete(); srcTri.delete(); dstTri.delete();
+}
 
-            src.delete(); M.delete(); srcTri.delete(); dstTri.delete();
-        } catch (e) {
-            retake(); 
-        }
+function defaultPts(W, H) {
+  const px=W*0.08, py=H*0.08;
+  return [{x:px,y:py},{x:W-px,y:py},{x:W-px,y:H-py},{x:px,y:H-py}];
+}
+
+/* ============================================================
+   ROTATION  (bake into warpedMat so stacking works)
+============================================================ */
+document.getElementById('rotBtn').addEventListener('click', () => {
+  if (!warpedMat || appMode === 'crop') return;
+  rotateMat90cw();
+  renderImage();
+});
+
+function rotateMat90cw() {
+  // OpenCV.js does not expose cv.ROTATE_* constants reliably.
+  // Transpose then flip horizontally = rotate 90° CW.
+  let tmp = new cv.Mat();
+  cv.transpose(warpedMat, tmp);
+  let flipped = new cv.Mat();
+  cv.flip(tmp, flipped, 1);
+  tmp.delete();
+  warpedMat.delete();
+  warpedMat = flipped;
+}
+
+/* ============================================================
+   RENDER IMAGE (apply current filter + adjustments to warpedMat)
+============================================================ */
+function renderImage() {
+  if (!warpedMat) return;
+
+  let base = warpedMat.clone();
+  let dst  = new cv.Mat();
+
+  if (currentFilter === 'bw') {
+    cv.cvtColor(base, dst, cv.COLOR_RGBA2GRAY);
+    cv.adaptiveThreshold(dst, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 15, 10);
+  } else if (currentFilter === 'enhanced') {
+    cv.cvtColor(base, dst, cv.COLOR_RGBA2GRAY);
+    cv.equalizeHist(dst, dst);
+    cv.cvtColor(dst, dst, cv.COLOR_GRAY2RGBA);
+  } else if (currentFilter === 'sketch') {
+    let gray = new cv.Mat();
+    cv.cvtColor(base, gray, cv.COLOR_RGBA2GRAY);
+    let inv = new cv.Mat();
+    cv.bitwise_not(gray, inv);
+    cv.GaussianBlur(inv, inv, new cv.Size(21,21), 0);
+    cv.divide(gray, inv, dst, 256);
+    gray.delete(); inv.delete();
+    cv.cvtColor(dst, dst, cv.COLOR_GRAY2RGBA);
+  } else {
+    dst = base.clone();
+  }
+  base.delete();
+
+  // Brightness / contrast
+  if (sBright !== 0 || sContrast !== 0) {
+    const alpha = 1 + sContrast/100;
+    const beta  = sBright * 2;
+    dst.convertTo(dst, -1, alpha, beta);
+  }
+
+  // Sharpen (unsharp mask)
+  if (sSharpen > 0) {
+    let blurred = new cv.Mat();
+    const sig = 1 + sSharpen * 0.4;
+    cv.GaussianBlur(dst, blurred, new cv.Size(0,0), sig, sig);
+    const amount = 0.5 + sSharpen * 0.1;
+    cv.addWeighted(dst, 1 + amount, blurred, -amount, 0, dst);
+    blurred.delete();
+  }
+
+  const W = dst.cols, H = dst.rows;
+  mainCanvas.width  = W;
+  mainCanvas.height = H;
+  const vw = viewport.clientWidth, vh = viewport.clientHeight;
+  const sc = Math.min(vw/W, vh/H) * 0.98;
+  mainCanvas.style.width  = (W*sc)+'px';
+  mainCanvas.style.height = (H*sc)+'px';
+
+  cv.imshow('main-canvas', dst);
+  dst.delete();
+}
+
+/* ============================================================
+   CROP
+============================================================ */
+let cropActive = false;
+
+document.getElementById('cropBtn').addEventListener('click', () => {
+  if (!warpedMat) return;
+  if (cropActive) {
+    applyCrop();
+  } else {
+    enterCropMode();
+  }
+});
+
+function enterCropMode() {
+  if (!warpedMat) return;
+  cropActive = true;
+  appMode = 'crop';
+
+  const cw = parseFloat(mainCanvas.style.width)  || mainCanvas.clientWidth;
+  const ch = parseFloat(mainCanvas.style.height) || mainCanvas.clientHeight;
+
+  // Initialise corners as full-image rectangle in display-pixel space
+  cropCorners = [
+    { x: 0,  y: 0  },
+    { x: cw, y: 0  },
+    { x: cw, y: ch },
+    { x: 0,  y: ch }
+  ];
+
+  syncCropOverlaySize();
+  cropOverlay.classList.add('active');
+  positionHandles();
+  drawCropMask();
+
+  document.getElementById('cropBtn').textContent = '✓ Apply';
+  document.getElementById('cropBtn').classList.add('toggled');
+}
+
+function exitCropMode() {
+  cropActive = false;
+  appMode = 'result';
+  cropOverlay.classList.remove('active');
+  cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+  document.getElementById('cropBtn').textContent = '✂ Crop';
+  document.getElementById('cropBtn').classList.remove('toggled');
+}
+
+function applyCrop() {
+  if (!warpedMat) { exitCropMode(); return; }
+
+  // Convert crop corners from display-px → warpedMat pixel space
+  const dispW = parseFloat(mainCanvas.style.width)  || mainCanvas.clientWidth;
+  const dispH = parseFloat(mainCanvas.style.height) || mainCanvas.clientHeight;
+  const sx = warpedMat.cols / dispW;
+  const sy = warpedMat.rows / dispH;
+
+  const pts = cropCorners.map(c => ({ x: c.x * sx, y: c.y * sy }));
+
+  // Draw warpedMat onto srcCanvas so warpFromSrc can read it
+  const tmpCanvas = document.createElement('canvas');
+  tmpCanvas.width  = warpedMat.cols;
+  tmpCanvas.height = warpedMat.rows;
+  cv.imshow(tmpCanvas, warpedMat);
+
+  // Replace srcCanvas with current warpedMat content
+  srcCanvas.width  = tmpCanvas.width;
+  srcCanvas.height = tmpCanvas.height;
+  srcCtx.drawImage(tmpCanvas, 0, 0);
+
+  try {
+    warpFromSrc(pts);
+  } catch(e) {
+    console.error('Crop failed:', e);
+    toast('Crop failed', 2000);
+    exitCropMode();
+    return;
+  }
+
+  exitCropMode();
+  renderImage();
+}
+
+function syncCropOverlaySize() {
+  cropCanvas.width  = viewport.clientWidth;
+  cropCanvas.height = viewport.clientHeight;
+}
+
+// Returns top-left of mainCanvas within viewport
+function canvasOffset() {
+  const cr = mainCanvas.getBoundingClientRect();
+  const vr = viewport.getBoundingClientRect();
+  return { x: cr.left - vr.left, y: cr.top - vr.top };
+}
+
+function positionHandles() {
+  const off = canvasOffset();
+  for (let i = 0; i < 4; i++) {
+    const h = document.getElementById('h'+i);
+    h.style.left = (off.x + cropCorners[i].x) + 'px';
+    h.style.top  = (off.y + cropCorners[i].y) + 'px';
+  }
+}
+
+function drawCropMask() {
+  const off  = canvasOffset();
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  cropCtx.clearRect(0, 0, cropCanvas.width, cropCanvas.height);
+  // Dimmed background
+  cropCtx.fillStyle = dark ? 'rgba(0,0,0,0.55)' : 'rgba(0,0,0,0.4)';
+  cropCtx.fillRect(0, 0, cropCanvas.width, cropCanvas.height);
+  // Cut-out the crop area
+  cropCtx.globalCompositeOperation = 'destination-out';
+  cropCtx.beginPath();
+  cropCtx.moveTo(off.x+cropCorners[0].x, off.y+cropCorners[0].y);
+  for (let i=1;i<4;i++) cropCtx.lineTo(off.x+cropCorners[i].x, off.y+cropCorners[i].y);
+  cropCtx.closePath();
+  cropCtx.fill();
+  cropCtx.globalCompositeOperation = 'source-over';
+  // Outline
+  cropCtx.beginPath();
+  cropCtx.moveTo(off.x+cropCorners[0].x, off.y+cropCorners[0].y);
+  for (let i=1;i<4;i++) cropCtx.lineTo(off.x+cropCorners[i].x, off.y+cropCorners[i].y);
+  cropCtx.closePath();
+  cropCtx.strokeStyle = dark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.85)';
+  cropCtx.lineWidth = 2;
+  cropCtx.stroke();
+}
+
+// ---- Drag handles ----
+function pickHandle(cx, cy) {
+  const off = canvasOffset();
+  const vr  = viewport.getBoundingClientRect();
+  for (let i=0;i<4;i++) {
+    const hx = vr.left + off.x + cropCorners[i].x;
+    const hy = vr.top  + off.y + cropCorners[i].y;
+    if (Math.hypot(cx-hx, cy-hy) < 32) return i;
+  }
+  return -1;
+}
+
+function moveHandle(idx, cx, cy) {
+  const off  = canvasOffset();
+  const vr   = viewport.getBoundingClientRect();
+  const maxW = parseFloat(mainCanvas.style.width)  || mainCanvas.clientWidth;
+  const maxH = parseFloat(mainCanvas.style.height) || mainCanvas.clientHeight;
+  cropCorners[idx] = {
+    x: Math.max(0, Math.min(maxW, cx - vr.left - off.x)),
+    y: Math.max(0, Math.min(maxH, cy - vr.top  - off.y))
+  };
+  positionHandles();
+  drawCropMask();
+}
+
+// Touch
+cropOverlay.addEventListener('touchstart', e => {
+  if (!cropActive) return;
+  e.preventDefault();
+  dragIdx = pickHandle(e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: false });
+cropOverlay.addEventListener('touchmove', e => {
+  if (!cropActive || dragIdx < 0) return;
+  e.preventDefault();
+  moveHandle(dragIdx, e.touches[0].clientX, e.touches[0].clientY);
+}, { passive: false });
+cropOverlay.addEventListener('touchend', () => { dragIdx = -1; });
+
+// Mouse
+cropOverlay.addEventListener('mousedown', e => {
+  if (!cropActive) return;
+  dragIdx = pickHandle(e.clientX, e.clientY);
+});
+window.addEventListener('mousemove', e => {
+  if (!cropActive || dragIdx < 0) return;
+  moveHandle(dragIdx, e.clientX, e.clientY);
+});
+window.addEventListener('mouseup', () => { dragIdx = -1; });
+
+/* ============================================================
+   FILTERS
+============================================================ */
+document.querySelectorAll('.ftab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    if (appMode === 'camera') return;
+    document.querySelectorAll('.ftab').forEach(t => t.classList.remove('on'));
+    tab.classList.add('on');
+    currentFilter = tab.dataset.f;
+    renderImage();
+  });
+});
+
+/* ============================================================
+   ADJUSTMENTS
+============================================================ */
+document.getElementById('adjBtn').addEventListener('click', () => {
+  const panel = document.getElementById('adj-panel');
+  const show  = panel.classList.toggle('show');
+  document.getElementById('adjBtn').classList.toggle('toggled', show);
+  document.getElementById('adjBtn').textContent = show ? '⚙ Close' : '⚙ Adjust';
+});
+
+[['sl-br','vl-br','sBright'],['sl-co','vl-co','sContrast'],['sl-sh','vl-sh','sSharpen']].forEach(([sid,vid,varname]) => {
+  document.getElementById(sid).addEventListener('input', function() {
+    document.getElementById(vid).textContent = this.value;
+    if (varname === 'sBright')    sBright   = +this.value;
+    if (varname === 'sContrast')  sContrast = +this.value;
+    if (varname === 'sSharpen')   sSharpen  = +this.value;
+    if (warpedMat) renderImage();
+  });
+});
+
+function resetSliders() {
+  [['sl-br','vl-br'],['sl-co','vl-co'],['sl-sh','vl-sh']].forEach(([s,v]) => {
+    document.getElementById(s).value = 0;
+    document.getElementById(v).textContent = '0';
+  });
+  sBright = 0; sContrast = 0; sSharpen = 0;
+}
+
+/* ============================================================
+   MODE TRANSITIONS
+============================================================ */
+function enterResultMode() {
+  appMode = 'result';
+  document.getElementById('camera-row').style.display = 'none';
+  document.getElementById('result-row').classList.add('show');
+  syncFilterTabs();
+}
+
+function enterCameraMode() {
+  exitCropMode();
+  appMode = 'camera';
+  document.getElementById('camera-row').style.display = 'flex';
+  document.getElementById('result-row').classList.remove('show');
+  document.getElementById('adj-panel').classList.remove('show');
+  document.getElementById('adjBtn').classList.remove('toggled');
+  document.getElementById('adjBtn').textContent = '⚙ Adjust';
+  currentFilter = 'bw'; rotAngle = 0;
+  resetSliders();
+  if (warpedMat) { warpedMat.delete(); warpedMat = null; }
+  syncFilterTabs();
+  startCamera();
+}
+
+function syncFilterTabs() {
+  document.querySelectorAll('.ftab').forEach(t => t.classList.toggle('on', t.dataset.f === currentFilter));
+}
+
+document.getElementById('retakeBtn').addEventListener('click', enterCameraMode);
+
+/* ============================================================
+   CAMERA CONTROLS (flip / flash)
+============================================================ */
+document.getElementById('flipBtn').addEventListener('click', () => {
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  startCamera();
+});
+
+document.getElementById('flashBtn').addEventListener('click', async () => {
+  if (!stream) return;
+  const track = stream.getVideoTracks()[0];
+  if (!track) return;
+  try {
+    flashOn = !flashOn;
+    await track.applyConstraints({ advanced: [{ torch: flashOn }] });
+    document.getElementById('flashBtn').classList.toggle('on', flashOn);
+    toast(flashOn ? 'Flash on' : 'Flash off');
+  } catch(e) {
+    toast('Torch not available on this device');
+  }
+});
+
+/* ============================================================
+   SAVE
+============================================================ */
+document.getElementById('savePngBtn').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.download = 'scan-' + Date.now() + '.png';
+  a.href = mainCanvas.toDataURL('image/png');
+  a.click();
+  toast('PNG saved');
+});
+
+document.getElementById('savePdfBtn').addEventListener('click', () => {
+  const { jsPDF } = window.jspdf;
+  const W = mainCanvas.width, H = mainCanvas.height;
+  const pdf = new jsPDF({ orientation: W > H ? 'l' : 'p', unit: 'px', format: [W, H] });
+  pdf.addImage(mainCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, W, H);
+  pdf.save('scan-' + Date.now() + '.pdf');
+  toast('PDF saved');
+});
+
+/* ============================================================
+   OCR / TRANSLATE
+============================================================ */
+let ocrMode = 'extract';
+
+document.getElementById('ocrBtn').addEventListener('click', () => {
+  ocrMode = 'extract';
+  document.getElementById('lang-title').textContent = 'Extract Text';
+  document.getElementById('tgt-wrap').style.display = 'none';
+  document.getElementById('doOcrBtn').textContent = 'Extract';
+  openModal('lang-modal');
+});
+
+document.getElementById('transBtn').addEventListener('click', () => {
+  ocrMode = 'translate';
+  document.getElementById('lang-title').textContent = 'Translate';
+  document.getElementById('tgt-wrap').style.display = 'block';
+  document.getElementById('doOcrBtn').textContent = 'Translate';
+  openModal('lang-modal');
+});
+
+document.getElementById('doOcrBtn').addEventListener('click', async () => {
+  closeModal('lang-modal');
+  setProc(true, ocrMode === 'extract' ? 'Reading text…' : 'Translating…');
+  scanLine.style.display = 'block';
+  try {
+    const lang = document.getElementById('src-lang').value;
+    const { data: { text } } = await Tesseract.recognize(mainCanvas, lang, {});
+    if (ocrMode === 'extract') {
+      showText('Extracted Text', text);
+    } else {
+      const srcIso = LANGUAGES.find(l => l.code === lang)?.iso || 'en';
+      const tgtIso = document.getElementById('tgt-lang').value;
+      const chunks = chunkText(text, 480);
+      let out = '';
+      for (const chunk of chunks) {
+        const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(chunk)}&langpair=${srcIso}|${tgtIso}`);
+        const d = await r.json();
+        out += (d.responseData?.translatedText || '') + ' ';
+      }
+      showText('Translation', out.trim());
     }
+  } catch(e) {
+    toast('Error: ' + e.message, 3000);
+  }
+  setProc(false);
+  scanLine.style.display = 'none';
+});
 
-    function toggleFilter(filterType) {
-        if (!warpedColorMat) return;
-        currentFilter = filterType;
-        let dst = new cv.Mat();
+function chunkText(text, max) {
+  const words = text.split(/(\s+)/);
+  const chunks = []; let cur = '';
+  for (const w of words) {
+    if ((cur+w).length > max) { if (cur.trim()) chunks.push(cur); cur = w; }
+    else cur += w;
+  }
+  if (cur.trim()) chunks.push(cur);
+  return chunks;
+}
 
-        if (filterType === 'bw') {
-            cv.cvtColor(warpedColorMat, dst, cv.COLOR_RGBA2GRAY);
-            cv.adaptiveThreshold(dst, dst, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 15, 10);
-        } else {
-            dst = warpedColorMat.clone();
-        }
+function showText(title, text) {
+  document.getElementById('text-title').textContent = title;
+  document.getElementById('result-ta').value = text;
+  openModal('text-modal');
+}
 
-        const maxWidth = dst.cols;
-        const maxHeight = dst.rows;
+document.getElementById('copyBtn').addEventListener('click', () => {
+  const ta = document.getElementById('result-ta');
+  ta.select();
+  document.execCommand('copy');
+  toast('Copied!');
+});
 
-        displayCanvas.width = maxWidth;
-        displayCanvas.height = maxHeight;
-        
-        let containerW = canvasContainer.clientWidth;
-        let containerH = canvasContainer.clientHeight;
-        let scale = Math.min(containerW / maxWidth, containerH / maxHeight) * 0.95;
-        displayCanvas.style.width = (maxWidth * scale) + "px";
-        displayCanvas.style.height = (maxHeight * scale) + "px";
+/* ============================================================
+   GALLERY
+============================================================ */
+document.getElementById('galleryBtn').addEventListener('click', () => {
+  renderGallery();
+  openModal('gal-modal');
+});
 
-        cv.imshow('displayCanvas', dst);
-        dst.delete();
+// Upload from device
+document.getElementById('file-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  this.value = ''; // reset so same file can be re-uploaded
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      // Add to gallery
+      const tmpC = document.createElement('canvas');
+      tmpC.width = img.width; tmpC.height = img.height;
+      tmpC.getContext('2d').drawImage(img, 0, 0);
+      gallery.push({ dataURL: tmpC.toDataURL('image/jpeg', 0.82), label: file.name });
+      renderGallery();
+      toast('Image added to gallery');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+});
 
-        const isBW = filterType === 'bw';
-        document.getElementById('colorBtn').className = `px-4 py-2 rounded-full font-semibold transition-colors border ${!isBW ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-600 border-gray-300 hover:bg-gray-100'}`;
-        document.getElementById('bwBtn').className = `px-4 py-2 rounded-full font-semibold transition-colors border ${isBW ? 'bg-blue-600 text-white border-blue-600' : 'text-gray-600 border-gray-300 hover:bg-gray-100'}`;
-        
-        let dataURL = displayCanvas.toDataURL('image/png');
-        document.getElementById('downloadLink').href = dataURL;
-        document.getElementById('downloadLink').download = `${isBW ? 'document_bw' : 'document_color'}.png`;
-        statusDiv.innerText = (isBW ? "B&W Document" : "Color Photo") + " Ready";
-    }
+document.getElementById('loadGalBtn').addEventListener('click', () => {
+  if (selGalIdx < 0) { toast('Select an image first'); return; }
+  const item = gallery[selGalIdx];
+  if (!item) return;
+  closeModal('gal-modal');
+  loadImageFromDataURL(item.dataURL);
+});
 
-    // --- OCR & Translation ---
-    let processAction = ''; // 'extract' or 'translate'
+function loadImageFromDataURL(dataURL) {
+  const img = new Image();
+  img.onload = () => {
+    srcCanvas.width  = img.width;
+    srcCanvas.height = img.height;
+    srcCtx.drawImage(img, 0, 0);
+    stopCamera();
+    rotAngle = 0;
+    setProc(true, 'Processing…');
+    setTimeout(() => {
+      try {
+        detectAndWarp();
+        renderImage();
+      } catch(e) {
+        loadRawToWarped();
+        renderImage();
+      }
+      setProc(false);
+      enterResultMode();
+    }, 60);
+  };
+  img.src = dataURL;
+}
 
-    function openLanguageModal(action) {
-        processAction = action;
-        const modal = document.getElementById('languageModal');
-        const targetContainer = document.getElementById('targetLangContainer');
-        const btn = document.getElementById('startProcessBtn');
+function addToGallery() {
+  gallery.push({ dataURL: mainCanvas.toDataURL('image/jpeg', 0.82), label: 'Scan ' + (gallery.length+1) });
+}
 
-        modal.classList.remove('hidden');
+function renderGallery() {
+  const grid  = document.getElementById('gal-grid');
+  const empty = document.getElementById('gal-empty');
+  grid.innerHTML = '';
+  selGalIdx = -1;
+  document.getElementById('gal-count').textContent = gallery.length + ' image' + (gallery.length !== 1 ? 's' : '');
 
-        if (action === 'extract') {
-            document.getElementById('modalTitle').innerText = "Extract Text";
-            targetContainer.classList.add('hidden');
-            btn.innerText = "Extract";
-        } else {
-            document.getElementById('modalTitle').innerText = "Translate Document";
-            targetContainer.classList.remove('hidden');
-            btn.innerText = "Translate";
-        }
-        
-        // Remove old listener to prevent duplicates
-        let newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
-        newBtn.addEventListener('click', startProcessing);
-    }
+  if (gallery.length === 0) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
 
-    function closeModal(id) {
-        document.getElementById(id).classList.add('hidden');
-    }
+  gallery.forEach((item, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'gthumb';
 
-    // --- Helper: Chunk Text ---
-    function chunkText(text, maxChars) {
-        const chunks = [];
-        let currentChunk = '';
-        const words = text.split(/(\s+)/); // Split by whitespace but keep delimiters
+    const img = document.createElement('img');
+    img.src = item.dataURL;
+    wrap.appendChild(img);
 
-        for (const word of words) {
-            if ((currentChunk + word).length > maxChars) {
-                if (currentChunk.trim().length > 0) chunks.push(currentChunk);
-                currentChunk = word;
-            } else {
-                currentChunk += word;
-            }
-        }
-        if (currentChunk.trim().length > 0) chunks.push(currentChunk);
-        return chunks;
-    }
-
-    async function startProcessing() {
-        closeModal('languageModal');
-        
-        // Show scan overlay
-        const overlay = document.getElementById('scanOverlay');
-        const overlayText = document.getElementById('scanText');
-        overlay.style.display = 'block';
-        overlayText.innerText = processAction === 'extract' ? "Scanning Text..." : "Translating...";
-        
-        const langCode = document.getElementById('sourceLang').value;
-        const targetLang = document.getElementById('targetLang').value;
-        const sourceLangIso = LANGUAGES.find(l => l.code === langCode).trans;
-
-        try {
-            // 1. Perform OCR
-            const { data: { text } } = await Tesseract.recognize(
-                displayCanvas,
-                langCode,
-                { logger: m => console.log(m) }
-            );
-
-            if (processAction === 'extract') {
-                showResult(text, "Extracted Text");
-            } else {
-                if (!text || text.trim().length === 0) throw new Error("No text detected");
-
-                // 2. Perform Chunked Translation
-                const chunks = chunkText(text, 500); // 500 Chars limit
-                let fullTranslation = '';
-                
-                for (let i = 0; i < chunks.length; i++) {
-                    overlayText.innerText = `Translating Part ${i + 1}/${chunks.length}...`;
-                    
-                    const chunk = chunks[i];
-                    // Encode nicely
-                    const q = encodeURIComponent(chunk);
-                    const url = `https://api.mymemory.translated.net/get?q=${q}&langpair=${sourceLangIso}|${targetLang}`;
-                    
-                    const response = await fetch(url);
-                    const data = await response.json();
-                    
-                    if (data.responseStatus === 200) {
-                        fullTranslation += data.responseData.translatedText + " ";
-                    } else if (data.responseStatus === 429) {
-                         // Too many requests - Wait and retry simple backoff
-                         await new Promise(r => setTimeout(r, 1000));
-                         i--; // Retry this chunk
-                    } else {
-                        console.warn("Translation partial error:", data);
-                        fullTranslation += `[Translation Error]` + " ";
-                    }
-                }
-
-                showResult(fullTranslation, "Translation Result");
-            }
-
-        } catch (err) {
-            console.error(err);
-            alert("Error: " + err.message);
-        } finally {
-            overlay.style.display = 'none';
-        }
-    }
-
-    function showResult(text, title) {
-        document.getElementById('resultTitle').innerText = title;
-        document.getElementById('resultText').value = text;
-        document.getElementById('textResultModal').classList.remove('hidden');
-    }
-
-    function copyText() {
-        const txt = document.getElementById('resultText');
-        txt.select();
-        document.execCommand('copy');
-        
-        const copyBtn = document.querySelector('#textResultModal button[onclick="copyText()"]');
-        const originalText = copyBtn.innerText;
-        copyBtn.innerText = "Copied!";
-        setTimeout(() => copyBtn.innerText = originalText, 2000);
-    }
-
-    // --- PDF Export ---
-    function savePDF() {
-        const { jsPDF } = window.jspdf;
-        let imgData = displayCanvas.toDataURL("image/jpeg", 0.9);
-        let w = displayCanvas.width;
-        let h = displayCanvas.height;
-        let orientation = w > h ? 'l' : 'p';
-        const pdf = new jsPDF({ orientation: orientation, unit: 'px', format: [w, h] });
-        pdf.addImage(imgData, 'JPEG', 0, 0, w, h);
-        pdf.save(`document-scan-${currentFilter}.pdf`);
-    }
-
-    function retake() {
-        mode = 'camera';
-        if (warpedColorMat) { warpedColorMat.delete(); warpedColorMat = null; }
-        document.getElementById('result-controls').classList.add('hidden');
-        document.getElementById('camera-controls').classList.remove('hidden');
-        statusDiv.innerText = "Camera Ready";
-        startCamera();
-    }
-    
-    window.addEventListener('resize', () => {
-        if (mode === 'camera') resizeCanvasToFitVideo();
-        else if (mode === 'result') toggleFilter(currentFilter);
+    const del = document.createElement('button');
+    del.className = 'gthumb-del';
+    del.innerHTML = '✕';
+    del.title = 'Remove';
+    del.addEventListener('click', e => {
+      e.stopPropagation();
+      gallery.splice(i, 1);
+      renderGallery();
     });
+    wrap.appendChild(del);
+
+    wrap.addEventListener('click', () => {
+      document.querySelectorAll('.gthumb').forEach(t => t.classList.remove('sel'));
+      wrap.classList.add('sel');
+      selGalIdx = i;
+    });
+    grid.appendChild(wrap);
+  });
+}
+
+/* ============================================================
+   MODALS
+============================================================ */
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.backdrop').forEach(b => {
+  b.addEventListener('click', e => { if (e.target === b) b.classList.remove('open'); });
+});
+
+/* ============================================================
+   PROCESSING OVERLAY
+============================================================ */
+function setProc(on, label) {
+  procLabel.textContent = label || '';
+  procOverlay.classList.toggle('active', on);
+}
+
+/* ============================================================
+   TOAST
+============================================================ */
+let toastTimer;
+function toast(msg, dur=1800) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+
+/* ============================================================
+   POINT ORDERING
+============================================================ */
+function orderPts(pts) {
+  const sum  = p => p.x + p.y;
+  const diff = p => p.y - p.x;
+  const tl = pts.reduce((a,b) => sum(b) < sum(a) ? b : a);
+  const br = pts.reduce((a,b) => sum(b) > sum(a) ? b : a);
+  const rest = pts.filter(p => p !== tl && p !== br);
+  const tr = rest.reduce((a,b) => diff(b) < diff(a) ? b : a);
+  const bl = rest.reduce((a,b) => diff(b) > diff(a) ? b : a);
+  return [tl, tr, br, bl];
+}
+
+/* ============================================================
+   RESIZE
+============================================================ */
+window.addEventListener('resize', () => {
+  if (appMode === 'camera' && isStreaming) {
+    fitCanvas(video.videoWidth, video.videoHeight);
+  } else if (appMode === 'result' || appMode === 'crop') {
+    if (!warpedMat) return;
+    const W = warpedMat.cols, H = warpedMat.rows;
+    const vw = viewport.clientWidth, vh = viewport.clientHeight;
+    const sc = Math.min(vw/W, vh/H) * 0.98;
+    mainCanvas.style.width  = (W*sc)+'px';
+    mainCanvas.style.height = (H*sc)+'px';
+    if (appMode === 'crop') {
+      syncCropOverlaySize();
+      positionHandles();
+      drawCropMask();
+    }
+  }
+});
 </script>
 </body>
 </html>

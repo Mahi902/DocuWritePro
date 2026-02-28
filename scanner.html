@@ -577,11 +577,16 @@ const LANGUAGES = [
 function onOpenCvReady() {
   cvReady = true;
   const ls = document.getElementById('loading-screen');
-  ls.classList.add('hidden');
-  setTimeout(() => ls.style.display = 'none', 450);
+  if (ls) { ls.classList.add('hidden'); setTimeout(() => ls.style.display = 'none', 450); }
+  populateLangs();
+  if (!isStreaming) startCamera();
+}
+
+// Start camera immediately on page load — don't wait for OpenCV
+window.addEventListener('DOMContentLoaded', () => {
   populateLangs();
   startCamera();
-}
+});
 
 function populateLangs() {
   const s = document.getElementById('src-lang');
@@ -597,25 +602,33 @@ function populateLangs() {
    CAMERA
 ============================================================ */
 async function startCamera() {
-  if (!cvReady) return;
   stopCamera();
+  let newStream;
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
+    newStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode, width:{ ideal:1920 }, height:{ ideal:1080 } },
       audio: false
     });
-    video.srcObject = stream;
-    await video.play();
-    video.addEventListener('loadedmetadata', () => {
-      isStreaming = true;
-      fitCanvas(video.videoWidth, video.videoHeight);
-      snapBtn.disabled = false;
-      cancelAnimationFrame(animId);
-      scanLoop();
-    }, { once: true });
   } catch(e) {
     toast('Camera access denied', 3000);
+    return;
   }
+
+  stream = newStream;
+  video.srcObject = stream;
+
+  video.addEventListener('loadedmetadata', () => {
+    isStreaming = true;
+    fitCanvas(video.videoWidth, video.videoHeight);
+    snapBtn.disabled = false;
+    const ls = document.getElementById('loading-screen');
+    if (ls) { ls.classList.add('hidden'); setTimeout(() => ls.style.display = 'none', 450); }
+    cancelAnimationFrame(animId);
+    scanLoop();
+  }, { once: true });
+
+  // play() may reject on autoplay policy — that's fine, loadedmetadata still fires
+  video.play().catch(() => {});
 }
 
 function stopCamera() {

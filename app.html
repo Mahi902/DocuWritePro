@@ -1,0 +1,2320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>DocuWrite Pro 5.0.3.7</title>
+    <meta name="description" content="DocuWrite Pro Mobile App">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Mobile Web App Capable -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#f2f2f7">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+
+    <style>
+        /* --- 1. RESET & VARIABLES (THEMING) --- */
+        :root {
+            /* Default Light Mode Variables */
+            --primary-color: #007AFF;
+            --primary-light: rgba(0, 122, 255, 0.1);
+            --bg-body: #F2F2F7;
+            --bg-card: #FFFFFF;
+            --text-primary: #000000;
+            --text-secondary: #8E8E93;
+            --separator: #E5E5EA;
+            --danger: #FF3B30;
+            --danger-bg: rgba(255, 59, 48, 0.1);
+            --nav-bg: rgba(255, 255, 255, 0.85);
+            --nav-border: rgba(0,0,0,0.05);
+            --search-bg: rgba(142, 142, 147, 0.12);
+            --picker-overlay: rgba(0,0,0,0.4);
+            
+            /* Dimensions */
+            --nav-height: 84px;
+            --radius-xl: 24px;
+            --radius-lg: 16px;
+            
+            /* Shadows */
+            --shadow-card: 0 4px 12px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-float: 0 8px 24px rgba(0,0,0,0.15), 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Explicit Dark Mode Overrides */
+        html[data-theme="dark"] {
+            --primary-color: #0A84FF;
+            --primary-light: rgba(10, 132, 255, 0.2);
+            --bg-body: #000000;
+            --bg-card: #1C1C1E;
+            --text-primary: #FFFFFF;
+            --text-secondary: #98989D;
+            --separator: #38383A;
+            --nav-bg: rgba(28, 28, 30, 0.85);
+            --nav-border: rgba(255,255,255,0.1);
+            --search-bg: rgba(118, 118, 128, 0.24);
+            --picker-overlay: rgba(0,0,0,0.6);
+        }
+
+        /* Animation Control */
+        html.no-animations * {
+            transition: none !important;
+            animation: none !important;
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            -webkit-touch-callout: none;
+            user-select: none;
+        }
+
+        input, textarea, [contenteditable] { user-select: text; }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%; width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-primary);
+            overflow: hidden;
+            overscroll-behavior-y: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* --- 2. LAYOUT --- */
+        #app-container {
+            height: 100%; width: 100%;
+            display: flex; flex-direction: column;
+            padding-bottom: var(--nav-height);
+            position: relative;
+        }
+
+        .tab-view {
+            flex: 1;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            display: none;
+            padding: 20px;
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .tab-view.active { display: block; animation: fadeIn 0.25s ease-out; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- 3. BOTTOM NAV --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            height: var(--nav-height);
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--nav-border);
+            display: flex; justify-content: space-around; align-items: flex-start;
+            padding-top: 12px; z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-secondary); font-size: 11px; font-weight: 500;
+            flex: 1; cursor: pointer; transition: transform 0.1s;
+        }
+        .nav-item:active { transform: scale(0.9); }
+        .nav-item.active { color: var(--primary-color); }
+        .nav-item .material-symbols-rounded { 
+            font-size: 26px; margin-bottom: 4px; 
+            font-variation-settings: 'FILL' 0, 'wght' 400;
+            transition: all 0.2s;
+        }
+        .nav-item.active .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 500; }
+        
+        #nav-scan { display: none; } 
+        body.online #nav-scan { display: flex; }
+
+        /* --- 4. COMPONENTS --- */
+        h2 { font-size: 34px; font-weight: 700; margin: 20px 0 15px 0; letter-spacing: -0.5px; color: var(--text-primary); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin: 30px 0 15px 0; }
+        .section-title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
+        .clear-btn { color: var(--primary-color); font-size: 15px; font-weight: 600; padding: 8px 0; float: right;}
+
+        /* Quick Actions */
+        .quick-actions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 25px; }
+        .action-btn {
+            background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px;
+            display: flex; flex-direction: row; align-items: center;
+            box-shadow: var(--shadow-card); transition: transform 0.1s; cursor: pointer;
+        }
+        .action-btn:active { transform: scale(0.97); background: var(--separator); }
+        .action-icon-circle {
+            width: 44px; height: 44px; background: var(--primary-light); color: var(--primary-color);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 12px; flex-shrink: 0;
+        }
+        .action-label { font-size: 15px; font-weight: 600; text-align: left; line-height: 1.2; }
+        
+        .action-btn.full-width {
+            grid-column: 1 / -1;
+            /* Extra visual distinction */
+            background: var(--bg-card);
+        }
+
+        /* Tool Grid (Default) */
+        .tools-grid, .recent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(105px, 1fr)); gap: 15px; padding-bottom: 20px; }
+        .tool-card {
+            background: var(--bg-card); border-radius: var(--radius-xl); padding: 18px 10px;
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            box-shadow: var(--shadow-card); transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+        }
+        .tool-card:active { transform: scale(0.95); opacity: 0.8; }
+        .tool-card span.material-symbols-rounded.tool-icon-main { 
+            font-size: 32px; color: var(--primary-color); margin-bottom: 12px;
+            background: var(--primary-light); padding: 10px; border-radius: 16px; 
+        }
+        .tool-name { font-size: 13px; line-height: 1.35; font-weight: 500; color: var(--text-primary); }
+        
+        /* Pinned Indicator */
+        .pinned-star {
+            position: absolute; top: 8px; right: 8px; font-size: 16px;
+            color: #FF9500; font-variation-settings: 'FILL' 1; display: none;
+        }
+        .tool-card.pinned .pinned-star { display: block; }
+        
+        /* Tool List (Card View) */
+        .tools-list, .recents-list { display: flex; flex-direction: column; gap: 8px; padding-bottom: 20px; }
+        .list-card {
+            background: var(--bg-card); border-radius: var(--radius-lg); padding: 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: var(--shadow-card); transition: all 0.2s; cursor: pointer;
+            position: relative;
+        }
+        .list-card:active { background: var(--separator); transform: scale(0.99); }
+        .list-card-left { display: flex; align-items: center; gap: 12px; }
+        .list-card-icon {
+            width: 40px; height: 40px; background: var(--primary-light); color: var(--primary-color);
+            border-radius: 10px; display: flex; align-items: center; justify-content: center;
+        }
+        .list-card-details { display: flex; flex-direction: column; }
+        .list-card-name { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .list-card-category { font-size: 13px; color: var(--text-secondary); }
+        .list-card-chevron { color: var(--text-secondary); opacity: 0.5; }
+        .list-card.pinned .list-card-name::after {
+            content: " ★"; color: #FF9500; font-size: 12px; vertical-align: middle;
+        }
+
+        /* Templates (Horizontal) */
+        #templates-section { margin-bottom: 10px; }
+        .templates-grid {
+            display: flex; overflow-x: auto; gap: 15px; padding: 5px 5px 20px 5px;
+            scroll-snap-type: x mandatory; scrollbar-width: none;
+        }
+        .templates-grid::-webkit-scrollbar { display: none; }
+        .template-card {
+            min-width: 140px; width: 140px; background: var(--bg-card); border-radius: var(--radius-lg);
+            overflow: hidden; box-shadow: var(--shadow-card); scroll-snap-align: start;
+        }
+        .template-img { width: 100%; height: 90px; object-fit: cover; background: #eee; }
+        .template-name { padding: 10px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* Show All Templates Button */
+        .show-all-templates-btn {
+            min-width: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: var(--bg-card); color: var(--primary-color); border-radius: var(--radius-lg);
+            font-weight: 600; font-size: 13px; box-shadow: var(--shadow-card); cursor: pointer;
+            scroll-snap-align: start; transition: transform 0.2s, background-color 0.2s;
+            border: 1px solid transparent; text-align: center; padding: 10px;
+        }
+        .show-all-templates-btn::before {
+            content: "grid_view"; font-family: "Material Symbols Rounded"; font-size: 28px;
+            margin-bottom: 8px; font-variation-settings: 'FILL' 0, 'wght' 400;
+        }
+        .show-all-templates-btn:active { transform: scale(0.96); background: var(--separator); }
+        html[data-theme="dark"] .show-all-templates-btn { background: var(--bg-card); color: var(--primary-color); border: 1px solid var(--separator); }
+        html[data-theme="dark"] .show-all-templates-btn:active { background: rgba(255, 255, 255, 0.1); border-color: var(--primary-color); }
+
+        /* Tools Bar */
+        .tools-top-bar {
+            position: sticky; top: -1px; z-index: 100;
+            background: var(--bg-body); backdrop-filter: blur(10px);
+            padding: 10px 0; display: flex; gap: 12px; margin-bottom: 10px; align-items: center;
+        }
+        .search-box {
+            flex: 1; background: var(--search-bg); border-radius: 10px; padding: 10px 12px;
+            display: flex; align-items: center;
+        }
+        .search-box input { border: none; background: transparent; width: 100%; outline: none; margin-left: 8px; font-size: 16px; color: var(--text-primary); }
+        .sort-btn { 
+            width: 44px; height: 44px; background: var(--bg-card); border: none; border-radius: 50%; 
+            color: var(--primary-color); box-shadow: var(--shadow-card); display: flex; align-items: center; justify-content: center;
+        }
+        .tool-category h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 25px 0 10px 5px; font-weight: 600; }
+
+        /* --- 5. SETTINGS (CUSTOM LIST) --- */
+        #tab-settings { padding: 0; background: var(--bg-body); }
+        #tab-settings h2 { padding: 20px 20px 5px 20px; }
+        
+        .settings-section-title {
+            margin: 24px 0 8px 20px; font-size: 13px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600;
+        }
+
+        .settings-group {
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin: 0 16px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .setting-row:not(:last-child)::after {
+            content: ""; position: absolute; bottom: 0; right: 0;
+            width: calc(100% - 20px); height: 1px; background: var(--separator);
+        }
+
+        .setting-row:active { background: var(--separator); }
+        .setting-label { font-size: 16px; color: var(--text-primary); font-weight: 500; }
+        .setting-value-container { display: flex; align-items: center; gap: 8px; }
+        .setting-value { font-size: 16px; color: var(--text-secondary); }
+        .setting-chevron { color: var(--text-secondary); font-size: 20px; opacity: 0.5; }
+
+        .btn-danger {
+            margin: 30px 16px; width: calc(100% - 32px); background: var(--bg-card);
+            color: var(--danger); border: none; padding: 16px; border-radius: 12px;
+            font-size: 16px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .btn-danger:active { background: var(--danger-bg); }
+
+        /* --- 6. CUSTOM BOTTOM SHEET PICKER --- */
+        #picker-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--picker-overlay); z-index: 2500;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #picker-overlay.open { opacity: 1; pointer-events: auto; }
+
+        #picker-sheet {
+            background: var(--bg-body);
+            border-radius: 20px 20px 0 0;
+            padding: 20px 16px 40px 16px;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            max-height: 80vh; display: flex; flex-direction: column;
+        }
+        #picker-overlay.open #picker-sheet { transform: translateY(0); }
+
+        .picker-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding: 0 5px;
+        }
+        .picker-title { font-size: 18px; font-weight: 700; }
+        .picker-btn { 
+            width: 36px; height: 36px; background: rgba(120,120,120,0.15); 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .picker-btn:active { background: rgba(120,120,120,0.3); }
+
+        .picker-options {
+            background: var(--bg-card); border-radius: 12px; overflow-y: auto; overflow-x: hidden;
+        }
+        .picker-option {
+            padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;
+            font-size: 16px; border-bottom: 1px solid var(--separator); cursor: pointer;
+        }
+        .picker-option:last-child { border-bottom: none; }
+        .picker-option:active { background: var(--separator); }
+        .picker-option.selected { color: var(--primary-color); font-weight: 600; }
+        .picker-check { display: none; color: var(--primary-color); font-size: 20px; }
+        .picker-option.selected .picker-check { display: block; }
+        
+        /* Pinning specific styles in picker */
+        .pin-option .material-symbols-rounded.pin-icon {
+            color: var(--text-secondary); opacity: 0.3; transition: all 0.2s;
+        }
+        .pin-option.pinned .material-symbols-rounded.pin-icon {
+            color: #FF9500; opacity: 1; font-variation-settings: 'FILL' 1;
+        }
+        
+        @keyframes jiggle {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.1) rotate(-3deg); }
+            50% { transform: scale(1.1) rotate(3deg); }
+            75% { transform: scale(1.1) rotate(-3deg); }
+            100% { transform: scale(1) rotate(0); }
+        }
+        .jiggle-anim { animation: jiggle 0.4s ease-in-out; }
+        
+        /* Move animation */
+        .move-up-anim { animation: moveUp 0.4s ease-in-out; }
+        @keyframes moveUp {
+            0% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(-10px); opacity: 0.5; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* --- 7. TOOL IFRAME (Slide Up/Down) --- */
+        #tool-iframe-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 2000;
+            display: flex; flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+            box-shadow: -10px 0 20px rgba(0,0,0,0.1);
+        }
+        #tool-iframe-container.visible { transform: translateY(0); }
+        
+        .iframe-header {
+            height: 56px; background: var(--nav-bg); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--separator);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px; flex-shrink: 0; padding-top: env(safe-area-inset-top);
+        }
+        .close-tool-btn { 
+            color: var(--primary-color); font-weight: 600; font-size: 16px;
+            padding: 8px; cursor: pointer; 
+        }
+
+        /* Setup & Offline */
+        .offline-banner {
+            background-color: #323232; color: white; padding: 12px 16px; font-size: 13px; font-weight: 500;
+            display: none; justify-content: space-between; align-items: center;
+            position: absolute; top: env(safe-area-inset-top); left: 16px; right: 16px;
+            border-radius: 8px; z-index: 900; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        body.offline .offline-banner { display: flex; }
+        body.offline.banner-dismissed .offline-banner { display: none; }
+        
+        #setup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 3000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px; text-align: center;
+        }
+        #setup-overlay.hidden { display: none; }
+        .setup-btn {
+            background: var(--primary-color); color: white; border: none;
+            padding: 16px 48px; border-radius: 30px; font-size: 17px; font-weight: 600; margin-top: 40px;
+            box-shadow: 0 4px 12px rgba(0,122,255,0.3); transition: transform 0.2s;
+        }
+        .setup-btn:active { transform: scale(0.96); }
+
+        #popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); z-index: 2500; display: none;
+            backdrop-filter: blur(4px); align-items: center; justify-content: center;
+        }
+        .popup-content {
+            background: var(--bg-card); width: 85%; max-width: 320px;
+            border-radius: 14px; padding: 24px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); text-align: center;
+        }
+        
+        .online-only { opacity: 1; }
+        body.offline .online-only { opacity: 0.4; pointer-events: none; filter: grayscale(1); }
+
+        /* --- CACHING IFRAME (Hidden) --- */
+        #caching-iframe {
+            position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: none;
+        }
+
+        /* --- RIPPLE EFFECT --- */
+        .ripple {
+            position: absolute; background: rgba(26, 115, 232, 0.15); border-radius: 50%;
+            transform: scale(0); animation: rippleEffect 0.5s linear; pointer-events: none;
+        }
+        @keyframes rippleEffect { to { transform: scale(4); opacity: 0; } }
+
+        /* --- 8. ABOUT APP OFFLINE STATE --- */
+        .offline-content {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; padding: 40px; text-align: center;
+        }
+        .offline-icon { font-size: 64px; color: var(--text-secondary); margin-bottom: 20px; }
+        .offline-message { font-size: 17px; color: var(--text-secondary); line-height: 1.4; max-width: 300px; }
+
+        /* --- 9. VIEW SELECTOR --- */
+        .view-selector {
+            display: flex; background: var(--search-bg); border-radius: 10px; overflow: hidden;
+            margin-left: 8px; height: 36px;
+        }
+        .view-option {
+            padding: 0 12px; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 500; color: var(--text-secondary); cursor: pointer; min-width: 70px;
+        }
+        .view-option.active { background: var(--primary-color); color: white; }
+
+        /* --- 10. LOADER --- */
+        .loader {
+            width: 40px; height: 40px; border: 3px solid var(--separator); border-top: 3px solid var(--primary-color);
+            border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* --- 11. LOCK APP OVERLAYS --- */
+        .fullscreen-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-body); z-index: 5000;
+            display: flex; flex-direction: column; 
+            justify-content: center; align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+            transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .fullscreen-overlay.active { transform: translateY(0); }
+        
+        .lock-content-wrapper {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 350px;
+            margin: auto;
+        }
+        
+        .pin-display {
+            display: flex; gap: 20px; margin: 30px 0;
+        }
+        .pin-dot {
+            width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--text-secondary);
+            transition: all 0.2s;
+        }
+        .pin-dot.filled { background: var(--text-primary); border-color: var(--text-primary); }
+        .pin-dot.error { border-color: var(--danger); background: var(--danger); animation: shake 0.4s; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        
+        .keypad {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; 
+            width: 100%; max-width: 280px; margin-top: 10px; margin-bottom: 20px;
+        }
+        .key {
+            width: 70px; height: 70px; border-radius: 50%; background: rgba(128,128,128,0.1);
+            display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500;
+            color: var(--text-primary); cursor: pointer; margin: 0 auto;
+            transition: background 0.2s;
+        }
+        @media (max-height: 600px) {
+            .key { width: 60px; height: 60px; font-size: 20px; }
+            .lock-icon { font-size: 40px; margin-bottom: 10px; }
+            .pin-display { margin: 20px 0; }
+        }
+        
+        .key:active { background: rgba(128,128,128,0.3); }
+        .key.blank { background: transparent; cursor: default; }
+        .key.delete { background: transparent; color: var(--text-primary); font-size: 16px; font-weight: 600;}
+        
+        .lock-icon {
+            font-size: 48px; color: var(--primary-color); margin-bottom: 20px;
+        }
+        .lock-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+        .lock-desc { color: var(--text-secondary); font-size: 15px; text-align: center; max-width: 300px; line-height: 1.5; }
+        
+        #lock-screen-overlay { z-index: 9999; background: var(--bg-body); }
+
+        /* --- 12. DYNOTE & FLOATING WINDOW --- */
+        #quick-note-fab {
+            position: fixed;
+            bottom: 30%; right: 0;
+            width: 50px; height: 50px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50% 0 0 50%;
+            display: none; /* Toggled by JS */
+            align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+            z-index: 2200; /* Higher than tool iframe */
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #quick-note-fab:active { transform: scale(0.9); }
+        
+        #quick-note-window {
+            position: fixed;
+            width: 320px; height: 400px;
+            top: 20%; left: 10%;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-float);
+            z-index: 2201; /* Higher than FAB */
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--separator);
+            resize: both;
+            min-width: 250px; min-height: 200px;
+            max-width: 90vw; max-height: 90vh;
+        }
+        
+        .qn-header {
+            height: 36px;
+            background: var(--nav-bg);
+            border-bottom: 1px solid var(--separator);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 10px;
+            cursor: move;
+            flex-shrink: 0;
+        }
+        
+        .qn-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        .qn-close { 
+            cursor: pointer; padding: 4px; border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center;
+        }
+        .qn-close:hover { background: rgba(128,128,128,0.1); }
+        
+        #qn-iframe { border: none; flex: 1; width: 100%; height: 100%; }
+        
+        /* Resize handle visual cue */
+        #quick-note-window::after {
+            content: "";
+            position: absolute; bottom: 2px; right: 2px;
+            width: 12px; height: 12px;
+            background: linear-gradient(135deg, transparent 50%, var(--text-secondary) 50%);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body class="online">
+
+    <!-- --- LOCK SCREEN OVERLAY (APP STARTUP) --- -->
+    <div id="lock-screen-overlay" class="fullscreen-overlay">
+        <div class="lock-content-wrapper">
+            <span class="material-symbols-rounded lock-icon">lock</span>
+            <div class="lock-title">App Locked</div>
+            <div class="lock-desc" id="lock-msg">Enter PIN to unlock</div>
+            
+            <div class="pin-display" id="unlock-pin-display">
+                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            </div>
+            
+            <div class="keypad" id="unlock-keypad">
+                <div class="key" onclick="enterPinDigit(1)">1</div>
+                <div class="key" onclick="enterPinDigit(2)">2</div>
+                <div class="key" onclick="enterPinDigit(3)">3</div>
+                <div class="key" onclick="enterPinDigit(4)">4</div>
+                <div class="key" onclick="enterPinDigit(5)">5</div>
+                <div class="key" onclick="enterPinDigit(6)">6</div>
+                <div class="key" onclick="enterPinDigit(7)">7</div>
+                <div class="key" onclick="enterPinDigit(8)">8</div>
+                <div class="key" onclick="enterPinDigit(9)">9</div>
+                <div class="key blank"></div>
+                <div class="key" onclick="enterPinDigit(0)">0</div>
+                <div class="key delete" onclick="deletePinDigit()">Delete</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- --- PIN SETUP / MANAGE OVERLAY --- -->
+    <div id="pin-setup-overlay" class="fullscreen-overlay">
+        <div style="position:absolute; top:20px; left:20px; cursor:pointer; z-index:10;" onclick="closePinSetup()">
+            <span class="material-symbols-rounded" style="font-size:30px; color:var(--primary-color);">close</span>
+        </div>
+        
+        <div class="lock-content-wrapper">
+            <span class="material-symbols-rounded lock-icon" id="setup-icon">lock_open</span>
+            <div class="lock-title" id="setup-title">Set PIN</div>
+            <div class="lock-desc" id="setup-desc">Create a 4-digit PIN code</div>
+            <div class="lock-desc" id="setup-warning" style="color:var(--danger); font-size:13px; margin-top:10px; display:none;">
+                If you forget your PIN, you are permanently locked out of the app. In such case, the only way to enter is to reset all app data.
+            </div>
+            
+            <div class="pin-display" id="setup-pin-display">
+                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            </div>
+            
+            <div class="keypad" id="setup-keypad">
+                <div class="key" onclick="enterSetupDigit(1)">1</div>
+                <div class="key" onclick="enterSetupDigit(2)">2</div>
+                <div class="key" onclick="enterSetupDigit(3)">3</div>
+                <div class="key" onclick="enterSetupDigit(4)">4</div>
+                <div class="key" onclick="enterSetupDigit(5)">5</div>
+                <div class="key" onclick="enterSetupDigit(6)">6</div>
+                <div class="key" onclick="enterSetupDigit(7)">7</div>
+                <div class="key" onclick="enterSetupDigit(8)">8</div>
+                <div class="key" onclick="enterSetupDigit(9)">9</div>
+                <div class="key blank"></div>
+                <div class="key" onclick="enterSetupDigit(0)">0</div>
+                <div class="key delete" onclick="deleteSetupDigit()">Delete</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- --- LOCK INFO PAGE (BEFORE SETUP) --- -->
+    <div id="lock-info-overlay" class="fullscreen-overlay">
+        <div style="position:absolute; top:20px; left:20px; cursor:pointer; z-index:10;" onclick="closeLockInfo()">
+            <span class="material-symbols-rounded" style="font-size:30px; color:var(--primary-color);">arrow_back</span>
+        </div>
+        
+        <div class="lock-content-wrapper">
+            <span class="material-symbols-rounded lock-icon">shield_lock</span>
+            <div class="lock-title">Lock App using PIN Code</div>
+            <div class="lock-desc" style="margin-top:10px;">
+                If you keep sensitive information stored in the DocuWrite Pro app, use this feature to set a pin code which is required to unlock and use the app.
+            </div>
+            
+            <div id="no-pin-actions" style="margin-top: 30px;">
+                <button class="setup-btn" onclick="startPinSetup()" style="margin-top:0;">Set PIN</button>
+            </div>
+            
+            <div id="has-pin-actions" style="display:none; width:100%; padding:0 30px; margin-top: 30px;">
+                <div class="settings-group" style="margin:0;">
+                    <div class="setting-row" onclick="startPinChange()">
+                        <span class="setting-label">Change PIN</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+                <button class="btn-danger" onclick="resetPinFlow()" style="margin: 20px 0; width:100%;">
+                    Reset Password
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- SETUP OVERLAY --- -->
+    <div id="setup-overlay">
+        <div style="width: 100px; height: 100px; background: white; border-radius: 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 30px;">
+            <span class="material-symbols-rounded" style="font-size: 56px; color: var(--primary-color);">cloud_sync</span>
+        </div>
+        <h2 style="font-size: 28px; margin-bottom: 12px;">Welcome to<br>DocuWrite Pro</h2>
+        <p style="font-size: 17px; color: var(--text-secondary); line-height: 1.5; max-width: 300px;">
+            We're downloading all tools for offline use. This only happens once.
+        </p>
+        <button id="start-setup-btn" class="setup-btn">Get Started</button>
+        <p id="setup-status" style="margin-top: 24px; font-size: 13px; color: var(--text-secondary); font-weight: 500;"></p>
+        <div id="caching-progress" style="margin-top: 15px; width: 200px; height: 4px; background: var(--separator); border-radius: 2px; overflow: hidden;">
+            <div id="progress-bar" style="width: 0%; height: 100%; background: var(--primary-color); transition: width 0.3s;"></div>
+        </div>
+    </div>
+
+    <!-- --- CUSTOM PICKER (BOTTOM SHEET) --- -->
+    <div id="picker-overlay" onclick="closePicker()">
+        <div id="picker-sheet" onclick="event.stopPropagation()">
+            <div class="picker-header">
+                <!-- Left Action Button (Edit Mode) -->
+                <div class="picker-btn" id="picker-edit-btn" onclick="togglePinMode()">
+                    <span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">edit</span>
+                </div>
+                
+                <span class="picker-title" id="picker-title">Select</span>
+                
+                <!-- Right Action Button (Close) -->
+                <div class="picker-btn" onclick="closePicker()">
+                    <span class="material-symbols-rounded" style="font-size: 20px; color: var(--text-secondary);">close</span>
+                </div>
+            </div>
+            <div class="picker-options" id="picker-options-container">
+                <!-- Options injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- --- QUICK NOTE FLOATING COMPONENTS --- -->
+    <div id="quick-note-fab" onclick="toggleQuickNoteWindow()">
+        <span class="material-symbols-rounded" style="font-size: 28px;">add</span>
+    </div>
+
+    <div id="quick-note-window">
+        <div class="qn-header" id="qn-header">
+            <span class="qn-title">Quick Note</span>
+            <div class="qn-close" onclick="toggleQuickNoteWindow()">
+                <span class="material-symbols-rounded" style="font-size: 18px; color: var(--text-secondary);">close</span>
+            </div>
+        </div>
+        <iframe id="qn-iframe" src="about:blank"></iframe>
+    </div>
+
+    <!-- --- APP CONTAINER --- -->
+    <div id="app-container">
+        
+        <!-- Offline Banner -->
+        <div class="offline-banner" id="offline-banner">
+            <span style="display:flex; align-items:center; gap:8px;"><span class="material-symbols-rounded" style="font-size:16px">wifi_off</span> Offline Mode</span>
+            <div class="banner-actions">
+                <button onclick="showOfflinePopup()" style="background:rgba(255,255,255,0.1); border:none; color:white; border-radius:4px; padding:4px 8px;">Details</button>
+                <button onclick="dismissBanner()" style="background:rgba(255,255,255,0.1); border:none; color:white; border-radius:4px; padding:4px 8px; margin-left:5px;">✕</button>
+            </div>
+        </div>
+
+        <!-- === HOME TAB === -->
+        <div id="tab-home" class="tab-view active">
+            <h2 class="home-header">Home</h2>
+            
+            <div class="quick-actions">
+                <div class="action-btn" id="btn-new-doc">
+                    <div class="action-icon-circle"><span class="material-symbols-rounded">note_add</span></div>
+                    <div class="action-label">New<br>Document</div>
+                </div>
+                <div class="action-btn" id="btn-new-img">
+                    <div class="action-icon-circle"><span class="material-symbols-rounded">add_photo_alternate</span></div>
+                    <div class="action-label">Edit<br>Image</div>
+                </div>
+                <div class="action-btn" id="btn-new-code">
+                    <div class="action-icon-circle"><span class="material-symbols-rounded">terminal</span></div>
+                    <div class="action-label">Write<br>Code</div>
+                </div>
+                <div class="action-btn" onclick="switchTab('tools')">
+                    <div class="action-icon-circle" style="background: var(--bg-body); color: var(--text-secondary);"><span class="material-symbols-rounded">apps</span></div>
+                    <div class="action-label">All<br>Tools</div>
+                </div>
+                
+                <!-- NEW DYNOTE BUTTON (Conditionally Shown) -->
+                <div class="action-btn full-width" id="btn-dynote" style="display: none;" onclick="openDyNoteTool()">
+                    <div class="action-icon-circle" style="background: rgba(142, 142, 147, 0.15); color: var(--text-secondary);">
+                        <span class="material-symbols-rounded">sticky_note_2</span>
+                    </div>
+                    <div class="action-label">My DyNotes</div>
+                </div>
+            </div>
+
+            <!-- Templates Section -->
+            <div id="templates-section">
+                <div class="section-header">
+                    <span class="section-title">Templates</span>
+                </div>
+                <div class="templates-grid" id="templates-grid"></div>
+            </div>
+
+            <div class="section-header">
+                <span class="section-title">Recents</span>
+                <div class="view-selector" style="margin-left: auto; margin-right: 0;">
+                    <span class="clear-btn" onclick="clearRecents()">‎‎ ‎  Clear‎‎ ‎ ‎  </span>
+                </div>
+            </div>
+
+            <div class="recent-grid" id="recent-grid"></div>
+            <div class="recents-list" id="recents-list" style="display: none;"></div>
+            <div style="height: 60px;"></div>
+        </div>
+
+        <!-- === TOOLS TAB === -->
+        <div id="tab-tools" class="tab-view">
+            <div class="tools-top-bar">
+                <div class="search-box">
+                    <span class="material-symbols-rounded" style="color:var(--text-secondary); opacity:0.7;">search</span>
+                    <input type="text" id="tool-search" placeholder="Search">
+                </div>
+                
+                <button class="sort-btn" id="sort-trigger"><span class="material-symbols-rounded">sort</span></button>
+            </div>
+            <div id="tools-list-container"></div>
+            <div style="height: 80px;"></div>
+        </div>
+
+        <!-- === SETTINGS TAB === -->
+        <div id="tab-settings" class="tab-view">
+            <h2>Settings</h2>
+            
+            <!-- Group 1: About -->
+            <div class="settings-group" style="margin-top: 10px;">
+                <div class="setting-row" onclick="openAboutApp()">
+                    <span class="setting-label">About App</span>
+                    <div class="setting-value-container">
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PREFERENCES -->
+            <div class="settings-section-title">Preferences</div>
+            <div class="settings-group">
+                <!-- Manual Theme Selector -->
+                <div class="setting-row" onclick="openThemePicker()">
+                    <span class="setting-label">Theme</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-theme">System</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+
+                <!-- View Mode -->
+                <div class="setting-row" onclick="openViewModePicker()">
+                    <span class="setting-label">Tool View</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-view-mode">Grid View</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+
+                <!-- Animations -->
+                <div class="setting-row" onclick="openAnimationsPicker()">
+                    <span class="setting-label">Animations</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-animations">Enabled</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- DEFAULTS -->
+            <div class="settings-section-title">Defaults</div>
+            <div class="settings-group">
+                <!-- Document Editor -->
+                <div class="setting-row" onclick="openEditorPicker('doc')">
+                    <span class="setting-label">Document Editor</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-doc-editor">Default</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+                
+                <!-- Image Editor -->
+                <div class="setting-row" onclick="openEditorPicker('img')">
+                    <span class="setting-label">Image Editor</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-img-editor">Drawing Board</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+
+                <!-- Code Editor -->
+                <div class="setting-row" onclick="openEditorPicker('code')">
+                    <span class="setting-label">Code Editor</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-code-editor">HTML</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECURITY & EXTRA -->
+            <div class="settings-section-title">Security</div>
+            <div class="settings-group">
+                <div class="setting-row" onclick="openLockApp()">
+                    <span class="setting-label">Lock App</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-lock-status">Off</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- EXTRA DIVISION (DYNOTE) -->
+            <div class="settings-section-title">Extra</div>
+            <div class="settings-group">
+                <!-- DyNote Toggle -->
+                <div class="setting-row" onclick="openDyNotePicker()">
+                    <span class="setting-label">DyNote Functionality</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-dynote">Disabled</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+                <!-- Quick Note Toggle (Nested) -->
+                <div class="setting-row" id="quick-note-setting" style="display: none;" onclick="openQuickNotePicker()">
+                    <span class="setting-label">Quick Note</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-quick-note">Disabled</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+                <!-- Scanner Functionality Toggle -->
+                <div class="setting-row" onclick="openScannerPicker()">
+                    <span class="setting-label">Scanner Functionality</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-scanner">Enabled</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+                <!-- Template Support Toggle -->
+                <div class="setting-row" onclick="openTemplatesPicker()">
+                    <span class="setting-label">Template Support</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-templates">Enabled</span>
+                        <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-danger" id="btn-update-app">
+                <span class="material-symbols-rounded" style="font-size: 20px; margin-right: 8px;">system_update_alt</span>
+                Reset & Update App
+            </button>
+
+            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.0.3.7 • Build 2026</p>
+            <div style="height: 80px;"></div>
+        </div>
+
+    </div>
+
+    <!-- --- BOTTOM NAVIGATION --- -->
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')" id="nav-home">
+            <span class="material-symbols-rounded">home</span>
+            <span>Home</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tools')" id="nav-tools">
+            <span class="material-symbols-rounded">grid_view</span>
+            <span>Tools</span>
+        </div>
+        <div class="nav-item online-only" id="nav-scan" onclick="openScanner()">
+            <span class="material-symbols-rounded">qr_code_scanner</span>
+            <span>Scan</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('settings')" id="nav-settings">
+            <span class="material-symbols-rounded">settings</span>
+            <span>Settings</span>
+        </div>
+    </div>
+
+    <!-- --- TOOL IFRAME OVERLAY --- -->
+    <div id="tool-iframe-container">
+        <div class="iframe-header">
+            <div class="iframe-title" id="iframe-title-text">Tool</div>
+            <div class="close-tool-btn" onclick="closeTool()">Home</div>
+        </div>
+        <iframe id="app-frame" src="about:blank" style="flex:1; border:none; width:100%; height:100%;"></iframe>
+    </div>
+
+    <!-- --- ABOUT APP IFRAME --- -->
+    <div id="about-iframe-container" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 2001; flex-direction: column;">
+        <div class="iframe-header" style="width: 100%; flex-shrink: 0;">
+            <div class="iframe-title">About DocuWrite Pro</div>
+            <div class="close-tool-btn" onclick="closeAboutApp()">Close</div>
+        </div>
+        <div id="about-loader" class="offline-content">
+            <div class="loader"></div>
+            <p style="color: var(--text-secondary);">Loading...</p>
+        </div>
+        <div id="about-offline" class="offline-content">
+            <span class="material-symbols-rounded offline-icon">wifi_off</span>
+            <p class="offline-message">Connect to the internet to view app information.</p>
+        </div>
+        <iframe id="about-frame" src="about:blank" style="border:none; width:100%; height:100%; flex: 1;"></iframe>
+    </div>
+
+    <!-- --- OFFLINE POPUP --- -->
+    <div id="popup-overlay" onclick="this.style.display='none'">
+        <div class="popup-content" onclick="event.stopPropagation()">
+            <span class="material-symbols-rounded" style="font-size: 40px; color: var(--text-secondary); margin-bottom: 10px;">wifi_off</span>
+            <h3 style="margin-top:0">Unavailable In Offline Mode</h3>
+            <ul style="padding-left: 20px; line-height: 1.6; font-size: 14px; text-align:left; color:var(--text-secondary); margin-bottom:20px;">
+                <li>Word Finder</li>
+                <li>Markup</li>
+                <li>Translator</li>
+                <li>Spell Checker</li>
+                <li>Share File</li>
+                <li>Chart Maker</li>
+                <li>Text Scanner</li>
+                <li>HTML Writer (AI)</li>
+                <li>All Collaboration Tools</li>
+            </ul>
+            <button onclick="document.getElementById('popup-overlay').style.display='none'" style="width:100%; padding:14px; background:var(--bg-body); color:var(--primary-color); border:none; border-radius:12px; font-weight:600; font-size:16px;">Close</button>
+        </div>
+    </div>
+
+    <!-- --- HIDDEN IFRAME FOR PAGE CACHING --- -->
+    <iframe id="caching-iframe" title="Caching Frame"></iframe>
+
+    <script>
+        // --- 1. DATA & CONFIG ---
+        const BASE_URL = "https://mahi902.github.io/DocuWritePro/";
+        const TEMPLATE_JSON_URL = BASE_URL + "temp.json";
+        const DYNOTE_URL = BASE_URL + "dynote.html";
+
+        // Tool Database (Updated with IDs for pinning)
+        const toolsDB = [
+            // Document Editing
+            { id: "doc_editor", name: "Editor", url: "document-writer.html", cat: "Document Editing", icon: "edit" },
+            { id: "doc_viewer", name: "Viewer", url: "viewer.html", cat: "Document Editing", icon: "visibility" },
+            { id: "markup", name: "Markup", url: "markup.html", cat: "Document Editing", icon: "ink_highlighter", onlineOnly: true },
+            { id: "word_finder", name: "Word Finder", url: "word-description-finder.html", cat: "Document Editing", icon: "menu_book", onlineOnly: true },
+            { id: "translator", name: "Translator", url: "translator.html", cat: "Document Editing", icon: "language", onlineOnly: true },
+            { id: "signer", name: "Signer", url: "document-signer.html", cat: "Document Editing", icon: "draw" },
+            { id: "find_replace", name: "Find & Replace", url: "findandreplacer.html", cat: "Document Editing", icon: "find_replace" },
+            { id: "page_nums", name: "Page Numbers", url: "page-number-adder.html", cat: "Document Editing", icon: "format_list_numbered" },
+            { id: "spreadsheet", name: "Spreadsheet", url: "spreadsheet.html", cat: "Document Editing", icon: "grid_view" },
+            { id: "merge", name: "Reorder & Merge", url: "rm.html", cat: "Document Editing", icon: "layers" },
+            { id: "encrypt", name: "Encryptor", url: "fe.html", cat: "Document Editing", icon: "shield" },
+            { id: "chart", name: "Chart Maker", url: "chart-maker.html", cat: "Document Editing", icon: "bar_chart", onlineOnly: true },
+            { id: "graph", name: "Graph Maker", url: "graphmaker.html", cat: "Document Editing", icon: "query_stats" },
+            { id: "whiteboard", name: "Whiteboard", url: "whiteboard.html", cat: "Document Editing", icon: "ad" },
+            { id: "mindmap", name: "Mind Map", url: "mmm.html", cat: "Document Editing", icon: "graph_2" },
+            { id: "table", name: "Table Maker", url: "table-maker.html", cat: "Document Editing", icon: "table_chart" },
+            { id: "watermark", name: "Watermarker", url: "watermarker.html", cat: "Document Editing", icon: "filter_alt" },
+            { id: "email", name: "Email Writer", url: "email-writer.html", cat: "Document Editing", icon: "email" },
+            { id: "spell", name: "Spell Checker", url: "spell-checker.html", cat: "Document Editing", icon: "spellcheck", onlineOnly: true },
+            { id: "extractor", name: "Extractor", url: "file-extractor.html", cat: "Document Editing", icon: "unarchive" },
+            { id: "qr", name: "QR Maker", url: "qr-code-maker.html", cat: "Document Editing", icon: "qr_code" },
+            { id: "id_card", name: "ID Maker", url: "id-card-maker.html", cat: "Document Editing", icon: "badge" },
+            { id: "zip", name: "Zipper", url: "file-zipper.html", cat: "Document Editing", icon: "archive" },
+            { id: "pdf_conv", name: "PDF Converter", url: "converters.html", cat: "Document Editing", icon: "picture_as_pdf" },
+            { id: "compress", name: "Compressor", url: "pdfcompressor.html", cat: "Document Editing", icon: "compress" },
+            { id: "context", name: "Context", url: "context-field.html", cat: "Document Editing", icon: "summarize" },
+            { id: "metadata", name: "Metadata", url: "metadatainspector.html", cat: "Document Editing", icon: "movie_info" },
+            { id: "gift", name: "Gift Card", url: "gift-card-maker.html", cat: "Document Editing", icon: "card_giftcard" },
+            { id: "share", name: "Share File", url: "docudrop.html", cat: "Document Editing", icon: "file_upload", onlineOnly: true },
+            { id: "scan_text", name: "Text Scanner", url: "text-extractor.html", cat: "Document Editing", icon: "document_scanner", onlineOnly: true },
+            { id: "key_test", name: "Key Test", url: "keyboard-click-test.html", cat: "Document Editing", icon: "keyboard" },
+            // Code Editing
+            { id: "ide", name: "Frontend IDE", url: "frontend-ide.html", cat: "Code Editing", icon: "developer_mode" },
+            { id: "html_edit", name: "HTML Editor", url: "code-playground.html", cat: "Code Editing", icon: "code" },
+            { id: "html_ai", name: "HTML Writer", url: "html.html", cat: "Code Editing", icon: "html", onlineOnly: true },
+            { id: "md", name: "Markdown", url: "mdeditor.html", cat: "Code Editing", icon: "markdown" },
+            { id: "btn_dev", name: "Button Dev", url: "button-designer.html", cat: "Code Editing", icon: "smart_button" },
+            { id: "split", name: "Splitter", url: "html-splitter.html", cat: "Code Editing", icon: "integration_instructions" },
+            { id: "goto", name: "GoTo Code", url: "goto-code.html", cat: "Code Editing", icon: "merge" },
+            { id: "snipper", name: "Snipper", url: "code-snipper.html", cat: "Code Editing", icon: "content_cut" },
+            // Image Editing
+            { id: "img_edit", name: "Img Editor", url: "image-editor.html", cat: "Image Editing", icon: "collections" },
+            { id: "attr_edit", name: "Attrib Edit", url: "atbedt.html", cat: "Image Editing", icon: "display_settings" },
+            { id: "draw", name: "Draw", url: "draw.html", cat: "Image Editing", icon: "brush" },
+            // Collaboration
+            { id: "collab", name: "Collab Editor", url: "collab-document-editor.html", cat: "Collaboration", icon: "group", onlineOnly: true },
+            { id: "text", name: "Text", url: "connect1.html", cat: "Collaboration", icon: "chat", onlineOnly: true },
+            { id: "call", name: "Call", url: "connect.html", cat: "Collaboration", icon: "call", onlineOnly: true },
+        ];
+
+        // --- 2. CORE STATE VARIABLES ---
+        let currentSort = 'All';
+        let isPinningMode = false;
+        
+        // --- 3. CORE FUNCTIONS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            document.getElementById(`nav-${tabId}`).classList.add('active');
+            
+            if (tabId === 'home') {
+                renderRecents();
+                checkTemplateVisibility();
+                checkDyNoteVisibility(); // Check DyNote button visibility
+                updateViewMode();
+            }
+            if (tabId === 'tools') {
+                renderTools();
+                updateViewMode();
+            }
+        }
+
+        function updateOnlineStatus() {
+            const isOnline = navigator.onLine;
+            document.body.className = isOnline ? 'online' : 'offline';
+            if (!isOnline && getCookie('bannerDismissed') === 'true') {
+                document.body.classList.add('banner-dismissed');
+            } else {
+                document.body.classList.remove('banner-dismissed');
+            }
+            if (document.getElementById('tab-tools').classList.contains('active')) renderTools();
+            checkScannerVisibility();
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        
+        // --- 4. TOOL OPENING ---
+        function openTool(url, name) {
+            if (name) addToRecents({ name, url, icon: getIconForTool(url) });
+            const frame = document.getElementById('app-frame');
+            const container = document.getElementById('tool-iframe-container');
+            document.getElementById('iframe-title-text').textContent = name || 'Tool';
+            frame.src = url;
+            container.classList.add('visible');
+        }
+
+        function closeTool() {
+            const container = document.getElementById('tool-iframe-container');
+            const frame = document.getElementById('app-frame');
+            container.classList.remove('visible');
+            setTimeout(() => {
+                frame.src = 'about:blank';
+            }, 300);
+        }
+
+        // --- 5. SORTING & PINNING FUNCTIONALITY ---
+        let sortPickerCallback = null;
+
+        function openSortPicker() {
+            isPinningMode = false;
+            const options = [
+                {label: 'All Tools', value: 'All'},
+                {label: 'Document Editing', value: 'Document Editing'},
+                {label: 'Image Editing', value: 'Image Editing'},
+                {label: 'Code Editing', value: 'Code Editing'}
+            ];
+            if (navigator.onLine) options.push({label: 'Collaboration', value: 'Collaboration'});
+
+            renderSortOptions(options);
+            
+            // Set edit icon
+            const editBtn = document.getElementById('picker-edit-btn');
+            editBtn.style.display = 'flex';
+            editBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">edit</span>';
+            
+            document.getElementById('picker-overlay').classList.add('open');
+        }
+        
+        function renderSortOptions(options) {
+            document.getElementById('picker-title').textContent = 'Sort by Category';
+            const container = document.getElementById('picker-options-container');
+            container.innerHTML = '';
+            
+            options.forEach(opt => {
+                const el = document.createElement('div');
+                el.className = `picker-option ${opt.value === currentSort ? 'selected' : ''}`;
+                el.innerHTML = `<span>${opt.label}</span><span class="material-symbols-rounded picker-check">check</span>`;
+                el.onclick = () => {
+                    currentSort = opt.value;
+                    renderTools();
+                    renderRecents();
+                    closePicker();
+                };
+                container.appendChild(el);
+            });
+        }
+        
+        function togglePinMode() {
+            isPinningMode = !isPinningMode;
+            const editBtn = document.getElementById('picker-edit-btn');
+            const title = document.getElementById('picker-title');
+            
+            if (isPinningMode) {
+                // SWITCH TO PIN MODE
+                editBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 22px; color: var(--primary-color);">check</span>';
+                title.textContent = 'Pin Tools';
+                renderPinList();
+            } else {
+                // SWITCH BACK TO SORT MODE (Save implied by switching/closing)
+                editBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size: 20px; color: var(--primary-color);">edit</span>';
+                // Reload original sort options
+                openSortPicker(); 
+            }
+        }
+        
+        function getPinnedTools() {
+            return JSON.parse(localStorage.getItem('pinned_tools') || '[]');
+        }
+        
+        function renderPinList() {
+            const container = document.getElementById('picker-options-container');
+            const pinned = getPinnedTools();
+            const allTools = [...toolsDB];
+            
+            // Sort: Pinned first, then alphabetical
+            allTools.sort((a, b) => {
+                const aPin = pinned.includes(a.id);
+                const bPin = pinned.includes(b.id);
+                if (aPin && !bPin) return -1;
+                if (!aPin && bPin) return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            container.innerHTML = '';
+            
+            allTools.forEach(tool => {
+                if(tool.onlineOnly && !navigator.onLine) return;
+                
+                const isPinned = pinned.includes(tool.id);
+                const el = document.createElement('div');
+                el.className = `picker-option pin-option ${isPinned ? 'pinned' : ''}`;
+                el.id = `pin-opt-${tool.id}`;
+                
+                el.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <span class="material-symbols-rounded" style="font-size:20px; color:var(--text-secondary);">${tool.icon}</span>
+                        <span>${tool.name}</span>
+                    </div>
+                    <span class="material-symbols-rounded pin-icon">star</span>
+                `;
+                
+                el.onclick = () => handlePinClick(tool.id, el);
+                container.appendChild(el);
+            });
+        }
+        
+        function handlePinClick(toolId, element) {
+            let pinned = getPinnedTools();
+            const isPinned = pinned.includes(toolId);
+            
+            if (isPinned) {
+                // Unpin
+                pinned = pinned.filter(id => id !== toolId);
+                element.classList.remove('pinned');
+                if(!document.documentElement.classList.contains('no-animations')) {
+                    element.classList.add('jiggle-anim');
+                }
+            } else {
+                // Pin
+                pinned.unshift(toolId); // Add to top of logic list
+                element.classList.add('pinned');
+                
+                // Animation logic
+                if(!document.documentElement.classList.contains('no-animations')) {
+                    const icon = element.querySelector('.pin-icon');
+                    icon.classList.add('jiggle-anim');
+                    setTimeout(() => icon.classList.remove('jiggle-anim'), 400);
+                    
+                    // Move to top animation
+                    const container = document.getElementById('picker-options-container');
+                    if (container.firstChild !== element) {
+                        element.classList.add('move-up-anim');
+                        setTimeout(() => {
+                            container.insertBefore(element, container.firstChild);
+                            element.classList.remove('move-up-anim');
+                        }, 250); // Wait for part of animation
+                    }
+                } else {
+                    // No anim, just move
+                    const container = document.getElementById('picker-options-container');
+                    container.insertBefore(element, container.firstChild);
+                }
+            }
+            
+            localStorage.setItem('pinned_tools', JSON.stringify(pinned));
+            renderTools(); // Update main grid immediately
+        }
+
+        // --- 6. TOOL RENDERING ---
+        function renderTools() {
+            const container = document.getElementById('tools-list-container');
+            const searchTerm = document.getElementById('tool-search').value.toLowerCase();
+            const isOnline = navigator.onLine;
+            const viewMode = localStorage.getItem('view_mode') || 'grid';
+            const pinned = getPinnedTools();
+            
+            container.innerHTML = '';
+            
+            // Filter and Sort Tools
+            let displayTools = toolsDB.filter(tool => {
+                if (!isOnline && tool.onlineOnly) return false;
+                if (!isOnline && tool.cat === "Collaboration") return false;
+                if (searchTerm && !tool.name.toLowerCase().includes(searchTerm)) return false;
+                if (currentSort !== 'All' && tool.cat !== currentSort) return false;
+                return true;
+            });
+            
+            const pinnedTools = displayTools.filter(t => pinned.includes(t.id));
+            const otherTools = displayTools.filter(t => !pinned.includes(t.id));
+            
+            // Strict Category Order
+            const categoryOrder = ['Document Editing', 'Image Editing', 'Code Editing', 'Collaboration'];
+
+            // Render Helper
+            const renderGroup = (title, tools) => {
+                if(tools.length === 0) return;
+                const catDiv = document.createElement('div');
+                catDiv.className = 'tool-category';
+                catDiv.innerHTML = `<h3>${title}</h3>`;
+                
+                if (viewMode === 'grid') {
+                    const gridDiv = document.createElement('div');
+                    gridDiv.className = 'tools-grid';
+                    tools.forEach(tool => {
+                        const card = document.createElement('div');
+                        card.className = `tool-card ${pinned.includes(tool.id) ? 'pinned' : ''} ${tool.onlineOnly ? 'online-only' : ''}`;
+                        card.innerHTML = `
+                            <span class="material-symbols-rounded tool-icon-main">${tool.icon}</span>
+                            <div class="tool-name">${tool.name}</div>
+                            <span class="material-symbols-rounded pinned-star">star</span>
+                        `;
+                        card.onclick = () => openTool(tool.url, tool.name);
+                        gridDiv.appendChild(card);
+                    });
+                    catDiv.appendChild(gridDiv);
+                } else {
+                    const listDiv = document.createElement('div');
+                    listDiv.className = 'tools-list';
+                    tools.forEach(tool => {
+                        const card = document.createElement('div');
+                        card.className = `list-card ${pinned.includes(tool.id) ? 'pinned' : ''} ${tool.onlineOnly ? 'online-only' : ''}`;
+                        card.innerHTML = `
+                            <div class="list-card-left">
+                                <div class="list-card-icon">
+                                    <span class="material-symbols-rounded">${tool.icon}</span>
+                                </div>
+                                <div class="list-card-details">
+                                    <div class="list-card-name">${tool.name}</div>
+                                    <div class="list-card-category">${tool.cat}</div>
+                                </div>
+                            </div>
+                            <span class="material-symbols-rounded list-card-chevron">chevron_right</span>
+                        `;
+                        card.onclick = () => openTool(tool.url, tool.name);
+                        listDiv.appendChild(card);
+                    });
+                    catDiv.appendChild(listDiv);
+                }
+                container.appendChild(catDiv);
+            };
+            
+            // Render Pinned First
+            if (pinnedTools.length > 0 && currentSort === 'All' && !searchTerm) {
+                renderGroup('Pinned', pinnedTools);
+            }
+            
+            // Render remaining tools
+            if (searchTerm || currentSort !== 'All') {
+                let toolsToShow = currentSort === 'All' && !searchTerm ? otherTools : displayTools;
+                
+                if (currentSort === 'All') {
+                    const categories = {};
+                    toolsToShow.forEach(t => {
+                        if (!categories[t.cat]) categories[t.cat] = [];
+                        categories[t.cat].push(t);
+                    });
+                    
+                    categoryOrder.forEach(catName => {
+                        if (categories[catName]) {
+                            renderGroup(catName, categories[catName]);
+                        }
+                    });
+                } else {
+                     renderGroup(currentSort, toolsToShow);
+                }
+            } else {
+                const categories = {};
+                otherTools.forEach(t => {
+                    if (!categories[t.cat]) categories[t.cat] = [];
+                    categories[t.cat].push(t);
+                });
+                
+                categoryOrder.forEach(catName => {
+                    if (categories[catName]) {
+                        renderGroup(catName, categories[catName]);
+                    }
+                });
+            }
+        }
+
+        document.getElementById('tool-search').addEventListener('keyup', renderTools);
+        document.getElementById('sort-trigger').addEventListener('click', openSortPicker);
+
+        // --- 7. VIEW MODE & ANIMATIONS ---
+        function updateViewMode() {
+            const viewMode = localStorage.getItem('view_mode') || 'grid';
+            const gridViews = document.querySelectorAll('.recent-grid, .tools-grid');
+            const listViews = document.querySelectorAll('.recents-list, .tools-list');
+            
+            if (viewMode === 'grid') {
+                gridViews.forEach(el => el.style.display = '');
+                listViews.forEach(el => el.style.display = 'none');
+                document.getElementById('display-view-mode').textContent = "Grid View";
+            } else {
+                gridViews.forEach(el => el.style.display = 'none');
+                listViews.forEach(el => el.style.display = '');
+                document.getElementById('display-view-mode').textContent = "List View";
+                if (document.getElementById('tab-home').classList.contains('active')) renderRecentsList();
+            }
+        }
+
+        function openViewModePicker() {
+            const current = localStorage.getItem('view_mode') || 'grid';
+            openPicker('Tool View', [
+                {label: 'Grid View', value: 'grid'},
+                {label: 'List View', value: 'list'}
+            ], current, (val, label) => {
+                localStorage.setItem('view_mode', val);
+                document.getElementById('display-view-mode').textContent = label;
+                updateViewMode();
+                renderTools();
+                if (document.getElementById('tab-home').classList.contains('active')) renderRecents();
+            });
+        }
+
+        function openAnimationsPicker() {
+            const current = localStorage.getItem('animations_enabled') || 'true';
+            openPicker('Animations', [
+                {label: 'Enabled', value: 'true'},
+                {label: 'Disabled', value: 'false'}
+            ], current, (val, label) => {
+                localStorage.setItem('animations_enabled', val);
+                document.getElementById('display-animations').textContent = label;
+                if (val === 'true') document.documentElement.classList.remove('no-animations');
+                else document.documentElement.classList.add('no-animations');
+            });
+        }
+
+        // --- 8. TEMPLATES SETTING ---
+        function openTemplatesPicker() {
+            const editor = localStorage.getItem('def_doc');
+            const isSugarcane = editor === 'sugarcane';
+
+            if (!isSugarcane) {
+                // Show informational message — not a real picker
+                openPicker('Template Support', [
+                    { label: 'To use templates, use Sugarcane Editor', value: '__info__' }
+                ], '__info__', () => {
+                    // no-op: informational only
+                });
+                return;
+            }
+
+            const current = localStorage.getItem('templates_enabled') || 'true';
+            openPicker('Template Support', [
+                { label: 'Enabled', value: 'true' },
+                { label: 'Disabled', value: 'false' }
+            ], current, (val, label) => {
+                localStorage.setItem('templates_enabled', val);
+                document.getElementById('display-templates').textContent = label;
+                checkTemplateVisibility();
+            });
+        }
+
+        function checkTemplateVisibility() {
+            const editor = localStorage.getItem('def_doc');
+            const templatesEnabled = localStorage.getItem('templates_enabled') !== 'false';
+            const container = document.getElementById('templates-section');
+
+            // Update display value in settings
+            if (editor === 'sugarcane') {
+                document.getElementById('display-templates').textContent = templatesEnabled ? 'Enabled' : 'Disabled';
+            } else {
+                document.getElementById('display-templates').textContent = 'Enabled';
+            }
+
+            // Show/hide template section on Home tab
+            if (editor === 'sugarcane' && templatesEnabled) {
+                container.style.display = 'block';
+                if (!templatesLoaded) fetchTemplates();
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        // --- 9. ABOUT APP ---
+        async function openAboutApp() {
+            const container = document.getElementById('about-iframe-container');
+            const loader = document.getElementById('about-loader');
+            const offline = document.getElementById('about-offline');
+            const frame = document.getElementById('about-frame');
+            
+            container.style.display = 'flex';
+            loader.style.display = 'flex';
+            offline.style.display = 'none';
+            frame.style.display = 'none';
+            
+            if (!navigator.onLine) {
+                setTimeout(() => { loader.style.display = 'none'; offline.style.display = 'flex'; }, 1000);
+                return;
+            }
+            
+            try {
+                frame.src = BASE_URL + "aboutapp.html";
+                frame.onload = () => { setTimeout(() => { loader.style.display = 'none'; frame.style.display = 'block'; }, 1000); };
+            } catch (error) { loader.style.display = 'none'; offline.style.display = 'flex'; }
+        }
+
+        function closeAboutApp() {
+            document.getElementById('about-iframe-container').style.display = 'none';
+            document.getElementById('about-frame').src = 'about:blank';
+        }
+
+        // --- 10. TEMPLATES FETCH ---
+        let allTemplates = [];
+        let templatesLoaded = false;
+        
+        async function fetchTemplates() {
+            try {
+                const resp = await fetch(TEMPLATE_JSON_URL);
+                const data = await resp.json();
+                allTemplates = data.templates;
+                templatesLoaded = true;
+                renderTemplates(5);
+            } catch (e) {
+                document.getElementById('templates-grid').innerHTML = '<div style="padding:20px;font-size:12px;color:#999">Offline</div>';
+            }
+        }
+        
+        function renderTemplates(limit) {
+            const grid = document.getElementById('templates-grid');
+            grid.innerHTML = '';
+            const count = limit === -1 ? allTemplates.length : Math.min(allTemplates.length, limit);
+            for (let i = 0; i < count; i++) {
+                const t = allTemplates[i];
+                const imgUrl = t.Image.startsWith('http') ? t.Image : BASE_URL + t.Image;
+                const linkUrl = t.Link.startsWith('http') ? t.Link : BASE_URL + t.Link;
+                const card = document.createElement('div');
+                card.className = 'template-card';
+                card.innerHTML = `<img src="${imgUrl}" class="template-img" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='"><div class="template-name">${t.Name}</div>`;
+                card.onclick = () => openTool(linkUrl, t.Name);
+                grid.appendChild(card);
+            }
+            if (limit !== -1 && allTemplates.length > limit) {
+                const btn = document.createElement('div');
+                btn.className = 'show-all-templates-btn';
+                btn.innerText = `‎View All‎`;
+                btn.onclick = () => renderTemplates(-1);
+                grid.appendChild(btn);
+            }
+        }
+
+        // --- 11. RECENTS ---
+        function getIconForTool(url) {
+            const tool = toolsDB.find(t => t.url === url);
+            return tool ? tool.icon : (url.includes('templates') ? 'description' : (url.includes('dynote') ? 'sticky_note_2' : 'extension'));
+        }
+        
+        function addToRecents(toolObj) {
+            let recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
+            recents = recents.filter(t => t.url !== toolObj.url);
+            recents.unshift(toolObj);
+            if (recents.length > 7) recents.length = 7;
+            localStorage.setItem('recentTools', JSON.stringify(recents));
+        }
+        
+        function renderRecents() {
+            const viewMode = localStorage.getItem('view_mode') || 'grid';
+            if (viewMode === 'grid') renderRecentsGrid(); else renderRecentsList();
+        }
+        
+        function renderRecentsGrid() {
+            const grid = document.getElementById('recent-grid');
+            const recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
+            grid.innerHTML = '';
+            document.getElementById('recents-list').style.display = 'none';
+            grid.style.display = '';
+            
+            if (recents.length === 0) {
+                grid.innerHTML = '<div class="recent-placeholder">No recent tools used</div>';
+                return;
+            }
+            recents.forEach(tool => {
+                const card = document.createElement('div');
+                card.className = 'tool-card';
+                card.innerHTML = `<span class="material-symbols-rounded tool-icon-main">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
+                card.onclick = () => openTool(tool.url, tool.name);
+                grid.appendChild(card);
+            });
+        }
+        
+        function renderRecentsList() {
+            const list = document.getElementById('recents-list');
+            const recents = JSON.parse(localStorage.getItem('recentTools') || '[]');
+            list.innerHTML = '';
+            document.getElementById('recent-grid').style.display = 'none';
+            list.style.display = '';
+            
+            if (recents.length === 0) {
+                list.innerHTML = '<div class="recent-placeholder" style="padding: 20px; text-align: center; color: var(--text-secondary);">No recent tools used</div>';
+                return;
+            }
+            recents.forEach(tool => {
+                const toolInfo = toolsDB.find(t => t.name === tool.name) || { cat: 'Unknown' };
+                const card = document.createElement('div');
+                card.className = 'list-card';
+                card.innerHTML = `
+                    <div class="list-card-left">
+                        <div class="list-card-icon"><span class="material-symbols-rounded">${tool.icon}</span></div>
+                        <div class="list-card-details"><div class="list-card-name">${tool.name}</div><div class="list-card-category">${toolInfo.cat}</div></div>
+                    </div>
+                    <span class="material-symbols-rounded list-card-chevron">chevron_right</span>
+                `;
+                card.onclick = () => openTool(tool.url, tool.name);
+                list.appendChild(card);
+            });
+        }
+        
+        function clearRecents() {
+            const recentGrid = document.getElementById('recent-grid');
+            const recentList = document.getElementById('recents-list');
+            const isGridView = recentGrid.style.display !== 'none';
+            const container = isGridView ? recentGrid : recentList;
+            const animate = !document.documentElement.classList.contains('no-animations');
+
+            if(animate && container.children.length > 0 && !container.children[0].classList.contains('recent-placeholder')) {
+                container.classList.add('clear-recents-active');
+                Array.from(container.children).forEach((item, index) => {
+                    item.style.setProperty('--item-index', index);
+                    item.style.animation = `slideOutRight 0.5s forwards ${index * 0.05}s`;
+                });
+                setTimeout(() => {
+                    localStorage.removeItem('recentTools');
+                    container.classList.remove('clear-recents-active');
+                    renderRecents();
+                }, 500 + (container.children.length * 50));
+            } else {
+                localStorage.removeItem('recentTools');
+                renderRecents();
+            }
+        }
+
+        // --- 12. EDITOR & SETTINGS PICKERS ---
+        function openPicker(title, options, selectedValue, onSelect) {
+            const overlay = document.getElementById('picker-overlay');
+            const container = document.getElementById('picker-options-container');
+            document.getElementById('picker-title').textContent = title;
+            
+            // Hide edit button for standard pickers
+            document.getElementById('picker-edit-btn').style.display = 'none';
+            
+            container.innerHTML = '';
+            options.forEach(opt => {
+                const el = document.createElement('div');
+                const isInfo = opt.value === '__info__';
+                el.className = `picker-option ${!isInfo && opt.value === selectedValue ? 'selected' : ''}`;
+                if (isInfo) {
+                    el.style.cssText = 'color: var(--text-secondary); font-size: 14px; cursor: default; font-style: italic; justify-content: center; text-align: center;';
+                    el.innerHTML = `<span>${opt.label}</span>`;
+                    el.onclick = () => {}; // no-op
+                } else {
+                    el.innerHTML = `<span>${opt.label}</span><span class="material-symbols-rounded picker-check">check</span>`;
+                    el.onclick = () => { closePicker(); onSelect(opt.value, opt.label); };
+                }
+                container.appendChild(el);
+            });
+            overlay.classList.add('open');
+        }
+
+        function closePicker() {
+            document.getElementById('picker-overlay').classList.remove('open');
+            isPinningMode = false; // Reset
+        }
+
+        const editorMap = {
+            doc: { key: 'def_doc', displayId: 'display-doc-editor', options: [{label: 'Default (Writer)', value: 'default'}, {label: 'Sugarcane (Advanced)', value: 'sugarcane'}] },
+            img: { key: 'def_img', displayId: 'display-img-editor', options: [{label: 'Drawing Board', value: 'drawing'}, {label: 'Basic Editor', value: 'default'}, {label: 'Attribution Editor', value: 'attribution'}] },
+            code: { key: 'def_code', displayId: 'display-code-editor', options: [{label: 'HTML Editor', value: 'default'}, {label: 'Frontend IDE', value: 'ide'}] }
+        };
+
+        function openEditorPicker(type) {
+            const map = editorMap[type];
+            const defaultVal = (type === 'img') ? 'drawing' : 'default';
+            const current = localStorage.getItem(map.key) || defaultVal;
+            openPicker(
+                document.querySelector(`#${map.displayId}`).parentElement.previousElementSibling.textContent, 
+                map.options, current, (val, label) => {
+                    localStorage.setItem(map.key, val);
+                    document.getElementById(map.displayId).textContent = label.split(' (')[0];
+                    if (type === 'doc' && document.getElementById('tab-home').classList.contains('active')) checkTemplateVisibility();
+                    if (type === 'img') updateImgBtnLabel();
+                }
+            );
+        }
+
+        function openScannerPicker() {
+            const current = localStorage.getItem('scanner_enabled') || 'true';
+            openPicker('Scanner Functionality', [
+                {label: 'Enabled', value: 'true'},
+                {label: 'Disabled', value: 'false'}
+            ], current, (val, label) => {
+                localStorage.setItem('scanner_enabled', val);
+                document.getElementById('display-scanner').textContent = label;
+                checkScannerVisibility();
+            });
+        }
+
+        function checkScannerVisibility() {
+            const scannerEnabled = localStorage.getItem('scanner_enabled') !== 'false';
+            const navScan = document.getElementById('nav-scan');
+            if (!scannerEnabled) {
+                navScan.style.display = 'none';
+            } else {
+                // Only show if online
+                navScan.style.display = navigator.onLine ? 'flex' : 'none';
+            }
+        }
+
+        // --- 13. DYNOTE & QUICK NOTE SETTINGS LOGIC ---
+        function openDyNotePicker() {
+            const current = localStorage.getItem('dynote_enabled') || 'false';
+            openPicker('DyNote Functionality', [
+                {label: 'Enabled', value: 'true'},
+                {label: 'Disabled', value: 'false'}
+            ], current, (val, label) => {
+                localStorage.setItem('dynote_enabled', val);
+                document.getElementById('display-dynote').textContent = label;
+                checkDyNoteVisibility(); // Update UI
+                
+                // If disabling DyNote, also disable Quick Note visually/logic
+                if (val === 'false') {
+                    // We don't change the preference, just hide it
+                    checkQuickNoteVisibility();
+                }
+            });
+        }
+
+        function openQuickNotePicker() {
+            const current = localStorage.getItem('quick_note_enabled') || 'false';
+            openPicker('Quick Note', [
+                {label: 'Enabled', value: 'true'},
+                {label: 'Disabled', value: 'false'}
+            ], current, (val, label) => {
+                localStorage.setItem('quick_note_enabled', val);
+                document.getElementById('display-quick-note').textContent = label;
+                checkQuickNoteVisibility(); // Update FAB
+            });
+        }
+
+        function getDyNoteUrl(prefix = '') {
+            // Determine theme (light/dark)
+            const theme = document.documentElement.getAttribute('data-theme');
+            let isDark = false;
+            
+            if (theme === 'dark') isDark = true;
+            else if (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) isDark = true;
+            
+            const hash = prefix + (isDark ? 'd' : 'l');
+            return DYNOTE_URL + '#' + hash;
+        }
+
+        function checkDyNoteVisibility() {
+            const isEnabled = localStorage.getItem('dynote_enabled') === 'true';
+            
+            // 1. Home Screen Button
+            const btn = document.getElementById('btn-dynote');
+            if (btn) btn.style.display = isEnabled ? 'flex' : 'none';
+            
+            // 2. Settings Quick Note Toggle
+            const qnSetting = document.getElementById('quick-note-setting');
+            if (qnSetting) qnSetting.style.display = isEnabled ? 'flex' : 'none';
+
+            // 3. Quick Note FAB Logic
+            checkQuickNoteVisibility();
+        }
+
+        function checkQuickNoteVisibility() {
+            const dyNoteOn = localStorage.getItem('dynote_enabled') === 'true';
+            const qnOn = localStorage.getItem('quick_note_enabled') === 'true';
+            
+            const fab = document.getElementById('quick-note-fab');
+            const win = document.getElementById('quick-note-window');
+            
+            if (dyNoteOn && qnOn) {
+                fab.style.display = 'flex';
+            } else {
+                fab.style.display = 'none';
+                win.style.display = 'none'; // Close window if feature disabled
+            }
+        }
+
+        function openDyNoteTool() {
+            openTool(getDyNoteUrl(), 'My DyNotes');
+        }
+
+        function toggleQuickNoteWindow() {
+            const win = document.getElementById('quick-note-window');
+            const iframe = document.getElementById('qn-iframe');
+            
+            if (win.style.display === 'flex') {
+                win.style.display = 'none';
+            } else {
+                iframe.src = getDyNoteUrl('quick'); // #quickl or #quickd
+                win.style.display = 'flex';
+                // Ensure it's on screen if it was dragged off
+                // (optional reset logic could go here)
+            }
+        }
+        
+        // --- DRAG & RESIZE LOGIC FOR QUICK NOTE ---
+        const qnWindow = document.getElementById('quick-note-window');
+        const qnHeader = document.getElementById('qn-header');
+        
+        let isDragging = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        qnHeader.addEventListener('mousedown', startDrag);
+        qnHeader.addEventListener('touchstart', startDrag, {passive: false});
+
+        function startDrag(e) {
+            if(e.target.closest('.qn-close')) return; // Don't drag on close button
+            
+            isDragging = true;
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+            
+            const rect = qnWindow.getBoundingClientRect();
+            dragOffsetX = clientX - rect.left;
+            dragOffsetY = clientY - rect.top;
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('touchmove', drag, {passive: false});
+            document.addEventListener('mouseup', stopDrag);
+            document.addEventListener('touchend', stopDrag);
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            
+            const clientX = e.clientX || e.touches[0].clientX;
+            const clientY = e.clientY || e.touches[0].clientY;
+            
+            let newX = clientX - dragOffsetX;
+            let newY = clientY - dragOffsetY;
+            
+            // Simple bounds check (optional, prevents losing window completely)
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            
+            if (newY < 0) newY = 0;
+            if (newY > winH - 50) newY = winH - 50;
+            if (newX < -200) newX = -200;
+            if (newX > winW - 50) newX = winW - 50;
+            
+            qnWindow.style.left = newX + 'px';
+            qnWindow.style.top = newY + 'px';
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('touchmove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            document.removeEventListener('touchend', stopDrag);
+        }
+
+        // --- 14. THEME ---
+        function initTheme() {
+            const saved = localStorage.getItem('theme_pref');
+            if (saved) {
+                applyTheme(saved);
+            } else {
+                localStorage.setItem('theme_pref', 'system');
+                applyTheme('system');
+            }
+        }
+
+        function applyTheme(theme) {
+            const html = document.documentElement;
+            const displayTheme = document.getElementById('display-theme');
+            if(displayTheme) displayTheme.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+            
+            if (theme === 'dark') {
+                html.setAttribute('data-theme', 'dark');
+            } else if (theme === 'light') {
+                html.setAttribute('data-theme', 'light');
+            } else {
+                html.removeAttribute('data-theme');
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    html.setAttribute('data-theme', 'dark'); 
+                } else {
+                    html.removeAttribute('data-theme');
+                }
+            }
+            
+            // Refresh DyNote URLs if open, as they depend on theme
+            // Only necessary if the tool or window is currently open, but harmless to leave until next open
+        }
+        
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                if (localStorage.getItem('theme_pref') === 'system') {
+                    applyTheme('system');
+                }
+            });
+        }
+
+        function openThemePicker() {
+            openPicker('Theme', [{label: 'System', value: 'system'},{label: 'Light', value: 'light'},{label: 'Dark', value: 'dark'}], 
+            localStorage.getItem('theme_pref') || 'system', (val) => { localStorage.setItem('theme_pref', val); applyTheme(val); });
+        }
+
+        // --- 15. APP LOCK & SECURITY ---
+        let pinSetupStep = 0; // 0: None, 1: Enter, 2: Confirm
+        let tempPin = '';
+        let pinInput = '';
+        let failedAttempts = 0;
+        let lockoutInterval = null;
+
+        function initLockSystem() {
+            const savedPin = localStorage.getItem('app_pin');
+            const lockoutUntil = localStorage.getItem('lockout_until');
+            
+            // Check Lockout
+            if (lockoutUntil && Date.now() < parseInt(lockoutUntil)) {
+                showLockScreen();
+                startLockoutTimer(parseInt(lockoutUntil));
+                return;
+            } else if (lockoutUntil) {
+                // Expired
+                localStorage.removeItem('lockout_until');
+                failedAttempts = 0;
+            }
+
+            if (savedPin) {
+                showLockScreen();
+            } else {
+                document.getElementById('lock-screen-overlay').classList.remove('active');
+            }
+            
+            updateLockSettingsUI();
+        }
+        
+        function startLockoutTimer(endTime) {
+            document.getElementById('unlock-keypad').style.pointerEvents = 'none';
+            document.getElementById('unlock-keypad').style.opacity = '0.5';
+            document.getElementById('lock-msg').style.color = 'var(--danger)';
+            
+            if (lockoutInterval) clearInterval(lockoutInterval);
+            
+            const updateTimer = () => {
+                const now = Date.now();
+                const remaining = Math.ceil((endTime - now) / 1000);
+                
+                if (remaining <= 0) {
+                    clearInterval(lockoutInterval);
+                    document.getElementById('unlock-keypad').style.pointerEvents = 'auto';
+                    document.getElementById('unlock-keypad').style.opacity = '1';
+                    document.getElementById('lock-msg').textContent = "Enter PIN to unlock";
+                    document.getElementById('lock-msg').style.color = 'var(--text-secondary)';
+                    localStorage.removeItem('lockout_until');
+                    failedAttempts = 0;
+                    updatePinDisplay('unlock-pin-display', 0);
+                    pinInput = '';
+                } else {
+                    document.getElementById('lock-msg').textContent = `Too many attempts. Locked for ${remaining}s...`;
+                }
+            };
+            
+            updateTimer();
+            lockoutInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateLockSettingsUI() {
+            const hasPin = !!localStorage.getItem('app_pin');
+            document.getElementById('display-lock-status').textContent = hasPin ? 'On' : 'Off';
+        }
+
+        function openLockApp() {
+            const hasPin = !!localStorage.getItem('app_pin');
+            const overlay = document.getElementById('lock-info-overlay');
+            
+            document.getElementById('no-pin-actions').style.display = hasPin ? 'none' : 'block';
+            document.getElementById('has-pin-actions').style.display = hasPin ? 'block' : 'none';
+            
+            if (hasPin && !sessionStorage.getItem('settings_unlocked')) {
+                startUnlockFlowForAccess(() => {
+                    overlay.classList.add('active');
+                    sessionStorage.setItem('settings_unlocked', 'true');
+                });
+            } else {
+                overlay.classList.add('active');
+            }
+        }
+
+        function closeLockInfo() {
+            document.getElementById('lock-info-overlay').classList.remove('active');
+        }
+
+        function showLockScreen() {
+            document.getElementById('lock-screen-overlay').classList.add('active');
+            pinInput = '';
+            updatePinDisplay('unlock-pin-display', 0);
+        }
+
+        function enterPinDigit(digit) {
+            if (pinInput.length < 4) {
+                pinInput += digit;
+                updatePinDisplay('unlock-pin-display', pinInput.length);
+                if (pinInput.length === 4) verifyUnlockPin();
+            }
+        }
+
+        function deletePinDigit() {
+            if (pinInput.length > 0) {
+                pinInput = pinInput.slice(0, -1);
+                updatePinDisplay('unlock-pin-display', pinInput.length);
+            }
+        }
+        
+        window.tempUnlockCallback = null;
+
+        function verifyUnlockPin() {
+            const savedPin = localStorage.getItem('app_pin');
+            if (pinInput === savedPin) {
+                if (window.tempUnlockCallback) {
+                    window.tempUnlockCallback();
+                    window.tempUnlockCallback = null;
+                    document.getElementById('lock-screen-overlay').classList.remove('active');
+                    document.getElementById('lock-msg').textContent = "Enter PIN to unlock";
+                } else {
+                    document.getElementById('lock-screen-overlay').classList.remove('active');
+                }
+                failedAttempts = 0;
+                localStorage.removeItem('failed_attempts');
+            } else {
+                animateError('unlock-pin-display');
+                pinInput = '';
+                updatePinDisplay('unlock-pin-display', 0);
+                failedAttempts++;
+                localStorage.setItem('failed_attempts', failedAttempts);
+                if (failedAttempts >= 10) {
+                    const lockTime = Date.now() + 60000;
+                    localStorage.setItem('lockout_until', lockTime);
+                    startLockoutTimer(lockTime);
+                } else {
+                    document.getElementById('lock-msg').textContent = `Wrong PIN. ${10 - failedAttempts} attempts remaining.`;
+                    document.getElementById('lock-msg').style.color = 'var(--danger)';
+                }
+            }
+        }
+        
+        function startPinSetup() {
+            pinSetupStep = 1;
+            tempPin = '';
+            pinInput = '';
+            
+            document.getElementById('lock-info-overlay').classList.remove('active');
+            document.getElementById('pin-setup-overlay').classList.add('active');
+            
+            document.getElementById('setup-title').textContent = 'Enter PIN';
+            document.getElementById('setup-desc').textContent = 'Create a 4-digit PIN code';
+            document.getElementById('setup-warning').style.display = 'block';
+            updatePinDisplay('setup-pin-display', 0);
+        }
+        
+        function enterSetupDigit(digit) {
+            if (pinInput.length < 4) {
+                pinInput += digit;
+                updatePinDisplay('setup-pin-display', pinInput.length);
+                if (pinInput.length === 4) {
+                    setTimeout(handleSetupStep, 200);
+                }
+            }
+        }
+        
+        function deleteSetupDigit() {
+            if (pinInput.length > 0) {
+                pinInput = pinInput.slice(0, -1);
+                updatePinDisplay('setup-pin-display', pinInput.length);
+            }
+        }
+        
+        function handleSetupStep() {
+            if (pinSetupStep === 1) {
+                tempPin = pinInput;
+                pinInput = '';
+                pinSetupStep = 2;
+                document.getElementById('setup-title').textContent = 'Confirm PIN';
+                document.getElementById('setup-desc').textContent = 'Enter the PIN again to confirm';
+                updatePinDisplay('setup-pin-display', 0);
+            } else if (pinSetupStep === 2) {
+                if (pinInput === tempPin) {
+                    localStorage.setItem('app_pin', pinInput);
+                    document.getElementById('setup-title').textContent = 'Password Set Successfully';
+                    document.getElementById('setup-icon').textContent = 'check_circle';
+                    document.getElementById('setup-keypad').style.display = 'none';
+                    document.getElementById('setup-pin-display').style.display = 'none';
+                    setTimeout(() => {
+                        closePinSetup();
+                        updateLockSettingsUI();
+                    }, 2000);
+                } else {
+                    animateError('setup-pin-display');
+                    document.getElementById('setup-desc').textContent = 'PINs did not match. Try again.';
+                    document.getElementById('setup-desc').style.color = 'var(--danger)';
+                    pinInput = '';
+                    updatePinDisplay('setup-pin-display', 0);
+                }
+            }
+        }
+        
+        function closePinSetup() {
+            document.getElementById('pin-setup-overlay').classList.remove('active');
+            document.getElementById('setup-keypad').style.display = 'grid';
+            document.getElementById('setup-pin-display').style.display = 'flex';
+            document.getElementById('setup-icon').textContent = 'lock_open';
+            document.getElementById('setup-desc').style.color = 'var(--text-secondary)';
+        }
+        
+        function startPinChange() { startPinSetup(); }
+        
+        function resetPinFlow() {
+            if(confirm("This will remove the current PIN code. Continue?")) {
+                localStorage.removeItem('app_pin');
+                updateLockSettingsUI();
+                closeLockInfo();
+            }
+        }
+
+        function updatePinDisplay(elementId, count) {
+            const dots = document.getElementById(elementId).children;
+            for(let i=0; i<4; i++) {
+                if (i < count) dots[i].classList.add('filled');
+                else dots[i].classList.remove('filled');
+            }
+        }
+        
+        function animateError(elementId) {
+            const dots = document.getElementById(elementId).children;
+            for(let dot of dots) dot.classList.add('error');
+            setTimeout(() => {
+                for(let dot of dots) dot.classList.remove('error');
+            }, 400);
+        }
+        
+        function startUnlockFlowForAccess(callback) {
+            window.tempUnlockCallback = callback;
+            document.getElementById('lock-screen-overlay').classList.add('active');
+            document.getElementById('lock-msg').textContent = "Enter PIN to access settings";
+            pinInput = '';
+            updatePinDisplay('unlock-pin-display', 0);
+        }
+
+        // --- 16. CACHING ---
+        async function cacheAllPages() {
+            const statusEl = document.getElementById('setup-status');
+            const progressBar = document.getElementById('progress-bar');
+            const cachingIframe = document.getElementById('caching-iframe');
+            
+            const urlsToCache = toolsDB.filter(t => !t.onlineOnly).map(t => t.url);
+            urlsToCache.push('document-writer.html', 'image-editor.html', 'code-playground.html', 'sceditor.html', 'atbedt.html', 'frontend-ide.html', 'dynote.html');
+            const uniqueUrls = [...new Set(urlsToCache)];
+            
+            let cachedCount = 0;
+            for (const url of uniqueUrls) {
+                cachedCount++;
+                progressBar.style.width = `${Math.round((cachedCount / uniqueUrls.length) * 100)}%`;
+                statusEl.textContent = `Caching: ${url} (${cachedCount}/${uniqueUrls.length})`;
+                cachingIframe.src = url;
+                await new Promise(r => setTimeout(r, 300));
+                cachingIframe.src = 'about:blank';
+            }
+            
+            statusEl.textContent = 'All tools cached!';
+            return true;
+        }
+
+        // --- 17. INIT ---
+        function loadSettings() {
+            // View Mode
+            const viewMode = localStorage.getItem('view_mode') || 'grid';
+            document.getElementById('display-view-mode').textContent = viewMode === 'grid' ? 'Grid View' : 'List View';
+            
+            // Animations
+            const anim = localStorage.getItem('animations_enabled') || 'true';
+            document.getElementById('display-animations').textContent = anim === 'true' ? 'Enabled' : 'Disabled';
+            if (anim === 'false') document.documentElement.classList.add('no-animations');
+            
+            // Editors
+            for(let k in editorMap) {
+                const map = editorMap[k];
+                const defaultVal = (k === 'img') ? 'drawing' : 'default';
+                const val = localStorage.getItem(map.key) || defaultVal;
+                const opt = map.options.find(o => o.value === val);
+                document.getElementById(map.displayId).textContent = opt ? opt.label.split(' (')[0] : 'Default';
+            }
+            updateImgBtnLabel();
+            
+            // DyNote Settings
+            const dyEnabled = localStorage.getItem('dynote_enabled') || 'false';
+            document.getElementById('display-dynote').textContent = dyEnabled === 'true' ? 'Enabled' : 'Disabled';
+            
+            const qnEnabled = localStorage.getItem('quick_note_enabled') || 'false';
+            document.getElementById('display-quick-note').textContent = qnEnabled === 'true' ? 'Enabled' : 'Disabled';
+
+            // Scanner Setting
+            const scannerEnabled = localStorage.getItem('scanner_enabled') !== 'false';
+            document.getElementById('display-scanner').textContent = scannerEnabled ? 'Enabled' : 'Disabled';
+
+            initTheme();
+            checkTemplateVisibility();
+            updateLockSettingsUI();
+            checkDyNoteVisibility(); // Check and apply UI for DyNote
+            checkScannerVisibility(); // Check scanner visibility
+        }
+
+        document.getElementById('btn-new-doc').onclick = () => {
+            const val = localStorage.getItem('def_doc');
+            openTool(val === 'sugarcane' ? 'sceditor.html' : 'document-writer.html', 'New Document');
+        }
+        document.getElementById('btn-new-img').onclick = () => {
+            const val = localStorage.getItem('def_img') || 'drawing';
+            if (val === 'drawing') {
+                openTool('https://mahi902.github.io/DocuWritePro/draw.html', 'New Canvas');
+            } else if (val === 'attribution') {
+                openTool('atbedt.html', 'Edit Images');
+            } else {
+                openTool('image-editor.html', 'Edit Images');
+            }
+        }
+        
+        function updateImgBtnLabel() {
+            const val = localStorage.getItem('def_img') || 'drawing';
+            const label = document.querySelector('#btn-new-img .action-label');
+            if (label) label.innerHTML = val === 'drawing' ? 'New<br>Canvas' : 'Edit<br>Image';
+        }
+        document.getElementById('btn-new-code').onclick = () => {
+            const val = localStorage.getItem('def_code');
+            openTool(val === 'ide' ? 'frontend-ide.html' : 'code-playground.html', 'New Code');
+        }
+
+        document.getElementById('btn-update-app').onclick = async () => {
+            if(!confirm("Reset app and clear offline cache?")) return;
+            localStorage.clear();
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (let r of regs) await r.unregister();
+            }
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map(k => caches.delete(k)));
+            }
+            location.reload();
+        };
+
+        const setupOverlay = document.getElementById('setup-overlay');
+        if (localStorage.getItem('app_setup_done') === 'true') {
+            setupOverlay.classList.add('hidden');
+        }
+        
+        document.getElementById('start-setup-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('start-setup-btn');
+            const status = document.getElementById('setup-status');
+            btn.disabled = true;
+            btn.textContent = "Caching...";
+            status.textContent = "Initializing Service Worker...";
+            
+            if ('serviceWorker' in navigator) {
+                try { await navigator.serviceWorker.register('sw.js'); } catch (e) { console.log(e); }
+            }
+            
+            await cacheAllPages();
+            localStorage.setItem('app_setup_done', 'true');
+            status.textContent = "Setup complete! Launching app...";
+            await new Promise(r => setTimeout(r, 1000));
+            setupOverlay.classList.add('hidden');
+            loadSettings();
+            updateOnlineStatus();
+            switchTab('home');
+        });
+
+        function openScanner() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            let isDark = false;
+            if (theme === 'dark') isDark = true;
+            else if (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) isDark = true;
+            const scanUrl = 'https://mahi902.github.io/DocuWritePro/scanner.html#' + (isDark ? 'dark' : 'light');
+            openTool(scanUrl, 'Scanner');
+        }
+
+        // Utils
+        function showOfflinePopup() { document.getElementById('popup-overlay').style.display = 'flex'; }
+        function dismissBanner() { setCookie('bannerDismissed', 'true', 365); updateOnlineStatus(); }
+        function setCookie(n, v, d) { const date = new Date(); date.setTime(date.getTime() + (d*24*60*60*1000)); document.cookie = n + "=" + v + ";expires="+ date.toUTCString() + ";path=/"; }
+        function getCookie(n) { const v = "; " + document.cookie; const p = v.split("; " + n + "="); if (p.length == 2) return p.pop().split(";").shift(); }
+
+        // Boot
+        initLockSystem();
+        if (localStorage.getItem('app_setup_done') === 'true') {
+            loadSettings();
+            updateOnlineStatus();
+            switchTab('home');
+        }
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(() => {
+                const aboutBox = document.getElementById("about-iframe-container");
+                if (aboutBox && aboutBox.style.display !== "none") closeAboutApp();
+            }, 150);
+        });
+    </script>
+</body>
+</html>

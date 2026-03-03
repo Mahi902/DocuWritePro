@@ -1,585 +1,508 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern File Zipper</title>
-    <meta name="description" content="DocuWrite Pro is an all-in-one online workspace that lets you write, edit, convert, design, and manage documents and digital content instantly—no installation, no complexity.">
-  <meta name="keywords" content="DocuWrite Pro, Mohtadi Azad Mahi, AI writer, document editor, online text tool, GitHub project, DocuWritePro, Document Editor, Document, Editor, PDF, JPG, Edit, Text, Change File Type, File Changer, Format, Format Changer, Office, Docs, A4, Editor, General document editing, Collab, Editing documents together, Document Viewer, Viewing documents, Word Finder, Searching for specific words, Translator, Language translation, Document Signer, Electronically signing documents, Page Number Adder, Adding page numbers to documents, Chart Maker, Creating data charts, Table Maker, Creating tables, Watermark Adder, Adding watermarks to files, Email Writer, Assisting with writing emails, Spell Checker, Checking spelling and grammar, File Extractor, Extracting contents from files, QR Maker, Creating QR codes, ID Card Maker, Designing and creating ID cards, File Zipper, Compressing or zipping files, PDF Converter, Converting files to or from PDF format, Context Field, Analyzing text (e.g., word count, frequency), Gift Card Maker, Creating custom gift cards, Share File, Uploading or sharing a file, Text Extractor, Extracting text from sources (e.g., images), Keyboard Click Test, Testing keyboard functionality, Frontend IDE, Integrated Development Environment for frontend coding, HTML Editor, Editing HTML code, HTML Writer, Writing or generating HTML content, Button Designer, Designing user interface buttons, HTML Splitter, Splitting HTML files or elements, GoTo Code, Navigation feature in an IDE/editor, Code Snipper, Storing or managing code snippets, Image Editor, Editing images, Image Generator, Generating new images, Drawing Board, A simple drawing or sketching tool, HTML, CSS, JS, Online, Fast, Easy, No login, No signup, Free, No credit card required, Mohtadi, Azad, Mahi, Mohtadi Azad, Mohtadi Azad Mahi, mahi902">
-  <meta name="author" content="Mohtadi Azad Mahi">
-  <meta name="robots" content="index, follow">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Zipper</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    --bg: #000000;
+    --surface: #0d0d0d;
+    --surface2: #161616;
+    --surface3: #1f1f1f;
+    --border: #242424;
+    --border2: #303030;
+    --text: #f5f5f5;
+    --text2: #888888;
+    --text3: #484848;
+    --accent: #4f8ef7;
+    --accent-dim: rgba(79,142,247,0.1);
+    --accent-glow: rgba(79,142,247,0.18);
+    --red: #f75f5f;
+    --green: #3dd68c;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --transition: 0.18s ease;
+    --shadow: 0 4px 24px rgba(0,0,0,0.6);
+    --shadow-sm: 0 2px 10px rgba(0,0,0,0.4);
+  }
+  [data-theme="light"] {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface2: #f0f6ff;
+    --surface3: #e4effe;
+    --border: #daeaff;
+    --border2: #b8d4f8;
+    --text: #0d1a2e;
+    --text2: #5a7a9a;
+    --text3: #9ab4cc;
+    --accent: #2563eb;
+    --accent-dim: rgba(37,99,235,0.07);
+    --accent-glow: rgba(37,99,235,0.16);
+    --red: #e03355;
+    --green: #16a34a;
+    --shadow: 0 4px 24px rgba(37,99,235,0.07);
+    --shadow-sm: 0 2px 10px rgba(37,99,235,0.06);
+  }
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <meta name="theme-color" content="#ffffff">
+  * { margin:0; padding:0; box-sizing:border-box; }
 
-  <!-- App & Brand Metadata -->
-  <meta property="og:site_name" content="DocuWrite Pro">
-  <meta name="application-name" content="DocuWrite Pro">
-  <meta name="apple-mobile-web-app-title" content="DocuWrite Pro">
+  html, body {
+    min-height: 100vh;
+    font-family: Arial, Helvetica, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.25s, color 0.25s;
+    font-size: 14px;
+  }
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="DocuWrite Pro — Online Document Editor">
-  <meta property="og:description" content="Edit, format, and export documents easily with DocuWrite Pro by Mohtadi Azad Mahi.">
-  <meta property="og:url" content="https://mahi902.github.io/DocuWritePro/">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+  .app { max-width: 1060px; margin: 0 auto; padding: 32px 24px 80px; }
 
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DocuWrite Pro — Online Document Editor">
-  <meta name="twitter:description" content="Create, format, and export documents easily with DocuWrite Pro. Built by Mohtadi Azad Mahi.">
-  <meta name="twitter:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+  /* THEME TOGGLE */
+  .top-bar { display:flex; justify-content:flex-end; margin-bottom:24px; }
+  .theme-toggle {
+    display: flex;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 4px; gap: 2px;
+  }
+  .theme-btn {
+    padding: 6px 16px; border-radius: 50px; border: none;
+    background: transparent; color: var(--text2);
+    font-size: 13px; font-family: Arial, Helvetica, sans-serif;
+    cursor: pointer; transition: var(--transition); font-weight: 600;
+  }
+  .theme-btn.active { background: var(--accent); color: #fff; }
 
-  <!-- Structured Data (Google Knowledge Graph) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "DocuWrite Pro",
-    "alternateName": "DocuWrite Pro — Online Document Editor",
-    "url": "https://mahi902.github.io/DocuWritePro/",
-    "creator": {
-      "@type": "Person",
-      "name": "Mohtadi Azad Mahi"
-    }
-  }
-  </script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            color: #333;
-        }
+  /* DROP ZONE */
+  .dropzone {
+    border: 1.5px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 52px 40px 44px;
+    text-align: center; cursor: pointer;
+    transition: var(--transition);
+    background: var(--surface2);
+    position: relative; overflow: hidden;
+  }
+  .dropzone::after {
+    content:''; position:absolute; inset:0;
+    background: radial-gradient(ellipse at 50% 60%, var(--accent-glow), transparent 70%);
+    opacity:0; transition:opacity 0.3s; pointer-events:none;
+  }
+  .dropzone:hover, .dropzone.drag-over { border-color:var(--accent); background:var(--accent-dim); }
+  .dropzone:hover::after, .dropzone.drag-over::after { opacity:1; }
+  .dz-icon {
+    width:52px; height:52px; border-radius:14px;
+    background:var(--accent-dim); border:1.5px solid var(--border2);
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; margin:0 auto 18px;
+    transition: var(--transition);
+  }
+  .dropzone:hover .dz-icon, .dropzone.drag-over .dz-icon {
+    background:var(--accent-glow); border-color:var(--accent);
+  }
+  .dropzone h2 { font-size:18px; font-weight:700; margin-bottom:6px; }
+  .dropzone p  { color:var(--text2); font-size:13px; line-height:1.6; }
+  .dz-browse {
+    display:inline-block; margin-top:20px; padding:10px 26px;
+    background:var(--accent); color:#fff; border-radius:50px;
+    font-weight:700; font-size:13px; cursor:pointer; border:none;
+    font-family:Arial,Helvetica,sans-serif; transition:var(--transition);
+    box-shadow:0 4px 16px var(--accent-glow);
+  }
+  .dz-browse:hover { opacity:0.88; transform:translateY(-1px); }
+  #fileInput { display:none; }
 
-        .container {
-            background-color: #ffffff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 600px;
-            text-align: center;
-            box-sizing: border-box;
-        }
+  /* GRID */
+  .content-grid {
+    display:grid; grid-template-columns:1fr 298px;
+    gap:18px; margin-top:22px;
+  }
+  @media (max-width:780px) { .content-grid { grid-template-columns:1fr; } }
 
-        h1 {
-            color: #1a73e8;
-            margin-bottom: 30px;
-            font-weight: 600;
-        }
+  /* SECTION HEAD */
+  .sec-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:11px; }
+  .sec-head h3 { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; }
+  .badge {
+    font-size:11px; font-weight:700; color:var(--accent);
+    background:var(--accent-dim); padding:3px 10px;
+    border-radius:50px; border:1px solid var(--border2);
+  }
 
-        .upload-area {
-            border: 3px dashed #dadce0;
-            border-radius: 10px;
-            padding: 30px;
-            margin-bottom: 25px;
-            background-color: #f8f9fa;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+  /* FILE LIST */
+  .file-list { display:flex; flex-direction:column; gap:7px; }
+  .file-card {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:var(--radius); padding:11px 13px;
+    display:flex; align-items:center; gap:12px;
+    transition:var(--transition); animation:fadeUp 0.2s ease;
+  }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:translateY(0)} }
+  .file-card:hover { border-color:var(--border2); box-shadow:var(--shadow-sm); }
 
-        .upload-area.highlight {
-            border-color: #4285F4;
-            background-color: #e8f0fe;
-        }
+  .file-icon {
+    width:40px; height:40px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:17px; flex-shrink:0; position:relative;
+  }
+  .ext-tag {
+    position:absolute; bottom:-3px; right:-4px;
+    font-size:7px; font-weight:700; padding:1px 4px;
+    border-radius:4px; text-transform:uppercase;
+    letter-spacing:0.02em; white-space:nowrap;
+  }
+  .file-info { flex:1; min-width:0; }
+  .file-name-wrap { display:flex; align-items:center; gap:6px; }
+  .file-name {
+    font-size:13px; font-weight:600;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:290px;
+  }
+  .file-name-input {
+    font-size:13px; font-weight:600;
+    background:var(--surface3); border:1px solid var(--accent);
+    border-radius:6px; color:var(--text); padding:3px 8px;
+    font-family:Arial,Helvetica,sans-serif; outline:none; flex:1; max-width:260px;
+  }
+  .file-meta { font-size:11px; color:var(--text3); margin-top:2px; }
+  .file-actions { display:flex; gap:5px; flex-shrink:0; }
+  .icon-btn {
+    width:29px; height:29px; border-radius:7px; border:1px solid var(--border);
+    background:var(--surface3); color:var(--text2); font-size:12px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:var(--transition);
+  }
+  .icon-btn:hover { border-color:var(--border2); color:var(--text); }
+  .icon-btn.delete:hover { border-color:var(--red); color:var(--red); background:rgba(247,95,95,0.08); }
+  .icon-btn.confirm:hover { border-color:var(--green); color:var(--green); background:rgba(61,214,140,0.08); }
 
-        .upload-area p {
-            margin-top: 20px;
-            font-size: 1.1em;
-            color: #5f6368;
-        }
+  /* SIDEBAR */
+  .sidebar { display:flex; flex-direction:column; gap:14px; }
+  .card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
 
-        .upload-area label {
-            color: #1a73e8;
-            cursor: pointer;
-            font-weight: 600;
-        }
+  /* PIE CHART */
+  .chart-wrap { position:relative; width:148px; height:148px; margin:14px auto 0; }
+  canvas#pieChart { width:148px !important; height:148px !important; }
+  .chart-center {
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    pointer-events:none;
+  }
+  .chart-total { font-size:28px; font-weight:800; line-height:1; }
+  .chart-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.1em; margin-top:2px; }
+  .legend { margin-top:13px; display:flex; flex-direction:column; gap:6px; }
+  .legend-item { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text2); }
+  .legend-dot { width:8px; height:8px; border-radius:3px; flex-shrink:0; }
+  .legend-name { flex:1; }
+  .legend-count { font-weight:700; color:var(--text); font-size:12px; }
 
-        #fileInput {
-            display: none;
-        }
+  /* ZIP CARD */
+  .zip-label { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:0.07em; display:block; margin-bottom:7px; }
+  .zip-row { display:flex; align-items:center; }
+  .zip-name-input {
+    flex:1; background:var(--surface3); border:1px solid var(--border2);
+    border-right:none; border-radius:var(--radius-sm) 0 0 var(--radius-sm);
+    padding:9px 11px; color:var(--text);
+    font-family:Arial,Helvetica,sans-serif; font-size:13px; font-weight:600;
+    outline:none; transition:var(--transition); min-width:0;
+  }
+  .zip-name-input:focus { border-color:var(--accent); }
+  .zip-ext {
+    background:var(--surface3); border:1px solid var(--border2);
+    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+    padding:9px 10px; color:var(--text3); font-size:12px; font-weight:700; white-space:nowrap;
+  }
+  .size-row {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:10px; padding:9px 11px;
+    background:var(--surface3); border-radius:var(--radius-sm); border:1px solid var(--border);
+  }
+  .size-row-label { font-size:11px; color:var(--text2); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+  .size-row-val { font-size:13px; font-weight:700; color:var(--text); }
+  .zip-btn {
+    width:100%; margin-top:11px; padding:12px;
+    background:var(--accent); border:none; border-radius:var(--radius-sm);
+    color:#fff; font-size:14px; font-weight:700;
+    cursor:pointer; font-family:Arial,Helvetica,sans-serif;
+    transition:var(--transition); box-shadow:0 4px 16px var(--accent-glow);
+    display:flex; align-items:center; justify-content:center; gap:7px;
+  }
+  .zip-btn:hover:not(:disabled) { opacity:0.9; transform:translateY(-1px); box-shadow:0 6px 22px var(--accent-glow); }
+  .zip-btn:disabled { opacity:0.3; cursor:not-allowed; transform:none; }
+  .zip-btn.loading { animation:blink 1s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
-        .google-docs-icon {
-            width: 48px;
-            height: 48px;
-            display: block;
-            margin: 0 auto;
-        }
+  /* TOAST */
+  .toast {
+    position:fixed; bottom:22px; right:22px;
+    background:var(--surface2); border:1px solid var(--border2); border-radius:10px;
+    padding:11px 17px; display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:600; box-shadow:var(--shadow);
+    transform:translateY(70px); opacity:0;
+    transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1); z-index:999;
+  }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.success { border-color:var(--green); }
+  .toast.error   { border-color:var(--red); }
 
-        .file-list-container {
-            text-align: left;
-            margin-bottom: 25px;
-        }
-
-        .file-list-container h3 {
-            color: #5f6368;
-            margin-bottom: 15px;
-            font-weight: 400;
-            font-size: 1em;
-        }
-
-        #fileList {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 150px;
-            overflow-y: auto;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background-color: #ffffff;
-        }
-
-        #fileList li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-            border-bottom: 1px solid #eee;
-            font-size: 0.95em;
-            color: #3c4043;
-        }
-
-        #fileList li:last-child {
-            border-bottom: none;
-        }
-
-        #fileList li .remove-file {
-            color: #ea4335;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1.2em;
-            padding-left: 10px;
-        }
-
-        .btn {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            margin: 5px;
-        }
-
-        .primary-btn {
-            background-color: #1a73e8;
-            color: #ffffff;
-        }
-
-        .primary-btn:hover {
-            background-color: #1565c0;
-            transform: translateY(-2px);
-        }
-
-        .primary-btn:disabled {
-            background-color: #aab8c2;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .secondary-btn {
-            background-color: #e8f0fe;
-            color: #1a73e8;
-            border: 1px solid #1a73e8;
-        }
-
-        .secondary-btn:hover {
-            background-color: #d2e3fc;
-            transform: translateY(-2px);
-        }
-
-        /* Zipper Animation */
-        .zipper-animation-container {
-            display: none; /* Hidden by default */
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-top: 30px;
-        }
-
-        .zipper {
-            width: 150px;
-            height: 100px;
-            position: relative;
-            overflow: hidden;
-            margin-bottom: 20px;
-        }
-
-        .zipper-teeth {
-            position: absolute;
-            top: 0;
-            width: 45%;
-            height: 100%;
-            background-color: #ccc;
-            border-radius: 5px;
-        }
-
-        .zipper-teeth.left {
-            left: 0;
-            transform-origin: top right;
-            animation: zipperCloseLeft 2s forwards; /* Animation for closing */
-        }
-
-        .zipper-teeth.right {
-            right: 0;
-            transform-origin: top left;
-            animation: zipperCloseRight 2s forwards; /* Animation for closing */
-        }
-
-        .zipper-slider {
-            width: 25px;
-            height: 35px;
-            background-color: #333;
-            border-radius: 5px;
-            position: absolute;
-            left: 50%;
-            top: 0; /* Start at the top */
-            transform: translateX(-50%);
-            animation: slideDown 2s forwards; /* Animation for sliding down */
-            z-index: 10;
-        }
-
-        @keyframes slideDown {
-            0% { top: 0; }
-            100% { top: calc(100% - 35px); } /* End at the bottom, accounting for slider height */
-        }
-
-        @keyframes zipperCloseLeft {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(15deg); } /* Adjust angle for desired close effect */
-        }
-
-        @keyframes zipperCloseRight {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(-15deg); } /* Adjust angle for desired close effect */
-        }
-
-
-        #zipperStatus {
-            font-size: 1.1em;
-            color: #5f6368;
-        }
-
-        /* Download Section */
-        .download-section {
-            display: none; /* Hidden by default */
-            margin-top: 30px;
-            padding: 20px;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            background-color: #f8f9fa;
-        }
-
-        .download-section h3 {
-            color: #1a73e8;
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #5f6368;
-            font-weight: 600;
-        }
-
-        .input-group input[type="text"] {
-            width: calc(100% - 20px);
-            padding: 12px 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1em;
-            box-sizing: border-box;
-        }
-    </style>
+  ::-webkit-scrollbar { width:5px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>File Zipper</h1>
+<div class="app">
 
-        <div class="upload-area" id="uploadArea">
-            <div class="google-docs-icon">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="5" y="3" width="14" height="18" rx="2" fill="#FFFFFF"/>
-                    <path d="M19 7L14.5 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V9.5L19 7Z" fill="#F0F0F0"/>
-                    <path d="M19 7L14.5 3V7H19Z" fill="#D0D0D0"/>
-                    <rect x="7" y="7" width="10" height="1.5" rx="0.75" fill="#4285F4"/>
-                    <rect x="7" y="10" width="8" height="1.5" rx="0.75" fill="#BBDEFB"/>
-                    <rect x="7" y="13" width="10" height="1.5" rx="0.75" fill="#BBDEFB"/>
-                    <rect x="7" y="16" width="7" height="1.5" rx="0.75" fill="#BBDEFB"/>
-                </svg>
-            </div>
-            <p>Drag & Drop files here or <label for="fileInput">Browse Files</label></p>
-            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip">
-        </div>
+  <div class="top-bar">
+    <div class="theme-toggle">
+      <button class="theme-btn" id="btnLight" onclick="setTheme('light')">☀ Light</button>
+      <button class="theme-btn active" id="btnDark"  onclick="setTheme('dark')">◑ Dark</button>
+    </div>
+  </div>
 
-        <div class="file-list-container">
-            <h3>Files to Zip:</h3>
-            <ul id="fileList">
-                </ul>
-        </div>
+  <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
+    <div class="dz-icon">🗜️</div>
+    <h2>Drop files to archive</h2>
+    <p>Any format — images, videos, documents, code, archives and more</p>
+    <button class="dz-browse" onclick="event.stopPropagation();document.getElementById('fileInput').click()">Choose Files</button>
+    <input type="file" id="fileInput" multiple>
+  </div>
 
-        <button id="zipButton" class="btn primary-btn" disabled>Zip Files</button>
-
-        <div class="zipper-animation-container" id="zipperAnimationContainer">
-            <div class="zipper">
-                <div class="zipper-teeth left"></div>
-                <div class="zipper-slider"></div>
-                <div class="zipper-teeth right"></div>
-            </div>
-            <p id="zipperStatus">Zipping in progress...</p>
-        </div>
-
-        <div class="download-section" id="downloadSection">
-            <h3>Zip Complete!</h3>
-            <div class="input-group">
-                <label for="zipFileName">File Name:</label>
-                <input type="text" id="zipFileName" value="my_files.zip">
-            </div>
-            <button id="downloadButton" class="btn primary-btn">Download Zip</button>
-            <button id="resetButton" class="btn secondary-btn">Zip More Files</button>
-        </div>
+  <div class="content-grid" id="contentGrid" style="display:none">
+    <div>
+      <div class="sec-head">
+        <h3>Files</h3>
+        <span class="badge" id="fileCount">0</span>
+      </div>
+      <div class="file-list" id="fileList"></div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('fileInput');
-            const fileList = document.getElementById('fileList');
-            const zipButton = document.getElementById('zipButton');
-            const zipperAnimationContainer = document.getElementById('zipperAnimationContainer');
-            const zipperStatus = document.getElementById('zipperStatus');
-            const downloadSection = document.getElementById('downloadSection');
-            const zipFileNameInput = document.getElementById('zipFileName');
-            const downloadButton = document.getElementById('downloadButton');
-            const resetButton = document.getElementById('resetButton');
+    <div class="sidebar">
+      <div class="card">
+        <div class="sec-head" style="margin-bottom:0">
+          <h3>Breakdown</h3>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="pieChart" width="148" height="148"></canvas>
+          <div class="chart-center">
+            <div class="chart-total" id="chartTotal">0</div>
+            <div class="chart-label">files</div>
+          </div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
 
-            let uploadedFiles = [];
-            let zippedBlob = null;
+      <div class="card">
+        <span class="zip-label">Archive name</span>
+        <div class="zip-row">
+          <input type="text" class="zip-name-input" id="zipName" value="my-archive" placeholder="archive-name">
+          <div class="zip-ext">.zip</div>
+        </div>
+        <div class="size-row">
+          <span class="size-row-label">Total size</span>
+          <span class="size-row-val" id="totalSize">0 B</span>
+        </div>
+        <button class="zip-btn" id="zipBtn" onclick="downloadZip()" disabled>
+          ⬇ &nbsp;Download ZIP
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
-            // Highlight drag area on drag enter/leave
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('highlight');
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('highlight');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('highlight');
-                handleFiles(e.dataTransfer.files);
-            });
-
-            // Handle file input change
-            fileInput.addEventListener('change', (e) => {
-                handleFiles(e.target.files);
-            });
-
-            // Handle browse files click
-            uploadArea.querySelector('label[for="fileInput"]').addEventListener('click', () => {
-                fileInput.click();
-            });
-
-            function handleFiles(files) {
-                for (const file of files) {
-                    if (!uploadedFiles.some(f => f.name === file.name && f.size === file.size)) {
-                        uploadedFiles.push(file);
-                    }
-                }
-                renderFileList();
-                updateZipButtonState();
-            }
-
-            function renderFileList() {
-                fileList.innerHTML = ''; // Clear existing list
-                if (uploadedFiles.length === 0) {
-                    const emptyItem = document.createElement('li');
-                    emptyItem.textContent = 'No files selected.';
-                    fileList.appendChild(emptyItem);
-                } else {
-                    uploadedFiles.forEach((file, index) => {
-                        const listItem = document.createElement('li');
-                        listItem.innerHTML = `
-                            <span>${file.name} (${formatBytes(file.size)})</span>
-                            <span class="remove-file" data-index="${index}">&times;</span>
-                        `;
-                        fileList.appendChild(listItem);
-                    });
-                }
-            }
-
-            // Remove file from list
-            fileList.addEventListener('click', (e) => {
-                if (e.target.classList.contains('remove-file')) {
-                    const indexToRemove = parseInt(e.target.dataset.index);
-                    uploadedFiles.splice(indexToRemove, 1);
-                    renderFileList();
-                    updateZipButtonState();
-                }
-            });
-
-            function formatBytes(bytes, decimals = 2) {
-                if (bytes === 0) return '0 Bytes';
-                const k = 1024;
-                const dm = decimals < 0 ? 0 : decimals;
-                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-            }
-
-            function updateZipButtonState() {
-                zipButton.disabled = uploadedFiles.length === 0;
-            }
-
-            // Actual Zipping using JSZip
-            zipButton.addEventListener('click', async () => {
-                if (uploadedFiles.length === 0) {
-                    alert('Please select files to zip.');
-                    return;
-                }
-
-                // Hide upload and file list, show animation
-                uploadArea.style.display = 'none';
-                fileList.closest('.file-list-container').style.display = 'none';
-                zipButton.style.display = 'none';
-                downloadSection.style.display = 'none';
-
-                zipperAnimationContainer.style.display = 'flex';
-                zipperStatus.textContent = 'Initializing zip...';
-
-                const zip = new JSZip();
-
-                // Add files to the zip object
-                for (const file of uploadedFiles) {
-                    zip.file(file.name, file);
-                }
-
-                try {
-                    zipperStatus.textContent = 'Compressing files...';
-                    zippedBlob = await zip.generateAsync({ type: "blob" }, function updateCallback(metadata) {
-                        const percent = metadata.percent.toFixed(2);
-                        zipperStatus.textContent = `Zipping: ${percent}%`;
-                    });
-
-                    zipperAnimationContainer.style.display = 'none';
-                    downloadSection.style.display = 'block';
-                    zipFileNameInput.value = `my_zipped_files_${new Date().getTime()}.zip`;
-
-                } catch (error) {
-                    console.error("Error zipping files:", error);
-                    alert("An error occurred while zipping the files. Please try again.");
-                    resetApp();
-                }
-            });
-
-            // Download the generated zip file
-            downloadButton.addEventListener('click', () => {
-                const fileName = zipFileNameInput.value.trim();
-                if (!fileName) {
-                    alert('Please enter a file name.');
-                    return;
-                }
-
-                if (zippedBlob) {
-                    saveAs(zippedBlob, fileName);
-                    resetApp();
-                } else {
-                    alert('No zip file generated yet. Please zip files first.');
-                }
-            });
-
-            resetButton.addEventListener('click', () => {
-                resetApp();
-            });
-
-            function resetApp() {
-                uploadedFiles = [];
-                zippedBlob = null;
-                renderFileList();
-                updateZipButtonState();
-
-                uploadArea.style.display = 'flex';
-                fileList.closest('.file-list-container').style.display = 'block';
-                zipButton.style.display = 'block';
-                zipperAnimationContainer.style.display = 'none';
-                downloadSection.style.display = 'none';
-                zipperStatus.textContent = 'Zipping in progress...';
-            }
-
-            // Initial render
-            renderFileList();
-            updateZipButtonState();
-        });
-    </script>
-    <!-- Load Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+<div class="toast" id="toast"><span id="toastMsg">Done</span></div>
 
 <script>
-// --- Create Toggle Button ---
-const toggle = document.createElement("span");
-toggle.className = "material-symbols-outlined";
-toggle.style.position = "fixed";
-toggle.style.top = "15px";
-toggle.style.right = "15px";
-toggle.style.fontSize = "32px";
-toggle.style.cursor = "pointer";
-toggle.style.zIndex = "999999";
-toggle.style.userSelect = "none";
-document.body.appendChild(toggle);
+let files = [], nextId = 0;
 
-// --- Functions ---
-function enableDark() {
-    document.documentElement.style.filter = "invert(1) hue-rotate(180deg)";
-    localStorage.setItem("theme", "dark");
-    toggle.textContent = "light_mode"; // sun icon
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('btnLight').classList.toggle('active', t === 'light');
+  document.getElementById('btnDark').classList.toggle('active', t === 'dark');
+  localStorage.setItem('zf-theme', t);
+  drawPie();
 }
+setTheme(localStorage.getItem('zf-theme') || 'dark');
 
-function disableDark() {
-    document.documentElement.style.filter = "";
-    localStorage.setItem("theme", "light");
-    toggle.textContent = "dark_mode"; // moon icon
-}
-
-// --- Load Saved Theme ---
-if (localStorage.getItem("theme") === "dark") {
-    enableDark();
-} else {
-    disableDark();
-}
-
-// --- Toggle on Click ---
-toggle.onclick = () => {
-    if (localStorage.getItem("theme") === "dark") {
-        disableDark();
-    } else {
-        enableDark();
-    }
+const TYPES = {
+  jpg:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},jpeg:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},
+  png:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},gif:{icon:'🎞',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},
+  svg:{icon:'✦',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},webp:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},
+  bmp:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},ico:{icon:'🔷',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},
+  mp4:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},mov:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},
+  avi:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},mkv:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},
+  webm:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},
+  mp3:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},wav:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},
+  ogg:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},flac:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},
+  m4a:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},
+  pdf:{icon:'📄',bg:'#fee2e2',fg:'#dc2626',cat:'Document'},doc:{icon:'📝',bg:'#ede9fe',fg:'#7c3aed',cat:'Document'},
+  docx:{icon:'📝',bg:'#ede9fe',fg:'#7c3aed',cat:'Document'},xls:{icon:'📊',bg:'#dcfce7',fg:'#16a34a',cat:'Document'},
+  xlsx:{icon:'📊',bg:'#dcfce7',fg:'#16a34a',cat:'Document'},ppt:{icon:'📋',bg:'#fff0e0',fg:'#d97316',cat:'Document'},
+  pptx:{icon:'📋',bg:'#fff0e0',fg:'#d97316',cat:'Document'},txt:{icon:'📃',bg:'#f1f5f9',fg:'#64748b',cat:'Document'},
+  md:{icon:'📝',bg:'#e0f2fe',fg:'#0284c7',cat:'Document'},
+  js:{icon:'⚡',bg:'#fefce8',fg:'#ca8a04',cat:'Code'},ts:{icon:'⚡',bg:'#dbeafe',fg:'#2563eb',cat:'Code'},
+  html:{icon:'<>',bg:'#fff0e0',fg:'#d97316',cat:'Code'},css:{icon:'✦',bg:'#ede9fe',fg:'#7c3aed',cat:'Code'},
+  json:{icon:'{}',bg:'#dcfce7',fg:'#16a34a',cat:'Code'},py:{icon:'🐍',bg:'#dcfce7',fg:'#16a34a',cat:'Code'},
+  java:{icon:'☕',bg:'#fff0e0',fg:'#d97316',cat:'Code'},cpp:{icon:'C+',bg:'#ede9fe',fg:'#7c3aed',cat:'Code'},
+  cs:{icon:'C#',bg:'#ede9fe',fg:'#7c3aed',cat:'Code'},go:{icon:'Go',bg:'#e0f2fe',fg:'#0284c7',cat:'Code'},
+  rs:{icon:'⚙',bg:'#fff0e0',fg:'#d97316',cat:'Code'},php:{icon:'🐘',bg:'#ede9fe',fg:'#7c3aed',cat:'Code'},
+  rb:{icon:'💎',bg:'#fee2e2',fg:'#dc2626',cat:'Code'},sh:{icon:'$_',bg:'#dcfce7',fg:'#16a34a',cat:'Code'},
+  zip:{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},rar:{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},
+  tar:{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},gz:{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},
+  '7z':{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},
 };
+
+const CAT_COLORS = {Image:'#f472b6',Video:'#fb923c',Audio:'#facc15',Document:'#a78bfa',Code:'#34d399',Archive:'#94a3b8',Other:'#38bdf8'};
+
+function getType(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const t = TYPES[ext];
+  if (t) return isDark ? {...t, bg: t.fg+'22'} : t;
+  return isDark ? {icon:'📁',bg:'#38bdf822',fg:'#38bdf8',cat:'Other'} : {icon:'📁',bg:'#e0f2fe',fg:'#0284c7',cat:'Other'};
+}
+
+function formatSize(b) {
+  if (b<1024) return b+' B';
+  if (b<1048576) return (b/1024).toFixed(1)+' KB';
+  if (b<1073741824) return (b/1048576).toFixed(1)+' MB';
+  return (b/1073741824).toFixed(2)+' GB';
+}
+
+const dz = document.getElementById('dropzone');
+dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave', e=>{if(!dz.contains(e.relatedTarget))dz.classList.remove('drag-over');});
+dz.addEventListener('drop', e=>{e.preventDefault();dz.classList.remove('drag-over');addFiles([...e.dataTransfer.files]);});
+document.getElementById('fileInput').addEventListener('change', e=>{addFiles([...e.target.files]);e.target.value='';});
+
+function addFiles(nf) {
+  nf.forEach(f=>files.push({id:nextId++,file:f,name:f.name}));
+  render();
+  if(nf.length) showToast(`✓ Added ${nf.length} file${nf.length>1?'s':''}`, 'success');
+}
+
+function render() {
+  const grid = document.getElementById('contentGrid');
+  const list = document.getElementById('fileList');
+  document.getElementById('fileCount').textContent = files.length;
+  document.getElementById('zipBtn').disabled = !files.length;
+  document.getElementById('totalSize').textContent = formatSize(files.reduce((s,f)=>s+f.file.size,0));
+  grid.style.display = files.length ? 'grid' : 'none';
+  list.innerHTML = '';
+  files.forEach(({id,file,name})=>{
+    const t = getType(name);
+    const ext = name.includes('.') ? name.split('.').pop().toLowerCase() : '';
+    const card = document.createElement('div');
+    card.className='file-card'; card.id=`card-${id}`;
+    card.innerHTML=`
+      <div class="file-icon" style="background:${t.bg};color:${t.fg}">
+        ${t.icon}
+        ${ext?`<span class="ext-tag" style="background:${t.fg};color:#fff">.${ext}</span>`:''}
+      </div>
+      <div class="file-info">
+        <div class="file-name-wrap">
+          <div class="file-name" title="${name}">${name}</div>
+        </div>
+        <div class="file-meta">${formatSize(file.size)} &middot; ${t.cat}</div>
+      </div>
+      <div class="file-actions">
+        <button class="icon-btn" title="Rename" onclick="startRename(${id})">✏</button>
+        <button class="icon-btn delete" title="Remove" onclick="removeFile(${id})">✕</button>
+      </div>`;
+    list.appendChild(card);
+  });
+  drawPie();
+}
+
+function startRename(id) {
+  const entry = files.find(f=>f.id===id); if(!entry) return;
+  const wrap = document.querySelector(`#card-${id} .file-name-wrap`);
+  wrap.innerHTML=`
+    <input class="file-name-input" id="rinput-${id}" value="${entry.name}">
+    <button class="icon-btn confirm" onclick="confirmRename(${id})">✓</button>
+    <button class="icon-btn" onclick="render()">✕</button>`;
+  const inp = document.getElementById(`rinput-${id}`);
+  inp.focus(); inp.select();
+  inp.addEventListener('keydown', e=>{if(e.key==='Enter')confirmRename(id);if(e.key==='Escape')render();});
+}
+function confirmRename(id) {
+  const inp = document.getElementById(`rinput-${id}`); if(!inp) return;
+  const val = inp.value.trim(); if(!val) return;
+  const entry = files.find(f=>f.id===id);
+  if(entry){entry.name=val;showToast('✎ Renamed','success');}
+  render();
+}
+function removeFile(id) {
+  files=files.filter(f=>f.id!==id); render(); showToast('Removed');
+}
+
+function drawPie() {
+  const canvas = document.getElementById('pieChart');
+  const ctx = canvas.getContext('2d');
+  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
+  ctx.clearRect(0,0,148,148);
+  document.getElementById('chartTotal').textContent = files.length;
+  const cx=74,cy=74,r=64;
+  if(!files.length){
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle=isDark?'#242424':'#daeaff'; ctx.lineWidth=15; ctx.stroke();
+    document.getElementById('legend').innerHTML=''; return;
+  }
+  const cats={};
+  files.forEach(({name})=>{const cat=getType(name).cat; cats[cat]=(cats[cat]||0)+1;});
+  const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  let angle=-Math.PI/2;
+  entries.forEach(([cat,count])=>{
+    const slice=(count/files.length)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,angle+0.025,angle+slice-0.025); ctx.closePath();
+    ctx.fillStyle=CAT_COLORS[cat]||'#888'; ctx.fill();
+    angle+=slice;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,43,0,Math.PI*2);
+  ctx.fillStyle=isDark?'#0d0d0d':'#f0f6ff'; ctx.fill();
+  document.getElementById('legend').innerHTML=entries.map(([cat,count])=>`
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${CAT_COLORS[cat]||'#888'}"></div>
+      <div class="legend-name">${cat}</div>
+      <div class="legend-count">${count}</div>
+    </div>`).join('');
+}
+
+async function downloadZip() {
+  if(!files.length) return;
+  const btn=document.getElementById('zipBtn');
+  btn.disabled=true; btn.classList.add('loading'); btn.innerHTML='⟳ &nbsp;Compressing...';
+  try {
+    const zip=new JSZip(), seen={};
+    files.forEach(({name,file})=>{
+      let n=name;
+      if(seen[name]!==undefined){seen[name]++;const d=name.lastIndexOf('.');n=d>0?name.slice(0,d)+` (${seen[name]})`+name.slice(d):name+` (${seen[name]})`;}
+      else seen[name]=0;
+      zip.file(n,file);
+    });
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
+    const fname=(document.getElementById('zipName').value.trim()||'archive')+'.zip';
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
+    URL.revokeObjectURL(a.href);
+    showToast(`⬇ ${fname} saved`,'success');
+  } catch(e){ showToast('⚠ Error building ZIP','error'); }
+  btn.disabled=false; btn.classList.remove('loading'); btn.innerHTML='⬇ &nbsp;Download ZIP';
+}
+
+let _tt;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.className='toast '+type; t.classList.add('show');
+  clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+const zipNameEl=document.getElementById('zipName');
+const sn=localStorage.getItem('zf-zipname'); if(sn) zipNameEl.value=sn;
+zipNameEl.addEventListener('input',()=>localStorage.setItem('zf-zipname',zipNameEl.value));
+render();
 </script>
-    
 </body>
 </html>

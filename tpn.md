@@ -54,7 +54,8 @@ The following services are used to power specific features within the applicatio
 
 ---
 
-##  Standard License
+##  Standard License Collection
+`License templates last updated: Mar 7, 2026`
 
 # Apache 2.0
                                  Apache License

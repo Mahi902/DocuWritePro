@@ -6,7 +6,7 @@
 
 
 ### 🔹mahi902.GitHub.io/DocuWritePro
-_Last updated: February 14th, 2026_
+_Last updated: March 7th, 2026_
 
 ## Introduction
 
@@ -446,6 +446,12 @@ DocuWrite Pro is created and moderated by [Mahi902](https://github.com/Mahi902/)
 ![Banner3](https://i.ibb.co/QjYtH4CY/MIT-Logo-New-svg.png)
 
 The project is under the [MIT](https://choosealicense.com/licenses/mit/) License in GitHub. Learn more at MIT's official website.
+
+ⓘ This project may include or depend on services, libraries, or tools provided by third-party providers. The licenses and legal notices for these third-party components are listed separately.
+
+You can view the complete list of third-party licenses here:
+https://mahi902.github.io/DocuWritePro/tpn.md
+
 
 ### Notes
 • Commercial Use Allowed: The MIT License permits the use of the software in commercial and proprietary products.

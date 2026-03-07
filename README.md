@@ -427,6 +427,8 @@ In DocuWrite Pro, we highly value your privacy. As a client side service, we don
 ---
 
 - <strong>Use of Artificial Intelligence during development:</strong><br>
+<img width="1376" height="768" alt="1000044951" src="https://github.com/user-attachments/assets/26d345a9-c96f-4ff9-b9a8-2492c913a4c4" />
+
   During the development of DocuWrite Pro, we took guidance and inspiration from various AI models. This does not imply direct copying of code. Instead, AI tools were used for design inspiration, debugging assistance, general suggestions, and feedback analysis. Additionally, GitHub Copilot’s “Auto Generate” feature is used to create clear and structured commit messages during version control.
 
 - <strong>Use of Artificial Intelligence within DocuWrite Pro:</strong><br>

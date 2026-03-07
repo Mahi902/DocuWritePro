@@ -528,7 +528,6 @@ I'm a passionate **student, software developer, and tech innovator**. I love cre
 | Project        | Description                  | Link |
 |----------------|-----------------------------|------|
 | DocuWrite Pro  | All-in-one document toolkit | [GitHub](https://github.com/Mahi902/DocuWritePro) |
-| Aurora         | Innovative web platform     | [GitHub](https://github.com/Mahi902/Aurora) |
 | eCalculator    | Simple online calculator    | [Google Sites](https://sites.google.com/view/calculator-simply/home) |
 
 

@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Opensheet</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    (function() {
+      const match = document.cookie.split('; ').find(r => r.startsWith('toolsuite_theme='));
+      if (match && match.split('=')[1] === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+
+  <style>
+    /* ── Scrollbars hidden globally ── */
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+
+    /* ── Box model reset ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ── Body ── */
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      overflow: hidden;
+      height: 100vh;
+    }
+    body.dark { background: #111; }
+
+    /* ── Loading Screen ── */
+    #loadingScreen {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+      transition: opacity 0.3s;
+    }
+    body.dark #loadingScreen { background: #1a1a1a; }
+    .spinner {
+      width: 52px; height: 52px;
+      border: 4px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 14px; color: #999; }
+    body.dark .loading-text { color: #666; }
+
+    /* ── App Container ── */
+    #appContainer {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Top Bar ── */
+    .top-bar {
+      background: #fff;
+      padding: 9px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 200;
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .top-bar { background: #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+
+    #toolTitle {
+      font-size: 17px;
+      border: none;
+      outline: none;
+      padding: 5px 9px;
+      border-radius: 8px;
+      font-family: inherit;
+      min-width: 140px;
+      max-width: 320px;
+      transition: background 0.2s;
+      flex-shrink: 0;
+      color: #1a1a2e;
+      background: transparent;
+    }
+    #toolTitle:hover, #toolTitle:focus { background: #f5f5f5; }
+    body.dark #toolTitle { color: #ddd; }
+    body.dark #toolTitle:hover, body.dark #toolTitle:focus { background: #252525; }
+
+    .top-spacer { flex: 1; min-width: 8px; }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 7px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      color: #1976d2;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #e3f2fd; }
+    .icon-btn .material-symbols-outlined { font-size: 22px; }
+    body.dark .icon-btn:hover { background: #1a2a3a; }
+
+    .action-btn {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      padding: 7px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      white-space: nowrap;
+      font-family: inherit;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+    .action-btn:hover { background: #1565c0; }
+    .action-btn.secondary { background: #546e7a; }
+    .action-btn.secondary:hover { background: #37474f; }
+
+    /* Export modal option buttons */
+    .export-opt-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      background: #fafafa;
+      cursor: pointer;
+      font-family: inherit;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .export-opt-btn:hover { border-color: #1976d2; background: #f0f7ff; }
+    body.dark .export-opt-btn { border-color: #333; background: #252525; }
+    body.dark .export-opt-btn:hover { border-color: #1976d2; background: #1a2a3a; }
+    .export-opt-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .export-opt-text { flex: 1; }
+    .export-opt-title { font-size: 14px; font-weight: 600; color: #222; margin-bottom: 3px; }
+    .export-opt-sub { font-size: 12px; color: #888; line-height: 1.4; }
+    body.dark .export-opt-title { color: #ddd; }
+    body.dark .export-opt-sub { color: #666; }
+
+    /* Auto-select toggle */
+    .autosel-wrap {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      flex-shrink: 0;
+      padding: 5px 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+    body.dark .autosel-wrap { border-color: #333; background: #252525; }
+    .autosel-label { font-size: 12px; font-weight: 600; color: #777; white-space: nowrap; }
+    body.dark .autosel-label { color: #888; }
+
+    .toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; cursor: pointer; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ccc;
+      border-radius: 11px;
+      transition: 0.3s;
+    }
+    .toggle-slider::before {
+      position: absolute;
+      content: "";
+      height: 16px; width: 16px;
+      left: 3px; bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    input:checked + .toggle-slider { background: #1976d2; }
+    input:checked + .toggle-slider::before { transform: translateX(18px); }
+    body.dark .toggle-slider { background: #444; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      background: #fff;
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .toolbar { background: #1a1a1a; }
+
+    .tbtn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .tbtn:hover { background: #e3f2fd; }
+    .tbtn.active { background: #bbdefb; }
+    .tbtn .material-symbols-outlined { font-size: 19px; color: #333; }
+    body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+    body.dark .tbtn:hover { background: #1a2a3a; }
+    body.dark .tbtn.active { background: #0d2a4a; }
+
+    .toolbar-sep {
+      width: 1px; height: 26px;
+      background: #e0e0e0;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    body.dark .toolbar-sep { background: #333; }
+
+    .tbtn-label {
+      font-size: 12px;
+      color: #d32f2f;
+      font-weight: 600;
+      padding: 5px 9px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      background: #fce4ec;
+      font-family: inherit;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .tbtn-label:hover { background: #f8bbd0; }
+    body.dark .tbtn-label { background: #3a1a1a; color: #ef9a9a; }
+    body.dark .tbtn-label:hover { background: #4a1a1a; }
+
+    /* Color pickers in toolbar */
+    .color-picker-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 7px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .color-picker-wrap:hover { background: #e3f2fd; }
+    body.dark .color-picker-wrap:hover { background: #1a2a3a; }
+    .color-picker-wrap .material-symbols-outlined { font-size: 17px; color: #555; }
+    body.dark .color-picker-wrap .material-symbols-outlined { color: #aaa; }
+    .color-picker-wrap input[type="color"] {
+      width: 18px; height: 18px;
+      border: 1px solid #ddd;
+      border-radius: 50%;
+      cursor: pointer;
+      padding: 1px;
+      flex-shrink: 0;
+      background: none;
+    }
+    .color-picker-wrap input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker-wrap input[type="color"]::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+    /* Font size select */
+    .font-size-select {
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 4px 7px;
+      font-size: 12px;
+      outline: none;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+      background: #fff;
+      color: #333;
+    }
+    body.dark .font-size-select { background: #252525; color: #ddd; border-color: #444; }
+
+    /* ── Formula Bar ── */
+    .formula-bar {
+      background: #fff;
+      padding: 5px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+      z-index: 100;
+    }
+    body.dark .formula-bar { background: #1a1a1a; border-color: #333; }
+
+    #cellRef {
+      font-size: 12px;
+      font-family: monospace;
+      font-weight: 700;
+      color: #1976d2;
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      border-radius: 6px;
+      padding: 3px 9px;
+      min-width: 48px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    body.dark #cellRef { background: #0d2a4a; border-color: #1a3a6a; color: #90caf9; }
+
+    .formula-sep { width: 1px; height: 18px; background: #e0e0e0; flex-shrink: 0; }
+    body.dark .formula-sep { background: #333; }
+
+    .fx-icon { font-size: 16px; color: #999; flex-shrink: 0; }
+    body.dark .fx-icon { color: #666; }
+
+    #formulaInput {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 13px;
+      font-family: inherit;
+      background: transparent;
+      color: #333;
+      padding: 2px 0;
+    }
+    body.dark #formulaInput { color: #ddd; }
+
+    /* ── Main Content ── */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── Content Area (Grid) ── */
+    .content-area {
+      flex: 1;
+      overflow: auto;
+      background: #f0f4f8;
+      min-width: 0;
+      position: relative;
+    }
+    body.dark .content-area { background: #111; }
+
+    /* ── Grid Table ── */
+    #mainGrid {
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      background: #fff;
+    }
+    body.dark #mainGrid { background: #1a1a1a; }
+
+    #mainGrid th, #mainGrid td {
+      border-right: 1px solid #e0e0e0;
+      border-bottom: 1px solid #e0e0e0;
+      position: relative;
+      min-width: 100px;
+      height: 26px;
+      padding: 0 8px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      color: #333;
+    }
+    body.dark #mainGrid th, body.dark #mainGrid td {
+      border-color: #2a2a2a;
+      color: #ccc;
+    }
+
+    #mainGrid th {
+      background: #fafafa;
+      font-weight: 500;
+      font-size: 12px;
+      color: #888;
+      user-select: none;
+      text-align: center;
+    }
+    body.dark #mainGrid th { background: #111; color: #666; }
+
+    .row-header {
+      width: 46px; min-width: 46px;
+      position: sticky; left: 0; z-index: 10;
+      font-size: 11px;
+    }
+    .col-header { position: sticky; top: 0; z-index: 10; }
+    .corner-header {
+      position: sticky; top: 0; left: 0; z-index: 20;
+      background: #f0f4f8;
+      width: 46px;
+    }
+    body.dark .corner-header { background: #111; }
+
+    td.selected {
+      background: rgba(25,118,210,0.08) !important;
+      box-shadow: inset 0 0 0 2px #1976d2;
+      z-index: 5;
+    }
+    body.dark td.selected {
+      background: rgba(25,118,210,0.14) !important;
+    }
+    td.dep-highlight {
+      background: rgba(46,125,50,0.08) !important;
+      box-shadow: inset 0 0 0 1px #388e3c;
+      z-index: 4;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 255px;
+      min-width: 255px;
+      background: #fff;
+      padding: 14px;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+      flex-shrink: 0;
+      order: -1;
+    }
+    body.dark .sidebar { background: #1a1a1a; border-right: 1px solid #333; }
+    .sidebar.collapsed {
+      transform: translateX(-255px);
+      width: 0; min-width: 0; padding: 0;
+      overflow: hidden;
+    }
+    .expand-btn {
+      position: fixed;
+      left: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 50;
+      display: none;
+    }
+    body.dark .expand-btn { background: #1a1a1a; }
+
+    .sb-section { margin-bottom: 18px; }
+    .sb-title {
+      font-size: 11px; font-weight: 700; color: #888;
+      margin-bottom: 9px; text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    body.dark .sb-title { color: #555; }
+    .sb-label { display: block; font-size: 12px; color: #777; margin-bottom: 3px; }
+
+    .sb-toggle-row {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 9px;
+    }
+    .sb-toggle-label { font-size: 13px; color: #444; }
+    body.dark .sb-toggle-label { color: #aaa; }
+
+    .collapse-btn {
+      width: 100%;
+      padding: 8px;
+      background: #e3f2fd;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #1976d2;
+      font-weight: 600;
+      margin-top: 6px;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .collapse-btn:hover { background: #bbdefb; }
+    body.dark .collapse-btn { background: #1a2a4a; color: #90caf9; }
+
+    /* Sidebar rows */
+    .sb-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 7px;
+      flex-wrap: wrap;
+    }
+    .sb-btn {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 7px;
+      background: #fafafa;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      color: #444;
+      font-weight: 500;
+    }
+    .sb-btn:hover { border-color: #1976d2; background: #e3f2fd; color: #1976d2; }
+    .sb-btn .material-symbols-outlined { font-size: 16px; }
+    body.dark .sb-btn { border-color: #333; background: #252525; color: #bbb; }
+    body.dark .sb-btn:hover { border-color: #1976d2; background: #1a2a3a; color: #90caf9; }
+
+    .sb-btn.danger { border-color: #fce4ec; background: #fff5f5; color: #d32f2f; }
+    .sb-btn.danger:hover { border-color: #d32f2f; background: #fce4ec; }
+    body.dark .sb-btn.danger { border-color: #3a1a1a; background: #2a1a1a; color: #ef9a9a; }
+
+    /* ── Footer ── */
+    .footer {
+      background: #fff;
+      border-top: 1px solid #e0e0e0;
+      padding: 5px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    body.dark .footer { background: #1a1a1a; border-color: #333; }
+    .footer-text {
+      font-size: 11px;
+      color: #999;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    body.dark .footer-text { color: #555; }
+
+    /* ── Right-click Context Menu ── */
+    .win-ctx-menu {
+      position: fixed;
+      background: #fff;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      z-index: 9800;
+      min-width: 200px;
+      padding: 4px 0;
+      display: none;
+      font-size: 13px;
+    }
+    .win-ctx-menu.open { display: block; }
+    body.dark .win-ctx-menu { background: #1e1e1e; border-color: #333; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+    .wcm-item {
+      padding: 7px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #222;
+      border-radius: 4px;
+      margin: 1px 4px;
+      transition: background 0.1s;
+      white-space: nowrap;
+    }
+    .wcm-item:hover { background: #e3f2fd; color: #1565c0; }
+    .wcm-item .material-symbols-outlined { font-size: 16px; color: #555; }
+    .wcm-item:hover .material-symbols-outlined { color: #1565c0; }
+    .wcm-item.danger { color: #d32f2f; }
+    .wcm-item.danger:hover { background: #fce4ec; }
+    .wcm-item.danger .material-symbols-outlined { color: #d32f2f; }
+    .wcm-sep { height: 1px; background: #eee; margin: 4px 8px; }
+    body.dark .wcm-item { color: #ddd; }
+    body.dark .wcm-item:hover { background: #1a2a3a; color: #90caf9; }
+    body.dark .wcm-item .material-symbols-outlined { color: #888; }
+    body.dark .wcm-sep { background: #333; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      padding: 10px 18px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      z-index: 10002;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success, .toast.info { background: #1976d2; }
+    .toast.error { background: #d32f2f; }
+    .toast .material-symbols-outlined { font-size: 16px; }
+
+    /* ── Tip Box ── */
+    #tipBox {
+      position: fixed;
+      bottom: 52px; right: 18px;
+      width: 284px;
+      background: #1976d2;
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+      z-index: 9990;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+      font-family: inherit;
+      pointer-events: none;
+    }
+    #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+    body.dark #tipBox { background: #0d47a1; }
+    .tip-prog { height: 3px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 11px; }
+    .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+    .tip-text { font-size: 13px; line-height: 1.5; min-height: 52px; }
+    .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+    .tip-btn { flex: 1; border: none; padding: 6px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .tip-prev { background: rgba(255,255,255,0.18); color: #fff; }
+    .tip-next { background: #fff; color: #1976d2; }
+
+    /* ── Tooltip ── */
+    .tbtn[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      bottom: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ── Find & Replace Modal ── */
+    .modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.48);
+      z-index: 8000; align-items: center; justify-content: center;
+    }
+    .modal.open { display: flex; }
+    .mbox {
+      background: #fff; border-radius: 16px; padding: 26px;
+      width: 90%; max-width: 400px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+      position: relative;
+    }
+    body.dark .mbox { background: #1e1e1e; color: #ddd; }
+    .mhdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .mtitle { font-size: 19px; font-weight: 500; color: #333; }
+    body.dark .mtitle { color: #e0e0e0; }
+    .mclose {
+      background: none; border: none; cursor: pointer;
+      padding: 4px; border-radius: 50%;
+      display: flex; align-items: center; transition: background 0.15s;
+    }
+    .mclose:hover { background: #f5f5f5; }
+    body.dark .mclose:hover { background: #333; }
+    .mclose .material-symbols-outlined { font-size: 21px; color: #666; }
+    .frow { margin-bottom: 13px; }
+    .frow label { display: block; font-size: 12px; color: #777; margin-bottom: 4px; }
+    body.dark .frow label { color: #888; }
+    .finput {
+      width: 100%; padding: 8px 10px;
+      border: 1px solid #e0e0e0; border-radius: 7px;
+      font-size: 13px; font-family: inherit; outline: none;
+      transition: border-color 0.2s; background: #fafafa; color: #333;
+    }
+    .finput:focus { border-color: #1976d2; background: #fff; }
+    body.dark .finput { background: #252525; color: #ddd; border-color: #444; }
+    .mfooter { display: flex; gap: 9px; justify-content: flex-end; margin-top: 18px; }
+    .mbtn {
+      padding: 8px 18px; border: none; border-radius: 8px;
+      cursor: pointer; font-size: 13px; font-family: inherit; font-weight: 500;
+      transition: background 0.15s;
+    }
+    .mbtn.primary { background: #1976d2; color: #fff; }
+    .mbtn.primary:hover { background: #1565c0; }
+    .mbtn.sec { background: #e0e0e0; color: #333; }
+    .mbtn.sec:hover { background: #d0d0d0; }
+    body.dark .mbtn.sec { background: #333; color: #bbb; }
+    body.dark .mbtn.sec:hover { background: #3a3a3a; }
+
+    /* Formula accordion in sidebar */
+    .aw-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 10px; background: #f0f7ff; border-radius: 8px;
+      cursor: pointer; user-select: none; border: 1px solid #dceeff;
+      margin-bottom: 4px;
+    }
+    .aw-header:hover { background: #e3f2fd; }
+    body.dark .aw-header { background: #1a2a3a; border-color: #1e3a5a; }
+    body.dark .aw-header:hover { background: #1e3350; }
+    .aw-header-label { font-size: 12px; font-weight: 600; color: #1565c0; letter-spacing: 0.2px; }
+    body.dark .aw-header-label { color: #90caf9; }
+    .aw-chevron { font-size: 16px; color: #1976d2; transition: transform 0.25s; }
+    .aw-chevron.open { transform: rotate(180deg); }
+    body.dark .aw-chevron { color: #90caf9; }
+    .aw-dropdown {
+      overflow: hidden; max-height: 0;
+      transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+      opacity: 0; pointer-events: none;
+    }
+    .aw-dropdown.open { max-height: 800px; opacity: 1; pointer-events: auto; }
+    .aw-inner { padding: 4px 2px 6px; }
+
+    .formula-card {
+      padding: 9px 10px; border-radius: 8px; margin-bottom: 5px;
+      border: 1px solid #f0f0f0; background: #fafafa; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .formula-card:hover { border-color: #1976d2; background: #f0f7ff; }
+    body.dark .formula-card { background: #222; border-color: #2a2a2a; }
+    body.dark .formula-card:hover { border-color: #1976d2; background: #1a2a3a; }
+    .formula-card-name {
+      font-size: 12px; font-weight: 700; color: #1976d2; font-family: monospace;
+      margin-bottom: 2px;
+    }
+    body.dark .formula-card-name { color: #90caf9; }
+    .formula-card-desc { font-size: 11px; color: #777; line-height: 1.4; }
+    body.dark .formula-card-desc { color: #888; }
+    .formula-card-example {
+      font-size: 11px; color: #999; font-family: monospace;
+      margin-top: 3px; background: #f0f4f8; padding: 2px 6px;
+      border-radius: 4px; display: inline-block;
+    }
+    body.dark .formula-card-example { background: #1a1a2a; color: #777; }
+
+    /* Hidden file input */
+    #fileInput { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ── Loading Screen ── -->
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Preparing spreadsheet…</div>
+</div>
+
+<!-- ── App Container ── -->
+<div id="appContainer">
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="material-symbols-outlined" style="font-size:22px;color:#1976d2;flex-shrink:0;">grid_view</span>
+    <input type="text" id="toolTitle" value="Untitled Spreadsheet" spellcheck="false">
+    <div class="top-spacer"></div>
+
+    <!-- Import -->
+    <button class="action-btn secondary" onclick="document.getElementById('fileInput').click()" title="Import JSON or CSV">
+      <span class="material-symbols-outlined" style="font-size:17px;">upload_file</span> Import
+    </button>
+    <input type="file" id="fileInput" accept=".json,.csv" onchange="importFile(event)">
+
+    <!-- Export -->
+    <button class="action-btn" onclick="openExportModal()">
+      <span class="material-symbols-outlined" style="font-size:17px;">download</span> Export
+    </button>
+
+    <!-- Find & Replace -->
+    <button class="icon-btn" onclick="openFindReplace()" title="Find & Replace">
+      <span class="material-symbols-outlined">find_replace</span>
+    </button>
+
+    <!-- Dark mode -->
+    <button class="icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle dark mode">
+      <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+    </button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="tbtn" onclick="doUndo()" title="Undo"><span class="material-symbols-outlined">undo</span></button>
+    <button class="tbtn" onclick="doRedo()" title="Redo"><span class="material-symbols-outlined">redo</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" id="btnBold" onclick="applyStyle('fontWeight','bold')" title="Bold"><span class="material-symbols-outlined">format_bold</span></button>
+    <button class="tbtn" id="btnItalic" onclick="applyStyle('fontStyle','italic')" title="Italic"><span class="material-symbols-outlined">format_italic</span></button>
+    <button class="tbtn" id="btnUnderline" onclick="applyStyle('textDecoration','underline')" title="Underline"><span class="material-symbols-outlined">format_underlined</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="applyStyle('textAlign','left')" title="Align Left"><span class="material-symbols-outlined">format_align_left</span></button>
+    <button class="tbtn" onclick="applyStyle('textAlign','center')" title="Align Center"><span class="material-symbols-outlined">format_align_center</span></button>
+    <button class="tbtn" onclick="applyStyle('textAlign','right')" title="Align Right"><span class="material-symbols-outlined">format_align_right</span></button>
+    <div class="toolbar-sep"></div>
+    <select class="font-size-select" title="Font Size" onchange="applyStyle('fontSize', this.value + 'px')">
+      <option value="">Size</option>
+      <option value="11">11</option>
+      <option value="12">12</option>
+      <option value="13" selected>13</option>
+      <option value="14">14</option>
+      <option value="16">16</option>
+      <option value="18">18</option>
+      <option value="20">20</option>
+      <option value="24">24</option>
+    </select>
+    <div class="toolbar-sep"></div>
+    <div class="color-picker-wrap" title="Text Color">
+      <span class="material-symbols-outlined">palette</span>
+      <input type="color" onchange="applyStyle('color', this.value)">
+    </div>
+    <div class="color-picker-wrap" title="Cell Background">
+      <span class="material-symbols-outlined">format_color_fill</span>
+      <input type="color" id="bgColorPicker" value="#ffffff" onchange="applyStyle('backgroundColor', this.value)">
+    </div>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn-label" onclick="clearCell()" title="Clear Cell">Clear</button>
+  </div>
+
+  <!-- Formula Bar -->
+  <div class="formula-bar">
+    <div id="cellRef">A1</div>
+    <div class="formula-sep"></div>
+    <span class="material-symbols-outlined fx-icon">function</span>
+    <input type="text" id="formulaInput" placeholder="Enter value or formula, e.g. =SUM(A1:A10)">
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="sb-section">
+        <div class="sb-title">Grid</div>
+        <div class="sb-row">
+          <button class="sb-btn" onclick="addRow()">
+            <span class="material-symbols-outlined">add_row_below</span> Add Row
+          </button>
+          <button class="sb-btn" onclick="addCol()">
+            <span class="material-symbols-outlined">add_column_right</span> Add Col
+          </button>
+        </div>
+        <div class="sb-row">
+          <button class="sb-btn danger" onclick="deleteCurrentRow()">
+            <span class="material-symbols-outlined">table_rows</span> Del Row
+          </button>
+          <button class="sb-btn danger" onclick="deleteCurrentCol()">
+            <span class="material-symbols-outlined">view_column</span> Del Col
+          </button>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">Cell Format</div>
+        <div class="sb-row">
+          <button class="sb-btn" onclick="applyStyle('fontWeight','bold')"><span class="material-symbols-outlined">format_bold</span> Bold</button>
+          <button class="sb-btn" onclick="applyStyle('fontStyle','italic')"><span class="material-symbols-outlined">format_italic</span> Italic</button>
+        </div>
+        <div class="sb-row">
+          <button class="sb-btn" onclick="applyStyle('textDecoration','underline')"><span class="material-symbols-outlined">format_underlined</span> Underline</button>
+          <button class="sb-btn" onclick="clearCell()"><span class="material-symbols-outlined">clear</span> Clear</button>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">Align</div>
+        <div class="sb-row">
+          <button class="sb-btn" onclick="applyStyle('textAlign','left')"><span class="material-symbols-outlined">format_align_left</span></button>
+          <button class="sb-btn" onclick="applyStyle('textAlign','center')"><span class="material-symbols-outlined">format_align_center</span></button>
+          <button class="sb-btn" onclick="applyStyle('textAlign','right')"><span class="material-symbols-outlined">format_align_right</span></button>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">History</div>
+        <div class="sb-row">
+          <button class="sb-btn" onclick="doUndo()"><span class="material-symbols-outlined">undo</span> Undo</button>
+          <button class="sb-btn" onclick="doRedo()"><span class="material-symbols-outlined">redo</span> Redo</button>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">Options</div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Auto Select</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoSelectSidebar" onchange="syncAutoSelect(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">Formulas</div>
+
+        <!-- Math & Aggregation -->
+        <div class="aw-header" onclick="toggleAccordion(this)">
+          <span class="aw-header-label">Math & Aggregation</span>
+          <span class="material-symbols-outlined aw-chevron">expand_more</span>
+        </div>
+        <div class="aw-dropdown">
+          <div class="aw-inner">
+            <div class="formula-card" onclick="insertFormula('=SUM()')">
+              <div class="formula-card-name">=SUM(range)</div>
+              <div class="formula-card-desc">Sum of all numeric cells in range.</div>
+              <span class="formula-card-example">=SUM(A1:A10)</span>
+            </div>
+            <div class="formula-card" onclick="insertFormula('=AVERAGE()')">
+              <div class="formula-card-name">=AVERAGE(range)</div>
+              <div class="formula-card-desc">Mean of all numeric values.</div>
+              <span class="formula-card-example">=AVERAGE(B1:B5)</span>
+            </div>
+            <div class="formula-card" onclick="insertFormula('=MIN()')">
+              <div class="formula-card-name">=MIN(range)</div>
+              <div class="formula-card-desc">Smallest value in range.</div>
+              <span class="formula-card-example">=MIN(C1:C20)</span>
+            </div>
+            <div class="formula-card" onclick="insertFormula('=MAX()')">
+              <div class="formula-card-name">=MAX(range)</div>
+              <div class="formula-card-desc">Largest value in range.</div>
+              <span class="formula-card-example">=MAX(C1:C20)</span>
+            </div>
+            <div class="formula-card" onclick="insertFormula('=COUNT()')">
+              <div class="formula-card-name">=COUNT(range)</div>
+              <div class="formula-card-desc">Number of numeric cells in range.</div>
+              <span class="formula-card-example">=COUNT(A1:A10)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logic -->
+        <div class="aw-header" onclick="toggleAccordion(this)">
+          <span class="aw-header-label">Logic</span>
+          <span class="material-symbols-outlined aw-chevron">expand_more</span>
+        </div>
+        <div class="aw-dropdown">
+          <div class="aw-inner">
+            <div class="formula-card" onclick="insertFormula('=IF()')">
+              <div class="formula-card-name">=IF(test, true, false)</div>
+              <div class="formula-card-desc">Returns one value if condition is true, another if false.</div>
+              <span class="formula-card-example">=IF(A1>10, "High", "Low")</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div class="aw-header" onclick="toggleAccordion(this)">
+          <span class="aw-header-label">Text</span>
+          <span class="material-symbols-outlined aw-chevron">expand_more</span>
+        </div>
+        <div class="aw-dropdown">
+          <div class="aw-inner">
+            <div class="formula-card" onclick="insertFormula('=CONCAT()')">
+              <div class="formula-card-name">=CONCAT(cell1, cell2, …)</div>
+              <div class="formula-card-desc">Joins values from multiple cells into one string.</div>
+              <span class="formula-card-example">=CONCAT(A1, B1)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="aw-header" onclick="toggleAccordion(this)">
+          <span class="aw-header-label">Date & Time</span>
+          <span class="material-symbols-outlined aw-chevron">expand_more</span>
+        </div>
+        <div class="aw-dropdown">
+          <div class="aw-inner">
+            <div class="formula-card" onclick="insertFormula('=DATE')">
+              <div class="formula-card-name">=DATE</div>
+              <div class="formula-card-desc">Current date as DD/MM/YYYY.</div>
+              <span class="formula-card-example">=DATE</span>
+            </div>
+            <div class="formula-card" onclick="insertFormula('=YEAR')">
+              <div class="formula-card-name">=YEAR</div>
+              <div class="formula-card-desc">Current year (e.g. 2025).</div>
+              <span class="formula-card-example">=YEAR</span>
+            </div>
+            <div class="formula-card" onclick="insertFormula('=MONTH')">
+              <div class="formula-card-name">=MONTH</div>
+              <div class="formula-card-desc">Full name of current month.</div>
+              <span class="formula-card-example">=MONTH</span>
+            </div>
+            <div class="formula-card" onclick="insertFormula('=DAY')">
+              <div class="formula-card-name">=DAY</div>
+              <div class="formula-card-desc">Full name of current weekday.</div>
+              <span class="formula-card-example">=DAY</span>
+            </div>
+            <div class="formula-card" onclick="insertFormula('=DATEM')">
+              <div class="formula-card-name">=DATEM</div>
+              <div class="formula-card-desc">Day of month as a number (1–31).</div>
+              <span class="formula-card-example">=DATEM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Random -->
+        <div class="aw-header" onclick="toggleAccordion(this)">
+          <span class="aw-header-label">Random</span>
+          <span class="material-symbols-outlined aw-chevron">expand_more</span>
+        </div>
+        <div class="aw-dropdown">
+          <div class="aw-inner">
+            <div class="formula-card" onclick="insertFormula('=RANDOM()')">
+              <div class="formula-card-name">=RANDOM(range or list)</div>
+              <div class="formula-card-desc">Returns the value of a random cell from a range or comma-separated list.</div>
+              <span class="formula-card-example">=RANDOM(A1:A5)</span>
+            </div>
+            <div class="formula-card" onclick="insertFormula('=RN(1:100)')">
+              <div class="formula-card-name">=RN(min:max)</div>
+              <div class="formula-card-desc">Random integer between two numbers.</div>
+              <span class="formula-card-example">=RN(1:100)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">chevron_left</span> Hide Panel
+      </button>
+    </div>
+
+    <!-- Expand button (when sidebar collapsed) -->
+    <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()">
+      <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+    </button>
+
+    <!-- Grid Content Area -->
+    <div class="content-area" id="gridArea">
+      <table id="mainGrid">
+        <thead id="gridHead"></thead>
+        <tbody id="gridBody"></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-text" id="statusText">Ready</div>
+    <div class="footer-text" id="gridDims">0 × 0</div>
+  </div>
+
+</div>
+
+<!-- Right-click Context Menu -->
+<div class="win-ctx-menu" id="ctxMenu">
+  <div class="wcm-item" onclick="ctxAction('copy')">
+    <span class="material-symbols-outlined">content_copy</span> Copy
+  </div>
+  <div class="wcm-item" onclick="ctxAction('paste')">
+    <span class="material-symbols-outlined">content_paste</span> Paste
+  </div>
+  <div class="wcm-sep"></div>
+  <div class="wcm-item" onclick="ctxAction('addRowBelow')">
+    <span class="material-symbols-outlined">add_row_below</span> Insert Row Below
+  </div>
+  <div class="wcm-item" onclick="ctxAction('addColRight')">
+    <span class="material-symbols-outlined">add_column_right</span> Insert Column Right
+  </div>
+  <div class="wcm-sep"></div>
+  <div class="wcm-item" onclick="ctxAction('clearCell')">
+    <span class="material-symbols-outlined">clear</span> Clear Cell
+  </div>
+  <div class="wcm-item danger" onclick="ctxAction('deleteRow')">
+    <span class="material-symbols-outlined">table_rows</span> Delete Row
+  </div>
+  <div class="wcm-item danger" onclick="ctxAction('deleteCol')">
+    <span class="material-symbols-outlined">view_column</span> Delete Column
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal" id="exportModal">
+  <div class="mbox" style="max-width:460px;">
+    <div class="mhdr">
+      <span class="mtitle">Export Spreadsheet</span>
+      <button class="mclose" onclick="closeExportModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <p style="font-size:13px;color:#777;margin-bottom:20px;line-height:1.5;">Choose a format to export your spreadsheet. Use JSON to preserve formulas and styles for future editing.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="export-opt-btn" onclick="exportFile('json');closeExportModal()">
+        <div class="export-opt-icon" style="background:#e3f2fd;">
+          <span class="material-symbols-outlined" style="color:#1976d2;font-size:26px;">data_object</span>
+        </div>
+        <div class="export-opt-text">
+          <div class="export-opt-title">Save as JSON</div>
+          <div class="export-opt-sub">Preserves formulas, styles, and structure. Best for re-importing later.</div>
+        </div>
+        <span class="material-symbols-outlined" style="color:#ccc;font-size:20px;flex-shrink:0;">chevron_right</span>
+      </button>
+      <button class="export-opt-btn" onclick="exportFile('csv');closeExportModal()">
+        <div class="export-opt-icon" style="background:#e8f5e9;">
+          <span class="material-symbols-outlined" style="color:#2e7d32;font-size:26px;">table</span>
+        </div>
+        <div class="export-opt-text">
+          <div class="export-opt-title">Export as CSV</div>
+          <div class="export-opt-sub">Plain text values only. Compatible with Excel, Google Sheets, and most tools.</div>
+        </div>
+        <span class="material-symbols-outlined" style="color:#ccc;font-size:20px;flex-shrink:0;">chevron_right</span>
+      </button>
+    </div>
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="closeExportModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Find & Replace Modal -->
+<div class="modal" id="findModal">
+  <div class="mbox">
+    <div class="mhdr">
+      <span class="mtitle">Find & Replace</span>
+      <button class="mclose" onclick="closeFindReplace()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="frow">
+      <label>Find</label>
+      <input class="finput" id="findInput" placeholder="Search for…">
+    </div>
+    <div class="frow">
+      <label>Replace with</label>
+      <input class="finput" id="replaceInput" placeholder="Replace with…">
+    </div>
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="closeFindReplace()">Cancel</button>
+      <button class="mbtn primary" onclick="doFindReplace()">Replace All</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast stack -->
+<div id="toastStack"></div>
+
+<!-- Tip Box -->
+<div id="tipBox">
+  <div class="tip-prog"><div class="tip-bar" id="tipBar"></div></div>
+  <div class="tip-text" id="tipText"></div>
+  <div class="tip-actions">
+    <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+    <button class="tip-btn tip-next" id="tipNextBtn" onclick="tipNav(1)">Next →</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// CORE DATA & STATE
+// ═══════════════════════════════════════
+let rows = 40, cols = 20;
+let cellData = {};
+let activeCell = { r: 0, c: 0 };
+let history = [], historyIndex = -1;
+let autoSelectOn = false;
+let autoSelectEditing = false; // true when formula bar is focused with a = formula
+let clipboardValue = '';
+
+// ═══════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════
+function getColLabel(index) {
+  let label = '';
+  while (index >= 0) {
+    label = String.fromCharCode((index % 26) + 65) + label;
+    index = Math.floor(index / 26) - 1;
+  }
+  return label;
+}
+function getCellId(r, c) { return `${getColLabel(c)}${r + 1}`; }
+function parseCellId(id) {
+  const match = id.match(/^([A-Z]+)(\d+)$/);
+  if (!match) return null;
+  let colLabel = match[1], row = parseInt(match[2]) - 1, col = 0;
+  for (let i = 0; i < colLabel.length; i++) col = col * 26 + (colLabel.charCodeAt(i) - 64);
+  return { r: row, c: col - 1 };
+}
+
+// ═══════════════════════════════════════
+// GRID RENDER
+// ═══════════════════════════════════════
+function renderGrid() {
+  const head = document.getElementById('gridHead');
+  const body = document.getElementById('gridBody');
+
+  head.innerHTML = `<tr><th class="corner-header"></th>${Array.from({length: cols}, (_, c) =>
+    `<th class="col-header">${getColLabel(c)}</th>`).join('')}</tr>`;
+
+  let bHtml = '';
+  for (let r = 0; r < rows; r++) {
+    bHtml += `<tr><th class="row-header">${r + 1}</th>`;
+    for (let c = 0; c < cols; c++) {
+      const id = getCellId(r, c);
+      const data = cellData[id] || { display: '', style: {} };
+      const styleStr = buildStyleString(data.style || {});
+      bHtml += `<td id="${id}" contenteditable="true" style="${styleStr}"
+        onfocus="onCellFocus(${r},${c})"
+        onblur="onCellBlur('${id}')"
+        onkeydown="onCellKey(event,${r},${c})"
+        oncontextmenu="onRightClick(event,${r},${c})"
+        >${escapeHtml(data.display || '')}</td>`;
+    }
+    bHtml += `</tr>`;
+  }
+  body.innerHTML = bHtml;
+  document.getElementById('gridDims').innerText = `${rows} Rows × ${cols} Cols`;
+}
+
+function buildStyleString(styleObj) {
+  return Object.entries(styleObj)
+    .map(([k, v]) => `${k.replace(/[A-Z]/g, m => '-' + m.toLowerCase())}:${v}`)
+    .join(';');
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ═══════════════════════════════════════
+// CELL LOGIC
+// ═══════════════════════════════════════
+function onCellFocus(r, c) {
+  // ── Auto Select interception ──
+  if (autoSelectOn && autoSelectEditing) {
+    const refId = getCellId(r, c);
+    const fInput = document.getElementById('formulaInput');
+    const curVal = fInput.value;
+    if (curVal.startsWith('=')) {
+      const pos = fInput.selectionStart ?? curVal.length;
+      const newVal = curVal.slice(0, pos) + refId + curVal.slice(pos);
+      fInput.value = newVal;
+      const editingTd = document.getElementById(getCellId(activeCell.r, activeCell.c));
+      if (editingTd) editingTd.innerText = newVal;
+      clearHighlights();
+      highlightDeps(newVal);
+      setTimeout(() => {
+        fInput.focus();
+        fInput.setSelectionRange(pos + refId.length, pos + refId.length);
+      }, 0);
+      return;
+    }
+  }
+
+  clearHighlights();
+  const prevId = getCellId(activeCell.r, activeCell.c);
+  document.getElementById(prevId)?.classList.remove('selected');
+
+  activeCell = { r, c };
+  const id = getCellId(r, c);
+  const td = document.getElementById(id);
+  td.classList.add('selected');
+  document.getElementById('cellRef').innerText = id;
+
+  const data = cellData[id] || { raw: '' };
+  if (data.raw && String(data.raw).startsWith('=')) {
+    td.innerText = data.raw;
+    highlightDeps(data.raw);
+  }
+  document.getElementById('formulaInput').value = data.raw || td.innerText;
+  updateFormatButtons(id);
+}
+
+function onCellBlur(id) {
+  const td = document.getElementById(id);
+  updateCellValue(id, td.innerText);
+  recalcAll();
+}
+
+function updateCellValue(id, val) {
+  if (!cellData[id]) cellData[id] = { raw: '', display: '', style: {} };
+  const oldRaw = cellData[id].raw;
+  cellData[id].raw = val;
+  if (oldRaw !== val) saveHistory();
+}
+
+function onCellKey(e, r, c) {
+  if (e.key === 'Enter') { e.preventDefault(); moveFocus(r + 1, c); }
+  if (e.key === 'Tab')   { e.preventDefault(); moveFocus(r, c + 1); }
+  if (e.key === 'Escape') { document.getElementById(getCellId(r, c)).blur(); }
+}
+
+function moveFocus(r, c) {
+  r = Math.max(0, Math.min(r, rows - 1));
+  c = Math.max(0, Math.min(c, cols - 1));
+  document.getElementById(getCellId(r, c))?.focus();
+}
+
+// Formula bar input
+document.getElementById('formulaInput').addEventListener('focus', () => {
+  if (autoSelectOn && document.getElementById('formulaInput').value.startsWith('=')) {
+    autoSelectEditing = true;
+  }
+});
+document.getElementById('formulaInput').addEventListener('input', (e) => {
+  const id = getCellId(activeCell.r, activeCell.c);
+  const td = document.getElementById(id);
+  if (td) td.innerText = e.target.value;
+  // Activate auto-select mode as soon as = is typed
+  autoSelectEditing = autoSelectOn && e.target.value.startsWith('=');
+  if (autoSelectEditing) { clearHighlights(); highlightDeps(e.target.value); }
+});
+document.getElementById('formulaInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const id = getCellId(activeCell.r, activeCell.c);
+    updateCellValue(id, e.target.value);
+    recalcAll();
+    autoSelectEditing = false;
+    document.getElementById(id).focus();
+  }
+  if (e.key === 'Escape') {
+    autoSelectEditing = false;
+    clearHighlights();
+  }
+});
+document.getElementById('formulaInput').addEventListener('blur', (e) => {
+  // Only clear if not clicking a cell (auto-select interception handles that)
+  setTimeout(() => {
+    if (document.activeElement?.tagName !== 'TD') autoSelectEditing = false;
+  }, 50);
+});
+
+// ═══════════════════════════════════════
+// STYLING
+// ═══════════════════════════════════════
+function applyStyle(prop, val) {
+  const id = getCellId(activeCell.r, activeCell.c);
+  const td = document.getElementById(id);
+  if (!td) return;
+  if (!cellData[id]) cellData[id] = { raw: td.innerText, display: td.innerText, style: {} };
+
+  if (prop === 'fontWeight') val = td.style.fontWeight === 'bold' ? 'normal' : 'bold';
+  else if (prop === 'fontStyle') val = td.style.fontStyle === 'italic' ? 'normal' : 'italic';
+  else if (prop === 'textDecoration') val = td.style.textDecoration.includes('underline') ? 'none' : 'underline';
+
+  td.style[prop] = val;
+  cellData[id].style[prop] = val;
+  saveHistory();
+  updateFormatButtons(id);
+}
+
+function updateFormatButtons(id) {
+  const td = document.getElementById(id);
+  if (!td) return;
+  document.getElementById('btnBold')?.classList.toggle('active', td.style.fontWeight === 'bold');
+  document.getElementById('btnItalic')?.classList.toggle('active', td.style.fontStyle === 'italic');
+  document.getElementById('btnUnderline')?.classList.toggle('active', td.style.textDecoration.includes('underline'));
+}
+
+function clearCell() {
+  const id = getCellId(activeCell.r, activeCell.c);
+  const td = document.getElementById(id);
+  if (!td) return;
+  if (!cellData[id]) cellData[id] = { raw: '', display: '', style: {} };
+  cellData[id].raw = '';
+  cellData[id].display = '';
+  td.innerText = '';
+  document.getElementById('formulaInput').value = '';
+  saveHistory();
+  showToast('Cell cleared', 'info');
+}
+
+// ═══════════════════════════════════════
+// FORMULA ENGINE (layered)
+// ═══════════════════════════════════════
+function clearHighlights() {
+  document.querySelectorAll('.dep-highlight').forEach(el => el.classList.remove('dep-highlight'));
+}
+function highlightDeps(formula) {
+  extractCellRefs(formula).forEach(id => {
+    document.getElementById(id)?.classList.add('dep-highlight');
+  });
+}
+function extractCellRefs(formula) {
+  const refs = new Set(), upper = String(formula).toUpperCase();
+  const rangeRx = /([A-Z]+\d+):([A-Z]+\d+)/g;
+  let m;
+  while ((m = rangeRx.exec(upper)) !== null) {
+    const s = parseCellId(m[1]), e = parseCellId(m[2]);
+    if (s && e) {
+      for (let r = Math.min(s.r,e.r); r <= Math.max(s.r,e.r); r++)
+        for (let c = Math.min(s.c,e.c); c <= Math.max(s.c,e.c); c++)
+          refs.add(getCellId(r,c));
+    }
+  }
+  const cellRx = /\b[A-Z]+\d+\b/g;
+  while ((m = cellRx.exec(upper)) !== null) {
+    const prev = upper[m.index-1], next = upper[m.index+m[0].length];
+    if (prev !== ':' && next !== ':') refs.add(m[0]);
+  }
+  return Array.from(refs);
+}
+
+function recalcAll() {
+  const ids = Object.keys(cellData);
+  for (let pass = 0; pass < 8; pass++) {
+    let changed = false;
+    ids.forEach(id => {
+      const item = cellData[id];
+      const newVal = item.raw && String(item.raw).startsWith('=')
+        ? executeFormula(item.raw) : item.raw;
+      if (item.display !== newVal) { item.display = newVal; changed = true; }
+      const td = document.getElementById(id);
+      if (td && document.activeElement !== td) td.innerText = item.display || '';
+    });
+    if (!changed) break;
+  }
+}
+
+function executeFormula(raw) {
+  try {
+    let expr = raw.substring(1).toUpperCase().trim();
+    const now = new Date();
+
+    // Date functions
+    if (expr === 'DATE') {
+      return `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
+    }
+    if (expr === 'YEAR') return now.getFullYear();
+    if (expr === 'DAY') return now.toLocaleDateString(undefined, { weekday: 'long' });
+    if (expr === 'MONTH') return now.toLocaleDateString(undefined, { month: 'long' });
+    if (expr === 'DATEM') return now.getDate();
+
+    // RANDOM(range or list)
+    const randomRx = /RANDOM\(([^)]+)\)/g;
+    if (expr.includes('RANDOM(')) {
+      return expr.replace(randomRx, (_, args) => {
+        let candidates = [];
+        if (args.includes(':')) {
+          const [sId, eId] = args.split(':');
+          const s = parseCellId(sId.trim()), e = parseCellId(eId.trim());
+          if (s && e) {
+            for (let r = Math.min(s.r,e.r); r <= Math.max(s.r,e.r); r++)
+              for (let c = Math.min(s.c,e.c); c <= Math.max(s.c,e.c); c++)
+                candidates.push(getCellId(r,c));
+          }
+        } else {
+          candidates = args.split(',').map(s => s.trim());
+        }
+        if (!candidates.length) return '#REF!';
+        const picked = candidates[Math.floor(Math.random() * candidates.length)];
+        return cellData[picked]?.display || '';
+      });
+    }
+
+    // RN(start:end)
+    const rnRx = /RN\((\d+):(\d+)\)/;
+    const rnM = expr.match(rnRx);
+    if (rnM) {
+      const a = parseInt(rnM[1]), b = parseInt(rnM[2]);
+      return Math.floor(Math.random() * (Math.max(a,b) - Math.min(a,b) + 1)) + Math.min(a,b);
+    }
+
+    // IF
+    const ifRx = /IF\(([A-Z]+\d+)\s*([>=<]+|!=)\s*([A-Z0-9.]+)\s*,\s*([^,)]+)(?:\s*,\s*([^)]+))?\)/g;
+    if (expr.includes('IF(')) {
+      expr = expr.replace(ifRx, (_, lc, op, rs, tp, fp) => {
+        const lv = parseFloat(cellData[lc]?.display) || 0;
+        const rv = /^[A-Z]+\d+$/.test(rs) ? (parseFloat(cellData[rs]?.display) || 0) : (parseFloat(rs) || 0);
+        let ok = false;
+        if (op === '>') ok = lv > rv; else if (op === '<') ok = lv < rv;
+        else if (op === '>=') ok = lv >= rv; else if (op === '<=') ok = lv <= rv;
+        else if (op === '=') ok = lv === rv; else if (op === '!=') ok = lv !== rv;
+        const res = (ok ? tp : (fp || '')).trim();
+        if (/^["'].*["']$/.test(res)) return res.replace(/["']/g, '');
+        if (/^[A-Z]+\d+$/.test(res)) return cellData[res]?.display || '';
+        return res;
+      });
+    }
+
+    // SUM, AVERAGE, COUNT, MIN, MAX, CONCAT
+    const funcRx = /(SUM|AVERAGE|COUNT|MIN|MAX|CONCAT)\(([^)]+)\)/g;
+    expr = expr.replace(funcRx, (_, fn, range) => {
+      if (fn === 'CONCAT') {
+        return range.split(',').map(r => {
+          const id = r.trim();
+          if (/^[A-Z]+\d+$/.test(id)) return cellData[id]?.display || '';
+          return id.replace(/["']/g, '');
+        }).join('');
+      }
+      const vals = getRangeVals(range);
+      if (fn === 'SUM') return vals.reduce((a,b)=>a+b,0);
+      if (fn === 'AVERAGE') return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+      if (fn === 'COUNT') return vals.length;
+      if (fn === 'MIN') return vals.length ? Math.min(...vals) : 0;
+      if (fn === 'MAX') return vals.length ? Math.max(...vals) : 0;
+    });
+
+    // Simple cell ref: =A1
+    if (/^[A-Z]+\d+$/.test(expr.replace(/[()]/g,''))) {
+      const id = expr.replace(/[()]/g,'');
+      return cellData[id] ? cellData[id].display : '';
+    }
+
+    // Substitute remaining cell refs
+    expr = expr.replace(/\b[A-Z]+\d+\b/g, m => {
+      const v = cellData[m]?.display || '0';
+      return isNaN(v) || v === '' ? 0 : v;
+    });
+
+    if (/[^0-9+\-*/(). ]/.test(expr)) return '#REF!';
+    const res = eval(expr);
+    return isFinite(res) ? Math.round(res * 1e10) / 1e10 : '#ERR';
+  } catch { return '#ERR'; }
+}
+
+function getRangeVals(rangeStr) {
+  if (!rangeStr.includes(':')) {
+    const id = rangeStr.trim();
+    const v = parseFloat(cellData[id]?.display);
+    return isNaN(v) ? [] : [v];
+  }
+  const [sId, eId] = rangeStr.split(':');
+  const s = parseCellId(sId.trim()), e = parseCellId(eId.trim());
+  if (!s || !e) return [];
+  const vals = [];
+  for (let r = Math.min(s.r,e.r); r <= Math.max(s.r,e.r); r++)
+    for (let c = Math.min(s.c,e.c); c <= Math.max(s.c,e.c); c++) {
+      const v = parseFloat(cellData[getCellId(r,c)]?.display);
+      if (!isNaN(v)) vals.push(v);
+    }
+  return vals;
+}
+
+// ═══════════════════════════════════════
+// GRID MUTATIONS
+// ═══════════════════════════════════════
+function addRow() { rows++; renderGrid(); recalcAll(); saveHistory(); showToast('Row added'); }
+function addCol() { cols++; renderGrid(); recalcAll(); saveHistory(); showToast('Column added'); }
+
+function deleteCurrentRow() {
+  if (rows <= 1) return;
+  const r = activeCell.r;
+  const newData = {};
+  Object.keys(cellData).forEach(id => {
+    const cell = parseCellId(id);
+    if (cell.r < r) newData[id] = cellData[id];
+    else if (cell.r > r) newData[getCellId(cell.r-1, cell.c)] = cellData[id];
+  });
+  cellData = newData; rows--;
+  renderGrid(); recalcAll(); saveHistory(); showToast('Row deleted', 'error');
+}
+function deleteCurrentCol() {
+  if (cols <= 1) return;
+  const c = activeCell.c;
+  const newData = {};
+  Object.keys(cellData).forEach(id => {
+    const cell = parseCellId(id);
+    if (cell.c < c) newData[id] = cellData[id];
+    else if (cell.c > c) newData[getCellId(cell.r, cell.c-1)] = cellData[id];
+  });
+  cellData = newData; cols--;
+  renderGrid(); recalcAll(); saveHistory(); showToast('Column deleted', 'error');
+}
+
+// ═══════════════════════════════════════
+// HISTORY / UNDO / REDO
+// ═══════════════════════════════════════
+function saveHistory() {
+  const snap = JSON.stringify({ rows, cols, cellData });
+  if (historyIndex < history.length - 1) history = history.slice(0, historyIndex + 1);
+  history.push(snap);
+  historyIndex++;
+  if (history.length > 60) { history.shift(); historyIndex--; }
+}
+function doUndo() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    restoreState(JSON.parse(history[historyIndex]));
+    showToast('Undone');
+  }
+}
+function doRedo() {
+  if (historyIndex < history.length - 1) {
+    historyIndex++;
+    restoreState(JSON.parse(history[historyIndex]));
+    showToast('Redone');
+  }
+}
+function restoreState(state) {
+  rows = state.rows; cols = state.cols; cellData = state.cellData;
+  renderGrid(); recalcAll();
+}
+
+// ═══════════════════════════════════════
+// IMPORT / EXPORT
+// ═══════════════════════════════════════
+function exportFile(type) {
+  const title = document.getElementById('toolTitle').value || 'spreadsheet';
+  let content, mime, ext;
+  if (type === 'json') {
+    content = JSON.stringify({ title, rows, cols, cellData }, null, 2);
+    mime = 'application/json'; ext = 'json';
+  } else {
+    const csvRows = [];
+    for (let r = 0; r < rows; r++) {
+      const csvRow = [];
+      for (let c = 0; c < cols; c++) {
+        csvRow.push(`"${(cellData[getCellId(r,c)]?.display || '').toString().replace(/"/g,'""')}"`);
+      }
+      csvRows.push(csvRow.join(','));
+    }
+    content = csvRows.join('\n');
+    mime = 'text/csv'; ext = 'csv';
+  }
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${title}.${ext}`; a.click();
+  URL.revokeObjectURL(url);
+  showToast(`Exported as .${ext}`);
+}
+
+function importFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const text = ev.target.result;
+    if (file.name.endsWith('.json')) {
+      try {
+        const data = JSON.parse(text);
+        rows = data.rows || 40; cols = data.cols || 20;
+        cellData = data.cellData || {};
+        document.getElementById('toolTitle').value = data.title || 'Untitled Spreadsheet';
+        renderGrid(); recalcAll(); saveHistory();
+        showToast('JSON imported');
+      } catch { showToast('Invalid JSON file', 'error'); }
+    } else if (file.name.endsWith('.csv')) {
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      cellData = {};
+      rows = Math.max(40, lines.length); cols = 20;
+      lines.forEach((line, r) => {
+        const cells = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        cols = Math.max(cols, cells.length);
+        cells.forEach((val, c) => {
+          const clean = val.replace(/^"|"$/g,'').replace(/""/g,'"');
+          if (clean) cellData[getCellId(r,c)] = { raw: clean, display: clean, style: {} };
+        });
+      });
+      renderGrid(); recalcAll(); saveHistory();
+      showToast('CSV imported');
+    }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════
+// FIND & REPLACE
+// ═══════════════════════════════════════
+function openFindReplace() { document.getElementById('findModal').classList.add('open'); document.getElementById('findInput').focus(); }
+function closeFindReplace() { document.getElementById('findModal').classList.remove('open'); }
+function doFindReplace() {
+  const find = document.getElementById('findInput').value;
+  const replace = document.getElementById('replaceInput').value;
+  if (!find) return;
+  let count = 0;
+  Object.keys(cellData).forEach(id => {
+    if (cellData[id].raw && String(cellData[id].raw).includes(find)) {
+      cellData[id].raw = String(cellData[id].raw).split(find).join(replace);
+      cellData[id].display = cellData[id].raw;
+      count++;
+    }
+  });
+  renderGrid(); recalcAll(); saveHistory();
+  closeFindReplace();
+  showToast(`${count} cell(s) updated`);
+}
+
+// ═══════════════════════════════════════
+// CONTEXT MENU
+// ═══════════════════════════════════════
+function onRightClick(e, r, c) {
+  e.preventDefault();
+  activeCell = { r, c };
+  const menu = document.getElementById('ctxMenu');
+  menu.classList.add('open');
+  let x = e.clientX, y = e.clientY;
+  if (x + 220 > window.innerWidth) x = window.innerWidth - 225;
+  if (y + 260 > window.innerHeight) y = window.innerHeight - 265;
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+}
+function closeCtxMenu() { document.getElementById('ctxMenu').classList.remove('open'); }
+document.addEventListener('click', closeCtxMenu);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeCtxMenu(); closeFindReplace(); closeExportModal(); } });
+
+function ctxAction(action) {
+  closeCtxMenu();
+  const id = getCellId(activeCell.r, activeCell.c);
+  if (action === 'copy') {
+    clipboardValue = cellData[id]?.display || '';
+    navigator.clipboard?.writeText(clipboardValue).catch(()=>{});
+    showToast('Copied');
+  } else if (action === 'paste') {
+    navigator.clipboard?.readText().then(text => {
+      updateCellValue(id, text);
+      recalcAll();
+    }).catch(() => {
+      if (clipboardValue) { updateCellValue(id, clipboardValue); recalcAll(); }
+    });
+  } else if (action === 'addRowBelow') addRow();
+  else if (action === 'addColRight') addCol();
+  else if (action === 'clearCell') clearCell();
+  else if (action === 'deleteRow') deleteCurrentRow();
+  else if (action === 'deleteCol') deleteCurrentCol();
+}
+
+// ═══════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const expandBtn = document.getElementById('expandBtn');
+  const isCollapsed = sidebar.classList.contains('collapsed');
+  sidebar.classList.toggle('collapsed');
+  expandBtn.style.display = isCollapsed ? 'none' : 'block';
+}
+
+function toggleAccordion(header) {
+  const dropdown = header.nextElementSibling;
+  const chevron = header.querySelector('.aw-chevron');
+  const isOpen = dropdown.classList.contains('open');
+  dropdown.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+function insertFormula(formula) {
+  // Focus the active cell, set the formula, and move cursor inside parens if present
+  const id = getCellId(activeCell.r, activeCell.c);
+  const td = document.getElementById(id);
+  const fInput = document.getElementById('formulaInput');
+  fInput.value = formula;
+  if (td) td.innerText = formula;
+  fInput.focus();
+  // Place cursor inside parentheses if present
+  const parenPos = formula.indexOf('(');
+  if (parenPos !== -1) {
+    fInput.setSelectionRange(parenPos + 1, parenPos + 1);
+  } else {
+    fInput.setSelectionRange(formula.length, formula.length);
+  }
+  // Activate auto-select if toggle is on
+  autoSelectEditing = autoSelectOn && formula.startsWith('=');
+}
+
+// ═══════════════════════════════════════
+// AUTO SELECT
+// ═══════════════════════════════════════
+function syncAutoSelect(el) {
+  autoSelectOn = el.checked;
+  document.getElementById('autoSelectSidebar').checked = el.checked;
+  if (!autoSelectOn) autoSelectEditing = false;
+  showToast(autoSelectOn ? 'Auto Select enabled' : 'Auto Select disabled');
+}
+document.getElementById('autoSelectSidebar').addEventListener('change', function() {
+  syncAutoSelect(this);
+});
+
+// ═══════════════════════════════════════
+// EXPORT MODAL
+// ═══════════════════════════════════════
+function openExportModal() { document.getElementById('exportModal').classList.add('open'); }
+function closeExportModal() { document.getElementById('exportModal').classList.remove('open'); }
+
+// ═══════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════
+function toggleTheme() {
+  const isDark = document.body.classList.toggle('dark');
+  document.documentElement.classList.toggle('dark', isDark);
+  document.getElementById('themeIcon').innerText = isDark ? 'light_mode' : 'dark_mode';
+  document.cookie = `toolsuite_theme=${isDark ? 'dark' : 'light'};path=/;max-age=31536000;SameSite=Lax`;
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+function showToast(message, type = 'info', duration = 2500) {
+  const stack = document.getElementById('toastStack');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${type === 'error' ? 'error' : 'check_circle'}</span>${message}`;
+  stack.appendChild(toast);
+  requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 350);
+  }, duration);
+}
+
+// ═══════════════════════════════════════
+// TIP BOX
+// ═══════════════════════════════════════
+const TIPS = [
+  "👋 Welcome to Opensheet! A clean, powerful browser-based spreadsheet.",
+  "📐 Click any cell to select it. Type a value or start with = for a formula.",
+  "🔢 Formulas supported: =SUM(A1:A10), =AVERAGE, =COUNT, =MIN, =MAX, =IF.",
+  "📋 Right-click any cell for context actions like copy, paste, insert, and delete.",
+  "🌙 Toggle dark mode with the moon icon in the top bar. It persists between sessions.",
+  "📤 Export as .json to preserve formulas for later editing. CSV for raw data.",
+  "🔍 Use Find & Replace (top bar) to bulk-edit cell values across the sheet.",
+  "✅ You're all set! Click Next to close this panel."
+];
+let tipIdx = 0;
+
+function showTip(idx) {
+  const box = document.getElementById('tipBox');
+  document.getElementById('tipText').textContent = TIPS[idx];
+  document.getElementById('tipBar').style.width = ((idx + 1) / TIPS.length * 100) + '%';
+  document.getElementById('tipNextBtn').textContent = idx === TIPS.length - 1 ? 'Got it ✓' : 'Next →';
+  box.classList.remove('hide'); box.classList.add('show');
+}
+function tipNav(dir) {
+  if (dir === 1 && tipIdx === TIPS.length - 1) {
+    document.getElementById('tipBox').classList.replace('show','hide');
+    localStorage.setItem('opensheet_tips_v2', '1');
+    return;
+  }
+  tipIdx = Math.max(0, Math.min(TIPS.length - 1, tipIdx + dir));
+  showTip(tipIdx);
+}
+
+// ═══════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); doUndo(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'y') { e.preventDefault(); doRedo(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); openFindReplace(); }
+});
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+window.addEventListener('load', () => {
+  // Apply saved theme
+  const themeMatch = document.cookie.split('; ').find(r => r.startsWith('toolsuite_theme='));
+  if (themeMatch && themeMatch.split('=')[1] === 'dark') {
+    document.body.classList.add('dark');
+    document.getElementById('themeIcon').innerText = 'light_mode';
+  }
+
+  renderGrid();
+  saveHistory();
+
+  // Dismiss loading screen
+  setTimeout(() => {
+    document.getElementById('loadingScreen').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'flex';
+
+      // Tips
+      if (!localStorage.getItem('opensheet_tips_v2')) {
+        setTimeout(() => showTip(0), 1000);
+      }
+
+      document.getElementById('statusText').innerText = 'Ready';
+    }, 300);
+  }, 700);
+});
+</script>
+</body>
+</html>

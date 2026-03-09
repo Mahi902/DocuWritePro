@@ -1,383 +1,1299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Spell Checker | DocuWrite Pro</title>
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --error: #ef4444;
-            --bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text: #0f172a;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --radius: 12px;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spell Checker</title>
 
-        /* Pure Black Dark Theme */
-        [data-theme="dark"] {
-            --bg: #000000;
-            --card-bg: #0a0a0a;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --border: #262626;
-            --shadow: 0 0 0 1px #262626;
-        }
+  <!-- Google Fonts: Material Symbols Rounded (filled) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+  <!-- Google Fonts: Material Symbols Outlined -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <!-- Inter font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-        * {
-            box-sizing: border-box;
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-        }
+  <!-- Prevent theme flash -->
+  <script>
+    (function() {
+      const match = document.cookie.split('; ').find(r => r.startsWith('toolsuite_theme='));
+      if (match && match.split('=')[1] === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
 
-        body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding: 2rem 1rem;
-        }
+  <style>
+    /* ── Scrollbars hidden globally ── */
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
 
-        .header {
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
+    /* ── Box model reset ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .brand h1 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin: 0;
-            letter-spacing: -0.025em;
-        }
+    /* ── Body ── */
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      overflow: hidden;
+      height: 100vh;
+    }
+    html.dark body, body.dark { background: #111; }
 
-        .brand p {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin: 4px 0 0 0;
-        }
+    /* ── Loading Screen ── */
+    #loadingScreen {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    body.dark #loadingScreen, html.dark #loadingScreen { background: #1a1a1a; }
+    .spinner {
+      width: 56px; height: 56px;
+      border: 4px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 17px; color: #666; }
+    body.dark .loading-text, html.dark .loading-text { color: #aaa; }
 
-        /* Toggle Switch */
-        .theme-toggle {
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--text);
-            box-shadow: var(--shadow);
-        }
+    /* ── App Container ── */
+    #appContainer {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-        .theme-toggle svg {
-            width: 20px;
-            height: 20px;
-        }
+    /* ── Top Bar ── */
+    .top-bar {
+      background: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 200;
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .top-bar { background: #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
 
-        .container {
-            width: 100%;
-            max-width: 900px;
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+    .tool-title {
+      font-size: 17px;
+      font-weight: 500;
+      color: #1a1a2e;
+      flex-shrink: 0;
+    }
+    body.dark .tool-title { color: #e0e0e0; }
 
-        .toolbar {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: rgba(var(--primary), 0.02);
-        }
+    .top-spacer { flex: 1; min-width: 8px; }
 
-        .stats {
-            display: flex;
-            gap: 1.5rem;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text-muted);
-        }
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 7px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      color: #1976d2;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #e3f2fd; }
+    .icon-btn .material-symbols-outlined { font-size: 22px; }
+    body.dark .icon-btn:hover { background: #1a2a3a; }
 
-        .editor-container {
-            position: relative;
-            padding: 1.5rem;
-            min-height: 400px;
-        }
+    /* ── Toolbar ── */
+    .toolbar {
+      background: #fff;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .toolbar { background: #1a1a1a; }
 
-        #editor {
-            width: 100%;
-            min-height: 350px;
-            outline: none;
-            font-size: 1.05rem;
-            line-height: 1.6;
-            color: var(--text);
-            white-space: pre-wrap;
-            word-wrap: break-word;
-        }
+    .toolbar-sep {
+      width: 1px; height: 26px;
+      background: #e0e0e0;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    body.dark .toolbar-sep { background: #333; }
 
-        #editor:empty:before {
-            content: attr(data-placeholder);
-            color: var(--text-muted);
-            opacity: 0.6;
-            cursor: text;
-        }
+    .tbtn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: background 0.15s;
+      flex-shrink: 0;
+      font-family: inherit;
+      font-size: 13px;
+      color: #333;
+    }
+    .tbtn:hover { background: #e3f2fd; }
+    .tbtn.active { background: #bbdefb; }
+    .tbtn .material-symbols-outlined { font-size: 19px; color: #333; }
+    body.dark .tbtn { color: #bbb; }
+    body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+    body.dark .tbtn:hover { background: #2a2a2a; }
 
-        .misspelled {
-            text-decoration: none;
-            border-bottom: 2px dashed var(--error);
-            cursor: help;
-        }
+    .tbtn-label { font-size: 13px; font-weight: 500; }
 
-        .footer-bar {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: var(--card-bg);
-        }
+    /* ── Main Content ── */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
 
-        #status-pill {
-            font-size: 0.75rem;
-            padding: 4px 12px;
-            border-radius: 20px;
-            background: var(--border);
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-        }
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 255px;
+      min-width: 255px;
+      background: #fff;
+      padding: 14px;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+      flex-shrink: 0;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-255px);
+      width: 0; min-width: 0; padding: 0;
+      overflow: hidden;
+    }
+    body.dark .sidebar { background: #1a1a1a; border-color: #333; }
 
-        .btn-check {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 8px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: transform 0.1s, background 0.2s;
-        }
+    .sb-section { margin-bottom: 18px; }
+    .sb-title {
+      font-size: 11px; font-weight: 700;
+      color: #888;
+      margin-bottom: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    body.dark .sb-title { color: #666; }
 
-        .btn-check:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-        }
+    .sb-label { display: block; font-size: 12px; color: #777; margin-bottom: 3px; }
+    body.dark .sb-label { color: #aaa; }
 
-        .btn-check:active {
-            transform: translateY(0);
-        }
+    .sb-toggle-row {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+    .sb-toggle-label { font-size: 13px; color: #444; }
+    body.dark .sb-toggle-label { color: #bbb; }
 
-        .btn-check:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
+    .toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: #ccc; border-radius: 11px; transition: 0.3s;
+    }
+    .toggle-slider::before {
+      position: absolute; content: "";
+      height: 16px; width: 16px;
+      left: 3px; bottom: 3px;
+      background: #fff; border-radius: 50%; transition: 0.3s;
+    }
+    input:checked + .toggle-slider { background: #1976d2; }
+    input:checked + .toggle-slider::before { transform: translateX(18px); }
+    body.dark .toggle-slider { background: #444; }
 
-        kbd {
-            background: var(--border);
-            border-radius: 3px;
-            padding: 2px 5px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            margin-left: 8px;
-        }
+    /* Stat cards */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 14px;
+    }
+    .stat-card {
+      background: #f0f7ff;
+      border: 1px solid #dceeff;
+      border-radius: 10px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    body.dark .stat-card { background: #1a2a3a; border-color: #1e3a5a; }
+    .stat-val {
+      font-size: 22px; font-weight: 700;
+      color: #1976d2; line-height: 1;
+    }
+    body.dark .stat-val { color: #90caf9; }
+    .stat-lbl { font-size: 11px; color: #777; margin-top: 3px; }
+    body.dark .stat-lbl { color: #888; }
 
-        @media (max-width: 600px) {
-            .stats { display: none; }
-            .header { margin-bottom: 1rem; }
-        }
-    </style>
+    /* Error list */
+    .error-list { display: flex; flex-direction: column; gap: 4px; }
+    .error-item {
+      background: #fafafa;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .error-item:hover {
+      background: #fce4ec;
+      border-color: #ef9a9a;
+    }
+    .error-item.highlighted {
+      background: #fce4ec;
+      border-color: #d32f2f;
+    }
+    body.dark .error-item { background: #252525; border-color: #333; }
+    body.dark .error-item:hover { background: #3a1a1a; border-color: #c62828; }
+    body.dark .error-item.highlighted { background: #3a1a1a; border-color: #ef9a9a; }
+    .error-word {
+      font-size: 13px; font-weight: 600;
+      color: #d32f2f;
+    }
+    body.dark .error-word { color: #ef9a9a; }
+    .error-pos { font-size: 11px; color: #999; margin-top: 1px; }
+    body.dark .error-pos { color: #666; }
+
+    .no-errors {
+      text-align: center;
+      padding: 20px 0;
+      font-size: 13px;
+      color: #999;
+    }
+    body.dark .no-errors { color: #666; }
+    .no-errors .material-symbols-outlined { font-size: 32px; color: #4caf50; display: block; margin-bottom: 6px; }
+
+    /* Collapse btn */
+    .collapse-btn {
+      width: 100%; padding: 8px;
+      background: #e3f2fd; border: none;
+      border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center;
+      justify-content: center; gap: 6px;
+      font-size: 13px; color: #1976d2;
+      font-weight: 600; margin-top: 6px;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .collapse-btn:hover { background: #bbdefb; }
+    body.dark .collapse-btn { background: #1a2a4a !important; color: #1976d2 !important; }
+
+    .expand-btn {
+      position: fixed; left: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: #fff; border: none;
+      border-radius: 8px; padding: 10px 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 50; display: none;
+    }
+    body.dark .expand-btn { background: #1a1a1a; }
+
+    /* ── Content Area ── */
+    .content-area {
+      flex: 1; overflow: auto;
+      display: flex;
+      justify-content: center;
+      background: #f0f4f8;
+      min-width: 0;
+      padding: 28px 20px;
+    }
+    body.dark .content-area { background: #111; }
+
+    /* ── Editor workspace ── */
+    .workspace {
+      width: 100%; max-width: 820px;
+      display: flex; flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Drop zone / upload area */
+    .drop-zone {
+      border: 2px dashed #1976d2;
+      border-radius: 12px;
+      padding: 28px 16px;
+      text-align: center;
+      cursor: pointer;
+      background: #fafafa;
+      transition: background 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      background: #e3f2fd;
+      border-color: #1565c0;
+    }
+    body.dark .drop-zone {
+      background: #222; border-color: #555; color: #aaa;
+    }
+    body.dark .drop-zone:hover, body.dark .drop-zone.dragover {
+      background: #1a2a3a;
+    }
+    .drop-zone .material-symbols-outlined {
+      font-size: 32px; color: #1976d2;
+      display: block; margin-bottom: 8px;
+    }
+    .drop-zone p { font-size: 13px; color: #777; }
+    body.dark .drop-zone p { color: #aaa; }
+    .drop-zone strong { color: #1976d2; cursor: pointer; }
+
+    /* Editor */
+    .editor-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      overflow: hidden;
+      flex: 1;
+    }
+    body.dark .editor-card { background: #1a1a1a; }
+
+    .editor-header {
+      padding: 10px 16px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    body.dark .editor-header { border-color: #2a2a2a; }
+    .editor-header-label {
+      font-size: 12px; font-weight: 600;
+      color: #888; text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    body.dark .editor-header-label { color: #666; }
+
+    #textInput {
+      width: 100%;
+      min-height: 360px;
+      padding: 20px;
+      border: none;
+      outline: none;
+      font-family: inherit;
+      font-size: 16px;
+      color: #333;
+      background: transparent;
+      resize: none;
+      line-height: 1.7;
+    }
+    body.dark #textInput { color: #ddd; }
+    #textInput::placeholder { color: #bbb; }
+    body.dark #textInput::placeholder { color: #555; }
+
+    /* Highlighted output */
+    #highlightOutput {
+      width: 100%;
+      min-height: 360px;
+      padding: 20px;
+      font-family: inherit;
+      font-size: 16px;
+      color: #333;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      display: none;
+    }
+    body.dark #highlightOutput { color: #ddd; }
+
+    .misspelled {
+      color: #d32f2f;
+      text-decoration: underline;
+      text-decoration-color: #d32f2f;
+      text-decoration-style: wavy;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      border-radius: 2px;
+      position: relative;
+    }
+    body.dark .misspelled { color: #ef9a9a; text-decoration-color: #ef9a9a; }
+    .misspelled.highlight-active {
+      background: rgba(211,47,47,0.12);
+      border-radius: 3px;
+    }
+
+    /* Suggestion popup */
+    #suggestPopup {
+      position: fixed;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+      z-index: 9500;
+      display: none;
+      padding: 6px;
+      border: 1px solid #e8e8e8;
+      min-width: 180px;
+      max-width: 240px;
+    }
+    body.dark #suggestPopup {
+      background: #1e1e1e; border-color: #333;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+    }
+    #suggestPopup.open { display: block; }
+
+    .suggest-header {
+      font-size: 11px; font-weight: 700;
+      color: #888; text-transform: uppercase;
+      letter-spacing: 0.6px; padding: 4px 8px 6px;
+    }
+    body.dark .suggest-header { color: #666; }
+
+    .suggest-item {
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: #333;
+      cursor: pointer;
+      transition: background 0.12s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .suggest-item:hover { background: #e3f2fd; color: #1565c0; }
+    body.dark .suggest-item { color: #ddd; }
+    body.dark .suggest-item:hover { background: #1a2a3a; color: #90caf9; }
+    .suggest-sep { height: 1px; background: #eee; margin: 4px 0; }
+    body.dark .suggest-sep { background: #333; }
+    .suggest-ignore {
+      padding: 7px 10px; border-radius: 6px;
+      font-size: 12px; color: #999; cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.12s;
+    }
+    .suggest-ignore:hover { background: #f5f5f5; color: #555; }
+    body.dark .suggest-ignore { color: #666; }
+    body.dark .suggest-ignore:hover { background: #2a2a2a; color: #999; }
+
+    /* ── Progress bar ── */
+    .prog-track {
+      width: 100%; height: 6px;
+      background: #e0e0e0; border-radius: 3px;
+      overflow: hidden; margin: 8px 0 4px;
+    }
+    .prog-fill {
+      height: 100%; background: #1976d2; transition: width 0.3s;
+      border-radius: 3px;
+    }
+    body.dark .prog-track { background: #333; }
+
+    /* ── Toast ── */
+    #toastStack { pointer-events: none; }
+    .toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      padding: 11px 20px; border-radius: 8px;
+      color: #fff; font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      z-index: 10002; opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success, .toast.info { background: #1976d2; }
+    .toast.error { background: #d32f2f; }
+
+    /* ── Tip Box ── */
+    #tipBox {
+      position: fixed; bottom: 80px; right: 18px;
+      width: 284px; background: #1976d2; color: #fff;
+      border-radius: 14px; padding: 14px;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+      z-index: 9990; opacity: 0; transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+      font-family: inherit; pointer-events: none;
+    }
+    #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+    body.dark #tipBox { background: #0d47a1; }
+    .tip-prog { height: 3px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 11px; }
+    .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+    .tip-text { font-size: 13px; line-height: 1.5; min-height: 58px; }
+    .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+    .tip-btn { flex: 1; border: none; padding: 6px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .tip-prev { background: rgba(255,255,255,0.15); color: #fff; }
+    .tip-next { background: #fff; color: #1976d2; }
+
+    /* custom dictionary tag */
+    .dict-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #e3f2fd; color: #1976d2;
+      border-radius: 6px; padding: 3px 8px 3px 6px;
+      font-size: 12px; font-weight: 500;
+      margin: 2px; flex-shrink: 0;
+    }
+    body.dark .dict-tag { background: #1a2a3a; color: #90caf9; }
+    .dict-tag button {
+      background: none; border: none; cursor: pointer;
+      color: inherit; opacity: 0.7; font-size: 13px;
+      display: flex; align-items: center; padding: 0; line-height: 1;
+    }
+    .dict-tag button:hover { opacity: 1; }
+    #dictWords { display: flex; flex-wrap: wrap; gap: 0; margin-bottom: 8px; min-height: 24px; }
+
+    .sb-input {
+      width: 100%; padding: 7px 9px;
+      border: 1px solid #e0e0e0; border-radius: 8px;
+      font-size: 13px; background: #fafafa;
+      font-family: inherit; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s; color: #333;
+    }
+    .sb-input:focus {
+      border-color: #1976d2;
+      box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+      background: #fff;
+    }
+    body.dark .sb-input { background: #252525 !important; color: #ddd !important; border-color: #444 !important; }
+
+    .action-btn {
+      background: #1976d2; color: #fff; border: none;
+      padding: 8px 18px; border-radius: 8px; cursor: pointer;
+      font-size: 13px; display: flex; align-items: center;
+      gap: 6px; transition: background 0.2s; white-space: nowrap;
+      font-family: inherit; flex-shrink: 0;
+    }
+    .action-btn:hover { background: #1565c0; }
+    .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .action-btn.secondary { background: #546e7a; }
+    .action-btn.secondary:hover { background: #37474f; }
+
+    /* Loading state indicator */
+    .dict-loading {
+      font-size: 12px; color: #1976d2;
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 0;
+    }
+    .dict-loading .mini-spin {
+      width: 14px; height: 14px;
+      border: 2px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    body.dark .dict-loading { color: #90caf9; }
+  </style>
 </head>
 <body>
 
-    <header class="header">
-        <div class="brand">
-            <h1>Spell Checker</h1>
-            <p></p>
-        </div>
-        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
-            <!-- Moon Icon -->
-            <svg id="moonIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-            </svg>
-            <!-- Sun Icon -->
-            <svg id="sunIcon" class="hidden" style="display:none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m0 13.5V21m8.966-8.966h-2.25M4.234 12h2.25m13.364-6.364l-1.591 1.591M6.761 17.239l-1.591 1.591m12.728 0l-1.591-1.591M6.761 6.761L5.17 5.17m11.192 11.192A4.5 4.5 0 1112 7.5a4.5 4.5 0 014.5 4.5z" />
-            </svg>
-        </button>
-    </header>
+<!-- Loading Screen -->
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingMsg">Fetching English word library…</div>
+</div>
 
-    <div class="container">
-        <div class="toolbar">
-            <div class="stats">
-                <span id="wordCount">0 Words</span>
-                <span id="charCount">0 Characters</span>
-            </div>
-            <div style="font-size: 0.75rem; color: var(--text-muted)">
-                Input
-            </div>
-        </div>
+<!-- App Container -->
+<div id="appContainer">
 
-        <div class="editor-container">
-            <div id="editor" 
-                 contenteditable="true" 
-                 spellcheck="false" 
-                 data-placeholder="Start typing your story or paste your text here..."
-                 aria-label="Text editor"></div>
-        </div>
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="material-symbols-outlined" style="font-size:22px;color:#1976d2;flex-shrink:0;">spellcheck</span>
+    <span class="tool-title">Spell Checker</span>
+    <div class="top-spacer"></div>
+    <button class="icon-btn" id="themeToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+      <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+    </button>
+  </div>
 
-        <div class="footer-bar">
-            <div id="status-pill">Ready</div>
-            <button class="btn-check" id="scanBtn">
-                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-                <span id="btnText">Check Spelling</span>
-                <kbd>Ctrl + Enter</kbd>
-            </button>
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="tbtn" onclick="runCheck()" id="btnCheck" title="Check spelling">
+      <span class="material-symbols-outlined">spellcheck</span>
+      <span class="tbtn-label">Check</span>
+    </button>
+    <button class="tbtn" onclick="clearAll()" title="Clear text">
+      <span class="material-symbols-outlined">delete_sweep</span>
+      <span class="tbtn-label">Clear</span>
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="triggerUpload()" title="Upload .txt file">
+      <span class="material-symbols-outlined">upload_file</span>
+      <span class="tbtn-label">Upload .txt</span>
+    </button>
+    <button class="tbtn" onclick="copyText()" title="Copy text">
+      <span class="material-symbols-outlined">content_copy</span>
+      <span class="tbtn-label">Copy</span>
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" id="btnEdit" onclick="switchToEdit()" title="Edit mode" style="display:none">
+      <span class="material-symbols-outlined">edit</span>
+      <span class="tbtn-label">Edit Mode</span>
+    </button>
+    <input type="file" id="fileInput" accept=".txt" style="display:none" onchange="loadFile(event)">
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+
+      <!-- Stats -->
+      <div class="sb-section">
+        <div class="sb-title">Results</div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-val" id="statWords">0</div>
+            <div class="stat-lbl">Total Words</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="statErrors" style="color:#d32f2f">0</div>
+            <div class="stat-lbl">Misspelled</div>
+          </div>
         </div>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-val" id="statIgnored">0</div>
+            <div class="stat-lbl">Ignored</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="statScore" style="color:#4caf50">—</div>
+            <div class="stat-lbl">Accuracy</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="sb-section">
+        <div class="sb-title">Options</div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Ignore numbers</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="optNumbers" checked onchange="rerunIfDone()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Ignore ALL CAPS</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="optCaps" checked onchange="rerunIfDone()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Ignore URLs</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="optUrls" checked onchange="rerunIfDone()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Custom Dictionary -->
+      <div class="sb-section">
+        <div class="sb-title">Custom Dictionary</div>
+        <div id="dictWords"></div>
+        <div style="display:flex;gap:6px;margin-bottom:8px;">
+          <input class="sb-input" type="text" id="dictInput" placeholder="Add word…" style="flex:1" onkeydown="if(event.key==='Enter')addDictWord()">
+          <button class="action-btn" onclick="addDictWord()" style="padding:7px 12px;flex-shrink:0">
+            <span class="material-symbols-outlined" style="font-size:16px">add</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Error List -->
+      <div class="sb-section">
+        <div class="sb-title">Misspelled Words</div>
+        <div class="error-list" id="errorList">
+          <div class="no-errors">
+            <span class="material-symbols-outlined">check_circle</span>
+            Run a check to see results
+          </div>
+        </div>
+      </div>
+
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">chevron_left</span>
+        Hide Panel
+      </button>
     </div>
 
-    <script>
-        const editor = document.getElementById('editor');
-        const scanBtn = document.getElementById('scanBtn');
-        const btnText = document.getElementById('btnText');
-        const statusPill = document.getElementById('status-pill');
-        const wordCountDisplay = document.getElementById('wordCount');
-        const charCountDisplay = document.getElementById('charCount');
-        const themeToggle = document.getElementById('themeToggle');
-        const sunIcon = document.getElementById('sunIcon');
-        const moonIcon = document.getElementById('moonIcon');
+    <!-- Expand Button (when sidebar collapsed) -->
+    <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+      <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+    </button>
 
-        // --- Theme Logic ---
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeIcons(savedTheme);
+    <!-- Content Area -->
+    <div class="content-area">
+      <div class="workspace">
 
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcons(newTheme);
-        });
+        <!-- Drop Zone -->
+        <div class="drop-zone" id="dropZone"
+             ondragover="event.preventDefault();this.classList.add('dragover')"
+             ondragleave="this.classList.remove('dragover')"
+             ondrop="handleDrop(event)"
+             onclick="triggerUpload()">
+          <span class="material-symbols-outlined">upload_file</span>
+          <p><strong>Click to upload</strong> or drag &amp; drop a <strong>.txt</strong> file</p>
+        </div>
 
-        function updateThemeIcons(theme) {
-            if (theme === 'dark') {
-                sunIcon.style.display = 'block';
-                moonIcon.style.display = 'none';
-            } else {
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-            }
-        }
+        <!-- Editor Card -->
+        <div class="editor-card">
+          <div class="editor-header">
+            <span class="editor-header-label" id="editorLabel">Input — paste or type text here</span>
+            <span id="charCount" style="font-size:11px;color:#aaa;">0 chars</span>
+          </div>
+          <textarea id="textInput" placeholder="Paste or type your text here, then click Check…" oninput="updateCharCount()"></textarea>
+          <div id="highlightOutput"></div>
+        </div>
 
-        // --- Dictionary Helpers ---
-        const whitelist = new Set([
-            "is", "the", "and", "a", "an", "in", "on", "at", "for", "to", "of", "by", "with", 
-            "as", "it", "he", "i'm", "you're", "he's", "she's", "it's", "we're", "they're", "i've", "you've",
-  "we've", "they've", "i'd", "you'd", "he'd", "she'd", "we'd", "they'd", "i'll",
-  "you'll", "he'll", "she'll", "we'll", "they'll", "isn't", "aren't", "wasn't",
-  "weren't", "haven't", "hasn't", "hadn't", "don't", "doesn't", "didn't", "can't",
-  "couldn't", "shouldn't", "wouldn't", "won't", "mustn't", "mightn't", "needn't", "she", "you", "we", "they", "that", "this", "these", "those", "is", "the", "and", "a", "an", "in", "on", "at", "for", "to", "of", "by", "with", 
-  "as", "it", "he", "she", "you", "we", "they", "that", "this", "these", "those",
-  "are", "was", "were", "be", "been", "have", "has", "had", "do", "does", "did",
-  "but", "or", "if", "so", "not", "no", "yes", "from", "my", "your", "our", "their",
-  "i", "me", "him", "her", "us", "them", "his", "hers", "its", "mine", "yours", "theirs", "are", "was", "were", "be", "been", "have", "has", "had", "do", "does", "did"
-        ]);
+      </div>
+    </div>
 
-        function updateStats() {
-            const text = editor.innerText.trim();
-            const words = text ? text.split(/\s+/).length : 0;
-            const chars = text.length;
-            wordCountDisplay.textContent = `${words} Word${words === 1 ? '' : 's'}`;
-            charCountDisplay.textContent = `${chars} Character${chars === 1 ? '' : 's'}`;
-        }
+  </div>
+</div>
 
-        editor.addEventListener('input', updateStats);
+<!-- Suggestion Popup -->
+<div id="suggestPopup">
+  <div class="suggest-header">Suggestions</div>
+  <div id="suggestList"></div>
+  <div class="suggest-sep"></div>
+  <div class="suggest-ignore" onclick="ignoreWord()">
+    <span class="material-symbols-outlined" style="font-size:15px">visibility_off</span>
+    Ignore this word
+  </div>
+</div>
 
-        async function checkWord(word) {
-            const clean = word.replace(/[.,?!;:()\[\]"']+$/, '').toLowerCase();
-            if (!clean || whitelist.has(clean) || /^\d+$/.test(clean)) return true;
-            
-            try {
-                const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${clean}`);
-                return response.ok;
-            } catch {
-                return true; 
-            }
-        }
+<!-- Toast Stack -->
+<div id="toastStack"></div>
 
-        async function performSpellCheck() {
-            statusPill.textContent = 'Scanning...';
-            statusPill.style.background = 'var(--primary)';
-            statusPill.style.color = '#fff';
-            scanBtn.disabled = true;
-            btnText.textContent = 'Processing...';
+<!-- Tip Box -->
+<div id="tipBox">
+  <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+  <div class="tip-text" id="tipText"></div>
+  <div class="tip-actions">
+    <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+    <button class="tip-btn tip-next" onclick="tipNav(1)">Next →</button>
+  </div>
+</div>
 
-            const rawText = editor.innerText;
-            const fragments = rawText.split(/(\s+)/);
-            
-            const processed = await Promise.all(fragments.map(async (frag) => {
-                if (/^[a-zA-Z']+$/.test(frag)) {
-                    const ok = await checkWord(frag);
-                    if (!ok) return `<span class="misspelled" title="Possible typo">${frag}</span>`;
-                }
-                return frag.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            }));
+<script>
+/* ════════════════════════════════════════
+   THEME — Cookie-based
+════════════════════════════════════════ */
+function setThemeCookie(v) {
+  document.cookie = 'toolsuite_theme=' + v + '; path=/; max-age=31536000; SameSite=Lax';
+}
+function getThemeCookie() {
+  const m = document.cookie.split('; ').find(r => r.startsWith('toolsuite_theme='));
+  return m ? m.split('=')[1] : null;
+}
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark');
+  const icon = document.getElementById('themeIcon');
+  if (icon) icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+  setThemeCookie(isDark ? 'dark' : 'light');
+}
+(function applyThemeOnLoad() {
+  if (getThemeCookie() === 'dark') {
+    document.body.classList.add('dark');
+    document.addEventListener('DOMContentLoaded', () => {
+      const icon = document.getElementById('themeIcon');
+      if (icon) icon.textContent = 'light_mode';
+    });
+  }
+})();
 
-            editor.innerHTML = processed.join('');
-            
-            // Restore cursor to end
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.selectNodeContents(editor);
-            range.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(range);
+/* ════════════════════════════════════════
+   WORD DICTIONARY — fetch from DWYL
+════════════════════════════════════════ */
+let wordSet = null;
+let loadError = false;
 
-            statusPill.textContent = 'Complete';
-            statusPill.style.background = 'var(--border)';
-            statusPill.style.color = 'var(--text-muted)';
-            scanBtn.disabled = false;
-            btnText.textContent = 'Check Spelling';
-        }
+async function loadDictionary() {
+  const url = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt';
+  try {
+    document.getElementById('loadingMsg').textContent = 'Fetching English word library…';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    wordSet = new Set(text.split('\n').map(w => w.trim().toLowerCase()).filter(Boolean));
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'flex';
+    showToast('Dictionary loaded — ' + wordSet.size.toLocaleString() + ' words', 'success');
+    if (!localStorage.getItem('tips_seen')) {
+      setTimeout(() => showTip(0), 1200);
+    }
+  } catch (e) {
+    loadError = true;
+    document.getElementById('loadingMsg').textContent = 'Failed to load dictionary. Check your connection.';
+    document.querySelector('#loadingScreen .spinner').style.borderTopColor = '#d32f2f';
+    setTimeout(() => {
+      // still show app with empty set
+      wordSet = new Set();
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'flex';
+      showToast('Dictionary unavailable — limited functionality', 'error', 4000);
+    }, 2500);
+  }
+}
 
-        scanBtn.addEventListener('click', performSpellCheck);
+/* ════════════════════════════════════════
+   SPELL CHECK ENGINE
+════════════════════════════════════════ */
+let customDict = new Set();
+let ignoredWords = new Set();
+let lastErrors = []; // [{word, startIdx, endIdx, tokenIdx}]
+let checkedText = '';
+let isChecked = false;
+let currentPopupWord = null;
+let currentPopupEls = [];
 
-        editor.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'Enter') {
-                e.preventDefault();
-                performSpellCheck();
-            }
-        });
+function isWordValid(word) {
+  const lower = word.toLowerCase();
+  if (customDict.has(lower)) return true;
+  if (ignoredWords.has(lower)) return true;
+  if (wordSet && wordSet.has(lower)) return true;
+  return false;
+}
 
-    </script>
+function tokenize(text) {
+  // Returns array of {word, start, end, isWord}
+  const tokens = [];
+  const re = /[A-Za-z''\u2019\u2018-]+|[^A-Za-z''\u2019\u2018-]+/g;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    const raw = m[0];
+    const start = m.index;
+    const end = start + raw.length;
+    // treat as a word token only if it starts with a letter
+    const isWord = /^[A-Za-z]/.test(raw);
+    tokens.push({ raw, start, end, isWord });
+  }
+  return tokens;
+}
+
+function shouldIgnore(word) {
+  const optNumbers = document.getElementById('optNumbers').checked;
+  const optCaps = document.getElementById('optCaps').checked;
+  const optUrls = document.getElementById('optUrls').checked;
+  if (optUrls && /^https?:\/\//i.test(word)) return true;
+  if (optNumbers && /\d/.test(word)) return true;
+  if (optCaps && word === word.toUpperCase() && word.length > 1) return true;
+  return false;
+}
+
+function runCheck() {
+  const text = document.getElementById('textInput').value;
+  if (!text.trim()) { showToast('Nothing to check!', 'error'); return; }
+  checkedText = text;
+  isChecked = true;
+
+  const tokens = tokenize(text);
+  lastErrors = [];
+  let wordCount = 0;
+
+  tokens.forEach((tok, idx) => {
+    if (!tok.isWord) return;
+    // Strip surrounding apostrophes
+    const clean = tok.raw.replace(/^['''\u2019\u2018]+|['''\u2019\u2018]+$/g, '');
+    if (!clean || clean.length < 2) return;
+    wordCount++;
+    if (shouldIgnore(clean)) return;
+    if (!isWordValid(clean)) {
+      lastErrors.push({ word: clean, raw: tok.raw, start: tok.start, end: tok.end, tokenIdx: idx });
+    }
+  });
+
+  // Update stats
+  document.getElementById('statWords').textContent = wordCount;
+  document.getElementById('statErrors').textContent = lastErrors.length;
+  document.getElementById('statIgnored').textContent = ignoredWords.size;
+  const accuracy = wordCount > 0 ? Math.round(((wordCount - lastErrors.length) / wordCount) * 100) : 100;
+  document.getElementById('statScore').textContent = accuracy + '%';
+
+  renderHighlight(tokens);
+  renderErrorList();
+
+  document.getElementById('textInput').style.display = 'none';
+  document.getElementById('highlightOutput').style.display = 'block';
+  document.getElementById('editorLabel').textContent = 'Result — click a red word for suggestions';
+  document.getElementById('btnEdit').style.display = 'inline-flex';
+
+  if (lastErrors.length === 0) {
+    showToast('No spelling mistakes found!', 'success');
+  } else {
+    showToast(lastErrors.length + ' misspelling' + (lastErrors.length > 1 ? 's' : '') + ' found', 'info');
+  }
+}
+
+function renderHighlight(tokens) {
+  const out = document.getElementById('highlightOutput');
+  let html = '';
+  tokens.forEach((tok) => {
+    if (!tok.isWord) {
+      html += escHtml(tok.raw);
+      return;
+    }
+    const clean = tok.raw.replace(/^['''\u2019\u2018]+|['''\u2019\u2018]+$/g, '');
+    const err = lastErrors.find(e => e.start === tok.start);
+    if (err) {
+      html += `<span class="misspelled" data-word="${escAttr(clean)}" onclick="openSuggest(event,this)">${escHtml(tok.raw)}</span>`;
+    } else {
+      html += escHtml(tok.raw);
+    }
+  });
+  out.innerHTML = html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function escAttr(s) {
+  return s.replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function renderErrorList() {
+  const list = document.getElementById('errorList');
+  if (lastErrors.length === 0) {
+    list.innerHTML = `<div class="no-errors"><span class="material-symbols-outlined">check_circle</span>All words look correct!</div>`;
+    return;
+  }
+  // Deduplicate by word
+  const seen = new Set();
+  const unique = lastErrors.filter(e => { if (seen.has(e.word.toLowerCase())) return false; seen.add(e.word.toLowerCase()); return true; });
+  list.innerHTML = unique.map(e =>
+    `<div class="error-item" onclick="highlightInText('${escAttr(e.word.toLowerCase())}')" data-word="${escAttr(e.word.toLowerCase())}">
+      <div class="error-word">${escHtml(e.word)}</div>
+      <div class="error-pos">${countOccurrences(e.word.toLowerCase())} occurrence${countOccurrences(e.word.toLowerCase())>1?'s':''}</div>
+    </div>`
+  ).join('');
+}
+
+function countOccurrences(w) {
+  return lastErrors.filter(e => e.word.toLowerCase() === w).length;
+}
+
+function highlightInText(word) {
+  // Scroll to first occurrence and flash it
+  document.querySelectorAll('.misspelled').forEach(el => el.classList.remove('highlight-active'));
+  const targets = [...document.querySelectorAll('.misspelled')].filter(el => el.dataset.word.toLowerCase() === word);
+  if (targets.length > 0) {
+    targets.forEach(t => t.classList.add('highlight-active'));
+    targets[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+  // highlight error list item
+  document.querySelectorAll('.error-item').forEach(el => {
+    el.classList.toggle('highlighted', el.dataset.word === word);
+  });
+}
+
+/* ════════════════════════════════════════
+   SUGGESTIONS
+════════════════════════════════════════ */
+function openSuggest(event, el) {
+  event.stopPropagation();
+  const word = el.dataset.word;
+  currentPopupWord = word;
+  currentPopupEls = [...document.querySelectorAll(`.misspelled[data-word="${CSS.escape(word)}"]`)];
+
+  const suggestions = getSuggestions(word);
+  const list = document.getElementById('suggestList');
+  if (suggestions.length === 0) {
+    list.innerHTML = `<div class="suggest-item" style="color:#999;cursor:default"><span class="material-symbols-outlined" style="font-size:15px">search_off</span>No suggestions</div>`;
+  } else {
+    list.innerHTML = suggestions.map(s =>
+      `<div class="suggest-item" onclick="applySuggestion('${escAttr(s)}')">
+        <span class="material-symbols-outlined" style="font-size:15px;color:#1976d2">spellcheck</span>${escHtml(s)}
+      </div>`
+    ).join('');
+  }
+
+  const popup = document.getElementById('suggestPopup');
+  popup.classList.add('open');
+
+  // Position popup
+  const rect = el.getBoundingClientRect();
+  let top = rect.bottom + 6;
+  let left = rect.left;
+  const pw = 240, ph = 200;
+  if (left + pw > window.innerWidth - 10) left = window.innerWidth - pw - 10;
+  if (top + ph > window.innerHeight - 10) top = rect.top - ph - 6;
+  popup.style.top = top + 'px';
+  popup.style.left = left + 'px';
+}
+
+function getSuggestions(word) {
+  if (!wordSet) return [];
+  const w = word.toLowerCase();
+  const results = [];
+
+  // 1) Keyboard-adjacent substitutions + deletion + insertion (limited scan)
+  const candidates = new Set();
+
+  // Single char deletion
+  for (let i = 0; i < w.length; i++) {
+    const c = w.slice(0, i) + w.slice(i + 1);
+    if (wordSet.has(c)) candidates.add(c);
+  }
+
+  // Transposition
+  for (let i = 0; i < w.length - 1; i++) {
+    const c = w.slice(0, i) + w[i+1] + w[i] + w.slice(i + 2);
+    if (wordSet.has(c)) candidates.add(c);
+  }
+
+  // Single char substitution (a-z)
+  for (let i = 0; i < w.length; i++) {
+    for (let cc = 97; cc <= 122; cc++) {
+      const c = w.slice(0, i) + String.fromCharCode(cc) + w.slice(i + 1);
+      if (c !== w && wordSet.has(c)) candidates.add(c);
+    }
+  }
+
+  // Single insertion
+  for (let i = 0; i <= w.length; i++) {
+    for (let cc = 97; cc <= 122; cc++) {
+      const c = w.slice(0, i) + String.fromCharCode(cc) + w.slice(i);
+      if (wordSet.has(c)) candidates.add(c);
+    }
+  }
+
+  candidates.forEach(c => results.push(c));
+  return results.slice(0, 6);
+}
+
+function applySuggestion(replacement) {
+  if (!currentPopupWord || !isChecked) return;
+  const word = currentPopupWord;
+
+  // Replace in the textarea value
+  const textArea = document.getElementById('textInput');
+  // Build regex to replace all exact occurrences preserving case
+  const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('\\b' + escapedWord + '\\b', 'gi');
+  textArea.value = textArea.value.replace(re, (match) => {
+    if (match[0] === match[0].toUpperCase()) {
+      return replacement.charAt(0).toUpperCase() + replacement.slice(1);
+    }
+    return replacement;
+  });
+
+  closeSuggest();
+  showToast('"' + word + '" → "' + replacement + '"', 'success');
+  // Re-run check
+  setTimeout(runCheck, 80);
+}
+
+function ignoreWord() {
+  if (!currentPopupWord) return;
+  ignoredWords.add(currentPopupWord.toLowerCase());
+  closeSuggest();
+  if (isChecked) setTimeout(runCheck, 80);
+}
+
+function closeSuggest() {
+  document.getElementById('suggestPopup').classList.remove('open');
+  currentPopupWord = null;
+}
+
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('suggestPopup').contains(e.target)) closeSuggest();
+});
+
+/* ════════════════════════════════════════
+   CUSTOM DICTIONARY
+════════════════════════════════════════ */
+function addDictWord() {
+  const inp = document.getElementById('dictInput');
+  const word = inp.value.trim().toLowerCase();
+  if (!word) return;
+  if (customDict.has(word)) { showToast('Word already in dictionary', 'info'); inp.value = ''; return; }
+  customDict.add(word);
+  inp.value = '';
+  renderDictTags();
+  if (isChecked) setTimeout(runCheck, 80);
+  showToast('"' + word + '" added to dictionary', 'success');
+}
+
+function removeDictWord(word) {
+  customDict.delete(word);
+  renderDictTags();
+  if (isChecked) setTimeout(runCheck, 80);
+}
+
+function renderDictTags() {
+  const container = document.getElementById('dictWords');
+  if (customDict.size === 0) {
+    container.innerHTML = '';
+    return;
+  }
+  container.innerHTML = [...customDict].map(w =>
+    `<span class="dict-tag">${escHtml(w)}<button onclick="removeDictWord('${escAttr(w)}')" title="Remove">✕</button></span>`
+  ).join('');
+}
+
+/* ════════════════════════════════════════
+   UTILITY
+════════════════════════════════════════ */
+function switchToEdit() {
+  document.getElementById('textInput').style.display = 'block';
+  document.getElementById('highlightOutput').style.display = 'none';
+  document.getElementById('editorLabel').textContent = 'Input — paste or type text here';
+  document.getElementById('btnEdit').style.display = 'none';
+  isChecked = false;
+}
+
+function clearAll() {
+  document.getElementById('textInput').value = '';
+  document.getElementById('highlightOutput').innerHTML = '';
+  document.getElementById('textInput').style.display = 'block';
+  document.getElementById('highlightOutput').style.display = 'none';
+  document.getElementById('btnEdit').style.display = 'none';
+  document.getElementById('editorLabel').textContent = 'Input — paste or type text here';
+  document.getElementById('charCount').textContent = '0 chars';
+  isChecked = false;
+  lastErrors = [];
+  ignoredWords.clear();
+  document.getElementById('statWords').textContent = '0';
+  document.getElementById('statErrors').textContent = '0';
+  document.getElementById('statIgnored').textContent = '0';
+  document.getElementById('statScore').textContent = '—';
+  document.getElementById('errorList').innerHTML = `<div class="no-errors"><span class="material-symbols-outlined">check_circle</span>Run a check to see results</div>`;
+  showToast('Cleared', 'info');
+}
+
+function triggerUpload() {
+  document.getElementById('fileInput').click();
+}
+
+function loadFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (!file.name.endsWith('.txt')) { showToast('Only .txt files are supported', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    switchToEdit();
+    document.getElementById('textInput').value = e.target.result;
+    updateCharCount();
+    showToast('"' + file.name + '" loaded', 'success');
+    setTimeout(runCheck, 150);
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function handleDrop(event) {
+  event.preventDefault();
+  document.getElementById('dropZone').classList.remove('dragover');
+  const file = event.dataTransfer.files[0];
+  if (!file) return;
+  if (!file.name.endsWith('.txt')) { showToast('Only .txt files are supported', 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    switchToEdit();
+    document.getElementById('textInput').value = e.target.result;
+    updateCharCount();
+    showToast('"' + file.name + '" loaded', 'success');
+    setTimeout(runCheck, 150);
+  };
+  reader.readAsText(file);
+}
+
+function copyText() {
+  const text = document.getElementById('textInput').value;
+  if (!text) { showToast('Nothing to copy', 'error'); return; }
+  navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard', 'success'));
+}
+
+function updateCharCount() {
+  const len = document.getElementById('textInput').value.length;
+  document.getElementById('charCount').textContent = len.toLocaleString() + ' char' + (len !== 1 ? 's' : '');
+}
+
+function rerunIfDone() {
+  if (isChecked) setTimeout(runCheck, 80);
+}
+
+/* ════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════ */
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const expandBtn = document.getElementById('expandBtn');
+  const isCollapsed = sidebar.classList.contains('collapsed');
+  sidebar.classList.toggle('collapsed');
+  expandBtn.style.display = isCollapsed ? 'none' : 'block';
+}
+
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
+function showToast(message, type = 'info', duration = 2800) {
+  const stack = document.getElementById('toastStack');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${type === 'error' ? 'error' : 'check_circle'}</span>${message}`;
+  stack.appendChild(toast);
+  requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 350);
+  }, duration);
+}
+
+/* ════════════════════════════════════════
+   TIP BOX
+════════════════════════════════════════ */
+const TIPS = [
+  " Welcome! Paste text or upload a .txt file, then click <strong>Check</strong> in the toolbar.",
+  " Misspelled words appear <strong>red with a wavy underline</strong>. Click any red word to see suggestions.",
+  " The <strong>sidebar</strong> shows all misspelled words at once — click any to jump to it in the text.",
+  " Add words to your <strong>Custom Dictionary</strong> so they're never flagged again.",
+  " Toggle <strong>dark mode</strong> with the moon icon in the top bar.  You're all set!"
+];
+let tipIndex = 0;
+
+function showTip(index) {
+  const box = document.getElementById('tipBox');
+  const text = document.getElementById('tipText');
+  const bar = document.getElementById('tipBar');
+  text.innerHTML = TIPS[index];
+  bar.style.width = ((index + 1) / TIPS.length * 100) + '%';
+  box.classList.remove('hide');
+  box.classList.add('show');
+}
+function tipNav(dir) {
+  tipIndex = Math.max(0, Math.min(TIPS.length - 1, tipIndex + dir));
+  if (tipIndex === TIPS.length - 1 && dir === 1) {
+    dismissTips();
+  } else {
+    showTip(tipIndex);
+  }
+}
+function dismissTips() {
+  const box = document.getElementById('tipBox');
+  box.classList.remove('show');
+  box.classList.add('hide');
+  localStorage.setItem('tips_seen', '1');
+}
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  loadDictionary();
+});
+</script>
 </body>
 </html>

@@ -4,881 +4,1118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Number Adder</title>
-    <meta name="description" content="DocuWrite Pro is an all-in-one online workspace that lets you write, edit, convert, design, and manage documents and digital content instantly—no installation, no complexity.">
-  <meta name="keywords" content="DocuWrite Pro, Mohtadi Azad Mahi, AI writer, document editor, online text tool, GitHub project, DocuWritePro, Document Editor, Document, Editor, PDF, JPG, Edit, Text, Change File Type, File Changer, Format, Format Changer, Office, Docs, A4, Editor, General document editing, Collab, Editing documents together, Document Viewer, Viewing documents, Word Finder, Searching for specific words, Translator, Language translation, Document Signer, Electronically signing documents, Page Number Adder, Adding page numbers to documents, Chart Maker, Creating data charts, Table Maker, Creating tables, Watermark Adder, Adding watermarks to files, Email Writer, Assisting with writing emails, Spell Checker, Checking spelling and grammar, File Extractor, Extracting contents from files, QR Maker, Creating QR codes, ID Card Maker, Designing and creating ID cards, File Zipper, Compressing or zipping files, PDF Converter, Converting files to or from PDF format, Context Field, Analyzing text (e.g., word count, frequency), Gift Card Maker, Creating custom gift cards, Share File, Uploading or sharing a file, Text Extractor, Extracting text from sources (e.g., images), Keyboard Click Test, Testing keyboard functionality, Frontend IDE, Integrated Development Environment for frontend coding, HTML Editor, Editing HTML code, HTML Writer, Writing or generating HTML content, Button Designer, Designing user interface buttons, HTML Splitter, Splitting HTML files or elements, GoTo Code, Navigation feature in an IDE/editor, Code Snipper, Storing or managing code snippets, Image Editor, Editing images, Image Generator, Generating new images, Drawing Board, A simple drawing or sketching tool, HTML, CSS, JS, Online, Fast, Easy, No login, No signup, Free, No credit card required, Mohtadi, Azad, Mahi, Mohtadi Azad, Mohtadi Azad Mahi, mahi902">
-  <meta name="author" content="Mohtadi Azad Mahi">
-  <meta name="robots" content="index, follow">
+    <meta name="description" content="Add page numbers to PDFs and images – live preview, text/circle toggle, PDF export.">
+    <meta name="author" content="Mohtadi Azad Mahi">
+    <!-- Favicon (same as original) -->
+    <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+    <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+    <meta name="theme-color" content="#ffffff">
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <meta name="theme-color" content="#ffffff">
-
-  <!-- App & Brand Metadata -->
-  <meta property="og:site_name" content="DocuWrite Pro">
-  <meta name="application-name" content="DocuWrite Pro">
-  <meta name="apple-mobile-web-app-title" content="DocuWrite Pro">
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="DocuWrite Pro — Online Document Editor">
-  <meta property="og:description" content="Edit, format, and export documents easily with DocuWrite Pro by Mohtadi Azad Mahi.">
-  <meta property="og:url" content="https://mahi902.github.io/DocuWritePro/">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DocuWrite Pro — Online Document Editor">
-  <meta name="twitter:description" content="Create, format, and export documents easily with DocuWrite Pro. Built by Mohtadi Azad Mahi.">
-  <meta name="twitter:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-
-  <!-- Structured Data (Google Knowledge Graph) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "DocuWrite Pro",
-    "alternateName": "DocuWrite Pro — Online Document Editor",
-    "url": "https://mahi902.github.io/DocuWritePro/",
-    "creator": {
-      "@type": "Person",
-      "name": "Mohtadi Azad Mahi"
-    }
-  }
-  </script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CDNs – strict order -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- PDF.js (for rendering) & jsPDF (for export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Early theme script – prevents flash -->
+    <script>
+        (function() {
+            const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+            if (match && match.split('=')[1] === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
     <style>
-        /* Apply Inter font to the body */
+        /* ----- GLOBAL RESET & SCROLLBARS ----- */
+        * { scrollbar-width: none; }
+        *::-webkit-scrollbar { display: none; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Styling for each page preview container */
-        .page-container {
-            position: relative;
-            border: 1px solid #e5e7eb; /* Tailwind gray-200 */
-            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f8;
             overflow: hidden;
-            cursor: pointer;
-            transition: all 0.2s ease-in-out; /* Smooth transition for hover/selection effects */
+            height: 100vh;
         }
-        /* Styling for selected page containers */
-        .page-container.selected {
-            border-color: #ef4444; /* Tailwind red-500 */
-            box-shadow: 0 0 0 2px #ef4444; /* Red outline for selected pages */
-        }
-        /* Styling for the red circle page number overlay */
-        .page-number-overlay {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            background-color: #ef4444; /* Tailwind red-500 */
-            color: white;
-            border-radius: 9999px; /* Tailwind rounded-full */
-            width: 2rem; /* Fixed width for the circle */
-            height: 2rem; /* Fixed height for the circle */
-            display: flex; /* Use flexbox for centering content */
+        body.dark { background: #111; }
+
+        /* ----- LOADING SCREEN ----- */
+        #loadingScreen {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            z-index: 10000;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 0.875rem; /* Tailwind text-sm */
-            z-index: 10; /* Ensure it's above the canvas */
+            flex-direction: column;
+            gap: 20px;
         }
+        body.dark #loadingScreen { background: #1a1a1a; }
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border: 4px solid #e3f2fd;
+            border-top-color: #1976d2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 17px; color: #666; }
+        body.dark .loading-text { color: #aaa; }
+
+        /* ----- APP CONTAINER ----- */
+        #appContainer {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ----- TOP BAR ----- */
+        .top-bar {
+            background: #fff;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 200;
+            flex-shrink: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+        }
+        body.dark .top-bar {
+            background: #1a1a1a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        .tool-title {
+            font-size: 17px;
+            font-weight: 500;
+            color: #1a1a2e;
+            padding: 0 8px;
+        }
+        body.dark .tool-title { color: #e0e0e0; }
+        .top-spacer { flex: 1; min-width: 8px; }
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 7px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            color: #1976d2;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .icon-btn:hover { background: #e3f2fd; }
+        body.dark .icon-btn:hover { background: #1a2a3a; }
+        .icon-btn .material-symbols-outlined { font-size: 22px; }
+
+        /* ----- TOOLBAR ----- */
+        .toolbar {
+            background: #fff;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+            flex-shrink: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+        }
+        body.dark .toolbar {
+            background: #1a1a1a;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .tbtn {
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 7px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .tbtn:hover { background: #e3f2fd; }
+        .tbtn .material-symbols-outlined { font-size: 19px; color: #333; }
+        body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+        body.dark .tbtn:hover { background: #2a2a2a; }
+        .toolbar-sep {
+            width: 1px;
+            height: 26px;
+            background: #e0e0e0;
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+        body.dark .toolbar-sep { background: #333; }
+        .toolbar-select {
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 4px 7px;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+            flex-shrink: 0;
+            background: #fff;
+            color: #333;
+        }
+        body.dark .toolbar-select {
+            background: #252525;
+            color: #ddd;
+            border-color: #444;
+        }
+
+        /* ----- MAIN CONTENT (SIDEBAR + CONTENT AREA) ----- */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* ----- SIDEBAR ----- */
+        .sidebar {
+            width: 255px;
+            min-width: 255px;
+            background: #fff;
+            padding: 14px;
+            overflow-y: auto;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+            transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+            flex-shrink: 0;
+        }
+        body.dark .sidebar {
+            background: #1a1a1a;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+        }
+        .sidebar.collapsed {
+            transform: translateX(-255px);
+            width: 0;
+            min-width: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .sb-section { margin-bottom: 18px; }
+        .sb-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #888;
+            margin-bottom: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        body.dark .sb-title { color: #666; }
+        .sb-label {
+            display: block;
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 3px;
+        }
+        .sb-input {
+            width: 100%;
+            padding: 7px 9px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 13px;
+            background: #fafafa;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .sb-input:focus {
+            border-color: #1976d2;
+            box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+            background: #fff;
+        }
+        body.dark .sb-input {
+            background: #252525;
+            color: #ddd;
+            border-color: #444;
+        }
+        body.dark .sb-input:focus { background: #2a2a2a; }
+        .color-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .color-item {
+            flex: 1;
+        }
+        input[type="color"].sb-color {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 2px;
+            flex-shrink: 0;
+        }
+        input[type="color"].sb-color::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"].sb-color::-webkit-color-swatch { border: none; border-radius: 50%; }
+
+        /* Toggle switch */
+        .sb-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 9px;
+        }
+        .sb-toggle-label {
+            font-size: 13px;
+            color: #444;
+        }
+        body.dark .sb-toggle-label { color: #bbb; }
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #ccc;
+            border-radius: 11px;
+            transition: 0.3s;
+        }
+        .toggle-slider::before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+        input:checked + .toggle-slider {
+            background: #1976d2;
+        }
+        input:checked + .toggle-slider::before {
+            transform: translateX(18px);
+        }
+        body.dark .toggle-slider { background: #444; }
+
+        /* Collapse button */
+        .collapse-btn {
+            width: 100%;
+            padding: 8px;
+            background: #e3f2fd;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #1976d2;
+            font-weight: 600;
+            margin-top: 6px;
+            transition: background 0.15s;
+            font-family: inherit;
+        }
+        .collapse-btn:hover { background: #bbdefb; }
+        body.dark .collapse-btn {
+            background: #1a2a4a;
+            color: #1976d2;
+        }
+        .expand-btn {
+            position: fixed;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            z-index: 50;
+            display: none;
+        }
+        body.dark .expand-btn { background: #1a1a1a; }
+        .expand-btn .material-symbols-outlined { color: #1976d2; font-size: 20px; }
+
+        /* ----- CONTENT AREA ----- */
+        .content-area {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f0f4f8;
+            min-width: 0;
+            padding: 20px;
+        }
+        body.dark .content-area { background: #111; }
+        .page-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+            width: 100%;
+            max-width: 1400px;
+        }
+        .page-container {
+            position: relative;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            cursor: pointer;
+            background: #fff;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .page-container.selected {
+            border-color: #1976d2;
+            background: #bbdefb;
+            box-shadow: 0 0 0 2px rgba(25,118,210,0.3);
+        }
+        body.dark .page-container {
+            background: #1a1a1a;
+            border-color: #333;
+        }
+        body.dark .page-container.selected {
+            border-color: #1976d2;
+            background: #0d2a4a;
+        }
+        .canvas-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #fff;
+            padding: 8px;
+        }
+        body.dark .canvas-wrapper { background: #111; }
+        .page-container canvas {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+        }
+        .page-label {
+            text-align: center;
+            font-size: 11px;
+            color: #777;
+            padding: 4px 0;
+            background: #fafafa;
+        }
+        body.dark .page-label {
+            color: #aaa;
+            background: #252525;
+        }
+        .page-number-overlay {
+            position: absolute;
+            font-weight: bold;
+            z-index: 10;
+            transition: all 0.1s;
+            pointer-events: none;
+        }
+        /* Position classes – set via JS */
+        .page-number-overlay.pos-bottom-center {
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .page-number-overlay.pos-bottom-left {
+            bottom: 8px;
+            left: 8px;
+        }
+        .page-number-overlay.pos-bottom-right {
+            bottom: 8px;
+            right: 8px;
+        }
+        .page-number-overlay.pos-top-left {
+            top: 8px;
+            left: 8px;
+        }
+        .page-number-overlay.pos-top-center {
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .page-number-overlay.pos-top-right {
+            top: 8px;
+            right: 8px;
+        }
+        /* Circle mode */
+        .page-number-overlay.circle-mode {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            width: 48px;  /* will be overridden by size */
+            height: 48px;
+            background: #1976d2;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        /* Text mode */
+        .page-number-overlay.text-mode {
+            background: transparent;
+            color: #1976d2;
+            padding: 4px 6px;
+            text-shadow: none;
+        }
+
+        /* ----- ACTION BUTTON (Primary) ----- */
+        .action-btn {
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+            white-space: nowrap;
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+        .action-btn:hover { background: #1565c0; }
+        .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        /* ----- MODAL (Processing) ----- */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.48);
+            z-index: 8000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.open { display: flex; }
+        .mbox {
+            background: #fff;
+            border-radius: 16px;
+            padding: 26px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+            text-align: center;
+        }
+        body.dark .mbox { background: #1e1e1e; color: #ddd; }
+        .spinner.small { width: 40px; height: 40px; border-width: 3px; margin: 0 auto 16px; }
+
+        /* ----- TOAST ----- */
+        #toastStack { position: fixed; bottom: 28px; left: 0; right: 0; pointer-events: none; z-index: 10002; }
+        .toast {
+            position: relative;
+            margin: 0 auto 8px;
+            width: fit-content;
+            max-width: 80%;
+            padding: 11px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            transform: translateY(60px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { background: #1976d2; }
+        .toast.error   { background: #d32f2f; }
+
+        /* ----- TIP BOX ----- */
+        #tipBox {
+            position: fixed;
+            bottom: 80px;
+            right: 18px;
+            width: 284px;
+            background: #1976d2;
+            color: #fff;
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+            z-index: 9990;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+        #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+        body.dark #tipBox { background: #0d47a1; }
+        .tip-prog {
+            height: 3px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 11px;
+        }
+        .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+        .tip-text { font-size: 13px; line-height: 1.5; min-height: 58px; }
+        .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+        .tip-btn {
+            flex: 1;
+            border: none;
+            padding: 6px;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .tip-prev { background: rgba(255,255,255,0.15); color: #fff; }
+        .tip-next { background: #fff; color: #1976d2; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-white shadow-sm py-4 px-6 flex items-center justify-between">
-        <h1 class="text-2xl font-semibold text-gray-800">Page Number Adder</h1>
-        <div class="flex items-center space-x-4">
-            <button id="processButton" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg shadow-md transition duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50" disabled>
-                Process & Download
+<body>
+    <!-- LOADING SCREEN -->
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading Page Number Adder...</div>
+    </div>
+
+    <!-- APP CONTAINER -->
+    <div id="appContainer">
+        <!-- TOP BAR -->
+        <div class="top-bar">
+            <span class="tool-title">Page Number Adder</span>
+            <div class="top-spacer"></div>
+            <button class="icon-btn" id="themeToggle" title="Toggle dark mode">
+                <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+            </button>
+            <button class="action-btn" id="processButton" disabled>
+                <span class="material-symbols-outlined" style="font-size:18px;">download</span> Export PDF
             </button>
         </div>
-    </header>
 
-    <main class="flex-grow container mx-auto p-6 flex flex-col lg:flex-row space-y-6 lg:space-y-0 lg:space-x-6">
-        <div class="lg:w-1/4 bg-white p-6 rounded-lg shadow-md flex flex-col space-y-4 h-fit">
-            <h2 class="text-xl font-medium text-gray-700 mb-2">Instructions</h2>
-            <p class="text-gray-600 text-sm">
-                1. Upload your PDF or image files.
-            </p>
-            <p class="text-gray-600 text-sm">
-                2. Click on the pages you want to number. The first clicked will be '1', the second '2', and so on.
-            </p>
-            <p class="text-gray-600 text-sm">
-                3. Choose the position, color, and size for the page numbers.
-            </p>
-            <p class="text-gray-600 text-sm">
-                4. Click "Process & Download" to get your numbered pages.
-            </p>
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <button class="tbtn" id="selectAllBtn" title="Select all pages">
+                <span class="material-symbols-outlined">select_all</span>
+            </button>
+            <button class="tbtn" id="deselectAllBtn" title="Deselect all pages">
+                <span class="material-symbols-outlined">clear</span>
+            </button>
+            <div class="toolbar-sep"></div>
+            <select id="positionSelect" class="toolbar-select">
+                <option value="bottom-center">Bottom Center</option>
+                <option value="bottom-left">Bottom Left</option>
+                <option value="bottom-right">Bottom Right</option>
+                <option value="top-left">Top Left</option>
+                <option value="top-center">Top Center</option>
+                <option value="top-right">Top Right</option>
+            </select>
+        </div>
 
-            <label for="fileInput" class="block text-sm font-medium text-gray-700 mb-2">Upload Files</label>
-            <input type="file" id="fileInput" accept="application/pdf,image/*" multiple class="block w-full text-sm text-gray-500
-                file:mr-4 file:py-2 file:px-4
-                file:rounded-lg file:border-0
-                file:text-sm file:font-semibold
-                file:bg-blue-50 file:text-blue-700
-                hover:file:bg-blue-100
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-
-            <div id="optionsSelector" class="mt-4 p-4 bg-gray-50 rounded-lg hidden">
-                <h3 class="text-lg font-medium text-gray-700 mb-3">Page Number Options:</h3>
-                
-                <div class="mb-4">
-                    <h4 class="text-md font-medium text-gray-600 mb-2">Position:</h4>
-                    <div class="grid grid-cols-2 gap-2 text-sm text-gray-700">
-                        <label class="flex items-center space-x-2">
-                            <input type="radio" name="pagePosition" value="bottom-center" class="form-radio text-blue-600" checked>
-                            <span>Bottom Center</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="radio" name="pagePosition" value="bottom-left" class="form-radio text-blue-600">
-                            <span>Bottom Left</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="radio" name="pagePosition" value="bottom-right" class="form-radio text-blue-600">
-                            <span>Bottom Right</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="radio" name="pagePosition" value="top-left" class="form-radio text-blue-600">
-                            <span>Top Left</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="radio" name="pagePosition" value="top-center" class="form-radio text-blue-600">
-                            <span>Top Center</span>
-                        </label>
-                        <label class="flex items-center space-x-2">
-                            <input type="radio" name="pagePosition" value="top-right" class="form-radio text-blue-600">
-                            <span>Top Right</span>
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- SIDEBAR -->
+            <div class="sidebar" id="sidebar">
+                <div class="sb-section">
+                    <div class="sb-title">Number Appearance</div>
+                    <div class="color-row">
+                        <div class="color-item">
+                            <span class="sb-label">Circle</span>
+                            <input type="color" id="circleColor" value="#1976d2" class="sb-color">
+                        </div>
+                        <div class="color-item">
+                            <span class="sb-label">Text</span>
+                            <input type="color" id="textColor" value="#ffffff" class="sb-color">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:12px;">
+                        <span class="sb-label">Size (px)</span>
+                        <input type="number" id="numberSize" value="48" min="16" max="128" step="4" class="sb-input">
+                    </div>
+                    <div class="sb-toggle-row">
+                        <span class="sb-toggle-label">Show circle background</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="circleToggle" checked>
+                            <span class="toggle-slider"></span>
                         </label>
                     </div>
                 </div>
-
-                <div class="mb-4">
-                    <label for="pageNumberColor" class="block text-md font-medium text-gray-600 mb-2">Color:</label>
-                    <input type="color" id="pageNumberColor" value="#FF0000" class="w-full h-10 rounded-md border border-gray-300 cursor-pointer">
+                <div class="sb-section">
+                    <div class="sb-title">Selection</div>
+                    <div style="font-size:13px; color:#333; margin-bottom:12px;" id="selectionCount">0 pages selected</div>
                 </div>
+                <button class="collapse-btn" id="collapseSidebarBtn">
+                    <span class="material-symbols-outlined">chevron_left</span> Hide Panel
+                </button>
+            </div>
+            <!-- Expand button (hidden initially) -->
+            <button class="expand-btn" id="expandSidebarBtn" style="display:none;">
+                <span class="material-symbols-outlined">chevron_right</span>
+            </button>
 
-                <div>
-                    <label for="pageNumberSize" class="block text-md font-medium text-gray-600 mb-2">Size (px):</label>
-                    <input type="number" id="pageNumberSize" value="48" min="16" max="128" step="4" class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                </div>
+            <!-- CONTENT AREA (page previews) -->
+            <div class="content-area" id="contentArea">
+                <div id="noFilesMessage" style="color:#999; text-align:center; margin-top:40px;">Upload PDF or image files to get started.</div>
+                <div id="pagePreviews" class="page-grid"></div>
+                <div id="loadingIndicator" style="display:none; color:#666;">Loading pages...</div>
             </div>
-        </div>
-<div class="lg:w-3/4 bg-white p-6 rounded-lg shadow-md flex-grow overflow-y-auto">
-            <div id="loadingIndicator" class="text-center text-gray-600 text-lg hidden">
-                Loading pages...
-            </div>
-            <div id="pagePreviews" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                </div>
-            <div id="noFilesMessage" class="text-center text-gray-500 mt-8">
-                Upload PDF or image files to get started.
-            </div>
-        </div>
-    </main>
-
-    <div id="processingModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50 hidden">
-        <div class="bg-white p-8 rounded-lg shadow-xl flex flex-col items-center space-y-4">
-            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-            <p class="text-gray-700 text-lg font-medium">Processing pages...</p>
-            <p id="processingStatus" class="text-gray-500 text-sm"></p>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-<script>
-        // Set the worker source for PDF.js, crucial for PDF rendering
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+    <!-- PROCESSING MODAL -->
+    <div id="processingModal" class="modal">
+        <div class="mbox">
+            <div class="spinner small"></div>
+            <p style="font-size:17px; font-weight:500; margin-bottom:8px;">Generating PDF...</p>
+            <p id="processingStatus" style="font-size:13px; color:#777;"></p>
+        </div>
+    </div>
 
-        // Get references to DOM elements
-        const fileInput = document.getElementById('fileInput');
-        const pagePreviews = document.getElementById('pagePreviews');
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        const noFilesMessage = document.getElementById('noFilesMessage');
-        const processButton = document.getElementById('processButton');
-        const optionsSelector = document.getElementById('optionsSelector'); // Renamed from positionSelector
-        const processingModal = document.getElementById('processingModal');
-        const processingStatus = document.getElementById('processingStatus');
-        const pageNumberColorInput = document.getElementById('pageNumberColor'); // New color input
-        const pageNumberSizeInput = document.getElementById('pageNumberSize');   // New size input
+    <!-- TOAST STACK -->
+    <div id="toastStack"></div>
 
-        // Global arrays/sets to manage page data and selection
-        let allPages = []; // Stores { type: 'pdf'/'image', file: File, pageIndex: number, originalCanvas: HTMLCanvasElement }
-        let selectedPageOrder = []; // Stores globalIndex of selected pages in the order they were clicked
+    <!-- TIP BOX -->
+    <div id="tipBox" class="hide">
+        <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+        <div class="tip-text" id="tipText">Welcome! Let's quickly tour the Page Number Adder.</div>
+        <div class="tip-actions">
+            <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+            <button class="tip-btn tip-next" onclick="tipNav(1)">Next →</button>
+        </div>
+    </div>
 
-        /**
-         * Shows the loading indicator and clears previous previews.
-         * @param {string} message - The message to display in the loading indicator.
-         */
-        function showLoading(message = 'Loading pages...') {
-            loadingIndicator.textContent = message;
-            loadingIndicator.classList.remove('hidden');
-            noFilesMessage.classList.add('hidden');
-            pagePreviews.innerHTML = ''; // Clear previous previews
-            processButton.disabled = true; // Disable process button during loading
-            optionsSelector.classList.add('hidden'); // Hide options selector
-        }
+    <script>
+        (function() {
+            // ----- PDF.JS WORKER -----
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
 
-        /**
-         * Hides the loading indicator and updates UI state.
-         */
-        function hideLoading() {
-            loadingIndicator.classList.add('hidden');
-            if (allPages.length === 0) {
-                noFilesMessage.classList.remove('hidden'); // Show message if no files
-            } else {
-                noFilesMessage.classList.add('hidden');
-                // Enable process button if any pages are selected
-                processButton.disabled = selectedPageOrder.length === 0;
-                optionsSelector.classList.remove('hidden'); // Show options selector
+            // ----- GLOBAL VARIABLES -----
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'application/pdf,image/*';
+            fileInput.multiple = true;
+            fileInput.style.display = 'none';
+            document.body.appendChild(fileInput);
+
+            let allPages = [];          // { type, file, pageIndex, originalCanvas }
+            let selectedPageOrder = []; // global indices in click order
+
+            // DOM elements
+            const appContainer = document.getElementById('appContainer');
+            const loadingScreen = document.getElementById('loadingScreen');
+            const pagePreviews = document.getElementById('pagePreviews');
+            const noFilesMessage = document.getElementById('noFilesMessage');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const processButton = document.getElementById('processButton');
+            const processingModal = document.getElementById('processingModal');
+            const processingStatus = document.getElementById('processingStatus');
+            const positionSelect = document.getElementById('positionSelect');
+            const circleColor = document.getElementById('circleColor');
+            const textColor = document.getElementById('textColor');
+            const numberSize = document.getElementById('numberSize');
+            const circleToggle = document.getElementById('circleToggle');
+            const selectionCount = document.getElementById('selectionCount');
+            const selectAllBtn = document.getElementById('selectAllBtn');
+            const deselectAllBtn = document.getElementById('deselectAllBtn');
+            const sidebar = document.getElementById('sidebar');
+            const collapseBtn = document.getElementById('collapseSidebarBtn');
+            const expandBtn = document.getElementById('expandSidebarBtn');
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+
+            // ----- THEME COOKIE HELPERS (exactly as spec) -----
+            function setThemeCookie(value) {
+                document.cookie = 'toolsuite_theme=' + value + '; path=/; max-age=31536000; SameSite=Lax';
             }
-        }
-
-        /**
-         * Renders a specific page of a PDF document onto a given canvas.
-         * @param {object} pdf - The PDF document object from PDF.js.
-         * @param {number} pageNum - The 1-based page number to render.
-         * @param {HTMLCanvasElement} canvas - The canvas element to draw on.
-         * @returns {Promise<HTMLCanvasElement>} A promise that resolves with the rendered canvas.
-         */
-        async function renderPdfPage(pdf, pageNum, canvas) {
-            const page = await pdf.getPage(pageNum);
-            // Adjust scale for better preview quality, balance performance and detail
-            const viewport = page.getViewport({ scale: 1.5 });
-            const context = canvas.getContext('2d');
-
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport,
-            };
-            await page.render(renderContext).promise;
-            return canvas;
-        }
-
-        /**
-         * Renders an image file onto a given canvas.
-         * @param {File} file - The image file to render.
-         * @param {HTMLCanvasElement} canvas - The canvas element to draw on.
-         * @returns {Promise<HTMLCanvasElement>} A promise that resolves with the rendered canvas.
-         */
-        async function renderImageToCanvas(file, canvas) {
-            return new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    const context = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    context.drawImage(img, 0, 0);
-                    URL.revokeObjectURL(img.src); // Clean up the object URL
-                    resolve(canvas);
-                };
-                img.onerror = () => {
-                    console.error("Failed to load image:", file.name);
-                    resolve(canvas); // Resolve even on error to not block other files
-                };
-                img.src = URL.createObjectURL(file);
-            });
-        }
-
-        /**
-         * Creates a DOM element for a page preview, including canvas, label, and number overlay.
-         * @param {HTMLCanvasElement} canvas - The canvas containing the page render.
-         * @param {number} globalPageIndex - The overall index of the page across all uploaded files.
-         * @returns {HTMLElement} The created page preview container element.
-         */
-        function createPagePreview(canvas, globalPageIndex) {
-            const pageContainer = document.createElement('div');
-            pageContainer.className = 'page-container p-2 bg-gray-50 rounded-lg shadow-sm hover:shadow-md';
-            pageContainer.dataset.globalIndex = globalPageIndex; // Store global index for easy lookup
-
-            const canvasWrapper = document.createElement('div');
-            canvasWrapper.className = 'w-full h-auto flex justify-center items-center overflow-hidden rounded-md bg-white';
-            canvasWrapper.appendChild(canvas);
-
-            const pageLabel = document.createElement('div');
-            pageLabel.className = 'text-center text-xs text-gray-500 mt-1';
-            pageLabel.textContent = `Page ${globalPageIndex + 1}`; // Display 1-based index to user
-
-            const pageNumberOverlay = document.createElement('div');
-            pageNumberOverlay.className = 'page-number-overlay hidden'; // Hidden by default
-
-            pageContainer.appendChild(canvasWrapper);
-            pageContainer.appendChild(pageLabel);
-            pageContainer.appendChild(pageNumberOverlay);
-
-            // Add click listener to toggle selection
-            pageContainer.addEventListener('click', () => togglePageSelection(pageContainer, globalPageIndex));
-
-            return pageContainer;
-        }
-
-        /**
-         * Updates the visible page number overlay on a page preview element.
-         * @param {HTMLElement} pageContainer - The DOM element of the page preview.
-         * @param {number|null} number - The page number to display, or null to hide the overlay.
-         */
-        function updatePageNumberOverlay(pageContainer, number) {
-            const overlay = pageContainer.querySelector('.page-number-overlay');
-            if (number !== null) {
-                overlay.textContent = number;
-                overlay.classList.remove('hidden');
-                pageContainer.classList.add('selected');
-            } else {
-                overlay.classList.add('hidden');
-                pageContainer.classList.remove('selected');
+            function getThemeCookie() {
+                const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+                return match ? match.split('=')[1] : null;
             }
-        }
-
-        /**
-         * Handles the selection/deselection of a page preview.
-         * Updates the `selectedPageOrder` array and re-renders all page numbers.
-         * @param {HTMLElement} pageContainer - The DOM element of the page preview.
-         * @param {number} globalPageIndex - The global index of the page.
-         */
-        function togglePageSelection(pageContainer, globalPageIndex) {
-            const existingIndexInOrder = selectedPageOrder.indexOf(globalPageIndex);
-
-            if (existingIndexInOrder !== -1) {
-                // Deselect: remove the page's globalIndex from the ordered array
-                selectedPageOrder.splice(existingIndexInOrder, 1);
-            } else {
-                // Select: add the page's globalIndex to the end of the ordered array
-                selectedPageOrder.push(globalPageIndex);
+            function toggleDarkMode() {
+                const isDark = document.body.classList.toggle('dark');
+                themeIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
+                setThemeCookie(isDark ? 'dark' : 'light');
             }
-            updateAllPageNumbers(); // Re-evaluate and update all numbers based on new order
-            processButton.disabled = selectedPageOrder.length === 0; // Update button state
-        }
+            if (document.documentElement.classList.contains('dark')) {
+                document.body.classList.add('dark');
+                themeIcon.textContent = 'light_mode';
+            }
+            themeToggle.addEventListener('click', toggleDarkMode);
 
-        /**
-         * Re-evaluates and updates the displayed page numbers for all page previews
-         * based on the current `selectedPageOrder`.
-         */
-        function updateAllPageNumbers() {
-            const pageElements = pagePreviews.querySelectorAll('.page-container');
+            // ----- SIDEBAR COLLAPSE -----
+            function toggleSidebar() {
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                sidebar.classList.toggle('collapsed');
+                expandBtn.style.display = isCollapsed ? 'none' : 'block';
+            }
+            collapseBtn.addEventListener('click', toggleSidebar);
+            expandBtn.addEventListener('click', toggleSidebar);
 
-            pageElements.forEach((element) => {
-                const globalIndex = parseInt(element.dataset.globalIndex);
-                // Find the assigned number (1-based) if the page is selected
-                const assignedNumber = selectedPageOrder.indexOf(globalIndex);
+            // ----- TOAST FUNCTION -----
+            function showToast(message, type = 'info', duration = 2800) {
+                const stack = document.getElementById('toastStack');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${type === 'error' ? 'error' : 'check_circle'}</span>${message}`;
+                stack.appendChild(toast);
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => toast.classList.add('show'));
+                });
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 350);
+                }, duration);
+            }
 
-                if (assignedNumber !== -1) {
-                    updatePageNumberOverlay(element, assignedNumber + 1); // Display 1-based number
+            // ----- TIP BOX (exactly as spec) -----
+            const TIPS = [
+                "👋 Upload PDF or image files using the upload button in the top bar.",
+                "🖱️ Click thumbnails to assign numbers – first clicked = 1, second = 2, etc.",
+                "🎨 Use the sidebar to change circle/text color, size, and toggle the circle.",
+                "📍 The position dropdown updates the preview in real time.",
+                "📦 When ready, click 'Export PDF' to download a single PDF with all pages."
+            ];
+            let tipIndex = 0;
+            const tipBox = document.getElementById('tipBox');
+            const tipText = document.getElementById('tipText');
+            const tipBar = document.getElementById('tipBar');
+            function showTip(index) {
+                tipText.textContent = TIPS[index];
+                tipBar.style.width = ((index + 1) / TIPS.length * 100) + '%';
+                tipBox.classList.remove('hide');
+                tipBox.classList.add('show');
+            }
+            function tipNav(dir) {
+                tipIndex = Math.max(0, Math.min(TIPS.length - 1, tipIndex + dir));
+                if (tipIndex === TIPS.length - 1 && dir === 1) {
+                    dismissTips();
                 } else {
-                    updatePageNumberOverlay(element, null); // Hide number if not selected
+                    showTip(tipIndex);
+                }
+            }
+            function dismissTips() {
+                tipBox.classList.replace('show', 'hide');
+                localStorage.setItem('tips_seen', '1');
+            }
+            window.addEventListener('load', () => {
+                if (!localStorage.getItem('tips_seen')) {
+                    setTimeout(() => showTip(0), 1200);
                 }
             });
-        }
 
-        // Event listener for when files are selected in the input
-        fileInput.addEventListener('change', async (event) => {
-            const files = event.target.files;
-            if (files.length === 0) {
+            // ----- UPLOAD BUTTON (top bar) -----
+            const uploadBtn = document.createElement('button');
+            uploadBtn.className = 'icon-btn';
+            uploadBtn.innerHTML = '<span class="material-symbols-outlined">upload_file</span>';
+            uploadBtn.title = 'Upload PDF or images';
+            document.querySelector('.top-bar .top-spacer').after(uploadBtn); // insert before spacer? Actually after title, before spacer.
+            // Better insert after title and before spacer:
+            const topBar = document.querySelector('.top-bar');
+            topBar.insertBefore(uploadBtn, document.querySelector('.top-spacer'));
+            uploadBtn.addEventListener('click', () => fileInput.click());
+
+            // ----- FILE INPUT HANDLER -----
+            fileInput.addEventListener('change', async (e) => {
+                const files = e.target.files;
+                if (!files.length) return;
+
+                loadingIndicator.style.display = 'block';
+                noFilesMessage.style.display = 'none';
+                pagePreviews.innerHTML = '';
                 allPages = [];
-                selectedPageOrder = []; // Clear selection
-                hideLoading();
-                return;
-            }
+                selectedPageOrder = [];
+                updateSelectionCount();
 
-            showLoading(); // Show loading indicator
-            allPages = []; // Reset all pages array
-            selectedPageOrder = []; // Reset selected pages array
-            pagePreviews.innerHTML = ''; // Clear existing previews
-
-            let globalPageIndex = 0; // Keep track of the overall page index
-
-            for (const file of files) {
-                if (file.type === 'application/pdf') {
-                    // Handle PDF files
-                    try {
-                        const pdfData = await file.arrayBuffer();
-                        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            const canvas = document.createElement('canvas');
-                            await renderPdfPage(pdf, i, canvas);
-                            allPages.push({ type: 'pdf', file: file, pageIndex: i - 1, originalCanvas: canvas });
-                            pagePreviews.appendChild(createPagePreview(canvas, globalPageIndex));
-                            globalPageIndex++;
+                let globalIndex = 0;
+                for (const file of files) {
+                    if (file.type === 'application/pdf') {
+                        try {
+                            const pdfData = await file.arrayBuffer();
+                            const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                const canvas = document.createElement('canvas');
+                                await renderPdfPage(pdf, i, canvas);
+                                allPages.push({ type: 'pdf', file, pageIndex: i-1, originalCanvas: canvas });
+                                pagePreviews.appendChild(createPagePreview(canvas, globalIndex));
+                                globalIndex++;
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            showToast(`Error loading PDF: ${file.name}`, 'error');
                         }
-                    } catch (error) {
-                        console.error('Error loading PDF:', file.name, error);
-                        processingStatus.textContent = `Error loading PDF: ${file.name}`;
-                        // Optionally, display a user-friendly error message on the UI
-                    }
-                } else if (file.type.startsWith('image/')) {
-                    // Handle image files
-                    try {
-                        const canvas = document.createElement('canvas');
-                        await renderImageToCanvas(file, canvas);
-                        // For images, pageIndex is 0 as each image is a single "page"
-                        allPages.push({ type: 'image', file: file, pageIndex: 0, originalCanvas: canvas });
-                        pagePreviews.appendChild(createPagePreview(canvas, globalPageIndex));
-                        globalPageIndex++;
-                    } catch (error) {
-                        console.error('Error loading image:', file.name, error);
-                        processingStatus.textContent = `Error loading image: ${file.name}`;
+                    } else if (file.type.startsWith('image/')) {
+                        try {
+                            const canvas = document.createElement('canvas');
+                            await renderImageToCanvas(file, canvas);
+                            allPages.push({ type: 'image', file, pageIndex: 0, originalCanvas: canvas });
+                            pagePreviews.appendChild(createPagePreview(canvas, globalIndex));
+                            globalIndex++;
+                        } catch (err) {
+                            console.error(err);
+                            showToast(`Error loading image: ${file.name}`, 'error');
+                        }
                     }
                 }
-            }
-            hideLoading(); // Hide loading indicator once all files are processed
-        });
-
-        /**
-         * Draws text (with a red circle background) onto a canvas context.
-         * @param {CanvasRenderingContext2D} ctx - The 2D rendering context of the canvas.
-         * @param {string} text - The text to draw (e.g., the page number).
-         * @param {number} x - The x-coordinate for the text/circle center.
-         * @param {number} y - The y-coordinate for the text/circle center.
-         * @param {object} options - Drawing options (font, textColor, textAlign, textBaseline, circleColor).
-         */
-        function drawTextOnCanvas(ctx, text, x, y, options) {
-            const fontSize = options.fontSize || 48; // Use dynamic font size
-            ctx.font = `${options.fontWeight || 'bold'} ${fontSize}px Inter`; // Use dynamic font size
-            ctx.textAlign = options.textAlign || 'center';
-            ctx.textBaseline = options.textBaseline || 'middle';
-
-            // Measure text to determine circle size
-            const textMetrics = ctx.measureText(text);
-            // Calculate radius: based on width of text or a standard digit '8', plus padding
-            // Adjusted calculation for better scaling with font size
-            const circleRadius = Math.max(textMetrics.width, ctx.measureText('8').width) / 2 + (fontSize * 0.5); // Padding scales with font size
-            const circleX = x;
-            const circleY = y;
-
-            // Draw circle background
-            ctx.beginPath();
-            ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
-            ctx.fillStyle = options.circleColor || 'red'; // Use dynamic circle color
-            ctx.fill();
-
-            // Draw text on top of the circle
-            ctx.fillStyle = options.textColor || 'white'; // Use dynamic text color
-            ctx.fillText(text, x, y);
-        }
-
-        // Event listener for the "Process & Download" button click
-        processButton.addEventListener('click', async () => {
-            if (selectedPageOrder.length === 0) {
-                // This case should be prevented by disabling the button, but as a fallback
-                console.warn('No pages selected for numbering. Please select at least one page.');
-                return;
-            }
-
-            processingModal.classList.remove('hidden'); // Show processing modal
-            processingStatus.textContent = 'Preparing files...';
-
-            // Get the selected page number position
-            const positionRadios = document.querySelectorAll('input[name="pagePosition"]');
-            let selectedPosition = 'bottom-center'; // Default position
-            for (const radio of positionRadios) {
-                if (radio.checked) {
-                    selectedPosition = radio.value;
-                    break;
+                loadingIndicator.style.display = 'none';
+                if (allPages.length === 0) {
+                    noFilesMessage.style.display = 'block';
+                } else {
+                    noFilesMessage.style.display = 'none';
                 }
+                processButton.disabled = true;
+                updateAllOverlays(); // apply current style to new overlays
+            });
+
+            async function renderPdfPage(pdf, pageNum, canvas) {
+                const page = await pdf.getPage(pageNum);
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                return canvas;
             }
 
-            // Get selected color and size
-            const selectedColor = pageNumberColorInput.value;
-            const selectedSize = parseInt(pageNumberSizeInput.value);
-
-            const zip = new JSZip(); // Initialize JSZip for creating a zip file
-
-            // Iterate through all pages to process them
-            for (let i = 0; i < allPages.length; i++) {
-                const pageInfo = allPages[i];
-                const originalCanvas = pageInfo.originalCanvas;
-
-                // Create a new canvas to draw the numbered page
-                const newCanvas = document.createElement('canvas');
-                const ctx = newCanvas.getContext('2d');
-
-                // Set new canvas dimensions to match original
-                newCanvas.width = originalCanvas.width;
-                newCanvas.height = originalCanvas.height;
-
-                // Draw the original page content onto the new canvas
-                ctx.drawImage(originalCanvas, 0, 0);
-
-                // Check if the current page was selected for numbering
-                const pageNumberIndex = selectedPageOrder.indexOf(i); // Get its index in the ordered selection array
-                if (pageNumberIndex !== -1) {
-                    const pageNumber = pageNumberIndex + 1; // 1-based page number
-                    const text = String(pageNumber);
-
-                    let x, y;
-                    // Padding from edges, scaled by font size for better responsiveness
-                    const padding = selectedSize * 1.5;
-
-                    // Calculate the position of the page number based on user selection
-                    switch (selectedPosition) {
-                        case 'bottom-center':
-                            x = newCanvas.width / 2;
-                            y = newCanvas.height - padding;
-                            ctx.textAlign = 'center';
-                            break;
-                        case 'bottom-left':
-                            x = padding;
-                            y = newCanvas.height - padding;
-                            ctx.textAlign = 'left';
-                            break;
-                        case 'bottom-right':
-                            x = newCanvas.width - padding;
-                            y = newCanvas.height - padding;
-                            ctx.textAlign = 'right';
-                            break;
-                        case 'top-left':
-                            x = padding;
-                            y = padding;
-                            ctx.textAlign = 'left';
-                            break;
-                        case 'top-center':
-                            x = newCanvas.width / 2;
-                            y = padding;
-                            ctx.textAlign = 'center';
-                            break;
-                        case 'top-right':
-                            x = newCanvas.width - padding;
-                            y = padding;
-                            ctx.textAlign = 'right';
-                            break;
-                        default:
-                            // Fallback to bottom-center if no valid position is selected
-                            x = newCanvas.width / 2;
-                            y = newCanvas.height - padding;
-                            ctx.textAlign = 'center';
-                    }
-                    processingStatus.textContent = `Adding number ${pageNumber} to page ${i + 1}...`;
-                    drawTextOnCanvas(ctx, text, x, y, {
-                        fontSize: selectedSize,
-                        textColor: 'white', // Text color inside the circle is always white for contrast
-                        circleColor: selectedColor, // Use the user-selected color for the circle
-                        textAlign: ctx.textAlign,
-                        textBaseline: 'middle'
-                    });
-                }
-
-                // Convert the new canvas content to a Blob (PNG image)
-                const fileName = `page_${i + 1}.png`;
-                await new Promise(resolve => {
-                    newCanvas.toBlob(blob => {
-                        zip.file(fileName, blob); // Add the image blob to the zip file
-                        resolve();
-                    }, 'image/png'); // Output as PNG
+            async function renderImageToCanvas(file, canvas) {
+                return new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        canvas.getContext('2d').drawImage(img, 0, 0);
+                        URL.revokeObjectURL(img.src);
+                        resolve(canvas);
+                    };
+                    img.onerror = () => resolve(canvas);
+                    img.src = URL.createObjectURL(file);
                 });
             }
 
-            processingStatus.textContent = 'Generating zip file...';
-            // Generate the zip file asynchronously
-            zip.generateAsync({ type: 'blob' })
-                .then(function (content) {
-                    saveAs(content, 'numbered_pages.zip'); // Trigger download of the zip file
-                    processingModal.classList.add('hidden'); // Hide modal on success
-                    processingStatus.textContent = ''; // Clear status message
-                })
-                .catch(error => {
-                    console.error('Error generating zip:', error);
-                    processingModal.classList.add('hidden'); // Hide modal on error
-                    processingStatus.textContent = 'Error processing files. Please try again.';
-                    // In a real application, you might show a more prominent error message to the user
+            function createPagePreview(canvas, globalIndex) {
+                const container = document.createElement('div');
+                container.className = 'page-container';
+                container.dataset.globalIndex = globalIndex;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'canvas-wrapper';
+                wrapper.appendChild(canvas);
+                container.appendChild(wrapper);
+
+                const label = document.createElement('div');
+                label.className = 'page-label';
+                label.textContent = `Page ${globalIndex + 1}`;
+                container.appendChild(label);
+
+                const overlay = document.createElement('div');
+                overlay.className = 'page-number-overlay';
+                container.appendChild(overlay);
+
+                container.addEventListener('click', () => togglePageSelection(container, globalIndex));
+                return container;
+            }
+
+            function togglePageSelection(container, globalIndex) {
+                const idx = selectedPageOrder.indexOf(globalIndex);
+                if (idx !== -1) {
+                    selectedPageOrder.splice(idx, 1);
+                } else {
+                    selectedPageOrder.push(globalIndex);
+                }
+                updateAllPageNumbers();
+                processButton.disabled = selectedPageOrder.length === 0;
+                updateSelectionCount();
+            }
+
+            function updateAllPageNumbers() {
+                const containers = document.querySelectorAll('.page-container');
+                containers.forEach(container => {
+                    const gIdx = parseInt(container.dataset.globalIndex);
+                    const order = selectedPageOrder.indexOf(gIdx);
+                    const overlay = container.querySelector('.page-number-overlay');
+                    if (order !== -1) {
+                        overlay.textContent = order + 1;
+                        overlay.style.display = 'block';
+                        container.classList.add('selected');
+                    } else {
+                        overlay.textContent = '';
+                        overlay.style.display = 'none';
+                        container.classList.remove('selected');
+                    }
                 });
-        });
+                updateAllOverlays(); // ensure style is applied even to visible ones
+            }
 
-        // Initialize the UI state when the script loads
-        hideLoading();
-    </script>
-    <script>
-(() => {
-  // Updated Storage Key for Page Number Adder
-  const STORAGE_KEY = "docuwritepro_page_number_guide_seen";
-  if (localStorage.getItem(STORAGE_KEY)) return;
+            function updateSelectionCount() {
+                selectionCount.textContent = `${selectedPageOrder.length} page(s) selected`;
+            }
 
-  const tips = [
-    "Welcome to Page Number Adder! Start by uploading your PDF documents or image files using the upload box.",
-    "Once files are loaded, you'll see a preview of every page. You can choose exactly which ones to number.",
-    "The order matters! The first page you click becomes '1', the second '2', and so on, regardless of their original position.",
-    "If you make a mistake in the sequence, click a selected page again to deselect it and reset the count for that page.",
-    "Use the 'Page Number Options' panel to decide where the numbers appear—choose from six different corner and center positions.",
-    "Customize the look of your page markers by picking a custom color from the color picker to match your document's theme.",
-    "Need the numbers to be more prominent? Adjust the 'Size (px)' field to increase or decrease the diameter of the number circle.",
-    "The red circle overlay you see in the preview is exactly how the final output will look on your processed pages.",
-    "When you're ready, click 'Process & Download' to generate a ZIP file containing all your pages with their new numbers.",
-    "Note: This tool converts PDF pages into high-quality PNG images during the numbering process for maximum compatibility."
-  ];
+            // ----- LIVE PREVIEW UPDATE -----
+            function updateAllOverlays() {
+                const overlays = document.querySelectorAll('.page-number-overlay');
+                const pos = positionSelect.value;
+                const circleMode = circleToggle.checked;
+                const cColor = circleColor.value;
+                const tColor = textColor.value;
+                const size = parseInt(numberSize.value) || 48;
 
-  let index = 0;
-  let direction = 1;
+                overlays.forEach(overlay => {
+                    // Remove all position classes and add current
+                    overlay.className = overlay.className.replace(/pos-[^\s]*/g, '').trim();
+                    overlay.classList.add(`pos-${pos}`);
 
-  /* Container */
-  const box = document.createElement("div");
-  box.id = "dwp-tip-box";
-  box.innerHTML = `
-    <div class="dwp-progress">
-      <div class="dwp-progress-bar"></div>
-    </div>
+                    // Set mode class
+                    if (circleMode) {
+                        overlay.classList.add('circle-mode');
+                        overlay.classList.remove('text-mode');
+                        overlay.style.background = cColor;
+                        overlay.style.color = '#ffffff';
+                        overlay.style.width = size + 'px';
+                        overlay.style.height = size + 'px';
+                        overlay.style.fontSize = Math.floor(size * 0.4) + 'px'; // scale text inside circle
+                    } else {
+                        overlay.classList.add('text-mode');
+                        overlay.classList.remove('circle-mode');
+                        overlay.style.background = 'transparent';
+                        overlay.style.color = tColor;
+                        overlay.style.width = 'auto';
+                        overlay.style.height = 'auto';
+                        overlay.style.fontSize = size + 'px';
+                        overlay.style.padding = '4px 6px';
+                    }
+                });
+            }
 
-    <div class="dwp-tip-wrapper">
-      <div class="dwp-tip-text"></div>
-    </div>
+            // Attach listeners for live update
+            positionSelect.addEventListener('change', updateAllOverlays);
+            circleColor.addEventListener('input', updateAllOverlays);
+            textColor.addEventListener('input', updateAllOverlays);
+            numberSize.addEventListener('input', updateAllOverlays);
+            circleToggle.addEventListener('change', updateAllOverlays);
 
-    <div class="dwp-actions">
-      <button class="dwp-prev">Back</button>
-      <button class="dwp-next">Next</button>
-    </div>
-  `;
-  document.body.appendChild(box);
+            // Select All / Deselect All
+            selectAllBtn.addEventListener('click', () => {
+                selectedPageOrder = allPages.map((_, i) => i);
+                updateAllPageNumbers();
+                processButton.disabled = selectedPageOrder.length === 0;
+                updateSelectionCount();
+            });
+            deselectAllBtn.addEventListener('click', () => {
+                selectedPageOrder = [];
+                updateAllPageNumbers();
+                processButton.disabled = true;
+                updateSelectionCount();
+            });
 
-  const textEl = box.querySelector(".dwp-tip-text");
-  const nextBtn = box.querySelector(".dwp-next");
-  const prevBtn = box.querySelector(".dwp-prev");
-  const progressBar = box.querySelector(".dwp-progress-bar");
+            // ----- PROCESS & EXPORT AS PDF -----
+            processButton.addEventListener('click', async () => {
+                if (selectedPageOrder.length === 0) return;
 
-  function updateTip(animate = true) {
-    if (animate) {
-      textEl.classList.remove("slide-in-left", "slide-in-right");
-      void textEl.offsetWidth;
-      textEl.classList.add(direction > 0 ? "slide-in-right" : "slide-in-left");
-    }
+                processingModal.classList.add('open');
+                processingStatus.textContent = 'Preparing pages...';
 
-    textEl.textContent = tips[index];
-    progressBar.style.width = `${((index + 1) / tips.length) * 100}%`;
+                const { jsPDF } = window.jspdf;
+                let pdf = null;
+                const pos = positionSelect.value;
+                const circleMode = circleToggle.checked;
+                const cColor = circleColor.value;
+                const tColor = textColor.value;
+                const size = parseInt(numberSize.value) || 48;
 
-    prevBtn.style.visibility = index === 0 ? "hidden" : "visible";
-    nextBtn.textContent = index === tips.length - 1 ? "Got it" : "Next";
-  }
+                for (let i = 0; i < allPages.length; i++) {
+                    const pageInfo = allPages[i];
+                    const origCanvas = pageInfo.originalCanvas;
+                    const newCanvas = document.createElement('canvas');
+                    newCanvas.width = origCanvas.width;
+                    newCanvas.height = origCanvas.height;
+                    const ctx = newCanvas.getContext('2d');
+                    ctx.drawImage(origCanvas, 0, 0);
 
-  nextBtn.onclick = () => {
-    if (index === tips.length - 1) {
-      localStorage.setItem(STORAGE_KEY, "true");
-      box.classList.add("fade-out");
-      setTimeout(() => box.remove(), 300);
-    } else {
-      direction = 1;
-      index++;
-      updateTip();
-    }
-  };
+                    const orderIdx = selectedPageOrder.indexOf(i);
+                    if (orderIdx !== -1) {
+                        const number = orderIdx + 1;
+                        const padding = size * 1.5;
+                        let x, y;
+                        switch (pos) {
+                            case 'bottom-center': x = newCanvas.width/2; y = newCanvas.height - padding; break;
+                            case 'bottom-left': x = padding; y = newCanvas.height - padding; break;
+                            case 'bottom-right': x = newCanvas.width - padding; y = newCanvas.height - padding; break;
+                            case 'top-left': x = padding; y = padding; break;
+                            case 'top-center': x = newCanvas.width/2; y = padding; break;
+                            case 'top-right': x = newCanvas.width - padding; y = padding; break;
+                            default: x = newCanvas.width/2; y = newCanvas.height - padding;
+                        }
 
-  prevBtn.onclick = () => {
-    if (index > 0) {
-      direction = -1;
-      index--;
-      updateTip();
-    }
-  };
+                        ctx.font = `bold ${size}px Inter`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
 
-  setTimeout(() => {
-    box.classList.add("show");
-    updateTip(false);
-  }, 1000);
+                        if (circleMode) {
+                            // Draw circle background
+                            const textWidth = ctx.measureText(number).width;
+                            const radius = Math.max(textWidth, ctx.measureText('8').width) / 2 + size * 0.5;
+                            ctx.beginPath();
+                            ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                            ctx.fillStyle = cColor;
+                            ctx.fill();
+                            ctx.fillStyle = '#ffffff';
+                        } else {
+                            ctx.fillStyle = tColor;
+                        }
+                        ctx.fillText(number, x, y);
+                    }
 
-  /* Styles */
-  const style = document.createElement("style");
-  style.textContent = `
-    #dwp-tip-box {
-      position: fixed;
-      top: 85px;
-      left: 20px;
-      width: 300px;
-      background: #1e293b; 
-      color: #fff;
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      font-family: 'Inter', system-ui, sans-serif;
-      z-index: 10000;
-      opacity: 0;
-      transform: translateY(-10px);
-      transition: opacity .3s ease, transform .3s ease;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
+                    // Add to PDF
+                    const imgData = newCanvas.toDataURL('image/png');
+                    if (!pdf) {
+                        pdf = new jsPDF({
+                            orientation: newCanvas.width > newCanvas.height ? 'l' : 'p',
+                            unit: 'pt',
+                            format: [newCanvas.width, newCanvas.height]
+                        });
+                        pdf.addImage(imgData, 'PNG', 0, 0, newCanvas.width, newCanvas.height);
+                    } else {
+                        pdf.addPage([newCanvas.width, newCanvas.height], newCanvas.width > newCanvas.height ? 'l' : 'p');
+                        pdf.addImage(imgData, 'PNG', 0, 0, newCanvas.width, newCanvas.height);
+                    }
+                    processingStatus.textContent = `Processed page ${i+1} of ${allPages.length}`;
+                }
 
-    #dwp-tip-box.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
+                pdf.save('numbered_pages.pdf');
+                processingModal.classList.remove('open');
+                showToast('PDF ready!', 'success');
+            });
 
-    #dwp-tip-box.fade-out {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-
-    .dwp-progress {
-      height: 4px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 99px;
-      overflow: hidden;
-      margin-bottom: 12px;
-    }
-
-    .dwp-progress-bar {
-      height: 100%;
-      width: 0%;
-      background: #ef4444; /* Matched to the red selection theme of the tool */
-      transition: width .35s ease;
-    }
-
-    .dwp-tip-wrapper {
-      overflow: hidden;
-      min-height: 70px;
-      display: flex;
-      align-items: center;
-    }
-
-    .dwp-tip-text {
-      font-size: 14px;
-      line-height: 1.5;
-      font-weight: 400;
-    }
-
-    .slide-in-right {
-      animation: slideRight .25s ease;
-    }
-
-    .slide-in-left {
-      animation: slideLeft .25s ease;
-    }
-
-    @keyframes slideRight {
-      from { opacity: 0; transform: translateX(10px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    @keyframes slideLeft {
-      from { opacity: 0; transform: translateX(-10px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    .dwp-actions {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 16px;
-    }
-
-    .dwp-actions button {
-      border: none;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .dwp-prev {
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-    }
-
-    .dwp-next {
-      background: #ef4444;
-      color: #fff;
-    }
-
-    .dwp-next:hover {
-      background: #dc2626;
-    }
-  `;
-  document.head.appendChild(style);
-})();
-    </script>
-    <script>
-(() => {
-    const STORAGE_KEY = 'dwp_pure_black_theme';
-    
-    // 1. Load Material Symbols
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0';
-    document.head.appendChild(link);
-
-    // 2. Inject Styles (Theme + Responsive Header)
-    const style = document.createElement('style');
-    style.textContent = `
-        /* Responsive Scrollable Header */
-        header {
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-        }
-        header::-webkit-scrollbar { display: none; } /* Hide scrollbar for clean UI */
-
-        /* Pure Black Theme Styles */
-        body.dark-mode { background-color: #000000 !important; color: #ffffff; }
-        body.dark-mode header, 
-        body.dark-mode main > div { 
-            background-color: #0a0a0a !important; 
-            border: 1px solid #222; 
-            color: #eeeeee; 
-        }
-        body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode h4,
-        body.dark-mode .text-gray-700, body.dark-mode .text-gray-800, body.dark-mode .text-gray-600 { 
-            color: #f3f4f6 !important; 
-        }
-        body.dark-mode .bg-gray-50 { background-color: #111111 !important; }
-        body.dark-mode .page-container { background-color: #1a1a1a !important; border-color: #333; }
-        
-        /* Theme Toggle Button Styling */
-        #themeToggle { 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            width: 42px; 
-            height: 42px; 
-            min-width: 42px; /* Prevent shrinking in scrollable header */
-            padding: 0; 
-        }
-        body.dark-mode #themeToggle { background-color: #222; color: #fff; border: 1px solid #444; }
-        
-        /* File Input Styling for Dark Mode */
-        body.dark-mode #fileInput { color: #9ca3af; }
-        body.dark-mode #fileInput::file-selector-button {
-            background-color: #1e293b;
-            color: #38bdf8;
-            border: 1px solid #334155;
-        }
-    `;
-    document.head.appendChild(style);
-
-    // 3. Create the Toggle Button
-    const headerActions = document.querySelector('header .flex.items-center.space-x-4');
-    const themeBtn = document.createElement('button');
-    themeBtn.id = 'themeToggle';
-    themeBtn.className = 'bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg shadow-md transition duration-200 ease-in-out focus:outline-none';
-    themeBtn.innerHTML = `<span class="material-symbols-outlined" id="themeIcon">dark_mode</span>`;
-    headerActions.prepend(themeBtn);
-
-    const iconEl = document.getElementById('themeIcon');
-
-    // 4. Theme Logic
-    const enableDarkMode = () => {
-        document.body.classList.add('dark-mode');
-        iconEl.textContent = 'light_mode';
-        localStorage.setItem(STORAGE_KEY, 'enabled');
-    };
-
-    const disableDarkMode = () => {
-        document.body.classList.remove('dark-mode');
-        iconEl.textContent = 'dark_mode';
-        localStorage.setItem(STORAGE_KEY, 'disabled');
-    };
-
-    if (localStorage.getItem(STORAGE_KEY) === 'enabled') {
-        enableDarkMode();
-    }
-
-    themeBtn.addEventListener('click', () => {
-        document.body.classList.contains('dark-mode') ? disableDarkMode() : enableDarkMode();
-    });
-})();
+            // ----- HIDE LOADING SCREEN, SHOW APP -----
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    appContainer.style.display = 'flex';
+                }, 800);
+            });
+        })();
     </script>
 </body>
 </html>
-
-

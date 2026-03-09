@@ -4,774 +4,1288 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Reorder & Merge</title>
-    <meta name="description" content="DocuWrite Pro is an all-in-one online workspace that lets you write, edit, convert, design, and manage documents and digital content instantly—no installation, no complexity.">
-  <meta name="keywords" content="DocuWrite Pro, Mohtadi Azad Mahi, AI writer, document editor, online text tool, GitHub project, DocuWritePro, Document Editor, Document, Editor, PDF, JPG, Edit, Text, Change File Type, File Changer, Format, Format Changer, Office, Docs, A4, Editor, General document editing, Collab, Editing documents together, Document Viewer, Viewing documents, Word Finder, Searching for specific words, Translator, Language translation, Document Signer, Electronically signing documents, Page Number Adder, Adding page numbers to documents, Chart Maker, Creating data charts, Table Maker, Creating tables, Watermark Adder, Adding watermarks to files, Email Writer, Assisting with writing emails, Spell Checker, Checking spelling and grammar, File Extractor, Extracting contents from files, QR Maker, Creating QR codes, ID Card Maker, Designing and creating ID cards, File Zipper, Compressing or zipping files, PDF Converter, Converting files to or from PDF format, Context Field, Analyzing text (e.g., word count, frequency), Gift Card Maker, Creating custom gift cards, Share File, Uploading or sharing a file, Text Extractor, Extracting text from sources (e.g., images), Keyboard Click Test, Testing keyboard functionality, Frontend IDE, Integrated Development Environment for frontend coding, HTML Editor, Editing HTML code, HTML Writer, Writing or generating HTML content, Button Designer, Designing user interface buttons, HTML Splitter, Splitting HTML files or elements, GoTo Code, Navigation feature in an IDE/editor, Code Snipper, Storing or managing code snippets, Image Editor, Editing images, Image Generator, Generating new images, Drawing Board, A simple drawing or sketching tool, HTML, CSS, JS, Online, Fast, Easy, No login, No signup, Free, No credit card required, Mohtadi, Azad, Mahi, Mohtadi Azad, Mohtadi Azad Mahi, mahi902">
-  <meta name="author" content="Mohtadi Azad Mahi">
-  <meta name="robots" content="index, follow">
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <meta name="theme-color" content="#ffffff">
-
-  <!-- App & Brand Metadata -->
-  <meta property="og:site_name" content="DocuWrite Pro">
-  <meta name="application-name" content="DocuWrite Pro">
-  <meta name="apple-mobile-web-app-title" content="DocuWrite Pro">
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="DocuWrite Pro — Online Document Editor">
-  <meta property="og:description" content="Edit, format, and export documents easily with DocuWrite Pro by Mohtadi Azad Mahi.">
-  <meta property="og:url" content="https://mahi902.github.io/DocuWritePro/">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DocuWrite Pro — Online Document Editor">
-  <meta name="twitter:description" content="Create, format, and export documents easily with DocuWrite Pro. Built by Mohtadi Azad Mahi.">
-  <meta name="twitter:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-
-  <!-- Structured Data (Google Knowledge Graph) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "DocuWrite Pro",
-    "alternateName": "DocuWrite Pro — Online Document Editor",
-    "url": "https://mahi902.github.io/DocuWritePro/",
-    "creator": {
-      "@type": "Person",
-      "name": "Mohtadi Azad Mahi"
-    }
-  }
-  </script>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Material Symbols -->
+    <!-- === REQUIRED CDNs === -->
+    <!-- Material Symbols (Rounded + Outlined) -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
-
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <!-- Google Fonts: Inter (UI font) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 
+    <!-- === EARLY THEME SCRIPT (prevents flash) === -->
+    <script>
+        (function() {
+            const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+            if (match && match.split('=')[1] === 'dark') {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+
     <style>
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+        /* === GLOBAL RESET & SCROLLBAR HIDE === */
+        * { scrollbar-width: none; }
+        *::-webkit-scrollbar { display: none; }
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1; 
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f8;
+            overflow: hidden;
+            height: 100vh;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1; 
+        body.dark {
+            background: #111;
+        }
+
+        /* === LOADING SCREEN === */
+        #loadingScreen {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            background: #fff;
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+        body.dark #loadingScreen {
+            background: #1a1a1a;
+        }
+        .spinner {
+            width: 56px;
+            height: 56px;
+            border: 4px solid #e3f2fd;
+            border-top-color: #1976d2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            font-size: 17px;
+            color: #666;
+        }
+        body.dark .loading-text {
+            color: #aaa;
+        }
+
+        /* === APP CONTAINER === */
+        #appContainer {
+            display: none; /* shown after loading */
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* === TOP BAR === */
+        .top-bar {
+            background: #fff;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 200;
+            flex-shrink: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+        }
+        body.dark .top-bar {
+            background: #1a1a1a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        #toolTitle {
+            font-size: 17px;
+            border: none;
+            outline: none;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-family: inherit;
+            min-width: 140px;
+            max-width: 340px;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            background: transparent;
+            color: #1a1a2e;
+        }
+        #toolTitle:hover,
+        #toolTitle:focus {
+            background: #f5f5f5;
+        }
+        body.dark #toolTitle {
+            color: #e0e0e0;
+        }
+        body.dark #toolTitle:hover,
+        body.dark #toolTitle:focus {
+            background: #252525;
+        }
+        .top-spacer {
+            flex: 1;
+            min-width: 8px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 7px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            color: #1976d2;
+            transition: background 0.2s;
+            flex-shrink: 0;
+        }
+        .icon-btn:hover {
+            background: #e3f2fd;
+        }
+        body.dark .icon-btn:hover {
+            background: #1a2a3a;
+        }
+        .icon-btn .material-symbols-outlined {
+            font-size: 22px;
+        }
+        body.dark .icon-btn .material-symbols-outlined {
+            color: #bbb;
+        }
+
+        /* === TOOLBAR === */
+        .toolbar {
+            background: #fff;
+            padding: 6px 12px;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+            flex-shrink: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+        }
+        body.dark .toolbar {
+            background: #1a1a1a;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .toolbar-sep {
+            width: 1px;
+            height: 26px;
+            background: #e0e0e0;
+            margin: 0 4px;
+            flex-shrink: 0;
+        }
+        body.dark .toolbar-sep {
+            background: #333;
+        }
+        .tbtn {
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 7px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            flex-shrink: 0;
+            font-size: 13px;
+            color: #333;
+            gap: 4px;
+        }
+        .tbtn:hover {
+            background: #e3f2fd;
+        }
+        body.dark .tbtn {
+            color: #ddd;
+        }
+        body.dark .tbtn:hover {
+            background: #1a2a3a;
+        }
+        .tbtn .material-symbols-outlined {
+            font-size: 19px;
+            color: #333;
+        }
+        body.dark .tbtn .material-symbols-outlined {
+            color: #bbb;
+        }
+        .tbtn.active {
+            background: #bbdefb;
+        }
+        .action-btn {
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+            white-space: nowrap;
+            font-family: inherit;
+            flex-shrink: 0;
+        }
+        .action-btn:hover {
+            background: #1565c0;
+        }
+        .action-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+        #selectionCount {
+            font-size: 13px;
+            color: #777;
+            margin-right: 8px;
+        }
+        body.dark #selectionCount {
+            color: #aaa;
+        }
+
+        /* === MAIN CONTENT (SIDEBAR + CONTENT AREA) === */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            width: 255px;
+            min-width: 255px;
+            background: #fff;
+            padding: 14px;
+            overflow-y: auto;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+            transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+            flex-shrink: 0;
+        }
+        body.dark .sidebar {
+            background: #1a1a1a;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+        }
+        .sidebar.collapsed {
+            transform: translateX(-255px);
+            width: 0;
+            min-width: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        .sb-section {
+            margin-bottom: 18px;
+        }
+        .sb-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: #888;
+            margin-bottom: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        body.dark .sb-title {
+            color: #666;
+        }
+        .sb-label {
+            display: block;
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 3px;
+        }
+        body.dark .sb-label {
+            color: #aaa;
+        }
+        .sb-file-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 8px;
+            background: #fafafa;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            font-size: 12px;
+            border: 1px solid #e0e0e0;
+        }
+        body.dark .sb-file-item {
+            background: #252525;
+            border-color: #333;
+            color: #ddd;
+        }
+        .file-color-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .sb-file-item .file-name {
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .sb-file-item .file-pages {
+            color: #999;
+            font-size: 11px;
+        }
+        .sb-file-item .remove-file {
+            color: #d32f2f;
+            cursor: pointer;
+            padding: 2px;
             border-radius: 4px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8; 
+        .sb-file-item .remove-file:hover {
+            background: #fce4ec;
+        }
+        .fmt-wide {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 11px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            background: #fafafa;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .fmt-wide:hover {
+            border-color: #1976d2;
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        body.dark .fmt-wide {
+            background: #252525;
+            border-color: #444;
+            color: #ddd;
+        }
+        body.dark .fmt-wide:hover {
+            border-color: #1976d2;
+            background: #1a2a3a;
+            color: #90caf9;
+        }
+        .collapse-btn {
+            width: 100%;
+            padding: 8px;
+            background: #e3f2fd;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #1976d2;
+            font-weight: 600;
+            margin-top: 6px;
+            transition: background 0.15s;
+            font-family: inherit;
+        }
+        .collapse-btn:hover {
+            background: #bbdefb;
+        }
+        body.dark .collapse-btn {
+            background: #1a2a4a;
+            color: #90caf9;
+        }
+        body.dark .collapse-btn:hover {
+            background: #1e3350;
         }
 
-        /* Animations */
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* === EXPAND BUTTON (shown when sidebar collapsed) === */
+        .expand-btn {
+            position: fixed;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 5px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            z-index: 50;
+            display: none;
+        }
+        body.dark .expand-btn {
+            background: #1a1a1a;
+        }
+        .expand-btn .material-symbols-outlined {
+            color: #1976d2;
+            font-size: 20px;
+        }
 
-        .spin { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        /* === CONTENT AREA === */
+        .content-area {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            justify-content: center;
+            background: #f0f4f8;
+            min-width: 0;
+            padding: 36px 20px;
+        }
+        body.dark .content-area {
+            background: #111;
+        }
+        .inner-content {
+            width: 100%;
+            max-width: 1200px;
+        }
 
-        /* Page Selection Styles */
+        /* === UPLOAD DROP ZONE === */
+        .drop-zone {
+            border: 2px dashed #1976d2;
+            border-radius: 12px;
+            padding: 48px 32px;
+            text-align: center;
+            cursor: pointer;
+            background: #fafafa;
+            transition: background 0.15s, border-color 0.15s;
+            margin: 20px 0;
+        }
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            background: #e3f2fd;
+            border-color: #1565c0;
+        }
+        body.dark .drop-zone {
+            background: #222;
+            border-color: #555;
+            color: #aaa;
+        }
+        body.dark .drop-zone:hover {
+            background: #1a2a3a;
+            border-color: #1976d2;
+        }
+        .drop-zone .material-symbols-outlined {
+            font-size: 48px;
+            color: #1976d2;
+            margin-bottom: 16px;
+        }
+
+        /* === PAGES GRID === */
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
         .page-card {
-            transition: all 0.2s ease;
-        }
-        .page-card:hover .hover-actions {
-            opacity: 1;
+            position: relative;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+            aspect-ratio: 3/4;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
         .page-card.selected {
-            border-color: #4f46e5; /* Indigo 600 */
-            background-color: #eef2ff;
+            border-color: #1976d2;
+            background: #e3f2fd;
             transform: scale(0.98);
         }
+        body.dark .page-card {
+            background: #1a1a1a;
+        }
+        .page-card canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            pointer-events: none;
+        }
         .selection-badge {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: #1976d2;
+            color: #fff;
+            font-weight: bold;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            z-index: 2;
             transform: scale(0);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: transform 0.2s;
         }
         .page-card.selected .selection-badge {
             transform: scale(1);
         }
-/* --- Dark Mode Overrides --- */
-.dark body {
-    background-color: #000000 !important;
-    color: #ffffff;
-}
+        .file-indicator {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1px solid #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        .hover-actions {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 3;
+        }
+        .page-card:hover .hover-actions {
+            opacity: 1;
+        }
+        .preview-btn {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 4px;
+            padding: 4px;
+            cursor: pointer;
+            display: flex;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .preview-btn .material-symbols-outlined {
+            font-size: 16px;
+            color: #1976d2;
+        }
 
-/* Header & Cards */
-.dark header, 
-.dark .bg-white, 
-.dark .page-card, 
-.dark #success-view,
-.dark #preview-modal .bg-white {
-    background-color: #0a0a0a !important;
-    border-color: #262626 !important;
-}
+        /* === MODALS === */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.48);
+            z-index: 8000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.open { display: flex; }
+        .mbox {
+            background: #fff;
+            border-radius: 16px;
+            padding: 26px;
+            width: 90%;
+            max-height: 88vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        body.dark .mbox {
+            background: #1a1a1a;
+            color: #ddd;
+        }
+        .mbox.narrow { max-width: 400px; }
+        .mhdr {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+        .mtitle {
+            font-size: 19px;
+            font-weight: 500;
+            color: #333;
+        }
+        body.dark .mtitle {
+            color: #e0e0e0;
+        }
+        .mclose {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            transition: background 0.15s;
+        }
+        .mclose:hover { background: #f5f5f5; }
+        body.dark .mclose:hover { background: #333; }
+        .mclose .material-symbols-outlined { font-size: 21px; color: #666; }
+        .mfooter {
+            display: flex;
+            gap: 9px;
+            justify-content: flex-end;
+            margin-top: 18px;
+        }
+        .mbtn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: inherit;
+            transition: background 0.15s;
+        }
+        .mbtn.primary {
+            background: #1976d2;
+            color: #fff;
+        }
+        .mbtn.primary:hover { background: #1565c0; }
+        .mbtn.sec {
+            background: #e0e0e0;
+            color: #333;
+        }
+        .mbtn.sec:hover { background: #d0d0d0; }
+        body.dark .mbtn.sec {
+            background: #333;
+            color: #bbb;
+        }
+        body.dark .mbtn.sec:hover { background: #3a3a3a; }
+        .frow {
+            margin-bottom: 13px;
+        }
+        .frow label {
+            display: block;
+            font-size: 12px;
+            color: #777;
+            margin-bottom: 3px;
+        }
+        .finput {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 7px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .finput:focus { border-color: #1976d2; }
+        body.dark .finput {
+            background: #252525;
+            color: #ddd;
+            border-color: #444;
+        }
 
-/* Export Page Specifics */
-.dark #success-view { background-color: #000000 !important; }
-.dark #filename-input { 
-    color: #ffffff !important; 
-    background-color: #171717 !important; 
-}
-.dark .text-slate-700, .dark .text-slate-800 { color: #e5e5e5 !important; }
-.dark .text-slate-500, .dark .text-slate-400 { color: #a3a3a3 !important; }
+        /* === PREVIEW MODAL (canvas) === */
+        #previewCanvas {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
 
-/* Input Box Background in Export Page */
-.dark .bg-slate-50 {
-    background-color: #171717 !important;
-}
+        /* === TOAST STACK === */
+        #toastStack {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10002;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            padding: 11px 20px;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            transform: translateY(60px);
+            opacity: 0;
+            transition: transform 0.3s, opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast.success { background: #1976d2; }
+        .toast.error   { background: #d32f2f; }
+        .toast.info    { background: #1976d2; }
 
-/* Hide Scrollbar for cleaner header */
-header::-webkit-scrollbar {
-    display: none;
-}
-header {
-    scrollbar-width: none;
-}
+        /* === TIP BOX === */
+        #tipBox {
+            position: fixed;
+            bottom: 80px;
+            right: 18px;
+            width: 284px;
+            background: #1976d2;
+            color: #fff;
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+            z-index: 9990;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.3s, transform 0.3s;
+            font-family: inherit;
+            pointer-events: none;
+        }
+        #tipBox.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        #tipBox.hide {
+            opacity: 0;
+            transform: translateY(8px);
+            pointer-events: none;
+        }
+        body.dark #tipBox {
+            background: #0d47a1;
+        }
+        .tip-prog {
+            height: 3px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 99px;
+            overflow: hidden;
+            margin-bottom: 11px;
+        }
+        .tip-bar {
+            height: 100%;
+            background: #fff;
+            transition: width 0.3s;
+        }
+        .tip-text {
+            font-size: 13px;
+            line-height: 1.5;
+            min-height: 58px;
+        }
+        .tip-actions {
+            display: flex;
+            gap: 7px;
+            margin-top: 11px;
+        }
+        .tip-btn {
+            flex: 1;
+            border: none;
+            padding: 6px;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .tip-prev {
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        .tip-next {
+            background: #fff;
+            color: #1976d2;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans h-screen flex flex-col overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
+<body>
+    <!-- LOADING SCREEN -->
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading...</div>
+    </div>
 
-    <!-- Header -->
-    <header class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center shadow-sm z-10">
-        <div class="flex items-center gap-2">
-            <span class="material-symbols-rounded text-indigo-600 text-3xl">layers</span>
-            <h1 class="text-xl font-bold tracking-tight text-slate-700">Reorder & Merge</h1>
+    <!-- APP CONTAINER (hidden initially) -->
+    <div id="appContainer">
+        <!-- TOP BAR -->
+        <div class="top-bar">
+            <input type="text" id="toolTitle" value="Reorder & Merge" spellcheck="false">
+            <div class="top-spacer"></div>
+            <button class="icon-btn" id="themeToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+                <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+            </button>
         </div>
-<div class="flex items-center gap-3 ml-auto">
-    <button id="theme-toggle" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors text-slate-600 dark:text-zinc-400">
-        <span class="material-symbols-rounded" id="theme-icon">dark_mode</span>
-    </button>
-</div>
-        <div id="action-header" class="hidden flex items-center gap-4">
-            <span class="text-sm text-slate-500 font-medium"><span id="selection-count">0</span> pages selected</span>
-            <button onclick="mergePages()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full shadow-md transition flex items-center gap-2 font-medium">
-                <span class="material-symbols-rounded text-sm">call_merge</span>
+
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <span id="selectionCount">0 pages selected</span>
+            <div class="toolbar-sep"></div>
+            <button class="action-btn" id="mergeBtn" onclick="mergePages()">
+                <span class="material-symbols-outlined">call_merge</span>
                 Merge
             </button>
         </div>
-    </header>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 overflow-y-auto relative w-full max-w-6xl mx-auto p-6">
-        
-        <!-- VIEW 1: Upload Section -->
-        <div id="upload-view" class="fade-in flex flex-col items-center justify-center h-full min-h-[400px]">
-            <div class="w-full max-w-xl">
-                <label for="file-input" id="drop-zone" class="group relative flex flex-col items-center justify-center w-full h-80 border-2 border-dashed border-slate-300 rounded-3xl cursor-pointer bg-white hover:bg-indigo-50 hover:border-indigo-400 transition-all duration-300 shadow-sm">
-                    <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center p-8">
-                        <div class="bg-indigo-100 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
-                            <span class="material-symbols-rounded text-indigo-600 text-4xl">upload_file</span>
-                        </div>
-                        <p class="mb-2 text-xl font-semibold text-slate-700">Click or drag PDFs here</p>
-                        <p class="text-sm text-slate-400">Select multiple files to begin reordering</p>
-                    </div>
-                    <input id="file-input" type="file" class="hidden" multiple accept="application/pdf" />
-                </label>
-            </div>
-        </div>
-
-        <!-- VIEW 2: Editor Section -->
-        <div id="editor-view" class="hidden fade-in pb-20">
-            <div id="files-container" class="space-y-8">
-                <!-- File blocks generated here -->
-            </div>
-        </div>
-
-        <!-- VIEW 3: Loading/Processing -->
-        <div id="loading-view" class="hidden absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center fade-in">
-            <div class="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full spin mb-4"></div>
-            <h2 class="text-2xl font-bold text-slate-700">Merging PDF...</h2>
-            <p class="text-slate-500 mt-2">This happens locally on your device.</p>
-        </div>
-
-        <!-- VIEW 4: Success -->
-        <div id="success-view" class="hidden absolute inset-0 bg-slate-50 z-40 flex flex-col items-center justify-center fade-in">
-            <div class="bg-white p-8 rounded-3xl shadow-xl max-w-md w-full text-center border border-slate-100">
-                <div class="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <span class="material-symbols-rounded text-green-600 text-5xl">check</span>
-                </div>
-                <h2 class="text-2xl font-bold text-slate-800 mb-2">Merge Complete!</h2>
-                <p class="text-slate-500 mb-6">Your document is ready to download.</p>
-                
-                <div class="text-left mb-6">
-                    <label class="block text-xs font-semibold text-slate-400 uppercase mb-1 ml-1">Filename</label>
-                    <div class="flex items-center border border-slate-300 rounded-xl bg-slate-50 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 transition overflow-hidden">
-                        <input type="text" id="filename-input" value="merged-document" class="bg-transparent border-none px-4 py-3 w-full focus:outline-none text-slate-700 font-medium">
-                        <span class="pr-4 text-slate-400 font-medium">.pdf</span>
+        <!-- MAIN CONTENT (SIDEBAR + CONTENT AREA) -->
+        <div class="main-content">
+            <!-- SIDEBAR -->
+            <div class="sidebar" id="sidebar">
+                <div class="sb-section">
+                    <div class="sb-title">Files</div>
+                    <div id="fileListSidebar" class="sb-file-list">
+                        <!-- populated dynamically -->
                     </div>
                 </div>
-
-                <div class="flex gap-3">
-                    <button onclick="resetApp()" class="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-600 font-medium hover:bg-slate-50 transition">Start Over</button>
-                    <button id="download-btn" class="flex-1 px-4 py-3 rounded-xl bg-indigo-600 text-white font-medium shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition flex justify-center items-center gap-2">
-                        <span class="material-symbols-rounded">download</span> Download
+                <div class="sb-section">
+                    <div class="sb-title">Actions</div>
+                    <button class="fmt-wide" id="uploadSidebarBtn">
+                        <span class="material-symbols-outlined">upload_file</span>
+                        Add PDFs
                     </button>
                 </div>
+                <button class="collapse-btn" onclick="toggleSidebar()">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                    Hide Panel
+                </button>
             </div>
-        </div>
 
-    </main>
-
-    <!-- Modal for Preview -->
-    <dialog id="preview-modal" class="backdrop:bg-slate-900/50 bg-transparent p-0 w-full h-full max-w-none max-h-none open:flex items-center justify-center outline-none z-50">
-        <div class="relative w-full h-full flex flex-col items-center justify-center p-4" onclick="closePreview(event)">
-            <button class="absolute top-6 right-6 bg-white/10 hover:bg-white/20 text-white rounded-full p-3 backdrop-blur-md transition" onclick="document.getElementById('preview-modal').close()">
-                <span class="material-symbols-rounded text-3xl">close</span>
+            <!-- EXPAND BUTTON (hidden when sidebar expanded) -->
+            <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+                <span class="material-symbols-outlined">chevron_right</span>
             </button>
-            <div class="bg-white rounded shadow-2xl overflow-auto max-w-[90vw] max-h-[90vh] flex items-center justify-center" onclick="event.stopPropagation()">
-                <canvas id="preview-canvas" class="block"></canvas>
+
+            <!-- CONTENT AREA -->
+            <div class="content-area" id="contentArea">
+                <div class="inner-content">
+                    <!-- Upload Zone (visible when no files) -->
+                    <div id="uploadZone" class="drop-zone">
+                        <span class="material-symbols-outlined">upload_file</span>
+                        <p class="mb-2 text-xl font-semibold">Click or drag PDFs here</p>
+                        <p class="text-sm">Select multiple files to begin reordering</p>
+                        <input type="file" id="fileInput" multiple accept="application/pdf" style="display: none;">
+                    </div>
+                    <!-- Pages Grid (hidden initially) -->
+                    <div id="pagesContainer" style="display: none;">
+                        <div class="pages-grid" id="pagesGrid"></div>
+                    </div>
+                </div>
             </div>
         </div>
-    </dialog>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Preview Modal -->
+    <div class="modal" id="previewModal">
+        <div class="mbox narrow" style="background: transparent; box-shadow: none; padding: 0;">
+            <canvas id="previewCanvas"></canvas>
+            <button class="mclose" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5);" onclick="closePreviewModal()">
+                <span class="material-symbols-outlined" style="color: #fff;">close</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="mbox narrow">
+            <div class="mhdr">
+                <div class="mtitle">Merge Complete!</div>
+                <button class="mclose" onclick="closeSuccessModal()">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="frow">
+                <label>Filename</label>
+                <input type="text" id="filenameInput" class="finput" value="merged-document">
+            </div>
+            <div class="mfooter">
+                <button class="mbtn sec" onclick="resetApp()">Start Over</button>
+                <button class="mbtn primary" id="downloadBtn">Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastStack"></div>
+
+    <!-- TIP BOX -->
+    <div id="tipBox">
+        <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+        <div class="tip-text" id="tipText"></div>
+        <div class="tip-actions">
+            <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+            <button class="tip-btn tip-next" onclick="tipNav(1)">Next →</button>
+        </div>
+    </div>
 
     <script>
-        // --- Configuration & State ---
+        // === CONFIGURATION ===
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        
+        const colorPalette = ['#1976d2', '#388e3c', '#d32f2f', '#f57c00', '#7b1fa2', '#0097a7', '#c2185b', '#512da8'];
+
+        // === STATE ===
         const state = {
-            files: [], // { id, file, pdfDocProxy }
-            pages: [], // Flat list logic: handled by UI referencing fileID + pageIndex
-            selectedPages: [], // Array of { fileId, pageIndex } ordered by selection
+            files: [],                // { id, name, data, pdfDoc, color }
+            selectedPages: [],        // [{ fileId, pageIndex }] (1-based)
             mergedPdfBytes: null
         };
 
-        // --- UI Elements ---
+        // === DOM ELEMENTS ===
         const els = {
-            uploadView: document.getElementById('upload-view'),
-            editorView: document.getElementById('editor-view'),
-            loadingView: document.getElementById('loading-view'),
-            successView: document.getElementById('success-view'),
-            dropZone: document.getElementById('drop-zone'),
-            fileInput: document.getElementById('file-input'),
-            filesContainer: document.getElementById('files-container'),
-            actionHeader: document.getElementById('action-header'),
-            selectionCount: document.getElementById('selection-count'),
-            previewModal: document.getElementById('preview-modal'),
-            previewCanvas: document.getElementById('preview-canvas'),
-            downloadBtn: document.getElementById('download-btn'),
-            filenameInput: document.getElementById('filename-input')
+            appContainer: document.getElementById('appContainer'),
+            loadingScreen: document.getElementById('loadingScreen'),
+            uploadZone: document.getElementById('uploadZone'),
+            fileInput: document.getElementById('fileInput'),
+            pagesContainer: document.getElementById('pagesContainer'),
+            pagesGrid: document.getElementById('pagesGrid'),
+            fileListSidebar: document.getElementById('fileListSidebar'),
+            selectionCount: document.getElementById('selectionCount'),
+            mergeBtn: document.getElementById('mergeBtn'),
+            sidebar: document.getElementById('sidebar'),
+            expandBtn: document.getElementById('expandBtn'),
+            previewModal: document.getElementById('previewModal'),
+            previewCanvas: document.getElementById('previewCanvas'),
+            successModal: document.getElementById('successModal'),
+            filenameInput: document.getElementById('filenameInput'),
+            downloadBtn: document.getElementById('downloadBtn'),
+            themeIcon: document.getElementById('themeIcon'),
+            toolTitle: document.getElementById('toolTitle')
         };
 
-        // --- Event Listeners ---
-        els.fileInput.addEventListener('change', handleFileSelect);
-        
-        // Drag & Drop logic
-        els.dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            els.dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
-        });
-        els.dropZone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            els.dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
-        });
-        els.dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            els.dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
-            if (e.dataTransfer.files.length) {
-                handleFiles(e.dataTransfer.files);
-            }
-        });
-
-        function handleFileSelect(e) {
-            if (e.target.files.length) {
-                handleFiles(e.target.files);
-            }
+        // === SIDEBAR TOGGLE ===
+        function toggleSidebar() {
+            const isCollapsed = els.sidebar.classList.contains('collapsed');
+            els.sidebar.classList.toggle('collapsed');
+            els.expandBtn.style.display = isCollapsed ? 'none' : 'block';
         }
 
+        // === UPLOAD HANDLING ===
+        els.uploadZone.addEventListener('click', () => els.fileInput.click());
+        els.uploadSidebarBtn = document.getElementById('uploadSidebarBtn');
+        if (els.uploadSidebarBtn) {
+            els.uploadSidebarBtn.addEventListener('click', () => els.fileInput.click());
+        }
+
+        // Drag & drop
+        els.uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            els.uploadZone.classList.add('dragover');
+        });
+        els.uploadZone.addEventListener('dragleave', () => {
+            els.uploadZone.classList.remove('dragover');
+        });
+        els.uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            els.uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+        });
+
+        els.fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) handleFiles(e.target.files);
+        });
+
         async function handleFiles(fileList) {
-            // Switch to Loading temporarily or just start processing
-            els.uploadView.classList.add('hidden');
-            els.editorView.classList.remove('hidden');
-            els.editorView.classList.add('flex');
-            els.actionHeader.classList.remove('hidden');
-            els.actionHeader.classList.add('flex');
+            // Hide upload zone, show pages container
+            els.uploadZone.style.display = 'none';
+            els.pagesContainer.style.display = 'block';
 
             for (const file of fileList) {
                 if (file.type !== 'application/pdf') continue;
-                
+
                 const fileId = Math.random().toString(36).substr(2, 9);
                 const arrayBuffer = await file.arrayBuffer();
-                
-                // CRITICAL FIX: Clone the buffer for PDF.js
-                // PDF.js transfers the buffer to a worker, detaching the original.
-                // We need to keep a valid copy (arrayBuffer) for pdf-lib merging later.
                 const bufferForRender = arrayBuffer.slice(0);
 
                 try {
-                    // Pass the clone to PDF.js
                     const pdfDoc = await pdfjsLib.getDocument(bufferForRender).promise;
-                    
+                    // Assign a color from palette
+                    const color = colorPalette[state.files.length % colorPalette.length];
                     state.files.push({
                         id: fileId,
                         name: file.name,
-                        data: arrayBuffer, // Store the original, non-detached buffer
-                        pdfDoc: pdfDoc
+                        data: arrayBuffer,
+                        pdfDoc: pdfDoc,
+                        color: color
                     });
 
-                    await renderFileSection(fileId, file.name, pdfDoc);
+                    await renderFilePages(fileId, file.name, pdfDoc, color);
+                    updateSidebarFileList();
                 } catch (err) {
-                    console.error("Error loading PDF", err);
-                    alert(`Could not load ${file.name}. It might be corrupted or password protected.`);
+                    console.error(err);
+                    showToast(`Could not load ${file.name}`, 'error');
                 }
             }
         }
 
-        // --- Rendering Logic ---
-
-        async function renderFileSection(fileId, fileName, pdfDoc) {
-            const section = document.createElement('div');
-            section.className = "bg-white rounded-2xl p-6 shadow-sm border border-slate-100 fade-in";
-            
-            // Header
-            const header = document.createElement('div');
-            header.className = "flex items-center gap-3 mb-6 pb-4 border-b border-slate-100";
-            header.innerHTML = `
-                <div class="bg-red-100 p-2 rounded-lg">
-                    <span class="material-symbols-rounded text-red-500">picture_as_pdf</span>
-                </div>
-                <div>
-                    <h3 class="font-bold text-slate-700">${fileName}</h3>
-                    <p class="text-xs text-slate-400">${pdfDoc.numPages} pages</p>
-                </div>
-            `;
-            section.appendChild(header);
-
-            // Grid
-            const grid = document.createElement('div');
-            grid.className = "grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4";
-            
-            section.appendChild(grid);
-            els.filesContainer.appendChild(section);
-
-            // Render Pages
-            for (let i = 1; i <= pdfDoc.numPages; i++) {
+        async function renderFilePages(fileId, fileName, pdfDoc, color) {
+            const numPages = pdfDoc.numPages;
+            for (let i = 1; i <= numPages; i++) {
                 const pageContainer = document.createElement('div');
+                pageContainer.className = 'page-card';
                 pageContainer.id = `page-${fileId}-${i}`;
-                pageContainer.className = "page-card relative group cursor-pointer border-2 border-transparent rounded-xl overflow-hidden bg-slate-100 aspect-[3/4] flex items-center justify-center shadow-inner";
                 pageContainer.onclick = (e) => {
-                    // Prevent triggering if clicking preview button
-                    if(e.target.closest('.preview-btn')) return;
+                    if (e.target.closest('.preview-btn')) return;
                     toggleSelection(fileId, i);
                 };
 
-                // Canvas for Thumbnail
                 const canvas = document.createElement('canvas');
-                canvas.className = "w-full h-full object-contain pointer-events-none";
+                canvas.className = 'thumbnail';
                 pageContainer.appendChild(canvas);
 
-                // Overlays
                 const badge = document.createElement('div');
+                badge.className = 'selection-badge';
                 badge.id = `badge-${fileId}-${i}`;
-                badge.className = "selection-badge absolute top-2 left-2 bg-indigo-600 text-white font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-lg z-10 text-sm";
-                badge.innerText = ""; // Filled dynamically
                 pageContainer.appendChild(badge);
 
-                // Hover Actions
+                // File indicator dot
+                const fileDot = document.createElement('div');
+                fileDot.className = 'file-indicator';
+                fileDot.style.backgroundColor = color;
+                fileDot.title = fileName;
+                pageContainer.appendChild(fileDot);
+
                 const actions = document.createElement('div');
-                actions.className = "hover-actions absolute top-2 right-2 opacity-0 transition-opacity duration-200 z-20";
-                actions.innerHTML = `
-                    <button class="preview-btn bg-white/90 hover:bg-white text-slate-700 p-2 rounded-full shadow-sm backdrop-blur-sm" onclick="previewPage('${fileId}', ${i})">
-                        <span class="material-symbols-rounded text-lg block">fullscreen</span>
-                    </button>
-                `;
+                actions.className = 'hover-actions';
+                actions.innerHTML = `<button class="preview-btn" onclick="previewPage('${fileId}', ${i}, event)"><span class="material-symbols-outlined">fullscreen</span></button>`;
                 pageContainer.appendChild(actions);
 
-                grid.appendChild(pageContainer);
+                els.pagesGrid.appendChild(pageContainer);
 
-                // Async Render
-                pdfDoc.getPage(i).then(page => {
-                    const viewport = page.getViewport({ scale: 0.4 }); // Low res for thumbnail
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    
-                    const renderContext = {
-                        canvasContext: canvas.getContext('2d'),
-                        viewport: viewport
-                    };
-                    page.render(renderContext);
-                });
+                // Render thumbnail
+                const page = await pdfDoc.getPage(i);
+                const viewport = page.getViewport({ scale: 0.3 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+                await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
             }
         }
 
-        // --- Interaction Logic ---
+        function updateSidebarFileList() {
+            els.fileListSidebar.innerHTML = '';
+            state.files.forEach(f => {
+                const item = document.createElement('div');
+                item.className = 'sb-file-item';
+                item.innerHTML = `
+                    <span class="file-color-dot" style="background-color: ${f.color};"></span>
+                    <span class="file-name">${f.name}</span>
+                    <span class="file-pages">${f.pdfDoc.numPages}</span>
+                    <span class="remove-file material-symbols-outlined" onclick="removeFile('${f.id}')">close</span>
+                `;
+                els.fileListSidebar.appendChild(item);
+            });
+        }
 
+        window.removeFile = function(fileId) {
+            // Remove all pages of this file from grid
+            state.files = state.files.filter(f => f.id !== fileId);
+            document.querySelectorAll(`[id^="page-${fileId}-"]`).forEach(el => el.remove());
+            // Also remove from selectedPages
+            state.selectedPages = state.selectedPages.filter(p => p.fileId !== fileId);
+            updateSelectionUI();
+            updateSidebarFileList();
+            if (state.files.length === 0) {
+                els.uploadZone.style.display = 'block';
+                els.pagesContainer.style.display = 'none';
+            }
+        };
+
+        // === SELECTION LOGIC ===
         function toggleSelection(fileId, pageIndex) {
-            const existingIndex = state.selectedPages.findIndex(p => p.fileId === fileId && p.pageIndex === pageIndex);
-            
-            if (existingIndex > -1) {
-                // Deselect: Remove and shift indices of others
-                state.selectedPages.splice(existingIndex, 1);
+            const idx = state.selectedPages.findIndex(p => p.fileId === fileId && p.pageIndex === pageIndex);
+            if (idx > -1) {
+                state.selectedPages.splice(idx, 1);
             } else {
-                // Select: Add to end
                 state.selectedPages.push({ fileId, pageIndex });
             }
-            
             updateSelectionUI();
         }
 
         function updateSelectionUI() {
-            // Reset all visual states first (inefficient but robust for prototype)
-            document.querySelectorAll('.page-card').forEach(el => {
-                el.classList.remove('selected', 'ring-2', 'ring-indigo-500');
-                el.querySelector('.selection-badge').innerText = '';
-            });
+            // Reset all badges
+            document.querySelectorAll('.selection-badge').forEach(b => b.textContent = '');
+            document.querySelectorAll('.page-card').forEach(c => c.classList.remove('selected'));
 
-            // Apply states based on order
             state.selectedPages.forEach((sel, index) => {
                 const el = document.getElementById(`page-${sel.fileId}-${sel.pageIndex}`);
                 if (el) {
-                    el.classList.add('selected', 'ring-2', 'ring-indigo-500');
+                    el.classList.add('selected');
                     const badge = document.getElementById(`badge-${sel.fileId}-${sel.pageIndex}`);
-                    badge.innerText = index + 1;
-                    
-                    // Tiny animation pop
-                    badge.style.transform = 'scale(0.5)';
-                    setTimeout(() => badge.style.transform = 'scale(1)', 50);
+                    if (badge) badge.textContent = index + 1;
                 }
             });
-
-            els.selectionCount.innerText = state.selectedPages.length;
+            els.selectionCount.textContent = `${state.selectedPages.length} pages selected`;
         }
 
-        // --- Preview Logic ---
-
-        async function previewPage(fileId, pageIndex) {
+        // === PREVIEW ===
+        window.previewPage = async function(fileId, pageIndex, event) {
+            if (event) event.stopPropagation();
             const fileObj = state.files.find(f => f.id === fileId);
             if (!fileObj) return;
-
-            els.previewModal.showModal();
             const page = await fileObj.pdfDoc.getPage(pageIndex);
-            
-            // High Quality Render
             const viewport = page.getViewport({ scale: 1.5 });
             const canvas = els.previewCanvas;
-            const context = canvas.getContext('2d');
-            
             canvas.height = viewport.height;
             canvas.width = viewport.width;
-            
-            await page.render({
-                canvasContext: context,
-                viewport: viewport
-            }).promise;
+            await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+            els.previewModal.classList.add('open');
+        };
+
+        function closePreviewModal() {
+            els.previewModal.classList.remove('open');
         }
 
-        function closePreview(e) {
-            if (e.target === els.previewModal) {
-                els.previewModal.close();
-            }
-        }
-
-        // --- Merging Logic ---
-
+        // === MERGE ===
         async function mergePages() {
             if (state.selectedPages.length === 0) {
-                alert("Please select at least one page to merge.");
+                showToast('Select at least one page', 'error');
                 return;
             }
 
-            els.loadingView.classList.remove('hidden');
+            // Show loading
+            els.loadingScreen.style.display = 'flex';
+            els.appContainer.style.display = 'none';
 
             try {
-                // Create a new PDFDocument
                 const mergedPdf = await PDFLib.PDFDocument.create();
-
-                // Optimization: Group pages by source file to avoid loading the same source Doc multiple times repeatedly
-                // actually, for correct order, we must iterate the selection list. 
-                // But we can keep loaded PDFLib docs in a cache map.
-                const loadedDocsCache = new Map();
+                const cache = new Map();
 
                 for (const sel of state.selectedPages) {
-                    let sourcePdfDoc = loadedDocsCache.get(sel.fileId);
-
-                    if (!sourcePdfDoc) {
+                    let srcDoc = cache.get(sel.fileId);
+                    if (!srcDoc) {
                         const fileObj = state.files.find(f => f.id === sel.fileId);
-                        // Load the source PDF into pdf-lib
-                        sourcePdfDoc = await PDFLib.PDFDocument.load(fileObj.data);
-                        loadedDocsCache.set(sel.fileId, sourcePdfDoc);
+                        srcDoc = await PDFLib.PDFDocument.load(fileObj.data);
+                        cache.set(sel.fileId, srcDoc);
                     }
-
-                    // Copy the page. Note: pdf-lib uses 0-based index, our UI uses 1-based
-                    const [copiedPage] = await mergedPdf.copyPages(sourcePdfDoc, [sel.pageIndex - 1]);
-                    mergedPdf.addPage(copiedPage);
+                    const [copied] = await mergedPdf.copyPages(srcDoc, [sel.pageIndex - 1]);
+                    mergedPdf.addPage(copied);
                 }
 
                 state.mergedPdfBytes = await mergedPdf.save();
-                
-                // Transition to success
-                els.loadingView.classList.add('hidden');
-                els.editorView.classList.add('hidden');
-                els.actionHeader.classList.add('hidden'); // Hide the merge button header
-                els.successView.classList.remove('hidden');
-                els.successView.classList.add('flex');
 
-                setupDownload();
-
-            } catch (error) {
-                console.error(error);
-                els.loadingView.classList.add('hidden');
-                alert("An error occurred during merging. Check console.");
+                // Hide loading, show success modal
+                els.loadingScreen.style.display = 'none';
+                els.appContainer.style.display = 'flex';
+                els.successModal.classList.add('open');
+            } catch (err) {
+                console.error(err);
+                els.loadingScreen.style.display = 'none';
+                els.appContainer.style.display = 'flex';
+                showToast('Merge failed', 'error');
             }
         }
 
-        function setupDownload() {
-            els.downloadBtn.onclick = () => {
-                const blob = new Blob([state.mergedPdfBytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                
-                let name = els.filenameInput.value.trim() || 'merged-document';
-                if (!name.toLowerCase().endsWith('.pdf')) name += '.pdf';
-                
-                a.href = url;
-                a.download = name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            };
+        // Download from success modal
+        els.downloadBtn.addEventListener('click', () => {
+            if (!state.mergedPdfBytes) return;
+            const blob = new Blob([state.mergedPdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            let name = els.filenameInput.value.trim() || 'merged-document';
+            if (!name.endsWith('.pdf')) name += '.pdf';
+            a.href = url;
+            a.download = name;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        function closeSuccessModal() {
+            els.successModal.classList.remove('open');
         }
 
         function resetApp() {
             location.reload();
         }
 
-    </script>
-    <script>
-(() => {
-  // Updated Storage Key for PDF Reorder & Merge
-  const STORAGE_KEY = "docuwritepro_pdf_rm_guide_seen";
-  if (localStorage.getItem(STORAGE_KEY)) return;
+        // === TOAST ===
+        function showToast(message, type = 'info', duration = 2800) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${type === 'error' ? 'error' : 'check_circle'}</span>${message}`;
+            document.getElementById('toastStack').appendChild(toast);
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => toast.classList.add('show'));
+            });
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 350);
+            }, duration);
+        }
 
-  const tips = [
-    "Welcome to PDF Reorder & Merge! Start by clicking the 'Upload PDF' area to select the files you want to modify.",
-    "Once uploaded, you will see a grid of all pages. Each page shows its source filename and original page number.",
-    "To reorder your document, simply click and drag any page thumbnail to its new desired position in the sequence.",
-    "Want to remove a page? Click the red 'Delete' icon (trash can) on the top right of any page thumbnail.",
-    "If you need to view a page more closely before deciding its position, click the 'Zoom' icon on the thumbnail.",
-    "You can add more pages at any time by clicking 'Add More PDFs' to combine multiple documents into one.",
-    "The 'Rotate' feature allows you to fix any pages that were scanned upside down or sideways before merging.",
-    "Before finishing, you can rename your final document using the 'Output Filename' field at the bottom.",
-    "Click 'Merge & Save' to process your changes. The tool will compile your new PDF based exactly on your grid layout.",
-    "After merging, use the 'Download' button to save the final PDF to your device, or 'Reset' to start a new project."
-  ];
+        // === TIP BOX ===
+        const TIPS = [
+            "Welcome! Use the sidebar to manage files. Click thumbnails to select pages.",
+            "Drag and drop PDFs into the upload area to add more files.",
+            "Selected pages get a blue border with a number. Order is determined by click order.",
+            "Use the Merge button in the toolbar to combine selected pages into a new PDF.",
+            "You can preview any page by clicking the fullscreen icon on the thumbnail.",
+            "Toggle dark mode using the moon icon in the top bar.",
+            "All processing happens locally – your files never leave your device."
+        ];
+        let tipIndex = 0;
+        const tipBox = document.getElementById('tipBox');
+        const tipText = document.getElementById('tipText');
+        const tipBar = document.getElementById('tipBar');
 
-  let index = 0;
-  let direction = 1;
+        function showTip(index) {
+            tipText.textContent = TIPS[index];
+            tipBar.style.width = ((index + 1) / TIPS.length * 100) + '%';
+            tipBox.classList.add('show');
+        }
 
-  /* Container */
-  const box = document.createElement("div");
-  box.id = "dwp-tip-box";
-  box.innerHTML = `
-    <div class="dwp-progress">
-      <div class="dwp-progress-bar"></div>
-    </div>
+        window.tipNav = function(dir) {
+            tipIndex = Math.max(0, Math.min(TIPS.length - 1, tipIndex + dir));
+            if (tipIndex === TIPS.length - 1 && dir === 1) {
+                dismissTips();
+            } else {
+                showTip(tipIndex);
+            }
+        };
 
-    <div class="dwp-tip-wrapper">
-      <div class="dwp-tip-text"></div>
-    </div>
+        function dismissTips() {
+            tipBox.classList.replace('show', 'hide');
+            localStorage.setItem('dwp_pdf_tip_seen', '1');
+        }
 
-    <div class="dwp-actions">
-      <button class="dwp-prev">Back</button>
-      <button class="dwp-next">Next</button>
-    </div>
-  `;
-  document.body.appendChild(box);
+        // === DARK MODE COOKIE ===
+        function setThemeCookie(value) {
+            document.cookie = 'toolsuite_theme=' + value + '; path=/; max-age=31536000; SameSite=Lax';
+        }
 
-  const textEl = box.querySelector(".dwp-tip-text");
-  const nextBtn = box.querySelector(".dwp-next");
-  const prevBtn = box.querySelector(".dwp-prev");
-  const progressBar = box.querySelector(".dwp-progress-bar");
+        function getThemeCookie() {
+            const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+            return match ? match.split('=')[1] : null;
+        }
 
-  function updateTip(animate = true) {
-    if (animate) {
-      textEl.classList.remove("slide-in-left", "slide-in-right");
-      void textEl.offsetWidth;
-      textEl.classList.add(direction > 0 ? "slide-in-right" : "slide-in-left");
-    }
+        window.toggleDarkMode = function() {
+            const isDark = document.body.classList.toggle('dark');
+            if (isDark) {
+                els.themeIcon.textContent = 'light_mode';
+                document.documentElement.classList.add('dark');
+            } else {
+                els.themeIcon.textContent = 'dark_mode';
+                document.documentElement.classList.remove('dark');
+            }
+            setThemeCookie(isDark ? 'dark' : 'light');
+        };
 
-    textEl.textContent = tips[index];
-    progressBar.style.width = `${((index + 1) / tips.length) * 100}%`;
+        // Apply theme on load (body class already set by early script, but we need to sync icon)
+        if (document.body.classList.contains('dark') || getThemeCookie() === 'dark') {
+            document.body.classList.add('dark');
+            els.themeIcon.textContent = 'light_mode';
+        }
 
-    prevBtn.style.visibility = index === 0 ? "hidden" : "visible";
-    nextBtn.textContent = index === tips.length - 1 ? "Got it" : "Next";
-  }
+        // === INIT ON LOAD ===
+        window.addEventListener('load', () => {
+            // Hide loading, show app
+            els.loadingScreen.style.display = 'none';
+            els.appContainer.style.display = 'flex';
 
-  nextBtn.onclick = () => {
-    if (index === tips.length - 1) {
-      localStorage.setItem(STORAGE_KEY, "true");
-      box.classList.add("fade-out");
-      setTimeout(() => box.remove(), 300);
-    } else {
-      direction = 1;
-      index++;
-      updateTip();
-    }
-  };
+            // Tip box
+            if (!localStorage.getItem('dwp_pdf_tip_seen')) {
+                setTimeout(() => showTip(0), 1200);
+            } else {
+                tipBox.style.display = 'none';
+            }
 
-  prevBtn.onclick = () => {
-    if (index > 0) {
-      direction = -1;
-      index--;
-      updateTip();
-    }
-  };
-
-  setTimeout(() => {
-    box.classList.add("show");
-    updateTip(false);
-  }, 1000);
-
-  /* Styles */
-  const style = document.createElement("style");
-  style.textContent = `
-    #dwp-tip-box {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%) translateY(10px);
-      width: 340px;
-      background: #1e293b; /* Slate-800 to contrast with the PDF tool's clean UI */
-      color: #f1f5f9;
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2), 0 10px 10px -5px rgba(0,0,0,0.1);
-      font-family: 'Inter', system-ui, sans-serif;
-      z-index: 10000;
-      opacity: 0;
-      transition: opacity .3s ease, transform .3s ease;
-      border: 1px solid rgba(255,255,255,0.1);
-    }
-
-    #dwp-tip-box.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    #dwp-tip-box.fade-out {
-      opacity: 0;
-      transform: translateX(-50%) translateY(10px);
-    }
-
-    .dwp-progress {
-      height: 4px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 99px;
-      overflow: hidden;
-      margin-bottom: 14px;
-    }
-
-    .dwp-progress-bar {
-      height: 100%;
-      width: 0%;
-      background: #3b82f6; /* Blue-500 */
-      transition: width .35s ease;
-    }
-
-    .dwp-tip-wrapper {
-      overflow: hidden;
-      min-height: 60px;
-      display: flex;
-      align-items: center;
-    }
-
-    .dwp-tip-text {
-      font-size: 14px;
-      line-height: 1.6;
-      font-weight: 400;
-    }
-
-    .slide-in-right {
-      animation: slideRight .25s ease;
-    }
-
-    .slide-in-left {
-      animation: slideLeft .25s ease;
-    }
-
-    @keyframes slideRight {
-      from { opacity: 0; transform: translateX(15px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    @keyframes slideLeft {
-      from { opacity: 0; transform: translateX(-15px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-
-    .dwp-actions {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 16px;
-      gap: 10px;
-    }
-
-    .dwp-actions button {
-      border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      flex: 1;
-      transition: all 0.2s;
-    }
-
-    .dwp-prev {
-      background: rgba(255,255,255,0.05);
-      color: #cbd5e1;
-    }
-
-    .dwp-prev:hover {
-      background: rgba(255,255,255,0.1);
-    }
-
-    .dwp-next {
-      background: #3b82f6;
-      color: white;
-    }
-
-    .dwp-next:hover {
-      background: #2563eb;
-    }
-  `;
-  document.head.appendChild(style);
-})();
-
-const themeToggle = document.getElementById('theme-toggle');
-const themeIcon = document.getElementById('theme-icon');
-const htmlElement = document.documentElement;
-
-// 1. Check for saved theme on load
-if (localStorage.getItem('theme') === 'dark' || 
-    (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    htmlElement.classList.add('dark');
-    themeIcon.innerText = 'light_mode';
-}
-
-// 2. Toggle Theme Function
-themeToggle.addEventListener('click', () => {
-    htmlElement.classList.toggle('dark');
-    
-    if (htmlElement.classList.contains('dark')) {
-        localStorage.setItem('theme', 'dark');
-        themeIcon.innerText = 'light_mode';
-    } else {
-        localStorage.setItem('theme', 'light');
-        themeIcon.innerText = 'dark_mode';
-    }
-});
+            // Sidebar expand button state
+            if (els.sidebar.classList.contains('collapsed')) {
+                els.expandBtn.style.display = 'block';
+            }
+        });
     </script>
 </body>
 </html>

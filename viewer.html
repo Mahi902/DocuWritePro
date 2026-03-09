@@ -1,603 +1,992 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document Viewer</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF viewer · TOOLSTRUCTER edition</title>
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+  <!-- ========== REQUIRED CDNs ========== -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- PDF.js & jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <!-- Google Material Symbols -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <!-- EARLY THEME SCRIPT -->
+  <script>
+    (function() {
+      var cookies = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+      if (cookies && cookies.split('=')[1] === 'dark') {
+        document.documentElement.classList.add('dark');
+        if (document.body) document.body.classList.add('dark');
+      }
+    })();
+  </script>
 
-    <!-- PDF.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    </script>
+  <style>
+    /* ---------- GLOBAL RESET ---------- */
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    <!-- jsPDF for single page export -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      overflow: hidden;
+      height: 100vh;
+      transition: background 0.2s;
+    }
+    body.dark { background: #111; }
 
-    <style>
-        body {
-            background-color: #f3f4f6; /* gray-100 default */
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            font-family: 'Inter', sans-serif;
-            transition: background-color 0.3s ease;
-        }
+    /* ---------- LOADING SCREEN ---------- */
+    #loadingScreen {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    body.dark #loadingScreen { background: #1a1a1a; }
+    .spinner {
+      width: 56px; height: 56px;
+      border: 4px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 17px; color: #666; }
+    body.dark .loading-text { color: #aaa; }
 
-        /* Material Symbol Styling */
-        .material-symbols-outlined {
-            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-            font-size: 20px;
-        }
+    /* ---------- APP CONTAINER ---------- */
+    #appContainer {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
 
-        /* --- Theme System --- */
+    /* ---------- TOP BAR ---------- */
+    .top-bar {
+      background: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 200;
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .top-bar {
+      background: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    #toolTitle {
+      font-size: 17px;
+      border: none;
+      outline: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-family: inherit;
+      min-width: 140px;
+      max-width: 340px;
+      background: transparent;
+      color: #1a1a2e;
+      font-weight: 400;
+      flex-shrink: 0;
+    }
+    #toolTitle:hover, #toolTitle:focus { background: #f5f5f5; }
+    body.dark #toolTitle {
+      color: #ddd;
+      background: #252525 !important;
+    }
+    body.dark #toolTitle:hover,
+    body.dark #toolTitle:focus { background: #2a2a2a !important; }
+    .top-spacer { flex: 1; min-width: 8px; }
 
-        /* Light Mode (Default) */
-        #main-header {
-            background-color: #ffffff;
-            color: #1f2937; /* gray-800 */
-            border-bottom: 1px solid #e5e7eb;
-        }
-        .control-group {
-            background-color: #f9fafb; /* gray-50 */
-            border: 1px solid #e5e7eb;
-        }
-        .tool-btn {
-            @apply p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center relative;
-        }
-        .tool-divider {
-            background-color: #d1d5db; /* gray-300 */
-        }
-        .page-input {
-            color: #1f2937;
-            border-bottom-color: #9ca3af;
-        }
-        .dropdown-menu {
-            background-color: #ffffff;
-            color: #1f2937;
-            border: 1px solid #f3f4f6;
-        }
-        .dropdown-item:hover {
-            background-color: #f9fafb;
-        }
-        .dropdown-divider {
-            background-color: #f3f4f6;
-        }
-        .dropdown-subtext {
-            color: #9ca3af;
-        }
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 7px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      color: #1976d2;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #e3f2fd; }
+    body.dark .icon-btn { color: #90caf9; }
+    body.dark .icon-btn:hover { background: #1a2a3a; }
+    .icon-btn .material-symbols-outlined { font-size: 22px; }
 
-        /* Dark Mode (Inverted Class) */
-        body.inverted-mode {
-            background-color: #0f0f0f;
-        }
-        body.inverted-mode #main-header {
-            background-color: #000000 !important; /* PURE BLACK */
-            color: #f3f4f6;
-            border-bottom: 1px solid #333;
-        }
-        body.inverted-mode .control-group {
-            background-color: #1a1a1a;
-            border-color: #333;
-        }
-        body.inverted-mode .tool-btn {
-            color: #9ca3af; /* gray-400 */
-        }
-        body.inverted-mode .tool-btn:hover {
-            color: #ffffff;
-            background-color: #333;
-        }
-        body.inverted-mode .tool-divider {
-            background-color: #4b5563; /* gray-600 */
-        }
-        body.inverted-mode .page-input {
-            color: #ffffff;
-            border-bottom-color: #4b5563;
-        }
-        
-        /* Dark Mode Dropdown */
-        body.inverted-mode .dropdown-menu {
-            background-color: #1a1a1a;
-            border-color: #333;
-            color: #f3f4f6;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-        }
-        body.inverted-mode .dropdown-item:hover {
-            background-color: #333;
-        }
-        body.inverted-mode .dropdown-divider {
-            background-color: #333;
-        }
-        body.inverted-mode .dropdown-subtext {
-            color: #6b7280;
-        }
-        body.inverted-mode .dropdown-menu .material-symbols-outlined {
-            color: #9ca3af;
-        }
-        body.inverted-mode .dropdown-item:hover .material-symbols-outlined {
-            color: #fff;
-        }
+    /* ---------- TOOLBAR ---------- */
+    .toolbar {
+      background: #fff;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .toolbar {
+      background: #1a1a1a;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .tbtn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .tbtn:hover { background: #e3f2fd; }
+    .tbtn.active { background: #bbdefb; }
+    .tbtn .material-symbols-outlined { font-size: 19px; color: #333; }
+    body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+    body.dark .tbtn:hover { background: #2a2a2a; }
 
-        /* Canvas Specifics */
-        #canvas-container {
-            flex: 1;
-            overflow: auto;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 2rem;
-            position: relative;
-        }
-        
-        canvas {
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: filter 0.3s ease;
-            background-color: white; 
-        }
+    .toolbar-sep {
+      width: 1px; height: 26px;
+      background: #e0e0e0;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    body.dark .toolbar-sep { background: #333; }
 
-        /* The actual page inversion logic */
-        body.inverted-mode canvas {
-            filter: invert(1) hue-rotate(180deg);
-        }
+    .page-input {
+      width: 44px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid #e0e0e0;
+      text-align: center;
+      font-size: 13px;
+      font-family: inherit;
+      color: #333;
+      outline: none;
+      margin: 0 2px;
+    }
+    .page-input:focus { border-bottom-color: #1976d2; }
+    body.dark .page-input {
+      color: #ddd;
+      border-bottom-color: #444;
+    }
+    #zoom-level {
+      font-size: 12px; font-weight: 500; color: #333; width: 45px; text-align: center;
+    }
+    body.dark #zoom-level { color: #bbb; }
 
-        /* UI Utilities */
-        .tool-btn:disabled {
-            @apply opacity-30 cursor-not-allowed hover:bg-transparent !important;
-        }
+    /* ---------- MAIN LAYOUT ---------- */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
 
-        .dropdown-menu {
-            transform-origin: top right;
-            transition: all 0.2s ease-out;
-            opacity: 0;
-            transform: scale(0.95);
-            pointer-events: none;
-        }
-        .dropdown-menu.open {
-            opacity: 1;
-            transform: scale(1);
-            pointer-events: auto;
-        }
+    /* ---------- SIDEBAR ---------- */
+    .sidebar {
+      width: 255px;
+      min-width: 255px;
+      background: #fff;
+      padding: 14px;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+      flex-shrink: 0;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-255px);
+      width: 0; min-width: 0; padding: 0; overflow: hidden;
+    }
+    body.dark .sidebar { background: #1a1a1a; }
 
-        /* Scrollbar */
-        #canvas-container::-webkit-scrollbar { width: 10px; height: 10px; }
-        #canvas-container::-webkit-scrollbar-track { background: transparent; }
-        #canvas-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 5px; }
-        body.inverted-mode #canvas-container::-webkit-scrollbar-thumb { background: #4b5563; }
+    .sb-section { margin-bottom: 24px; }
+    .sb-title {
+      font-size: 11px; font-weight: 700; color: #888;
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 12px;
+    }
+    body.dark .sb-title { color: #666; }
 
-        /* Loader */
-        .loader {
-            border: 3px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 3px solid #3b82f6;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+    .thumb-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .thumb-item {
+      cursor: pointer;
+      border-radius: 8px;
+      padding: 6px;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .thumb-item:hover { background: #e3f2fd; }
+    .thumb-item.active { background: #bbdefb; }
+    body.dark .thumb-item:hover { background: #1a2a3a; }
+    body.dark .thumb-item.active { background: #0d2a4a; }
+    .thumb-img {
+      width: 40px;
+      height: auto;
+      border-radius: 4px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      background: #fff;
+    }
+    .thumb-page-num {
+      font-size: 12px;
+      font-weight: 500;
+      color: #333;
+    }
+    body.dark .thumb-page-num { color: #ddd; }
 
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    </style>
+    .sb-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+    .sb-toggle-label {
+      font-size: 13px;
+      color: #444;
+    }
+    body.dark .sb-toggle-label { color: #bbb; }
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ccc;
+      border-radius: 11px;
+      transition: 0.3s;
+    }
+    .toggle-slider::before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    input:checked + .toggle-slider { background: #1976d2; }
+    input:checked + .toggle-slider::before { transform: translateX(18px); }
+    body.dark .toggle-slider { background: #444; }
+
+    .sidebar-btn {
+      width: 100%;
+      background: #e3f2fd;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1976d2;
+      cursor: pointer;
+      margin-bottom: 8px;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .sidebar-btn:hover { background: #bbdefb; }
+    body.dark .sidebar-btn {
+      background: #1a2a4a;
+      color: #1976d2;
+    }
+    body.dark .sidebar-btn:hover { background: #1e3350; }
+    .sidebar-btn .material-symbols-outlined { font-size: 18px; }
+
+    .collapse-btn {
+      width: 100%; padding: 8px; background: #e3f2fd; border: none;
+      border-radius: 8px; cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 6px; font-size: 13px; color: #1976d2;
+      font-weight: 600; margin-top: 6px; transition: background 0.15s;
+      font-family: inherit;
+    }
+    .collapse-btn:hover { background: #bbdefb; }
+    body.dark .collapse-btn { background: #1a2a4a !important; color: #1976d2 !important; }
+
+    .expand-btn {
+      position: fixed; left: 10px; top: 50%; transform: translateY(-50%);
+      background: #fff; border: none; border-radius: 8px; padding: 10px 5px;
+      cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.15); z-index: 50;
+      display: none;
+    }
+    body.dark .expand-btn { background: #1a1a1a; }
+    .expand-btn .material-symbols-outlined { color: #1976d2; font-size: 20px; }
+
+    /* ---------- CONTENT AREA (CRYSTAL CLEAR + RESPONSIVE) ---------- */
+    .content-area {
+      flex: 1; overflow: auto; display: flex; flex-direction: column;
+      align-items: center; background: #f0f4f8; min-width: 0; padding: 36px 20px;
+      position: relative;
+    }
+    body.dark .content-area { background: #111; }
+
+    #single-page-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    
+    /* CRITICAL: Canvas maintains quality AND responsiveness */
+    #the-canvas, .infinite-page {
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      background: white;
+      display: block;
+      width: 100% !important;      /* Force full width of container */
+      height: auto !important;      /* Maintain aspect ratio */
+      max-width: 100%;
+      /* High quality rendering */
+      image-rendering: auto;
+    }
+
+    #infinite-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+    }
+
+    #empty-state, #loading-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #777; text-align: center;
+    }
+    #loading-state { position: absolute; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 16px; }
+    body.dark #loading-state { background: #1a1a1a; color: #ddd; }
+    .hidden { display: none !important; }
+
+    /* ---------- TOAST ---------- */
+    #toastStack { position: fixed; bottom: 28px; left: 0; right: 0; pointer-events: none; z-index: 10002; }
+    .toast {
+      position: absolute; left: 50%; transform: translateX(-50%) translateY(60px);
+      padding: 11px 20px; border-radius: 8px; color: #fff; font-size: 13px;
+      font-weight: 500; display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15); opacity: 0;
+      transition: transform 0.3s, opacity 0.3s; pointer-events: none;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: #1976d2; }
+    .toast.error   { background: #d32f2f; }
+    .toast.info    { background: #1976d2; }
+
+    /* ---------- TIP BOX ---------- */
+    #tipBox {
+      position: fixed; bottom: 80px; right: 18px; width: 284px;
+      background: #1976d2; color: #fff; border-radius: 14px; padding: 14px;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.3); z-index: 9990;
+      opacity: 0; transform: translateY(8px); transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+    #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+    body.dark #tipBox { background: #0d47a1; }
+    .tip-prog { height: 3px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 11px; }
+    .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+    .tip-text { font-size: 13px; line-height: 1.5; min-height: 58px; }
+    .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+    .tip-btn {
+      flex: 1; border: none; padding: 6px; border-radius: 7px; font-size: 12px;
+      font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .tip-prev { background: rgba(255,255,255,0.15); color: #fff; }
+    .tip-next { background: #fff; color: #1976d2; }
+  </style>
 </head>
 <body>
+  <!-- LOADING SCREEN -->
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading PDF viewer...</div>
+  </div>
 
-    <!-- Header / Toolbar -->
-    <header id="main-header" class="shadow-sm z-10 p-2 flex items-center justify-between gap-2 select-none h-16 transition-colors duration-300">
-        
-        <!-- Left: Upload -->
-        <div class="flex items-center">
-            <input type="file" id="file-upload" class="hidden" accept=".pdf" />
-            <button onclick="document.getElementById('file-upload').click()" class="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-4 py-2 flex items-center mr-2 transition-colors shadow-sm" title="Open File">
-                <span class="material-symbols-outlined mr-2">folder_open</span>
-                <span class="text-sm font-medium">Open</span>
-            </button>
-            <div id="file-name" class="text-xs opacity-70 max-w-[150px] truncate hidden md:block font-medium">No file selected</div>
+  <!-- APP CONTAINER -->
+  <div id="appContainer">
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <input type="text" id="toolTitle" value="Untitled PDF" placeholder="Document name">
+      <div class="top-spacer"></div>
+      <button class="icon-btn" id="themeToggle" title="Toggle dark mode">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
+    </div>
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <button class="tbtn" id="prev-page" title="Previous page"><span class="material-symbols-outlined">chevron_left</span></button>
+      <input type="number" id="page-num" class="page-input" value="0" min="1">
+      <span style="font-size:13px; color:#777;">/ <span id="page-count">0</span></span>
+      <button class="tbtn" id="next-page" title="Next page"><span class="material-symbols-outlined">chevron_right</span></button>
+      <div class="toolbar-sep"></div>
+      <button class="tbtn" id="zoom-out" title="Zoom out"><span class="material-symbols-outlined">remove</span></button>
+      <span id="zoom-level" class="mx-1">100%</span>
+      <button class="tbtn" id="zoom-in" title="Zoom in"><span class="material-symbols-outlined">add</span></button>
+      <div class="toolbar-sep"></div>
+      <button class="tbtn" id="rotate-btn" title="Rotate clockwise"><span class="material-symbols-outlined">rotate_right</span></button>
+      <button class="tbtn" id="print-btn" title="Print"><span class="material-symbols-outlined">print</span></button>
+    </div>
+
+    <!-- MAIN: SIDEBAR + CONTENT -->
+    <div class="main-content">
+      <!-- SIDEBAR -->
+      <div class="sidebar" id="sidebar">
+        <div class="sb-section">
+          <div class="sb-title">Pages</div>
+          <div id="thumb-list" class="thumb-list"></div>
         </div>
-
-        <!-- Center: Navigation & Zoom -->
-        <div class="control-group flex items-center rounded-lg p-1 transition-colors duration-300 shadow-sm">
-            <!-- Page Nav -->
-            <button id="prev-page" class="tool-btn" title="Previous Page">
-                <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-            <div class="flex items-center px-2 space-x-1">
-                <input type="number" id="page-num" value="0" class="page-input w-10 bg-transparent text-center text-sm font-medium focus:outline-none border-b focus:border-blue-500 transition-colors" />
-                <span class="opacity-60 text-sm">/ <span id="page-count">0</span></span>
-            </div>
-            <button id="next-page" class="tool-btn" title="Next Page">
-                <span class="material-symbols-outlined">chevron_right</span>
-            </button>
-            
-            <div class="tool-divider h-6 w-px mx-2 transition-colors"></div>
-
-            <!-- Zoom -->
-            <button id="zoom-out" class="tool-btn" title="Zoom Out">
-                <span class="material-symbols-outlined">remove</span>
-            </button>
-            <span id="zoom-level" class="text-xs font-mono opacity-80 w-12 text-center">100%</span>
-            <button id="zoom-in" class="tool-btn" title="Zoom In">
-                <span class="material-symbols-outlined">add</span>
-            </button>
+        <div class="sb-section">
+          <div class="sb-title">View</div>
+          <div class="sb-toggle-row">
+            <span class="sb-toggle-label">Infinite scroll</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="infiniteToggle">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
         </div>
-
-        <!-- Right: View Options & Actions -->
-        <div class="flex items-center gap-1 relative">
-            <!-- Rotation -->
-            <button id="rotate-btn" class="tool-btn" title="Rotate Clockwise">
-                <span class="material-symbols-outlined">rotate_right</span>
-            </button>
-            
-            <!-- Theme Toggle -->
-            <button id="theme-btn" class="tool-btn" title="Toggle Dark Theme">
-                <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
-            </button>
-
-            <div class="tool-divider h-6 w-px mx-2 bg-gray-300"></div>
-
-            <!-- Print -->
-            <button id="print-btn" class="tool-btn" title="Print">
-                <span class="material-symbols-outlined">print</span>
-            </button>
-
-            <!-- Download Dropdown Trigger -->
-            <div class="relative">
-                <button id="download-menu-btn" class="tool-btn" title="Download Options">
-                    <span class="material-symbols-outlined">download</span>
-                    <span class="material-symbols-outlined text-[16px] ml-1">arrow_drop_down</span>
-                </button>
-
-                <!-- Dropdown Menu -->
-                <div id="download-dropdown" class="dropdown-menu absolute right-0 mt-2 w-56 rounded-lg shadow-xl py-1 z-50">
-                    <button id="download-full" class="dropdown-item w-full text-left px-4 py-3 flex items-center gap-3 transition-colors">
-                        <span class="material-symbols-outlined opacity-70">description</span>
-                        <div class="flex flex-col">
-                            <span class="text-sm font-semibold">Download PDF</span>
-                            <span class="dropdown-subtext text-[10px]">Save the entire document</span>
-                        </div>
-                    </button>
-                    <div class="dropdown-divider h-px mx-2"></div>
-                    <button id="download-page" class="dropdown-item w-full text-left px-4 py-3 flex items-center gap-3 transition-colors">
-                        <span class="material-symbols-outlined opacity-70">article</span>
-                        <div class="flex flex-col">
-                            <span class="text-sm font-semibold">Download Page</span>
-                            <span class="dropdown-subtext text-[10px]">Save current page as PDF</span>
-                        </div>
-                    </button>
-                </div>
-            </div>
+        <div class="sb-section">
+          <div class="sb-title">Download</div>
+          <button class="sidebar-btn" id="downloadFullBtn">
+            <span class="material-symbols-outlined">description</span> Full PDF
+          </button>
+          <button class="sidebar-btn" id="downloadPageBtn">
+            <span class="material-symbols-outlined">article</span> Current page
+          </button>
         </div>
-    </header>
+        <button class="collapse-btn" onclick="toggleSidebar()">
+          <span class="material-symbols-outlined">chevron_left</span> Hide Panel
+        </button>
+      </div>
+      <!-- Expand button -->
+      <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
 
-    <!-- Main Content -->
-    <main id="canvas-container">
-        <!-- Placeholder / Loading State -->
-        <div id="empty-state" class="flex flex-col items-center justify-center h-full opacity-40">
-            <span class="material-symbols-outlined text-7xl mb-4">plagiarism</span>
-            <h2 class="text-xl font-medium">No document loaded</h2>
-            <p class="text-sm mt-2">Click "Open" to view a PDF</p>
+      <!-- CONTENT AREA -->
+      <div class="content-area" id="canvas-container">
+        <div id="empty-state" class="">
+          <span class="material-symbols-outlined" style="font-size:48px;">plagiarism</span>
+          <p>No document loaded<br><small>Click Open in top bar</small></p>
         </div>
-
-        <div id="loading-state" class="hidden flex-col items-center justify-center absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 bg-white/90 p-6 rounded-xl backdrop-blur-sm shadow-lg border border-gray-100">
-            <div class="loader mb-3"></div>
-            <span class="text-sm font-medium text-gray-600">Rendering...</span>
+        <div id="loading-state" class="hidden">
+          <div class="spinner" style="width:32px;height:32px;"></div>
+          <span>Rendering page…</span>
         </div>
+        <!-- Single page mode -->
+        <div id="single-page-container" class="">
+          <canvas id="the-canvas" class="hidden"></canvas>
+        </div>
+        <!-- Infinite scroll mode -->
+        <div id="infinite-container" class="hidden"></div>
+      </div>
+    </div>
+  </div>
 
-        <!-- The PDF Page Canvas -->
-        <canvas id="the-canvas" class="hidden"></canvas>
-    </main>
+  <!-- TIP BOX -->
+  <div id="tipBox" class="hide">
+    <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+    <div class="tip-text" id="tipText">Welcome! Use the sidebar to jump between pages.</div>
+    <div class="tip-actions">
+      <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+      <button class="tip-btn tip-next" onclick="tipNav(1)">Next →</button>
+    </div>
+  </div>
 
-    <script>
-        // --- State Management ---
-        const state = {
-            pdfDoc: null,
-            pageNum: 1,
-            pageRendering: false,
-            pageNumPending: null,
-            scale: 1.0,
-            rotation: 0, 
-            isDarkMode: false,
-            currentFile: null,
-            currentFileName: "document.pdf"
-        };
+  <!-- TOAST STACK -->
+  <div id="toastStack"></div>
 
-        // --- DOM Elements ---
-        const els = {
-            canvas: document.getElementById('the-canvas'),
-            ctx: document.getElementById('the-canvas').getContext('2d'),
-            pageCount: document.getElementById('page-count'),
-            pageNum: document.getElementById('page-num'),
-            container: document.getElementById('canvas-container'),
-            emptyState: document.getElementById('empty-state'),
-            loadingState: document.getElementById('loading-state'),
-            zoomLevel: document.getElementById('zoom-level'),
-            fileName: document.getElementById('file-name'),
-            dropdown: document.getElementById('download-dropdown'),
-            fileInput: document.getElementById('file-upload'),
-            themeIcon: document.getElementById('theme-icon')
-        };
+  <script>
+    (function() { if (document.documentElement.classList.contains('dark')) document.body.classList.add('dark'); })();
 
-        // --- Core Rendering Logic ---
-        async function renderPage(num) {
-            state.pageRendering = true;
-            els.loadingState.classList.remove('hidden');
-            els.loadingState.classList.add('flex');
-
-            try {
-                const page = await state.pdfDoc.getPage(num);
-                const pixelRatio = window.devicePixelRatio || 1;
-                const viewport = page.getViewport({ scale: state.scale, rotation: state.rotation });
-
-                els.canvas.width = Math.floor(viewport.width * pixelRatio);
-                els.canvas.height = Math.floor(viewport.height * pixelRatio);
-                els.canvas.style.width = `${Math.floor(viewport.width)}px`;
-                els.canvas.style.height = `${Math.floor(viewport.height)}px`;
-
-                const transform = pixelRatio !== 1 ? [pixelRatio, 0, 0, pixelRatio, 0, 0] : null;
-
-                const renderContext = {
-                    canvasContext: els.ctx,
-                    transform: transform,
-                    viewport: viewport
-                };
-
-                await page.render(renderContext).promise;
-                
-                state.pageRendering = false;
-                els.loadingState.classList.add('hidden');
-                els.loadingState.classList.remove('flex');
-                els.canvas.classList.remove('hidden');
-                els.emptyState.classList.add('hidden');
-                els.pageNum.value = num;
-
-                if (state.pageNumPending !== null) {
-                    renderPage(state.pageNumPending);
-                    state.pageNumPending = null;
-                }
-            } catch (error) {
-                console.error("Error rendering page:", error);
-                state.pageRendering = false;
-                els.loadingState.classList.add('hidden');
-            }
-        }
-
-        function queueRenderPage(num) {
-            if (state.pageRendering) {
-                state.pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
-        }
-
-        function onPrevPage() {
-            if (state.pageNum <= 1) return;
-            state.pageNum--;
-            queueRenderPage(state.pageNum);
-        }
-
-        function onNextPage() {
-            if (state.pageNum >= state.pdfDoc.numPages) return;
-            state.pageNum++;
-            queueRenderPage(state.pageNum);
-        }
-
-        function handleFileSelect(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            state.currentFile = file;
-            state.currentFileName = file.name;
-            els.fileName.textContent = file.name;
-            state.pageNum = 1;
-            state.scale = 1.0;
-            state.rotation = 0;
-            els.zoomLevel.textContent = "100%";
-
-            const fileReader = new FileReader();
-            fileReader.onload = function() {
-                const typedarray = new Uint8Array(this.result);
-                pdfjsLib.getDocument(typedarray).promise.then(pdf => {
-                    state.pdfDoc = pdf;
-                    els.pageCount.textContent = pdf.numPages;
-                    renderPage(state.pageNum);
-                    updateButtonStates();
-                }, reason => {
-                    console.error('Error loading PDF:', reason);
-                    alert("Error loading PDF: " + reason);
-                });
-            };
-            fileReader.readAsArrayBuffer(file);
-        }
-
-        // --- Controls & Theme ---
-
-        function updateButtonStates() {
-            const loaded = !!state.pdfDoc;
-            document.querySelectorAll('.tool-btn').forEach(btn => {
-                // Keep file open and theme button enabled always
-                if (!btn.querySelector('.material-symbols-outlined').textContent.includes('folder_open') && 
-                    !btn.id.includes('theme-btn')) {
-                    btn.disabled = !loaded;
-                }
-            });
-        }
-
-        // Apply theme based on state
-        function applyTheme() {
-            if (state.isDarkMode) {
-                document.body.classList.add('inverted-mode');
-                els.themeIcon.textContent = 'light_mode'; 
-                els.themeIcon.parentElement.title = "Switch to Light Mode";
-            } else {
-                document.body.classList.remove('inverted-mode');
-                els.themeIcon.textContent = 'dark_mode'; 
-                els.themeIcon.parentElement.title = "Switch to Dark Mode";
-            }
-            // Save to localStorage
-            localStorage.setItem('theme', state.isDarkMode ? 'dark' : 'light');
-        }
-
-        function toggleTheme() {
-            state.isDarkMode = !state.isDarkMode;
-            applyTheme();
-        }
-
-        function rotatePage() {
-            state.rotation = (state.rotation + 90) % 360;
-            queueRenderPage(state.pageNum);
-        }
-
-        function zoomIn() {
-            state.scale += 0.2;
-            els.zoomLevel.textContent = Math.round(state.scale * 100) + "%";
-            queueRenderPage(state.pageNum);
-        }
-
-        function zoomOut() {
-            if (state.scale <= 0.4) return;
-            state.scale -= 0.2;
-            els.zoomLevel.textContent = Math.round(state.scale * 100) + "%";
-            queueRenderPage(state.pageNum);
-        }
-
-        // --- Export & Download ---
-
-        function downloadFullPDF() {
-            if (!state.currentFile) return;
-            const url = URL.createObjectURL(state.currentFile);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = state.currentFileName;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            closeDropdown();
-        }
-
-        async function downloadCurrentPage() {
-            if (!state.pdfDoc) return;
-            const originalText = document.getElementById('download-page').innerHTML;
-            document.getElementById('download-page').innerHTML = `<span class="material-symbols-outlined animate-spin">refresh</span> Generating...`;
-
-            try {
-                const { jsPDF } = window.jspdf;
-                const page = await state.pdfDoc.getPage(state.pageNum);
-                const viewport = page.getViewport({ scale: 2.0, rotation: state.rotation });
-                
-                const canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                const ctx = canvas.getContext('2d');
-                await page.render({ canvasContext: ctx, viewport: viewport }).promise;
-                
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const pdf = new jsPDF({
-                    orientation: viewport.width > viewport.height ? 'landscape' : 'portrait',
-                    unit: 'px',
-                    format: [viewport.width, viewport.height]
-                });
-
-                pdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height);
-                pdf.save(`page_${state.pageNum}_${state.currentFileName}`);
-            } catch (err) {
-                console.error(err);
-                alert("Could not generate page PDF.");
-            } finally {
-                document.getElementById('download-page').innerHTML = originalText;
-                closeDropdown();
-            }
-        }
-
-        function printPDF() {
-            if (!state.currentFile) return;
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            document.body.appendChild(iframe);
-            const objectUrl = URL.createObjectURL(state.currentFile);
-            iframe.src = objectUrl;
-            iframe.onload = function() {
-                try {
-                    iframe.contentWindow.focus();
-                    iframe.contentWindow.print();
-                } catch (e) {
-                    alert("Please use the browser's print dialog (Ctrl+P) after downloading.");
-                }
-            };
-            setTimeout(() => { document.body.removeChild(iframe); URL.revokeObjectURL(objectUrl); }, 60000);
-        }
-
-        // --- Event Listeners ---
-        document.getElementById('prev-page').addEventListener('click', onPrevPage);
-        document.getElementById('next-page').addEventListener('click', onNextPage);
-        document.getElementById('zoom-in').addEventListener('click', zoomIn);
-        document.getElementById('zoom-out').addEventListener('click', zoomOut);
-        document.getElementById('rotate-btn').addEventListener('click', rotatePage);
-        document.getElementById('theme-btn').addEventListener('click', toggleTheme);
-        els.fileInput.addEventListener('change', handleFileSelect);
-
-        els.pageNum.addEventListener('change', (e) => {
-            let num = parseInt(e.target.value);
-            if (num >= 1 && num <= state.pdfDoc.numPages) {
-                state.pageNum = num;
-                queueRenderPage(num);
-            } else {
-                e.target.value = state.pageNum;
-            }
-        });
-
-        const dropdownBtn = document.getElementById('download-menu-btn');
-        const closeDropdown = () => els.dropdown.classList.remove('open');
-        dropdownBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            els.dropdown.classList.toggle('open');
-        });
-        document.addEventListener('click', closeDropdown);
-        document.getElementById('download-full').addEventListener('click', downloadFullPDF);
-        document.getElementById('download-page').addEventListener('click', (e) => {
-            e.stopPropagation();
-            downloadCurrentPage();
-        });
-        document.getElementById('print-btn').addEventListener('click', printPDF);
-
-        document.addEventListener('keydown', (e) => {
-            if (!state.pdfDoc) return;
-            if (e.key === 'ArrowLeft') onPrevPage();
-            if (e.key === 'ArrowRight') onNextPage();
-            if (e.key === '+' || (e.ctrlKey && e.key === '=')) { e.preventDefault(); zoomIn(); }
-            if (e.key === '-' || (e.ctrlKey && e.key === '-')) { e.preventDefault(); zoomOut(); }
-        });
-
-        // Initialize Theme from LocalStorage
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            state.isDarkMode = true;
-            applyTheme();
-        }
-
-        updateButtonStates();
-    </script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-    const header = document.getElementById("main-header");
-
-    if (header) {
-        header.style.overflowX = "auto";
-        header.style.overflowY = "hidden";
-        header.style.whiteSpace = "nowrap";
-        header.style.flexWrap = "nowrap";
-        header.style.display = "flex";
-        header.style.scrollbarWidth = "thin";
-        header.style.webkitOverflowScrolling = "touch";
+    // ---------- TIP BOX ----------
+    const TIPS = [
+      "Welcome! Use the sidebar to jump between pages.",
+      "Click Open in the top bar to load any PDF document.",
+      "Toggle dark mode using the moon icon in the top bar.",
+      "Enable infinite scroll to see all pages stacked.",
+      "You're all set. This box will not show again."
+    ];
+    let tipIndex = 0;
+    function showTip(index) {
+      const box = document.getElementById('tipBox');
+      const text = document.getElementById('tipText');
+      const bar = document.getElementById('tipBar');
+      text.textContent = TIPS[index];
+      bar.style.width = ((index + 1) / TIPS.length * 100) + '%';
+      box.classList.remove('hide'); box.classList.add('show');
     }
-});
-</script>
+    function tipNav(dir) {
+      tipIndex = Math.max(0, Math.min(TIPS.length - 1, tipIndex + dir));
+      if (tipIndex === TIPS.length - 1 && dir === 1) dismissTips();
+      else showTip(tipIndex);
+    }
+    function dismissTips() {
+      document.getElementById('tipBox').classList.replace('show', 'hide');
+      localStorage.setItem('tips_seen', '1');
+    }
+    if (!localStorage.getItem('tips_seen')) {
+      window.addEventListener('load', () => setTimeout(() => showTip(0), 1200));
+    }
+
+    // ---------- TOAST ----------
+    function showToast(message, type = 'info', duration = 2800) {
+      const stack = document.getElementById('toastStack');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${type === 'error' ? 'error' : 'check_circle'}</span>${message}`;
+      stack.appendChild(toast);
+      requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 350);
+      }, duration);
+    }
+
+    // ---------- THEME ----------
+    function setThemeCookie(value) {
+      document.cookie = 'toolsuite_theme=' + value + '; path=/; max-age=31536000; SameSite=Lax';
+    }
+    function getThemeCookie() {
+      const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+      return match ? match.split('=')[1] : null;
+    }
+    function applyTheme(isDark) {
+      if (isDark) {
+        document.body.classList.add('dark');
+        document.getElementById('themeIcon').textContent = 'light_mode';
+      } else {
+        document.body.classList.remove('dark');
+        document.getElementById('themeIcon').textContent = 'dark_mode';
+      }
+      setThemeCookie(isDark ? 'dark' : 'light');
+    }
+    function toggleDarkMode() {
+      applyTheme(!document.body.classList.contains('dark'));
+    }
+    document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
+    applyTheme(getThemeCookie() === 'dark');
+
+    // ---------- SIDEBAR COLLAPSE ----------
+    window.toggleSidebar = function() {
+      const sidebar = document.querySelector('.sidebar');
+      const expandBtn = document.getElementById('expandBtn');
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      sidebar.classList.toggle('collapsed');
+      expandBtn.style.display = isCollapsed ? 'none' : 'block';
+    };
+
+    // ---------- PDF VIEWER STATE ----------
+    const state = {
+      pdfDoc: null,
+      pageNum: 1,
+      pageRendering: false,
+      pageNumPending: null,
+      scale: 1.0,
+      rotation: 0,
+      currentFile: null,
+      currentFileName: '',
+      infiniteMode: false,
+      thumbnails: []
+    };
+    const els = {
+      canvas: document.getElementById('the-canvas'),
+      ctx: document.getElementById('the-canvas').getContext('2d'),
+      pageCount: document.getElementById('page-count'),
+      pageNum: document.getElementById('page-num'),
+      container: document.getElementById('canvas-container'),
+      emptyState: document.getElementById('empty-state'),
+      loadingState: document.getElementById('loading-state'),
+      zoomLevel: document.getElementById('zoom-level'),
+      toolTitle: document.getElementById('toolTitle'),
+      thumbList: document.getElementById('thumb-list'),
+      singleContainer: document.getElementById('single-page-container'),
+      infiniteContainer: document.getElementById('infinite-container'),
+      infiniteToggle: document.getElementById('infiniteToggle')
+    };
+
+    // toggle infinite mode
+    els.infiniteToggle.addEventListener('change', (e) => {
+      state.infiniteMode = e.target.checked;
+      if (state.pdfDoc) {
+        if (state.infiniteMode) {
+          renderInfinite();
+        } else {
+          els.infiniteContainer.innerHTML = '';
+          els.infiniteContainer.classList.add('hidden');
+          els.singleContainer.classList.remove('hidden');
+          renderPage(state.pageNum);
+        }
+      }
+    });
+
+    // ---------- HIGH QUALITY + RESPONSIVE RENDERING (SINGLE PAGE) ----------
+    async function renderPage(num) {
+      if (!state.pdfDoc || state.infiniteMode) return;
+      state.pageRendering = true;
+      els.loadingState.classList.remove('hidden');
+      try {
+        const page = await state.pdfDoc.getPage(num);
+        const viewport = page.getViewport({ scale: state.scale, rotation: state.rotation });
+        
+        // Use device pixel ratio for retina/high-DPI displays
+        const pixelRatio = window.devicePixelRatio || 1;
+        
+        // Set canvas dimensions to physical pixels (high resolution)
+        els.canvas.width = Math.floor(viewport.width * pixelRatio);
+        els.canvas.height = Math.floor(viewport.height * pixelRatio);
+        
+        // CRITICAL FIX: Use percentage-based CSS for responsiveness
+        els.canvas.style.width = '100%';
+        els.canvas.style.height = 'auto';
+        
+        // Use transform to scale the rendering context for high-DPI
+        const transform = pixelRatio !== 1 
+          ? [pixelRatio, 0, 0, pixelRatio, 0, 0] 
+          : null;
+
+        await page.render({
+          canvasContext: els.ctx,
+          transform: transform,
+          viewport: viewport
+        }).promise;
+        
+        state.pageRendering = false;
+        els.loadingState.classList.add('hidden');
+        els.canvas.classList.remove('hidden');
+        els.emptyState.classList.add('hidden');
+        els.pageNum.value = num;
+        
+        document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+        const activeThumb = document.querySelector(`.thumb-item[data-page="${num}"]`);
+        if (activeThumb) activeThumb.classList.add('active');
+        
+        if (state.pageNumPending) { renderPage(state.pageNumPending); state.pageNumPending = null; }
+      } catch (e) {
+        console.error(e);
+        showToast('Render error', 'error');
+        state.pageRendering = false;
+        els.loadingState.classList.add('hidden');
+      }
+    }
     
+    function queueRenderPage(num) {
+      if (state.pageRendering) state.pageNumPending = num;
+      else renderPage(num);
+    }
+
+    // ---------- HIGH QUALITY + RESPONSIVE INFINITE RENDERING ----------
+    async function renderInfinite() {
+      if (!state.pdfDoc || !state.infiniteMode) return;
+      els.loadingState.classList.remove('hidden');
+      els.infiniteContainer.innerHTML = '';
+      els.infiniteContainer.classList.remove('hidden');
+      els.singleContainer.classList.add('hidden');
+      try {
+        const pixelRatio = window.devicePixelRatio || 1;
+        
+        for (let i = 1; i <= state.pdfDoc.numPages; i++) {
+          const page = await state.pdfDoc.getPage(i);
+          const viewport = page.getViewport({ scale: state.scale, rotation: state.rotation });
+          
+          const canvas = document.createElement('canvas');
+          canvas.className = 'infinite-page';
+          
+          // Set high-resolution dimensions
+          canvas.width = Math.floor(viewport.width * pixelRatio);
+          canvas.height = Math.floor(viewport.height * pixelRatio);
+          
+          // CRITICAL FIX: Responsive CSS sizing
+          canvas.style.width = '100%';
+          canvas.style.height = 'auto';
+          
+          const transform = pixelRatio !== 1 
+            ? [pixelRatio, 0, 0, pixelRatio, 0, 0] 
+            : null;
+          
+          await page.render({
+            canvasContext: canvas.getContext('2d'),
+            transform: transform,
+            viewport: viewport
+          }).promise;
+          
+          els.infiniteContainer.appendChild(canvas);
+        }
+        
+        if (state.pageNum > 1 && els.infiniteContainer.children.length > 0) {
+          const target = els.infiniteContainer.children[state.pageNum - 1];
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        els.loadingState.classList.add('hidden');
+        els.emptyState.classList.add('hidden');
+      } catch (e) {
+        console.error(e);
+        showToast('Error rendering infinite', 'error');
+        els.loadingState.classList.add('hidden');
+      }
+    }
+
+    // ---------- GENERATE THUMBNAILS ----------
+    async function generateThumbnails() {
+      if (!state.pdfDoc) return;
+      const numPages = state.pdfDoc.numPages;
+      els.thumbList.innerHTML = '';
+      state.thumbnails = [];
+      
+      for (let i = 1; i <= numPages; i++) {
+        const page = await state.pdfDoc.getPage(i);
+        const viewport = page.getViewport({ scale: 0.2 });
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+        
+        state.thumbnails.push(dataUrl);
+        const thumbDiv = document.createElement('div');
+        thumbDiv.className = 'thumb-item';
+        thumbDiv.setAttribute('data-page', i);
+        thumbDiv.innerHTML = `<img class="thumb-img" src="${dataUrl}" alt="page ${i}"><span class="thumb-page-num">${i}</span>`;
+        
+        thumbDiv.addEventListener('click', () => {
+          state.pageNum = i;
+          if (state.infiniteMode) {
+            const targetCanvas = els.infiniteContainer.children[i-1];
+            if (targetCanvas) targetCanvas.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } else {
+            queueRenderPage(i);
+          }
+          document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+          thumbDiv.classList.add('active');
+        });
+        
+        els.thumbList.appendChild(thumbDiv);
+      }
+      
+      document.querySelectorAll('.thumb-item').forEach(el => el.classList.remove('active'));
+      const current = document.querySelector(`.thumb-item[data-page="${state.pageNum}"]`);
+      if (current) current.classList.add('active');
+    }
+
+    // ---------- FILE OPEN ----------
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      state.currentFile = file;
+      state.currentFileName = file.name;
+      els.toolTitle.value = file.name.replace(/\.pdf$/i, '');
+      state.scale = 1.0;
+      state.rotation = 0;
+      els.zoomLevel.textContent = '100%';
+      
+      const reader = new FileReader();
+      reader.onload = function() {
+        const typedarray = new Uint8Array(this.result);
+        pdfjsLib.getDocument(typedarray).promise.then(pdf => {
+          state.pdfDoc = pdf;
+          state.pageNum = 1;
+          els.pageCount.textContent = pdf.numPages;
+          generateThumbnails().then(() => {
+            if (state.infiniteMode) {
+              renderInfinite();
+            } else {
+              renderPage(1);
+            }
+            showToast('PDF loaded', 'success');
+          });
+        }, err => {
+          console.error(err);
+          showToast('Invalid PDF', 'error');
+        });
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file'; fileInput.accept = '.pdf'; fileInput.style.display = 'none';
+    fileInput.addEventListener('change', handleFileSelect);
+    document.body.appendChild(fileInput);
+
+    document.querySelector('.top-bar').insertAdjacentHTML('afterbegin', `
+      <button class="icon-btn" id="openBtn" style="color:#1976d2;" title="Open PDF">
+        <span class="material-symbols-outlined">folder_open</span>
+      </button>
+    `);
+    document.getElementById('openBtn').addEventListener('click', () => fileInput.click());
+
+    // ---------- EVENT LISTENERS ----------
+    document.getElementById('prev-page').addEventListener('click', () => {
+      if (!state.pdfDoc || state.pageNum <= 1) return;
+      state.pageNum--;
+      if (state.infiniteMode) {
+        const target = els.infiniteContainer.children[state.pageNum-1];
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        queueRenderPage(state.pageNum);
+      }
+    });
+    
+    document.getElementById('next-page').addEventListener('click', () => {
+      if (!state.pdfDoc || state.pageNum >= state.pdfDoc.numPages) return;
+      state.pageNum++;
+      if (state.infiniteMode) {
+        const target = els.infiniteContainer.children[state.pageNum-1];
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        queueRenderPage(state.pageNum);
+      }
+    });
+    
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      if (!state.pdfDoc) return;
+      state.scale = Math.min(3, state.scale + 0.2);
+      els.zoomLevel.textContent = Math.round(state.scale * 100) + '%';
+      if (state.infiniteMode) {
+        renderInfinite();
+      } else {
+        queueRenderPage(state.pageNum);
+      }
+    });
+    
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      if (!state.pdfDoc || state.scale <= 0.4) return;
+      state.scale -= 0.2;
+      els.zoomLevel.textContent = Math.round(state.scale * 100) + '%';
+      if (state.infiniteMode) {
+        renderInfinite();
+      } else {
+        queueRenderPage(state.pageNum);
+      }
+    });
+    
+    document.getElementById('rotate-btn').addEventListener('click', () => {
+      if (!state.pdfDoc) return;
+      state.rotation = (state.rotation + 90) % 360;
+      if (state.infiniteMode) {
+        renderInfinite();
+      } else {
+        queueRenderPage(state.pageNum);
+      }
+    });
+    
+    els.pageNum.addEventListener('change', (e) => {
+      if (!state.pdfDoc) return;
+      let num = parseInt(e.target.value);
+      if (num >= 1 && num <= state.pdfDoc.numPages) {
+        state.pageNum = num;
+        if (state.infiniteMode) {
+          const target = els.infiniteContainer.children[num-1];
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+          queueRenderPage(num);
+        }
+      } else {
+        e.target.value = state.pageNum;
+      }
+    });
+
+    // DOWNLOAD buttons
+    document.getElementById('downloadFullBtn').addEventListener('click', () => {
+      if (!state.currentFile) { showToast('No document loaded', 'error'); return; }
+      const url = URL.createObjectURL(state.currentFile);
+      const a = document.createElement('a');
+      a.href = url; a.download = state.currentFileName;
+      a.click(); URL.revokeObjectURL(url);
+    });
+    
+    document.getElementById('downloadPageBtn').addEventListener('click', async () => {
+      if (!state.pdfDoc) { showToast('No document loaded', 'error'); return; }
+      try {
+        const { jsPDF } = window.jspdf;
+        const page = await state.pdfDoc.getPage(state.pageNum);
+        const viewport = page.getViewport({ scale: 2.0, rotation: state.rotation });
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdf = new jsPDF({
+          orientation: viewport.width > viewport.height ? 'landscape' : 'portrait',
+          unit: 'px',
+          format: [viewport.width, viewport.height]
+        });
+        pdf.addImage(imgData, 'JPEG', 0, 0, viewport.width, viewport.height);
+        pdf.save(`page_${state.pageNum}.pdf`);
+        showToast('Page saved', 'success');
+      } catch (err) {
+        console.error(err);
+        showToast('Export failed', 'error');
+      }
+    });
+
+    // PRINT
+    document.getElementById('print-btn').addEventListener('click', () => {
+      if (!state.currentFile) { showToast('No document loaded', 'error'); return; }
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      const url = URL.createObjectURL(state.currentFile);
+      iframe.src = url;
+      iframe.onload = () => {
+        iframe.contentWindow.print();
+        setTimeout(() => { document.body.removeChild(iframe); URL.revokeObjectURL(url); }, 60000);
+      };
+    });
+
+    // keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (!state.pdfDoc) return;
+      if (e.key === 'ArrowLeft') { e.preventDefault(); document.getElementById('prev-page').click(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); document.getElementById('next-page').click(); }
+      if (e.key === '+' || (e.ctrlKey && e.key === '=')) { e.preventDefault(); document.getElementById('zoom-in').click(); }
+      if (e.key === '-' || (e.ctrlKey && e.key === '-')) { e.preventDefault(); document.getElementById('zoom-out').click(); }
+    });
+
+    window.addEventListener('load', () => {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'flex';
+    });
+  </script>
 </body>
 </html>

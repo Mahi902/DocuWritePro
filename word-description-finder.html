@@ -1,712 +1,746 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Description Finder</title>
-    <meta name="description" content="A clean, fast online dictionary and visual word finder.">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: #f8f9fa;
-            color: #202124;
-            line-height: 1.6;
-            padding: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
-            transition: background-color 0.3s, color 0.3s;
-        }
-        
-        /* PURE BLACK DARK THEME */
-        body.dark-theme {
-            background: #000000;
-            color: #ffffff;
-        }
-        
-        body.dark-theme .logo h1 {
-            color: #ffffff;
-        }
-        
-        body.dark-theme .logo-icon {
-            color: #ffffff;
-        }
-        
-        body.dark-theme .search-box {
-            background: #000000;
-            color: #ffffff;
-            border-color: #333333;
-        }
-        
-        body.dark-theme .search-box:focus {
-            border-color: #ffffff;
-            box-shadow: 0 1px 6px rgba(255, 255, 255, 0.3);
-        }
-        
-        body.dark-theme .search-box::placeholder {
-            color: #888888;
-        }
-        
-        body.dark-theme .search-btn {
-            background: #ffffff;
-            color: #000000;
-        }
-        
-        body.dark-theme .search-btn:hover {
-            background: #f0f0f0;
-        }
-        
-        body.dark-theme .result-container {
-            background: #000000;
-            box-shadow: 0 1px 2px rgba(255, 255, 255, 0.1), 0 1px 3px 1px rgba(255, 255, 255, 0.05);
-            border: 1px solid #333333;
-        }
-        
-        body.dark-theme .word-header {
-            background: #000000;
-            border-color: #333333;
-        }
-        
-        body.dark-theme .word-title {
-            color: #ffffff;
-        }
-        
-        body.dark-theme .phonetic {
-            color: #cccccc;
-        }
-        
-        body.dark-theme .audio-btn {
-            background: #ffffff;
-            color: #000000;
-        }
-        
-        body.dark-theme .audio-btn:hover {
-            background: #f0f0f0;
-        }
-        
-        body.dark-theme .part-of-speech {
-            background: #222222;
-            color: #ffffff;
-            border: 1px solid #333333;
-        }
-        
-        body.dark-theme .definition {
-            color: #ffffff;
-        }
-        
-        body.dark-theme .definition:before {
-            color: #cccccc;
-        }
-        
-        body.dark-theme .example {
-            color: #cccccc;
-        }
-        
-        body.dark-theme .synonyms-antonyms {
-            background: #000000;
-            border-color: #333333;
-        }
-        
-        body.dark-theme .synonyms h4, 
-        body.dark-theme .antonyms h4 {
-            color: #ffffff;
-        }
-        
-        body.dark-theme .tag {
-            background: #222222;
-            color: #ffffff;
-            border: 1px solid #333333;
-        }
-        
-        body.dark-theme .section-title {
-            background: #000000;
-            border-color: #333333;
-            color: #ffffff;
-        }
-        
-        body.dark-theme .image-card {
-            background: #000000;
-            border: 1px solid #333333;
-        }
-        
-        body.dark-theme .placeholder {
-            color: #888888;
-        }
-        
-        body.dark-theme .placeholder .material-icons {
-            color: #333333;
-        }
-        
-        body.dark-theme .error-message {
-            background: #330000;
-            color: #ff9999;
-            border: 1px solid #660000;
-        }
-        
-        body.dark-theme .spinner {
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #ffffff;
-        }
-        
-        /* Dark theme toggle button */
-        .theme-toggle {
-            position: relative;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s;
-        }
-        
-        .theme-toggle:hover {
-            background: rgba(0, 0, 0, 0.1);
-        }
-        
-        body.dark-theme .theme-toggle:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        
-        .theme-icon {
-            font-size: 24px;
-            color: #5f6368;
-            transition: transform 0.3s, color 0.3s;
-        }
-        
-        body.dark-theme .theme-icon {
-            color: #ffffff;
-        }
-        
-        .theme-toggle:hover .theme-icon {
-            color: #1a73e8;
-        }
-        
-        body.dark-theme .theme-toggle:hover .theme-icon {
-            color: #ffffff;
-        }
-        
-        /* Rotate animation for smooth transition */
-        .theme-icon.rotate {
-            transform: rotate(360deg);
-        }
-        
-        /* Rest of your existing styles remain the same */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 0;
-            border-bottom: 1px solid #dadce0;
-            margin-bottom: 30px;
-        }
-        
-        body.dark-theme header {
-            border-color: #333333;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .logo h1 {
-            font-weight: 500;
-            font-size: 28px;
-            color: #1a73e8;
-        }
-        
-        .logo-icon {
-            color: #1a73e8;
-            font-size: 32px;
-        }
-        
-        .search-container {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            position: relative;
-        }
-        
-        .search-box {
-            flex: 1;
-            padding: 16px 20px;
-            font-size: 18px;
-            border: 1px solid #dadce0;
-            border-radius: 8px;
-            outline: none;
-            transition: all 0.3s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        
-        .search-box:focus {
-            border-color: #1a73e8;
-            box-shadow: 0 1px 6px rgba(66,133,244,0.3);
-        }
-        
-        .search-btn {
-            background: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 0 30px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .search-btn:hover {
-            background: #1765cc;
-        }
-        
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 40px;
-        }
-        
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(66,133,244,0.2);
-            border-top-color: #1a73e8;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        .result-container {
-            display: none;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 2px rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
-            overflow: hidden;
-            margin-bottom: 30px;
-        }
-        
-        .word-header {
-            background: #f8f9fa;
-            padding: 20px;
-            border-bottom: 1px solid #dadce0;
-        }
-        
-        .word-title {
-            font-size: 36px;
-            font-weight: 500;
-            margin-bottom: 5px;
-            color: #202124;
-            text-transform: capitalize;
-        }
-        
-        .phonetic {
-            font-size: 18px;
-            color: #5f6368;
-            margin-bottom: 10px;
-        }
-        
-        .audio-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .audio-btn {
-            background: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        
-        .part-of-speech {
-            display: inline-block;
-            background: #e8f0fe;
-            color: #1a73e8;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 15px;
-            margin-left: 20px;
-            margin-top: 15px;
-        }
-        
-        .definition {
-            padding: 10px 20px;
-            font-size: 18px;
-            line-height: 1.6;
-            color: #202124;
-            position: relative;
-            padding-left: 45px;
-        }
-        
-        .definition:before {
-            content: "•";
-            position: absolute;
-            left: 25px;
-            color: #5f6368;
-        }
-        
-        .example {
-            padding: 5px 20px;
-            font-size: 16px;
-            line-height: 1.6;
-            color: #5f6368;
-            font-style: italic;
-            position: relative;
-            padding-left: 45px;
-            margin-bottom: 10px;
-        }
-        
-        .synonyms-antonyms {
-            display: flex;
-            gap: 20px;
-            padding: 20px;
-            background: #fff;
-            border-top: 1px solid #eee;
-            flex-wrap: wrap;
-        }
-        
-        .synonyms h4, .antonyms h4 {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #202124;
-        }
-        
-        .tag {
-            display: inline-block;
-            background: #f1f3f4;
-            color: #202124;
-            padding: 4px 12px;
-            border-radius: 16px;
-            font-size: 14px;
-            margin-right: 8px;
-            margin-bottom: 8px;
-        }
-        
-        .section-title {
-            font-size: 20px;
-            font-weight: 500;
-            padding: 15px 20px;
-            background: #f8f9fa;
-            border-top: 1px solid #dadce0;
-            border-bottom: 1px solid #dadce0;
-        }
-        
-        .images-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-            padding: 20px;
-        }
-        
-        .image-card {
-            border-radius: 8px;
-            overflow: hidden;
-            height: 200px;
-            background: #eee;
-            position: relative;
-        }
-        
-        .image-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .image-overlay {
-            position: absolute;
-            bottom: 0;
-            background: rgba(0,0,0,0.6);
-            color: white;
-            width: 100%;
-            padding: 5px 10px;
-            font-size: 11px;
-        }
-        
-        .placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: #5f6368;
-            padding: 80px 20px;
-            text-align: center;
-        }
-        
-        .error-message {
-            display: none;
-            background: #fce8e6;
-            color: #d93025;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Word Description Finder · Toolstructer</title>
+  <!-- CDN dependencies (exact order) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-        @media (max-width: 600px) {
-            .search-container { flex-direction: column; }
-            .images-container { grid-template-columns: 1fr; }
+  <!-- CRITICAL: apply theme before any rendering (cookie) -->
+  <script>
+    (function() {
+      try {
+        const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+        if (match && match.split('=')[1] === 'dark') {
+          document.documentElement.classList.add('dark');
         }
-    </style>
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    /* ────────── GLOBAL RESET & SCROLLBAR HIDE ────────── */
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      overflow: hidden;
+      height: 100vh;
+      transition: background 0.2s;
+    }
+    body.dark { background: #111; }
+
+    /* ────────── LOADING SCREEN ────────── */
+    #loadingScreen {
+      position: fixed; inset: 0; z-index: 10000;
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 20px;
+    }
+    body.dark #loadingScreen { background: #1a1a1a; }
+    .spinner {
+      width: 56px; height: 56px;
+      border: 4px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 17px; color: #666; }
+    body.dark .loading-text { color: #aaa; }
+
+    /* ────────── APP CONTAINER (hidden until ready) ────────── */
+    #appContainer {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ────────── TOP BAR ────────── */
+    .top-bar {
+      background: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 200;
+      flex-shrink: 0;
+      overflow-x: auto; overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .top-bar {
+      background: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    .tool-title {
+      font-size: 17px;
+      font-weight: 500;
+      color: #1a1a2e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    body.dark .tool-title { color: #e0e0e0; }
+    .tool-title .material-symbols-outlined { font-size: 26px; color: #1976d2; }
+    .top-spacer { flex: 1; min-width: 8px; }
+
+    /* icon button (top bar) */
+    .icon-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 7px; border-radius: 8px;
+      display: flex; align-items: center;
+      color: #1976d2; transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #e3f2fd; }
+    body.dark .icon-btn:hover { background: #1a2a3a; }
+    .icon-btn .material-symbols-outlined { font-size: 22px; color: #333; }
+    body.dark .icon-btn .material-symbols-outlined { color: #bbb; }
+
+    /* ────────── TOOLBAR ────────── */
+    .toolbar {
+      background: #fff;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      overflow-x: auto; overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .toolbar { background: #1a1a1a; }
+
+    /* search input (sb-input style) */
+    .sb-input {
+      width: 300px;
+      padding: 9px 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fafafa;
+      font-family: inherit;
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+    .sb-input:focus {
+      border-color: #1976d2;
+      box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+      background: #fff;
+    }
+    body.dark .sb-input {
+      background: #252525 !important;
+      color: #ddd !important;
+      border-color: #444 !important;
+    }
+    body.dark .sb-input:focus { border-color: #1976d2; }
+
+    /* primary action button */
+    .action-btn {
+      background: #1976d2; color: #fff;
+      border: none; padding: 8px 20px;
+      border-radius: 8px; cursor: pointer;
+      font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.2s;
+      white-space: nowrap; font-family: inherit;
+      flex-shrink: 0;
+    }
+    .action-btn:hover { background: #1565c0; }
+    body.dark .action-btn { background: #1976d2; } /* same accent */
+    .action-btn .material-symbols-outlined { font-size: 18px; }
+
+    /* ────────── MAIN CONTENT (sidebar + content) ────────── */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ────────── SIDEBAR (expanded 255px) ────────── */
+    .sidebar {
+      width: 255px; min-width: 255px;
+      background: #fff;
+      padding: 14px;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+      flex-shrink: 0;
+      display: flex; flex-direction: column;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-255px);
+      width: 0; min-width: 0; padding: 0; overflow: hidden;
+    }
+    body.dark .sidebar { background: #1a1a1a; }
+
+    /* sidebar sections */
+    .sb-section { margin-bottom: 24px; }
+    .sb-title {
+      font-size: 11px; font-weight: 700;
+      color: #888; margin-bottom: 9px;
+      text-transform: uppercase; letter-spacing: 0.6px;
+    }
+    body.dark .sb-title { color: #666; }
+    .sb-label {
+      display: block; font-size: 12px;
+      color: #777; margin-bottom: 6px;
+    }
+
+    /* download button (wide style) */
+    .fmt-wide {
+      width: 100%;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; padding: 11px;
+      border: 2px solid #e0e0e0; border-radius: 10px;
+      background: #fafafa; cursor: pointer;
+      font-size: 13px; font-weight: 600;
+      transition: all 0.15s; font-family: inherit;
+      margin-top: 6px;
+    }
+    .fmt-wide:hover {
+      border-color: #1976d2;
+      background: #e3f2fd;
+      color: #1976d2;
+    }
+    body.dark .fmt-wide {
+      background: #252525; border-color: #444; color: #ddd;
+    }
+    body.dark .fmt-wide:hover {
+      border-color: #1976d2; background: #1a2a3a; color: #90caf9;
+    }
+
+    /* collapse button */
+    .collapse-btn {
+      width: 100%; padding: 10px;
+      background: #e3f2fd; border: none; border-radius: 8px;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 6px;
+      font-size: 13px; color: #1976d2; font-weight: 600;
+      margin-top: 20px; transition: background 0.15s;
+      font-family: inherit;
+    }
+    .collapse-btn:hover { background: #bbdefb; }
+    body.dark .collapse-btn {
+      background: #1a2a4a !important;
+      color: #90caf9 !important;
+    }
+
+    /* expand button (floating, shown when collapsed) */
+    .expand-btn {
+      position: fixed; left: 10px; top: 50%;
+      transform: translateY(-50%);
+      background: #fff; border: none;
+      border-radius: 8px; padding: 10px 5px;
+      cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 50; display: none;
+    }
+    body.dark .expand-btn { background: #1a1a1a; }
+    .expand-btn .material-symbols-outlined { color: #1976d2; font-size: 20px; }
+
+    /* ────────── CONTENT AREA (scrollable results) ────────── */
+    .content-area {
+      flex: 1; overflow-y: auto;
+      background: #f0f4f8;
+      min-width: 0;
+      padding: 30px 24px;
+    }
+    body.dark .content-area { background: #111; }
+
+    /* placeholder (centered) */
+    .placeholder {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #5f6368; padding: 80px 20px; text-align: center;
+    }
+    body.dark .placeholder { color: #888; }
+    .placeholder .material-symbols-outlined { font-size: 64px; color: #dadce0; margin-bottom: 20px; }
+
+    /* result card */
+    .result-card {
+      background: #fff; border-radius: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.1);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    body.dark .result-card { background: #1a1a1a; border: 1px solid #333; }
+
+    .word-header {
+      padding: 20px; border-bottom: 1px solid #f0f0f0;
+    }
+    body.dark .word-header { border-color: #333; }
+    .word-title { font-size: 36px; font-weight: 500; color: #202124; text-transform: capitalize; }
+    body.dark .word-title { color: #e0e0e0; }
+    .phonetic { font-size: 18px; color: #5f6368; margin: 6px 0 12px; }
+    body.dark .phonetic { color: #aaa; }
+
+    .audio-container { display: flex; align-items: center; gap: 10px; }
+    .audio-btn {
+      background: #1976d2; color: white; border: none;
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .audio-btn .material-symbols-outlined { font-size: 20px; }
+
+    .part-of-speech {
+      display: inline-block; background: #e8f0fe; color: #1976d2;
+      padding: 4px 12px; border-radius: 16px; font-size: 14px; font-weight: 500;
+      margin: 12px 20px 4px;
+    }
+    body.dark .part-of-speech { background: #1e2a3a; color: #90caf9; }
+
+    .definition { padding: 8px 20px 8px 45px; font-size: 18px; position: relative; }
+    .definition:before { content: "•"; position: absolute; left: 25px; color: #5f6368; }
+    body.dark .definition { color: #ddd; }
+
+    .example { padding: 2px 20px 10px 45px; font-size: 16px; color: #5f6368; font-style: italic; }
+    body.dark .example { color: #aaa; }
+
+    .synonyms-antonyms {
+      display: flex; gap: 20px; padding: 16px 20px;
+      background: #fff; border-top: 1px solid #eee;
+    }
+    body.dark .synonyms-antonyms { background: #1a1a1a; border-color: #333; }
+    .synonyms h4, .antonyms h4 { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #202124; }
+    body.dark .synonyms h4, body.dark .antonyms h4 { color: #ddd; }
+    .tag {
+      display: inline-block; background: #f1f3f4; color: #202124;
+      padding: 4px 12px; border-radius: 16px; font-size: 13px; margin-right: 8px; margin-bottom: 8px;
+    }
+    body.dark .tag { background: #2a2a2a; color: #ccc; }
+
+    .section-title {
+      font-size: 18px; font-weight: 500; padding: 16px 20px;
+      background: #f8f9fa; border-top: 1px solid #dadce0; border-bottom: 1px solid #dadce0;
+    }
+    body.dark .section-title { background: #1a1a1a; border-color: #333; color: #e0e0e0; }
+
+    .images-container {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px; padding: 20px;
+    }
+    .image-card {
+      border-radius: 8px; overflow: hidden; height: 150px;
+      background: #eee; position: relative;
+    }
+    .image-card img { width: 100%; height: 100%; object-fit: cover; }
+    .image-overlay {
+      position: absolute; bottom: 0; background: rgba(0,0,0,0.6); color: white;
+      width: 100%; padding: 4px 8px; font-size: 11px;
+    }
+
+    /* error message */
+    .error-message {
+      display: none; background: #fce8e6; color: #d93025;
+      padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;
+    }
+    body.dark .error-message { background: #330000; color: #ff9999; border: 1px solid #660000; }
+
+    /* ────────── TIP BOX (new user) ────────── */
+    #tipBox {
+      position: fixed; bottom: 80px; right: 18px;
+      width: 284px; background: #1976d2; color: #fff;
+      border-radius: 14px; padding: 14px;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+      z-index: 9990; opacity: 0; transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+    #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+    body.dark #tipBox { background: #0d47a1; }
+
+    .tip-prog { height: 3px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 11px; }
+    .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+    .tip-text { font-size: 13px; line-height: 1.5; min-height: 58px; }
+    .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+    .tip-btn { flex: 1; border: none; padding: 6px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .tip-prev { background: rgba(255,255,255,0.15); color: #fff; }
+    .tip-next { background: #fff; color: #1976d2; }
+  </style>
 </head>
 <body>
-    <header>
-        <div class="logo">
-            <span class="material-icons logo-icon">menu_book</span>
-            <h1>Word Finder</h1>
+  <!-- loading screen -->
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading Word Finder...</div>
+  </div>
+
+  <!-- main app container -->
+  <div id="appContainer">
+    <!-- top bar -->
+    <div class="top-bar">
+      <div class="tool-title">
+        <span class="material-symbols-outlined">menu_book</span>
+        <span>Word Finder</span>
+      </div>
+      <div class="top-spacer"></div>
+      <button class="icon-btn" id="themeToggle" title="Toggle dark mode">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
+    </div>
+
+    <!-- toolbar (search) -->
+    <div class="toolbar">
+      <input type="text" class="sb-input" id="wordInput" placeholder="e.g. ocean, serendipity" value="ocean">
+      <button class="action-btn" id="searchBtn">
+        <span class="material-symbols-outlined">search</span>
+        Search
+      </button>
+    </div>
+
+    <!-- main content (sidebar + content area) -->
+    <div class="main-content">
+      <!-- sidebar -->
+      <div class="sidebar" id="sidebar">
+        <div class="sb-section">
+          <div class="sb-title">actions</div>
+          <button class="fmt-wide" id="downloadBtn">
+            <i class="bi bi-download"></i> Download Results
+          </button>
         </div>
-        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle dark mode">
-            <span class="material-icons theme-icon" id="theme-icon">dark_mode</span>
+        <div class="sb-section">
+          <div class="sb-title">about</div>
+          <span class="sb-label">Type a word, get definitions, examples, and images.</span>
+        </div>
+        <!-- collapse button (inside sidebar) -->
+        <button class="collapse-btn" id="collapseSidebarBtn">
+          <span class="material-symbols-outlined">chevron_left</span>
+          Hide Panel
         </button>
-    </header>
-    
-    <div class="search-container">
-        <input type="text" class="search-box" id="word-input" placeholder="Search for a word (e.g. 'Ocean')">
-        <button class="search-btn" id="search-btn">
-            <span class="material-icons">search</span>
-            Search
-        </button>
-    </div>
-    
-    <div class="error-message" id="error-message"></div>
-    
-    <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <p>Fetching definitions...</p>
-    </div>
-    
-    <div class="result-container" id="result-container">
-        <div class="word-header">
-            <h2 class="word-title" id="word-title"></h2>
-            <div class="phonetic" id="phonetic"></div>
-            <div class="audio-container" id="audio-container">
-                <button class="audio-btn" id="audio-btn">
-                    <span class="material-icons">volume_up</span>
+      </div>
+
+      <!-- expand button (floating, initially hidden) -->
+      <button class="expand-btn" id="expandSidebarBtn" title="Show panel">
+        <span class="material-symbols-outlined">chevron_right</span>
+      </button>
+
+      <!-- main content area (scrollable results) -->
+      <div class="content-area" id="contentArea">
+        <!-- placeholder (shown initially) -->
+        <div class="placeholder" id="placeholder">
+          <span class="material-symbols-outlined">search</span>
+          <p>Search for a word to see definitions and images.</p>
+        </div>
+
+        <!-- error message -->
+        <div class="error-message" id="errorMessage"></div>
+
+        <!-- result container (hidden initially) -->
+        <div id="resultContainer" style="display: none;">
+          <div class="result-card">
+            <div class="word-header">
+              <h2 class="word-title" id="wordTitle"></h2>
+              <div class="phonetic" id="phonetic"></div>
+              <div class="audio-container" id="audioContainer">
+                <button class="audio-btn" id="audioBtn">
+                  <span class="material-symbols-outlined">volume_up</span>
                 </button>
-                <span>Listen Pronunciation</span>
+                <span>Listen</span>
+              </div>
             </div>
+            <div id="meaningsContainer"></div>
+            <div id="synAntContainer" class="synonyms-antonyms" style="display:none;"></div>
+            <div class="section-title">Visual References (Unsplash)</div>
+            <div class="images-container" id="unsplashContainer"></div>
+          </div>
         </div>
-        
-        <div id="meanings-container"></div>
-        
-        <div id="synonyms-antonyms-container" class="synonyms-antonyms" style="display:none;"></div>
-        
-        <div class="section-title">Visual References (Unsplash)</div>
-        <div class="images-container" id="unsplash-images"></div>
+      </div>
     </div>
-    
-    <div class="placeholder" id="placeholder">
-        <span class="material-icons" style="font-size: 64px; color: #dadce0; margin-bottom: 20px;">search</span>
-        <p>Type a word above to see meanings, examples, and images.</p>
+  </div>
+
+  <!-- tip box (new user) -->
+  <div id="tipBox" class="hide">
+    <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+    <div class="tip-text" id="tipText"></div>
+    <div class="tip-actions">
+      <button class="tip-btn tip-prev" id="tipPrev">← Prev</button>
+      <button class="tip-btn tip-next" id="tipNext">Next →</button>
     </div>
+  </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const searchBtn = document.getElementById('search-btn');
-            const wordInput = document.getElementById('word-input');
-            const loading = document.getElementById('loading');
-            const resultContainer = document.getElementById('result-container');
-            const placeholder = document.getElementById('placeholder');
-            const errorMessage = document.getElementById('error-message');
-            const meaningsContainer = document.getElementById('meanings-container');
-            const synAntContainer = document.getElementById('synonyms-antonyms-container');
-            const unsplashContainer = document.getElementById('unsplash-images');
-            
-            const wordTitle = document.getElementById('word-title');
-            const phonetic = document.getElementById('phonetic');
-            const audioBtn = document.getElementById('audio-btn');
-            const audioContainer = document.getElementById('audio-container');
-            
-            // Dark theme functionality
-            const themeToggle = document.getElementById('theme-toggle');
-            const themeIcon = document.getElementById('theme-icon');
-            const body = document.body;
-            
-            // Check for saved theme preference or prefer-color-scheme
-            const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-            const savedTheme = localStorage.getItem('theme');
-            
-            // Set initial theme
-            if (savedTheme === 'dark' || (!savedTheme && prefersDarkScheme.matches)) {
-                enableDarkTheme();
+  <script>
+    (function() {
+      // ensure dark class from early script also applied to body
+      if (document.documentElement.classList.contains('dark')) {
+        document.body.classList.add('dark');
+      }
+    })();
+
+    // ---------- THEME (cookie-based, shared) ----------
+    function setThemeCookie(value) {
+      document.cookie = 'toolsuite_theme=' + value + '; path=/; max-age=31536000; SameSite=Lax';
+    }
+    function getThemeCookie() {
+      const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+      return match ? match.split('=')[1] : null;
+    }
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark');
+      const icon = document.getElementById('themeIcon');
+      if (icon) icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+      setThemeCookie(isDark ? 'dark' : 'light');
+      // also sync html element
+      if (isDark) document.documentElement.classList.add('dark');
+      else document.documentElement.classList.remove('dark');
+    }
+
+    // ---------- TIP BOX (new user carousel) ----------
+    const TIPS = [
+      "👋 Type any word in the toolbar and press Search.",
+      "📖 See definitions, phonetics, and example sentences.",
+      "🌙 Toggle dark mode using the moon icon in top bar.",
+      "🖼️ Real images from Unsplash appear below the definitions.",
+      "⬇️ Click 'Download Results' in sidebar to save as .txt file."
+    ];
+    let tipIndex = 0;
+    const tipBox = document.getElementById('tipBox');
+    const tipText = document.getElementById('tipText');
+    const tipBar = document.getElementById('tipBar');
+    const tipPrev = document.getElementById('tipPrev');
+    const tipNext = document.getElementById('tipNext');
+
+    function showTip(index) {
+      tipText.textContent = TIPS[index];
+      tipBar.style.width = ((index + 1) / TIPS.length * 100) + '%';
+      tipBox.classList.remove('hide');
+      tipBox.classList.add('show');
+    }
+    function tipNav(dir) {
+      tipIndex = Math.max(0, Math.min(TIPS.length - 1, tipIndex + dir));
+      if (tipIndex === TIPS.length - 1 && dir === 1) {
+        dismissTips();
+      } else {
+        showTip(tipIndex);
+      }
+    }
+    function dismissTips() {
+      tipBox.classList.replace('show', 'hide');
+      localStorage.setItem('tips_seen', '1');
+    }
+    tipPrev.addEventListener('click', () => tipNav(-1));
+    tipNext.addEventListener('click', () => tipNav(1));
+
+    // ---------- SIDEBAR COLLAPSE ----------
+    const sidebar = document.getElementById('sidebar');
+    const expandBtn = document.getElementById('expandSidebarBtn');
+    function toggleSidebar() {
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      sidebar.classList.toggle('collapsed');
+      expandBtn.style.display = isCollapsed ? 'none' : 'block';
+    }
+    document.getElementById('collapseSidebarBtn').addEventListener('click', toggleSidebar);
+    expandBtn.addEventListener('click', toggleSidebar);
+
+    // ---------- APP INIT ----------
+    window.addEventListener('load', function() {
+      // hide loading screen, show app
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'flex';
+
+      // tip box: only if not seen
+      if (!localStorage.getItem('tips_seen')) {
+        setTimeout(() => showTip(0), 800);
+      }
+
+      // theme icon sync
+      const icon = document.getElementById('themeIcon');
+      if (document.body.classList.contains('dark')) icon.textContent = 'light_mode';
+      else icon.textContent = 'dark_mode';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
+
+    // ---------- DICTIONARY + UNSPLASH ----------
+    const wordInput = document.getElementById('wordInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const placeholder = document.getElementById('placeholder');
+    const errorMsg = document.getElementById('errorMessage');
+    const resultContainer = document.getElementById('resultContainer');
+    const wordTitle = document.getElementById('wordTitle');
+    const phonetic = document.getElementById('phonetic');
+    const audioContainer = document.getElementById('audioContainer');
+    const audioBtn = document.getElementById('audioBtn');
+    const meaningsDiv = document.getElementById('meaningsContainer');
+    const synAntDiv = document.getElementById('synAntContainer');
+    const unsplashDiv = document.getElementById('unsplashContainer');
+
+    const UNSPLASH_KEY = 'zE9SiiMyCl5TxAqvpUIphoUSd72HIHrQFBmwUAm4hAg'; // provided
+
+    // store last result for download
+    let lastWordData = null;
+    let lastWord = '';
+
+    async function searchWord() {
+      const word = wordInput.value.trim().toLowerCase();
+      if (!word) return;
+
+      // reset UI
+      placeholder.style.display = 'none';
+      errorMsg.style.display = 'none';
+      resultContainer.style.display = 'none';
+      meaningsDiv.innerHTML = '';
+      synAntDiv.innerHTML = '';
+      synAntDiv.style.display = 'none';
+      unsplashDiv.innerHTML = '';
+
+      // show loading maybe (we can show spinner inside content? just hide placeholder)
+      // but we don't have a dedicated spinner inside content; we'll rely on user patience
+
+      try {
+        // dictionary api
+        const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+        if (!dictRes.ok) throw new Error("Word not found in dictionary.");
+        const dictData = await dictRes.json();
+        const entry = dictData[0];
+        lastWordData = entry;
+        lastWord = word;
+
+        wordTitle.textContent = entry.word;
+        const phoneticText = entry.phonetic || (entry.phonetics[0] ? entry.phonetics[0].text : '');
+        phonetic.textContent = phoneticText;
+
+        // audio
+        const audioObj = entry.phonetics.find(p => p.audio && p.audio.trim() !== '');
+        if (audioObj) {
+          audioContainer.style.display = 'flex';
+          const audio = new Audio(audioObj.audio);
+          audioBtn.onclick = () => audio.play();
+        } else {
+          audioContainer.style.display = 'none';
+        }
+
+        // meanings
+        entry.meanings.forEach(meaning => {
+          const posDiv = document.createElement('div');
+          posDiv.innerHTML = `<div class="part-of-speech">${meaning.partOfSpeech}</div>`;
+          meaning.definitions.slice(0,3).forEach(def => {
+            const defEl = document.createElement('div');
+            defEl.className = 'definition';
+            defEl.textContent = def.definition;
+            posDiv.appendChild(defEl);
+            if (def.example) {
+              const exEl = document.createElement('div');
+              exEl.className = 'example';
+              exEl.textContent = `"${def.example}"`;
+              posDiv.appendChild(exEl);
             }
-            
-            // Theme toggle click handler
-            themeToggle.addEventListener('click', () => {
-                const themeIcon = document.getElementById('theme-icon');
-                themeIcon.classList.add('rotate');
-                
-                setTimeout(() => {
-                    themeIcon.classList.remove('rotate');
-                }, 300);
-                
-                if (body.classList.contains('dark-theme')) {
-                    disableDarkTheme();
-                } else {
-                    enableDarkTheme();
-                }
-            });
-            
-            function enableDarkTheme() {
-                body.classList.add('dark-theme');
-                themeIcon.textContent = 'light_mode';
-                localStorage.setItem('theme', 'dark');
+          });
+          meaningsDiv.appendChild(posDiv);
+
+          // synonyms/antonyms (collect once)
+          if (meaning.synonyms.length > 0 || meaning.antonyms.length > 0) {
+            synAntDiv.style.display = 'flex';
+            if (meaning.synonyms.length > 0) {
+              const box = document.createElement('div');
+              box.style.flex = '1';
+              box.innerHTML = '<h4>Synonyms</h4>';
+              meaning.synonyms.slice(0,8).forEach(s => {
+                box.innerHTML += `<span class="tag">${s}</span>`;
+              });
+              synAntDiv.appendChild(box);
             }
-            
-            function disableDarkTheme() {
-                body.classList.remove('dark-theme');
-                themeIcon.textContent = 'dark_mode';
-                localStorage.setItem('theme', 'light');
+            if (meaning.antonyms.length > 0) {
+              const box = document.createElement('div');
+              box.style.flex = '1';
+              box.innerHTML = '<h4>Antonyms</h4>';
+              meaning.antonyms.slice(0,5).forEach(a => {
+                box.innerHTML += `<span class="tag">${a}</span>`;
+              });
+              synAntDiv.appendChild(box);
             }
-            
-            // Listen for system theme changes
-            prefersDarkScheme.addEventListener('change', (e) => {
-                // Only auto-switch if user hasn't set a preference
-                if (!localStorage.getItem('theme')) {
-                    if (e.matches) {
-                        enableDarkTheme();
-                    } else {
-                        disableDarkTheme();
-                    }
-                }
-            });
-            
-            // Public Unsplash Access Key
-            const UNSPLASH_KEY = 'zE9SiiMyCl5TxAqvpUIphoUSd72HIHrQFBmwUAm4hAg';
-
-            function searchWord() {
-                const word = wordInput.value.trim().toLowerCase();
-                if (!word) return;
-
-                // Reset UI
-                loading.style.display = 'block';
-                resultContainer.style.display = 'none';
-                placeholder.style.display = 'none';
-                errorMessage.style.display = 'none';
-                meaningsContainer.innerHTML = '';
-                synAntContainer.innerHTML = '';
-                synAntContainer.style.display = 'none';
-                unsplashContainer.innerHTML = '';
-
-                // 1. Fetch Dictionary Data
-                fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`)
-                    .then(res => {
-                        if (!res.ok) throw new Error("We couldn't find definitions for that word.");
-                        return res.json();
-                    })
-                    .then(data => {
-                        const entry = data[0];
-                        wordTitle.textContent = entry.word;
-                        phonetic.textContent = entry.phonetic || (entry.phonetics[0] ? entry.phonetics[0].text : '');
-                        
-                        // Handle Audio
-                        const audioObj = entry.phonetics.find(p => p.audio !== "");
-                        if (audioObj) {
-                            audioContainer.style.display = 'flex';
-                            const audio = new Audio(audioObj.audio);
-                            audioBtn.onclick = () => audio.play();
-                        } else {
-                            audioContainer.style.display = 'none';
-                        }
-
-                        // Meanings & Examples
-                        entry.meanings.forEach(m => {
-                            const part = document.createElement('div');
-                            part.innerHTML = `<div class="part-of-speech">${m.partOfSpeech}</div>`;
-                            m.definitions.slice(0, 3).forEach(d => {
-                                const defEl = document.createElement('div');
-                                defEl.className = 'definition';
-                                defEl.textContent = d.definition;
-                                part.appendChild(defEl);
-                                if (d.example) {
-                                    const exEl = document.createElement('div');
-                                    exEl.className = 'example';
-                                    exEl.textContent = `"${d.example}"`;
-                                    part.appendChild(exEl);
-                                }
-                            });
-                            meaningsContainer.appendChild(part);
-
-                            // Collect Synonyms/Antonyms
-                            if (m.synonyms.length > 0 || m.antonyms.length > 0) {
-                                synAntContainer.style.display = 'flex';
-                                if (m.synonyms.length > 0) {
-                                    const box = document.createElement('div');
-                                    box.style.flex = "1";
-                                    box.innerHTML = '<h4>Synonyms</h4>';
-                                    m.synonyms.slice(0, 5).forEach(s => {
-                                        box.innerHTML += `<span class="tag">${s}</span>`;
-                                    });
-                                    synAntContainer.appendChild(box);
-                                }
-                            }
-                        });
-
-                        loading.style.display = 'none';
-                        resultContainer.style.display = 'block';
-                    })
-                    .catch(err => {
-                        loading.style.display = 'none';
-                        errorMessage.textContent = err.message;
-                        errorMessage.style.display = 'block';
-                        placeholder.style.display = 'flex';
-                    });
-
-                // 2. Fetch Unsplash Images
-                fetch(`https://api.unsplash.com/search/photos?query=${word}&per_page=6&client_id=${UNSPLASH_KEY}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.results && data.results.length > 0) {
-                            data.results.forEach(photo => {
-                                const card = document.createElement('div');
-                                card.className = 'image-card';
-                                card.innerHTML = `
-                                    <img src="${photo.urls.small}" alt="${word}">
-                                    <div class="image-overlay">by ${photo.user.name}</div>
-                                `;
-                                unsplashContainer.appendChild(card);
-                            });
-                        } else {
-                            unsplashContainer.innerHTML = '<p style="padding: 20px; color: #666;">No images found.</p>';
-                        }
-                    })
-                    .catch(() => {
-                        unsplashContainer.innerHTML = '<p style="padding: 20px; color: #666;">Could not load images.</p>';
-                    });
-            }
-
-            searchBtn.addEventListener('click', searchWord);
-            wordInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') searchWord();
-            });
+          }
         });
-    </script>
+
+        resultContainer.style.display = 'block';
+      } catch (err) {
+        errorMsg.textContent = err.message;
+        errorMsg.style.display = 'block';
+        placeholder.style.display = 'flex';
+        lastWordData = null;
+      }
+
+      // unsplash images (always attempt, even if word not found? but better only if word exists)
+      try {
+        const unsplashRes = await fetch(`https://api.unsplash.com/search/photos?query=${word}&per_page=6&client_id=${UNSPLASH_KEY}`);
+        const unsplashData = await unsplashRes.json();
+        if (unsplashData.results && unsplashData.results.length > 0) {
+          unsplashData.results.forEach(photo => {
+            const card = document.createElement('div');
+            card.className = 'image-card';
+            card.innerHTML = `
+              <img src="${photo.urls.small}" alt="${word}">
+              <div class="image-overlay">by ${photo.user.name}</div>
+            `;
+            unsplashDiv.appendChild(card);
+          });
+        } else {
+          unsplashDiv.innerHTML = '<p style="padding:20px; color:#666;">No images found.</p>';
+        }
+      } catch {
+        unsplashDiv.innerHTML = '<p style="padding:20px; color:#666;">Could not load images.</p>';
+      }
+    }
+
+    // download button
+    document.getElementById('downloadBtn').addEventListener('click', function() {
+      if (!lastWordData || !lastWord) {
+        alert('No word results to download. Search for a word first.');
+        return;
+      }
+      let content = `WORD: ${lastWordData.word}\n`;
+      if (lastWordData.phonetic) content += `Phonetic: ${lastWordData.phonetic}\n`;
+      content += `\n--- DEFINITIONS ---\n`;
+      lastWordData.meanings.forEach(m => {
+        content += `\n[${m.partOfSpeech}]\n`;
+        m.definitions.slice(0,3).forEach((d, idx) => {
+          content += `${idx+1}. ${d.definition}\n`;
+          if (d.example) content += `   Example: "${d.example}"\n`;
+        });
+      });
+      // synonyms/antonyms
+      content += `\n--- SYNONYMS ---\n`;
+      lastWordData.meanings.forEach(m => {
+        if (m.synonyms.length) content += m.synonyms.slice(0,8).join(', ') + '\n';
+      });
+      content += `\n--- ANTONYMS ---\n`;
+      lastWordData.meanings.forEach(m => {
+        if (m.antonyms.length) content += m.antonyms.slice(0,5).join(', ') + '\n';
+      });
+      content += `\n(Images from Unsplash included in the visual panel)\n`;
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${lastWord}_definition.txt`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    searchBtn.addEventListener('click', searchWord);
+    wordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchWord(); });
+
+    // prefill ocean on load (optional)
+    window.addEventListener('load', function() {
+      // small delay to let app show
+      setTimeout(() => {
+        if (wordInput.value.trim()) searchWord();
+      }, 300);
+    });
+  </script>
 </body>
 </html>

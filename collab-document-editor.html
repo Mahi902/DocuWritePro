@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DocuWrite Collab</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+
+  <script>
+    (function() {
+      const match = document.cookie.split('; ').find(r => r.startsWith('toolsuite_theme='));
+      if (match && match.split('=')[1] === 'dark') document.documentElement.classList.add('dark');
+    })();
+  </script>
+
+  <style>
+    /* ── Scrollbars hidden globally ── */
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      overflow: hidden;
+      height: 100vh;
+      color: #333;
+    }
+    body.dark { background: #111; color: #ddd; }
+
+    /* ── Loading Screen ── */
+    #loadingScreen {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    body.dark #loadingScreen { background: #1a1a1a; }
+    .spinner {
+      width: 56px; height: 56px;
+      border: 4px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 17px; color: #666; }
+    body.dark .loading-text { color: #aaa; }
+
+    /* ── App Container ── */
+    #appContainer {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Top Bar ── */
+    .top-bar {
+      background: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 200;
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .top-bar { background: #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+
+    .top-bar-title {
+      font-size: 17px;
+      font-weight: 500;
+      color: #1a1a2e;
+      flex-shrink: 0;
+    }
+    body.dark .top-bar-title { color: #e0e0e0; }
+
+    .top-spacer { flex: 1; min-width: 8px; }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 7px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      color: #1976d2;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #e3f2fd; }
+    .icon-btn .material-symbols-outlined { font-size: 22px; }
+    body.dark .icon-btn:hover { background: #1a2a3a; }
+
+    .action-btn {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      white-space: nowrap;
+      font-family: inherit;
+      flex-shrink: 0;
+      font-weight: 500;
+    }
+    .action-btn:hover { background: #1565c0; }
+    .action-btn.secondary { background: #546e7a; }
+    .action-btn.secondary:hover { background: #37474f; }
+    .action-btn.danger { background: #d32f2f; }
+    .action-btn.danger:hover { background: #b71c1c; }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      background: #fff;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .toolbar { background: #1a1a1a; }
+
+    .toolbar-sep {
+      width: 1px; height: 26px;
+      background: #e0e0e0;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    body.dark .toolbar-sep { background: #333; }
+
+    .tbtn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .tbtn:hover { background: #e3f2fd; }
+    .tbtn.active { background: #bbdefb; }
+    .tbtn .material-symbols-outlined { font-size: 19px; color: #333; }
+    body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+    body.dark .tbtn:hover { background: #2a2a2a; }
+    body.dark .tbtn.active { background: #0d2a4a; }
+
+    select.tb-select {
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 4px 7px;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+      background: #fff;
+      color: #333;
+    }
+    body.dark select.tb-select {
+      background: #252525 !important;
+      color: #ddd !important;
+      border-color: #444 !important;
+    }
+
+    /* ── Main Content ── */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 255px;
+      min-width: 255px;
+      background: #fff;
+      padding: 14px;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-255px);
+      width: 0; min-width: 0; padding: 0;
+      overflow: hidden;
+    }
+    body.dark .sidebar { background: #1a1a1a; border-color: #333; box-shadow: 2px 0 8px rgba(0,0,0,0.3); }
+
+    .sb-section { margin-bottom: 18px; }
+
+    .sb-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      margin-bottom: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    body.dark .sb-title { color: #666; }
+
+    .sb-label {
+      display: block;
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 3px;
+    }
+    body.dark .sb-label { color: #aaa; }
+
+    /* Team code box */
+    .team-code-box {
+      background: #f0f7ff;
+      border: 1px solid #dceeff;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 18px;
+    }
+    body.dark .team-code-box { background: #1a2a3a; border-color: #1e3a5a; }
+
+    .team-code-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .team-code-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1565c0;
+      letter-spacing: 1px;
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    body.dark .team-code-value { color: #90caf9; }
+
+    .copy-btn-sm {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      color: #1976d2;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .copy-btn-sm:hover { background: #bbdefb; }
+    .copy-btn-sm .material-symbols-outlined { font-size: 16px; }
+
+    /* Status row */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #d32f2f;
+      flex-shrink: 0;
+    }
+    .status-dot.connected { background: #2e7d32; }
+    .status-text { font-size: 12px; color: #777; }
+    body.dark .status-text { color: #aaa; }
+
+    /* Member list */
+    .member-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .member-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 9px;
+      border-radius: 8px;
+      transition: background 0.12s;
+      position: relative;
+    }
+    .member-item:hover { background: #e3f2fd; }
+    body.dark .member-item:hover { background: #1a2a3a; }
+
+    .member-avatar {
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      background: #1976d2;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .member-info { flex: 1; min-width: 0; }
+    .member-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    body.dark .member-name { color: #ddd; }
+
+    .member-badges { display: flex; gap: 4px; margin-top: 2px; flex-wrap: wrap; }
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge-admin { background: #fff3e0; color: #e65100; }
+    .badge-view { background: #fce4ec; color: #c62828; }
+    .badge-you { background: #e3f2fd; color: #1565c0; }
+
+    .member-actions { display: flex; gap: 3px; }
+    .mem-act-btn {
+      background: none; border: none;
+      border-radius: 5px; padding: 4px;
+      cursor: pointer;
+      display: flex; align-items: center;
+      color: #777;
+      transition: background 0.12s, color 0.12s;
+    }
+    .mem-act-btn:hover { background: #bbdefb; color: #1976d2; }
+    .mem-act-btn.danger:hover { background: #fce4ec; color: #d32f2f; }
+    .mem-act-btn .material-symbols-outlined { font-size: 15px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 24px 12px;
+      color: #aaa;
+      font-size: 12px;
+    }
+    .empty-state .material-symbols-outlined { font-size: 36px; color: #ddd; display: block; margin-bottom: 8px; }
+    body.dark .empty-state .material-symbols-outlined { color: #333; }
+
+    /* Collapse button */
+    .collapse-btn {
+      width: 100%;
+      padding: 8px;
+      background: #e3f2fd;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #1976d2;
+      font-weight: 600;
+      margin-top: auto;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .collapse-btn:hover { background: #bbdefb; }
+    body.dark .collapse-btn { background: #1a2a4a !important; color: #1976d2 !important; }
+
+    /* Expand button */
+    .expand-btn {
+      position: fixed;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 50;
+      display: none;
+    }
+    body.dark .expand-btn { background: #1a1a1a; }
+
+    /* ── Content Area ── */
+    .content-area {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      background: #f0f4f8;
+      min-width: 0;
+      padding: 36px 20px;
+    }
+    body.dark .content-area { background: #111; }
+
+    .document-paper {
+      width: 210mm;
+      min-height: 297mm;
+      background: #fff;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+      padding: 25mm;
+      outline: none;
+      border-radius: 4px;
+      font-size: 16px;
+      color: #333;
+      line-height: 1.6;
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      flex-shrink: 0;
+      transition: box-shadow 0.2s;
+    }
+    .document-paper:focus { box-shadow: 0 6px 32px rgba(0,0,0,0.14); }
+    body.dark .document-paper { background: #1e1e1e; color: #ddd; box-shadow: 0 4px 24px rgba(0,0,0,0.4); }
+
+    /* ── Modals ── */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.48);
+      z-index: 8000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.open { display: flex; }
+
+    .mbox {
+      background: #fff;
+      border-radius: 16px;
+      padding: 26px;
+      width: 90%;
+      max-height: 88vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+    }
+    .mbox.narrow { max-width: 420px; }
+    body.dark .mbox { background: #1a1a1a; color: #ddd; box-shadow: 0 16px 48px rgba(0,0,0,0.5); }
+
+    .mhdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .mtitle {
+      font-size: 19px;
+      font-weight: 500;
+      color: #333;
+    }
+    body.dark .mtitle { color: #e0e0e0; }
+
+    .mclose {
+      background: none; border: none;
+      cursor: pointer; padding: 4px;
+      border-radius: 50%;
+      display: flex; align-items: center;
+      transition: background 0.15s;
+    }
+    .mclose:hover { background: #f5f5f5; }
+    body.dark .mclose:hover { background: #2a2a2a; }
+    .mclose .material-symbols-outlined { font-size: 21px; color: #666; }
+    body.dark .mclose .material-symbols-outlined { color: #999; }
+
+    .mfooter {
+      display: flex;
+      gap: 9px;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    .frow { margin-bottom: 13px; }
+    .frow label {
+      display: block;
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 3px;
+    }
+    body.dark .frow label { color: #aaa; }
+
+    .finput {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 7px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      background: #fafafa;
+      color: #333;
+    }
+    .finput:focus {
+      border-color: #1976d2;
+      box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+      background: #fff;
+    }
+    body.dark .finput {
+      background: #252525 !important;
+      color: #ddd !important;
+      border-color: #444 !important;
+    }
+
+    .mbtn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .mbtn.primary { background: #1976d2; color: #fff; }
+    .mbtn.primary:hover { background: #1565c0; }
+    .mbtn.sec { background: #e0e0e0; color: #333; }
+    .mbtn.sec:hover { background: #d0d0d0; }
+    .mbtn.danger-btn { background: #d32f2f; color: #fff; }
+    .mbtn.danger-btn:hover { background: #b71c1c; }
+    body.dark .mbtn.sec { background: #333; color: #bbb; }
+    body.dark .mbtn.sec:hover { background: #3a3a3a; }
+
+    /* User manage modal */
+    .manage-user-card {
+      background: #f0f7ff;
+      border: 1px solid #dceeff;
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    body.dark .manage-user-card { background: #1a2a3a; border-color: #1e3a5a; }
+
+    .manage-user-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: #1976d2;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .manage-user-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+    body.dark .manage-user-name { color: #e0e0e0; }
+    .manage-user-sub { font-size: 12px; color: #777; margin-top: 1px; }
+    body.dark .manage-user-sub { color: #aaa; }
+
+    .manage-actions { display: flex; flex-direction: column; gap: 8px; }
+    .manage-action-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 8px;
+      background: #fafafa;
+      border: 1px solid #ebebeb;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .manage-action-row:hover { background: #e3f2fd; border-color: #bbdefb; }
+    .manage-action-row.danger:hover { background: #fce4ec; border-color: #f8bbd0; }
+    body.dark .manage-action-row { background: #252525; border-color: #333; }
+    body.dark .manage-action-row:hover { background: #1a2a3a; border-color: #1e3a5a; }
+    body.dark .manage-action-row.danger:hover { background: #2a1a1a; border-color: #4a1a1a; }
+
+    .manage-action-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+    }
+    body.dark .manage-action-label { color: #ddd; }
+    .manage-action-label.danger { color: #d32f2f; }
+    .manage-action-label .material-symbols-outlined { font-size: 18px; }
+
+    /* Toggle switch */
+    .sb-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+    .sb-toggle-label { font-size: 13px; color: #444; }
+    body.dark .sb-toggle-label { color: #bbb; }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px; height: 22px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ccc;
+      border-radius: 11px;
+      transition: 0.3s;
+    }
+    .toggle-slider::before {
+      position: absolute;
+      content: "";
+      height: 16px; width: 16px;
+      left: 3px; bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    input:checked + .toggle-slider { background: #1976d2; }
+    input:checked + .toggle-slider::before { transform: translateX(18px); }
+    body.dark .toggle-slider { background: #444; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      padding: 11px 20px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      z-index: 10002;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success, .toast.info { background: #1976d2; }
+    .toast.error { background: #d32f2f; }
+    #toastStack { pointer-events: none; }
+
+    /* ── Tip Box ── */
+    #tipBox {
+      position: fixed;
+      bottom: 80px;
+      right: 18px;
+      width: 284px;
+      background: #1976d2;
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+      z-index: 9990;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+      font-family: inherit;
+      pointer-events: none;
+    }
+    #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+    body.dark #tipBox { background: #0d47a1; }
+
+    .tip-prog { height: 3px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 11px; }
+    .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+    .tip-text { font-size: 13px; line-height: 1.5; min-height: 58px; }
+    .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+    .tip-btn {
+      flex: 1;
+      border: none;
+      padding: 6px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .tip-prev { background: rgba(255,255,255,0.15); color: #fff; }
+    .tip-next { background: #fff; color: #1976d2; }
+
+    /* View-only overlay */
+    #viewOnlyBanner {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      background: rgba(211,47,47,0.92);
+      color: #fff;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 5px;
+      border-radius: 4px 4px 0 0;
+      display: none;
+      pointer-events: none;
+      letter-spacing: 0.3px;
+    }
+    .doc-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 210mm;
+    }
+
+    /* divider in sidebar */
+    .sb-divider {
+      height: 1px;
+      background: #f0f0f0;
+      margin: 12px 0;
+    }
+    body.dark .sb-divider { background: #2a2a2a; }
+  </style>
+</head>
+<body>
+
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading DocuWrite Collab...</div>
+</div>
+
+<div id="appContainer">
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="top-bar-title">DocuWrite Collab</span>
+    <div class="top-spacer"></div>
+    <button class="action-btn secondary" id="downloadBtn">
+      <span class="material-symbols-outlined" style="font-size:16px">download</span>
+      Download
+    </button>
+    <button class="icon-btn" id="themeBtn" title="Toggle theme">
+      <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+    </button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="tbtn" data-command="bold" title="Bold"><span class="material-symbols-outlined">format_bold</span></button>
+    <button class="tbtn" data-command="italic" title="Italic"><span class="material-symbols-outlined">format_italic</span></button>
+    <button class="tbtn" data-command="underline" title="Underline"><span class="material-symbols-outlined">format_underlined</span></button>
+    <button class="tbtn" data-command="strikeThrough" title="Strikethrough"><span class="material-symbols-outlined">strikethrough_s</span></button>
+    <div class="toolbar-sep"></div>
+    <select class="tb-select" id="formatBlock" title="Heading">
+      <option value="p">Paragraph</option>
+      <option value="h1">Heading 1</option>
+      <option value="h2">Heading 2</option>
+      <option value="h3">Heading 3</option>
+    </select>
+    <select class="tb-select" id="fontSize" title="Font size">
+      <option value="2">Small</option>
+      <option value="3" selected>Normal</option>
+      <option value="4">Medium</option>
+      <option value="5">Large</option>
+      <option value="6">X-Large</option>
+    </select>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" data-command="justifyLeft" title="Align left"><span class="material-symbols-outlined">format_align_left</span></button>
+    <button class="tbtn" data-command="justifyCenter" title="Align center"><span class="material-symbols-outlined">format_align_center</span></button>
+    <button class="tbtn" data-command="justifyRight" title="Align right"><span class="material-symbols-outlined">format_align_right</span></button>
+    <button class="tbtn" data-command="justifyFull" title="Justify"><span class="material-symbols-outlined">format_align_justify</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" data-command="insertUnorderedList" title="Bullet list"><span class="material-symbols-outlined">format_list_bulleted</span></button>
+    <button class="tbtn" data-command="insertOrderedList" title="Numbered list"><span class="material-symbols-outlined">format_list_numbered</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" data-command="undo" title="Undo"><span class="material-symbols-outlined">undo</span></button>
+    <button class="tbtn" data-command="redo" title="Redo"><span class="material-symbols-outlined">redo</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" id="clearDocBtn" title="Clear document"><span class="material-symbols-outlined">delete_sweep</span></button>
+  </div>
+
+  <!-- Main content -->
+  <div class="main-content">
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+
+      <div class="sb-section">
+        <div class="sb-title">Team Session</div>
+        <div class="team-code-box">
+          <div class="sb-label">Team Code</div>
+          <div class="team-code-row">
+            <div class="team-code-value" id="teamCodeDisplay">—</div>
+            <button class="copy-btn-sm" id="copyCodeBtn" title="Copy code">
+              <span class="material-symbols-outlined">content_copy</span>
+            </button>
+          </div>
+          <div class="status-row">
+            <div class="status-dot" id="statusDot"></div>
+            <span class="status-text" id="statusText">Not connected</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="action-btn" id="leaveBtn" style="flex:1;justify-content:center;font-size:12px;padding:7px 10px;">
+            <span class="material-symbols-outlined" style="font-size:15px">logout</span>
+            Leave
+          </button>
+        </div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <div class="sb-section" style="flex:1;">
+        <div class="sb-title" style="display:flex;align-items:center;justify-content:space-between;">
+          <span>Members</span>
+          <span id="memberCount" style="font-size:11px;font-weight:700;color:#1976d2;">0</span>
+        </div>
+        <div class="member-list" id="memberList">
+          <div class="empty-state">
+            <span class="material-symbols-outlined">group_off</span>
+            No members yet
+          </div>
+        </div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <div class="sb-section">
+        <div class="sb-title">Permissions</div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">My edit access</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="editToggle" checked disabled>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">chevron_left</span>
+        Hide Panel
+      </button>
+    </div>
+
+    <!-- Expand btn -->
+    <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+      <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+    </button>
+
+    <!-- Content area -->
+    <div class="content-area">
+      <div class="doc-wrapper">
+        <div id="viewOnlyBanner">View Only — Editing Disabled</div>
+        <div id="documentPaper" class="document-paper" contenteditable="true" spellcheck="true"></div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- Join/Create Modal -->
+<div class="modal open" id="joinModal">
+  <div class="mbox narrow">
+    <div class="mhdr">
+      <div class="mtitle">Join or Create Team</div>
+    </div>
+    <div class="frow">
+      <label>Your Name</label>
+      <input type="text" class="finput" id="inputName" placeholder="Enter your display name" maxlength="32">
+    </div>
+    <div class="frow">
+      <label>Team Code <span style="color:#999;font-weight:400;">(leave blank to create a new team)</span></label>
+      <input type="text" class="finput" id="inputCode" placeholder="Paste team code here">
+    </div>
+    <div class="mfooter">
+      <button class="mbtn primary" id="joinBtn">Join Team</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Member Modal -->
+<div class="modal" id="manageModal">
+  <div class="mbox narrow">
+    <div class="mhdr">
+      <div class="mtitle">Manage Member</div>
+      <button class="mclose" onclick="closeManageModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="manage-user-card">
+      <div class="manage-user-avatar" id="manageAvatar">U</div>
+      <div>
+        <div class="manage-user-name" id="manageName">User</div>
+        <div class="manage-user-sub" id="manageSub">Online</div>
+      </div>
+    </div>
+    <div class="manage-actions">
+      <div class="manage-action-row" id="toggleEditRow" onclick="doToggleEdit()">
+        <div class="manage-action-label" id="toggleEditLabel">
+          <span class="material-symbols-outlined" id="toggleEditIcon">edit_off</span>
+          <span id="toggleEditText">Set to View Only</span>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:16px;color:#bbb;">chevron_right</span>
+      </div>
+      <div class="manage-action-row danger" onclick="doKickUser()">
+        <div class="manage-action-label danger">
+          <span class="material-symbols-outlined">person_remove</span>
+          Remove from Team
+        </div>
+        <span class="material-symbols-outlined" style="font-size:16px;color:#bbb;">chevron_right</span>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="closeManageModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast stack -->
+<div id="toastStack"></div>
+
+<!-- Tip box -->
+<div id="tipBox">
+  <div class="tip-prog"><div class="tip-bar" id="tipBar"></div></div>
+  <div class="tip-text" id="tipText"></div>
+  <div class="tip-actions">
+    <button class="tip-btn tip-prev" onclick="tipNav(-1)">Prev</button>
+    <button class="tip-btn tip-next" onclick="tipNav(1)">Next</button>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  // ── DOM refs ──
+  const loadingScreen   = document.getElementById('loadingScreen');
+  const appContainer    = document.getElementById('appContainer');
+  const joinModal       = document.getElementById('joinModal');
+  const inputName       = document.getElementById('inputName');
+  const inputCode       = document.getElementById('inputCode');
+  const joinBtn         = document.getElementById('joinBtn');
+  const teamCodeDisplay = document.getElementById('teamCodeDisplay');
+  const copyCodeBtn     = document.getElementById('copyCodeBtn');
+  const memberList      = document.getElementById('memberList');
+  const memberCount     = document.getElementById('memberCount');
+  const documentPaper   = document.getElementById('documentPaper');
+  const statusDot       = document.getElementById('statusDot');
+  const statusText      = document.getElementById('statusText');
+  const downloadBtn     = document.getElementById('downloadBtn');
+  const leaveBtn        = document.getElementById('leaveBtn');
+  const themeBtn        = document.getElementById('themeBtn');
+  const themeIcon       = document.getElementById('themeIcon');
+  const editToggle      = document.getElementById('editToggle');
+  const viewOnlyBanner  = document.getElementById('viewOnlyBanner');
+  const manageModal     = document.getElementById('manageModal');
+  const manageAvatar    = document.getElementById('manageAvatar');
+  const manageName      = document.getElementById('manageName');
+  const manageSub       = document.getElementById('manageSub');
+  const toggleEditIcon  = document.getElementById('toggleEditIcon');
+  const toggleEditText  = document.getElementById('toggleEditText');
+  const clearDocBtn     = document.getElementById('clearDocBtn');
+
+  // ── State ──
+  let peer = null, peerId = null, userName = null;
+  let connections = {}, teamMembers = {};
+  let isAdmin = false, teamCode = null;
+  let docContent = '';
+  let canEdit = true;
+  let selectedMemberId = null;
+  let isBroadcasting = false;
+
+  // ── Theme ──
+  function applyTheme() {
+    const isDark = document.body.classList.contains('dark');
+    themeIcon.textContent = isDark ? 'light_mode' : 'dark_mode';
+  }
+  function toggleTheme() {
+    document.body.classList.toggle('dark');
+    const isDark = document.body.classList.contains('dark');
+    document.cookie = `toolsuite_theme=${isDark ? 'dark' : 'light'}; path=/; max-age=31536000; SameSite=Lax`;
+    applyTheme();
+  }
+  if (document.documentElement.classList.contains('dark')) document.body.classList.add('dark');
+  applyTheme();
+  themeBtn.addEventListener('click', toggleTheme);
+
+  // ── Init ──
+  setTimeout(() => {
+    loadingScreen.style.display = 'none';
+    appContainer.style.display = 'flex';
+  }, 900);
+
+  // ── Toolbar ──
+  document.querySelectorAll('.tbtn[data-command]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!canEdit) { showToast('You are in view-only mode', 'error'); return; }
+      const cmd = btn.dataset.command;
+      document.execCommand(cmd, false, null);
+      documentPaper.focus();
+    });
+  });
+
+  document.getElementById('formatBlock').addEventListener('change', function () {
+    if (!canEdit) return;
+    document.execCommand('formatBlock', false, this.value);
+    documentPaper.focus();
+  });
+  document.getElementById('fontSize').addEventListener('change', function () {
+    if (!canEdit) return;
+    document.execCommand('fontSize', false, this.value);
+    documentPaper.focus();
+  });
+
+  clearDocBtn.addEventListener('click', () => {
+    if (!canEdit) { showToast('You are in view-only mode', 'error'); return; }
+    if (confirm('Clear all document content?')) {
+      documentPaper.innerHTML = '';
+      broadcastDoc();
+    }
+  });
+
+  // ── Join/Create ──
+  joinBtn.addEventListener('click', handleJoin);
+  inputName.addEventListener('keydown', e => { if (e.key === 'Enter') handleJoin(); });
+  inputCode.addEventListener('keydown', e => { if (e.key === 'Enter') handleJoin(); });
+
+  function handleJoin() {
+    const name = inputName.value.trim();
+    const code = inputCode.value.trim();
+    if (!name) { showToast('Please enter your name', 'error'); return; }
+    userName = name;
+    isAdmin = !code;
+    teamCode = code || null;
+    joinModal.classList.remove('open');
+    initPeer();
+  }
+
+  function initPeer() {
+    peer = new Peer({ host: '0.peerjs.com', port: 443, secure: true });
+
+    peer.on('open', id => {
+      peerId = id;
+      setConnected(true);
+      if (isAdmin) {
+        teamCode = peerId;
+        teamCodeDisplay.textContent = teamCode;
+        addMember(peerId, userName, true, true);
+        showToast('Team created. Share the code!');
+      } else {
+        teamCodeDisplay.textContent = teamCode;
+        connectToHost(teamCode);
+      }
+    });
+
+    peer.on('connection', conn => {
+      if (isAdmin) setupConn(conn);
+    });
+
+    peer.on('error', err => {
+      setConnected(false);
+      showToast('Connection error: ' + err.message, 'error');
+    });
+
+    peer.on('disconnected', () => {
+      setConnected(false);
+      setTimeout(() => { if (peer && !peer.destroyed) peer.reconnect(); }, 2000);
+    });
+  }
+
+  function connectToHost(code) {
+    const conn = peer.connect(code, {
+      metadata: { userName, canEdit: true },
+      reliable: true
+    });
+    setupConn(conn);
+  }
+
+  function setupConn(conn) {
+    const id = conn.peer;
+    conn.on('open', () => {
+      connections[id] = conn;
+      if (isAdmin) {
+        const meta = conn.metadata || {};
+        addMember(id, meta.userName || 'Guest', false, true);
+        sendTo(conn, {
+          type: 'team-state',
+          members: teamMembers,
+          content: documentPaper.innerHTML
+        });
+        broadcast({ type: 'member-join', member: { id, name: meta.userName || 'Guest', isAdmin: false, canEdit: true } }, id);
+        showToast((meta.userName || 'Guest') + ' joined');
+      } else {
+        setConnected(true);
+      }
+    });
+    conn.on('data', data => handleData(id, data));
+    conn.on('close', () => {
+      const name = teamMembers[id]?.name || 'A member';
+      removeMember(id);
+      delete connections[id];
+      showToast(name + ' left the team');
+    });
+    conn.on('error', () => {
+      removeMember(id);
+      delete connections[id];
+    });
+  }
+
+  function handleData(fromId, data) {
+    if (typeof data !== 'object') return;
+    switch (data.type) {
+      case 'team-state':
+        teamMembers = data.members;
+        renderMembers();
+        if (!isBroadcasting) documentPaper.innerHTML = data.content || '';
+        docContent = documentPaper.innerHTML;
+        break;
+      case 'doc-update':
+        if (!isBroadcasting) {
+          const sel = saveSelection();
+          documentPaper.innerHTML = data.content;
+          restoreSelection(sel);
+          docContent = data.content;
+        }
+        break;
+      case 'member-join':
+        addMember(data.member.id, data.member.name, data.member.isAdmin, data.member.canEdit);
+        showToast(data.member.name + ' joined');
+        break;
+      case 'member-leave':
+        removeMember(data.peerId);
+        break;
+      case 'member-update':
+        if (teamMembers[data.userId]) teamMembers[data.userId].canEdit = data.canEdit;
+        if (data.userId === peerId) setEditAccess(data.canEdit);
+        renderMembers();
+        break;
+      case 'toggle-edit':
+        setEditAccess(data.canEdit);
+        break;
+      case 'kick':
+        showToast('You have been removed from the team', 'error');
+        setTimeout(leaveTeam, 2000);
+        break;
+    }
+  }
+
+  function setEditAccess(val) {
+    canEdit = val;
+    documentPaper.contentEditable = val ? 'true' : 'false';
+    editToggle.checked = val;
+    viewOnlyBanner.style.display = val ? 'none' : 'block';
+    if (!val) showToast('Your editing access has been removed', 'error');
+    else showToast('Editing access granted');
+  }
+
+  // ── Document changes ──
+  documentPaper.addEventListener('input', () => {
+    if (!canEdit) return;
+    broadcastDoc();
+  });
+
+  function broadcastDoc() {
+    const content = documentPaper.innerHTML;
+    docContent = content;
+    isBroadcasting = true;
+    broadcast({ type: 'doc-update', content });
+    clearTimeout(broadcastDoc._t);
+    broadcastDoc._t = setTimeout(() => { isBroadcasting = false; }, 200);
+  }
+
+  documentPaper.addEventListener('paste', e => {
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    document.execCommand('insertText', false, text);
+  });
+
+  // ── Members ──
+  function addMember(id, name, adminFlag, canEditFlag) {
+    teamMembers[id] = { id, name, isAdmin: adminFlag, canEdit: canEditFlag, isSelf: id === peerId };
+    renderMembers();
+  }
+
+  function removeMember(id) {
+    delete teamMembers[id];
+    renderMembers();
+  }
+
+  function renderMembers() {
+    const entries = Object.values(teamMembers);
+    memberCount.textContent = entries.length;
+    if (!entries.length) {
+      memberList.innerHTML = '<div class="empty-state"><span class="material-symbols-outlined">group_off</span>No members yet</div>';
+      return;
+    }
+    memberList.innerHTML = '';
+    entries.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'member-item';
+      const badges = [];
+      if (m.isAdmin) badges.push('<span class="badge badge-admin">Host</span>');
+      if (!m.canEdit) badges.push('<span class="badge badge-view">View</span>');
+      if (m.isSelf) badges.push('<span class="badge badge-you">You</span>');
+      div.innerHTML = `
+        <div class="member-avatar">${m.name.charAt(0).toUpperCase()}</div>
+        <div class="member-info">
+          <div class="member-name">${escHtml(m.name)}</div>
+          ${badges.length ? '<div class="member-badges">' + badges.join('') + '</div>' : ''}
+        </div>
+        ${isAdmin && !m.isAdmin && !m.isSelf ? `
+          <div class="member-actions">
+            <button class="mem-act-btn" title="Manage" data-id="${m.id}">
+              <span class="material-symbols-outlined">manage_accounts</span>
+            </button>
+          </div>` : ''}
+      `;
+      if (isAdmin && !m.isAdmin && !m.isSelf) {
+        div.querySelector('.mem-act-btn').addEventListener('click', () => openManageModal(m.id));
+      }
+      memberList.appendChild(div);
+    });
+  }
+
+  // ── Manage Modal ──
+  function openManageModal(id) {
+    const m = teamMembers[id];
+    if (!m) return;
+    selectedMemberId = id;
+    manageAvatar.textContent = m.name.charAt(0).toUpperCase();
+    manageName.textContent = m.name;
+    manageSub.textContent = m.canEdit ? 'Can edit' : 'View only';
+    toggleEditIcon.textContent = m.canEdit ? 'edit_off' : 'edit';
+    toggleEditText.textContent = m.canEdit ? 'Set to View Only' : 'Allow Editing';
+    manageModal.classList.add('open');
+  }
+
+  window.closeManageModal = function () { manageModal.classList.remove('open'); };
+
+  window.doToggleEdit = function () {
+    const m = teamMembers[selectedMemberId];
+    if (!m) return;
+    const newVal = !m.canEdit;
+    m.canEdit = newVal;
+    if (connections[selectedMemberId]) sendTo(connections[selectedMemberId], { type: 'toggle-edit', canEdit: newVal });
+    broadcast({ type: 'member-update', userId: selectedMemberId, canEdit: newVal });
+    renderMembers();
+    showToast(m.name + ' can now ' + (newVal ? 'edit' : 'only view'));
+    closeManageModal();
+  };
+
+  window.doKickUser = function () {
+    const m = teamMembers[selectedMemberId];
+    if (!m) return;
+    if (connections[selectedMemberId]) {
+      sendTo(connections[selectedMemberId], { type: 'kick' });
+      connections[selectedMemberId].close();
+      delete connections[selectedMemberId];
+    }
+    broadcast({ type: 'member-leave', peerId: selectedMemberId });
+    removeMember(selectedMemberId);
+    showToast(m.name + ' has been removed');
+    closeManageModal();
+  };
+
+  // ── Leave ──
+  leaveBtn.addEventListener('click', leaveTeam);
+
+  function leaveTeam() {
+    broadcast({ type: 'member-leave', peerId });
+    Object.values(connections).forEach(c => c.close());
+    if (peer && !peer.destroyed) peer.destroy();
+    connections = {}; teamMembers = {};
+    peer = null; peerId = null; teamCode = null; isAdmin = false;
+    canEdit = true;
+    documentPaper.innerHTML = '';
+    documentPaper.contentEditable = 'true';
+    viewOnlyBanner.style.display = 'none';
+    editToggle.checked = true;
+    teamCodeDisplay.textContent = '—';
+    setConnected(false);
+    renderMembers();
+    joinModal.classList.add('open');
+    showToast('You left the team');
+  }
+
+  // ── Copy code ──
+  copyCodeBtn.addEventListener('click', () => {
+    if (!teamCode) { showToast('No code yet', 'error'); return; }
+    navigator.clipboard.writeText(teamCode).then(() => {
+      showToast('Team code copied');
+      copyCodeBtn.innerHTML = '<span class="material-symbols-outlined">check</span>';
+      setTimeout(() => { copyCodeBtn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>'; }, 2000);
+    });
+  });
+
+  // ── Download ──
+  downloadBtn.addEventListener('click', async () => {
+    try {
+      const { default: html2canvas } = await import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.esm.min.js').catch(() => null) || {};
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      document.head.appendChild(script);
+      script.onload = async () => {
+        const canvas = await html2canvas(documentPaper, { scale: 2, useCORS: true, logging: false });
+        const a = document.createElement('a');
+        a.download = 'DocuWriteCollab_' + new Date().toISOString().slice(0,10) + '.jpg';
+        a.href = canvas.toDataURL('image/jpeg', 0.9);
+        a.click();
+        script.remove();
+      };
+    } catch { showToast('Download failed', 'error'); }
+  });
+
+  // ── Status ──
+  function setConnected(val) {
+    statusDot.classList.toggle('connected', val);
+    statusText.textContent = val ? 'Connected' : 'Not connected';
+  }
+
+  // ── Sidebar toggle ──
+  window.toggleSidebar = function () {
+    const sb = document.getElementById('sidebar');
+    const eb = document.getElementById('expandBtn');
+    const isCollapsed = sb.classList.contains('collapsed');
+    sb.classList.toggle('collapsed');
+    eb.style.display = isCollapsed ? 'none' : 'block';
+  };
+
+  // ── Helpers ──
+  function sendTo(conn, msg) { if (conn.open) conn.send(msg); }
+  function broadcast(msg, excludeId = null) {
+    Object.entries(connections).forEach(([id, conn]) => {
+      if (id !== excludeId && conn.open) conn.send(msg);
+    });
+  }
+  function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function saveSelection() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return null;
+    const range = sel.getRangeAt(0);
+    return { startContainer: range.startContainer, startOffset: range.startOffset, endContainer: range.endContainer, endOffset: range.endOffset };
+  }
+  function restoreSelection(saved) {
+    if (!saved) return;
+    try {
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.setStart(saved.startContainer, saved.startOffset);
+      range.setEnd(saved.endContainer, saved.endOffset);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (_) {}
+  }
+
+  // ── Toast ──
+  window.showToast = function (message, type = 'info', duration = 2800) {
+    const stack = document.getElementById('toastStack');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${type === 'error' ? 'error' : 'check_circle'}</span>${message}`;
+    stack.appendChild(toast);
+    requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 350);
+    }, duration);
+  };
+
+  // ── Tips ──
+  const TIPS = [
+    'Create a new team by entering your name and clicking Join Team. Share your team code with others.',
+    'Paste a team code to join an existing session. All edits sync in real time across all members.',
+    'As host, click the manage icon next to any member to toggle their editing access or remove them.',
+    'Toggle dark mode using the moon icon in the top bar. The theme is saved for all your tools.',
+    'Use the toolbar to format text. When you are done, download the document as a JPG.'
+  ];
+  let tipIndex = 0;
+  window.tipNav = function (dir) {
+    tipIndex = Math.max(0, Math.min(TIPS.length - 1, tipIndex + dir));
+    if (tipIndex === TIPS.length - 1 && dir === 1) dismissTips();
+    else showTipAt(tipIndex);
+  };
+  function showTipAt(i) {
+    document.getElementById('tipText').textContent = TIPS[i];
+    document.getElementById('tipBar').style.width = ((i + 1) / TIPS.length * 100) + '%';
+    const box = document.getElementById('tipBox');
+    box.classList.remove('hide');
+    box.classList.add('show');
+  }
+  function dismissTips() {
+    const box = document.getElementById('tipBox');
+    box.classList.replace('show', 'hide');
+    try { localStorage.setItem('collab_tips_seen', '1'); } catch (_) {}
+  }
+  setTimeout(() => {
+    try { if (!localStorage.getItem('collab_tips_seen')) showTipAt(0); } catch (_) { showTipAt(0); }
+  }, 1500);
+
+});
+</script>
+</body>
+</html>

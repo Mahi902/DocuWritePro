@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frontend IDE</title>
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.5/addon/search/searchcursor.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <script>
+    (function() {
+      const match = document.cookie.split('; ').find(r => r.startsWith('toolsuite_theme='));
+      if (match && match.split('=')[1] === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+
+  <style>
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      overflow: hidden;
+      height: 100vh;
+    }
+    body.dark { background: #111; }
+
+    /* ── Loading Screen ── */
+    #loadingScreen {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    body.dark #loadingScreen { background: #1a1a1a; }
+    .spinner {
+      width: 56px; height: 56px;
+      border: 4px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    body.dark .spinner { border-color: #333; border-top-color: #1976d2; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 17px; color: #666; }
+    body.dark .loading-text { color: #aaa; }
+
+    /* ── App Container ── */
+    #appContainer {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Top Bar ── */
+    .top-bar {
+      background: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 200;
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .top-bar { background: #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+
+    .top-bar-title {
+      font-size: 17px;
+      font-weight: 500;
+      color: #1a1a2e;
+      flex-shrink: 0;
+    }
+    body.dark .top-bar-title { color: #e0e0e0; }
+
+    .top-spacer { flex: 1; min-width: 8px; }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 7px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      color: #1976d2;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #e3f2fd; }
+    .icon-btn .material-symbols-outlined { font-size: 22px; }
+    body.dark .icon-btn:hover { background: #1a2a3a; }
+
+    .action-btn {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      white-space: nowrap;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .action-btn:hover { background: #1565c0; }
+    .action-btn .material-symbols-outlined { font-size: 18px; }
+
+    .action-btn.secondary { background: #546e7a; }
+    .action-btn.secondary:hover { background: #37474f; }
+
+    .action-btn.active-save {
+      background: #388e3c;
+    }
+    .action-btn.active-save:hover { background: #2e7d32; }
+
+    /* ── Tabs Bar (Toolbar role) ── */
+    .tabs-bar {
+      background: #fff;
+      padding: 0 12px;
+      display: flex;
+      align-items: stretch;
+      gap: 2px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+      min-height: 44px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    body.dark .tabs-bar {
+      background: #1a1a1a;
+      border-bottom-color: #333;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .tab-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 0 14px;
+      border: none;
+      background: transparent;
+      color: #777;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: inherit;
+      position: relative;
+      flex-shrink: 0;
+      transition: color 0.15s, background 0.15s;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+    .tab-item:hover { background: #e3f2fd; color: #1976d2; }
+    .tab-item.active { color: #1976d2; border-bottom-color: #1976d2; background: #f5faff; }
+    body.dark .tab-item { color: #aaa; }
+    body.dark .tab-item:hover { background: #1a2a3a; color: #90caf9; }
+    body.dark .tab-item.active { color: #90caf9; border-bottom-color: #1976d2; background: #111e2d; }
+
+    .tab-color-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .tab-close-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 2px;
+      border-radius: 4px;
+      color: #aaa;
+      transition: background 0.15s, color 0.15s;
+      opacity: 0;
+    }
+    .tab-item:hover .tab-close-btn,
+    .tab-item.active .tab-close-btn { opacity: 1; }
+    .tab-close-btn:hover { background: #fce4ec; color: #d32f2f; }
+    .tab-close-btn .material-symbols-outlined { font-size: 15px; }
+
+    .tabs-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      padding-left: 8px;
+      flex-shrink: 0;
+    }
+
+    .tbtn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+      font-family: inherit;
+    }
+    .tbtn:hover { background: #e3f2fd; }
+    .tbtn.active { background: #bbdefb; }
+    .tbtn .material-symbols-outlined { font-size: 19px; color: #333; }
+    body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+    body.dark .tbtn:hover { background: #1a2a3a; }
+    body.dark .tbtn.active { background: #0d2a4a; }
+
+    .toolbar-sep {
+      width: 1px;
+      height: 26px;
+      background: #e0e0e0;
+      margin: 0 4px;
+      flex-shrink: 0;
+      align-self: center;
+    }
+    body.dark .toolbar-sep { background: #333; }
+
+    /* ── Main Content ── */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 255px;
+      min-width: 255px;
+      background: #fff;
+      padding: 14px;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-255px);
+      width: 0; min-width: 0; padding: 0;
+      overflow: hidden;
+    }
+    body.dark .sidebar { background: #1a1a1a; border-color: #333; box-shadow: 2px 0 8px rgba(0,0,0,0.4); }
+
+    .sb-section { margin-bottom: 18px; }
+    .sb-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      margin-bottom: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    body.dark .sb-title { color: #666; }
+
+    .sb-label {
+      display: block;
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 4px;
+    }
+    body.dark .sb-label { color: #aaa; }
+
+    .sb-input {
+      width: 100%;
+      padding: 7px 9px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #fafafa;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      color: #333;
+    }
+    .sb-input:focus {
+      border-color: #1976d2;
+      box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+      background: #fff;
+    }
+    body.dark .sb-input {
+      background: #252525 !important;
+      color: #ddd !important;
+      border-color: #444 !important;
+    }
+    body.dark .sb-input:focus { border-color: #1976d2 !important; }
+
+    .sb-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+
+    .sb-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+    .sb-toggle-label { font-size: 13px; color: #444; }
+    body.dark .sb-toggle-label { color: #bbb; }
+
+    .toggle-switch {
+      position: relative;
+      width: 40px; height: 22px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ccc;
+      border-radius: 11px;
+      transition: 0.3s;
+    }
+    .toggle-slider::before {
+      position: absolute;
+      content: "";
+      height: 16px; width: 16px;
+      left: 3px; bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    input:checked + .toggle-slider { background: #1976d2; }
+    input:checked + .toggle-slider::before { transform: translateX(18px); }
+    body.dark .toggle-slider { background: #444; }
+
+    .sb-stat {
+      font-size: 12px;
+      color: #555;
+      background: #f5f5f5;
+      border-radius: 6px;
+      padding: 6px 9px;
+      margin-bottom: 6px;
+    }
+    body.dark .sb-stat { background: #252525; color: #aaa; }
+
+    .collapse-btn {
+      width: 100%;
+      padding: 8px;
+      background: #e3f2fd;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #1976d2;
+      font-weight: 600;
+      margin-top: auto;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .collapse-btn:hover { background: #bbdefb; }
+    body.dark .collapse-btn { background: #1a2a4a !important; color: #90caf9 !important; }
+    .collapse-btn .material-symbols-outlined { font-size: 18px; }
+
+    .expand-btn {
+      position: fixed;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 50;
+      display: none;
+    }
+    body.dark .expand-btn { background: #1a1a1a; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+
+    /* ── Editor / Preview Area ── */
+    .content-area {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      background: #f0f4f8;
+    }
+    body.dark .content-area { background: #111; }
+
+    .editor-preview-wrap {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+      min-height: 0;
+    }
+    .editor-preview-wrap.code-only { grid-template-columns: 1fr; }
+    .editor-preview-wrap.code-only #previewPane { display: none; }
+    .editor-preview-wrap.preview-only { grid-template-columns: 1fr; }
+    .editor-preview-wrap.preview-only #editorPane { display: none; }
+
+    #editorPane {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #previewPane {
+      border-left: 1px solid #e0e0e0;
+      background: #fff;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    body.dark #previewPane { border-left-color: #333; background: #1a1a1a; }
+
+    .pane-header {
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #888;
+      background: #fff;
+      border-bottom: 1px solid #e0e0e0;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    body.dark .pane-header { background: #1a1a1a; border-bottom-color: #333; color: #666; }
+
+    .CodeMirror {
+      height: 100% !important;
+      font-size: 13px;
+      line-height: 1.65;
+      font-family: 'Fira Code', 'Consolas', 'Monaco', monospace !important;
+    }
+    .CodeMirror-scroll { height: 100%; }
+
+    #cmWrapper {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #previewFrame {
+      width: 100%;
+      flex: 1;
+      border: none;
+    }
+
+    /* ── Bottom Status Bar ── */
+    .status-bar {
+      background: #1976d2;
+      color: #fff;
+      padding: 4px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .status-bar { background: #0d47a1; }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      opacity: 0.9;
+    }
+    .status-item .material-symbols-outlined { font-size: 14px; }
+    .status-sep {
+      width: 1px;
+      height: 14px;
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* ── Find Panel ── */
+    .find-panel {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      display: none;
+      z-index: 100;
+      gap: 7px;
+      align-items: center;
+    }
+    .find-panel.open { display: flex; }
+    body.dark .find-panel { background: #1e1e1e; border-color: #333; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+
+    .find-input {
+      padding: 6px 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 7px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      width: 180px;
+      background: #fafafa;
+      color: #333;
+      transition: border-color 0.2s;
+    }
+    .find-input:focus { border-color: #1976d2; background: #fff; }
+    body.dark .find-input { background: #252525 !important; color: #ddd !important; border-color: #444 !important; }
+
+    .find-btn {
+      padding: 6px 11px;
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .find-btn:hover { background: #1565c0; }
+
+    /* ── Modal ── */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.48);
+      z-index: 8000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal.open { display: flex; }
+
+    .mbox {
+      background: #fff;
+      border-radius: 16px;
+      padding: 26px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 88vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+    }
+    body.dark .mbox { background: #1e1e1e; color: #ddd; box-shadow: 0 16px 48px rgba(0,0,0,0.5); }
+
+    .mhdr {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+    .mtitle { font-size: 19px; font-weight: 500; color: #333; }
+    body.dark .mtitle { color: #e0e0e0; }
+
+    .mclose {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      transition: background 0.15s;
+    }
+    .mclose:hover { background: #f5f5f5; }
+    body.dark .mclose:hover { background: #333; }
+    .mclose .material-symbols-outlined { font-size: 21px; color: #666; }
+    body.dark .mclose .material-symbols-outlined { color: #aaa; }
+
+    .frow { margin-bottom: 13px; }
+    .frow label { display: block; font-size: 12px; color: #777; margin-bottom: 4px; }
+    body.dark .frow label { color: #aaa; }
+    .finput {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #e0e0e0;
+      border-radius: 7px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+      color: #333;
+      background: #fafafa;
+    }
+    .finput:focus { border-color: #1976d2; background: #fff; }
+    body.dark .finput { background: #252525 !important; color: #ddd !important; border-color: #444 !important; }
+
+    .mfooter {
+      display: flex;
+      gap: 9px;
+      justify-content: flex-end;
+      margin-top: 18px;
+    }
+
+    .mbtn {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      border: none;
+      transition: background 0.15s;
+    }
+    .mbtn.primary { background: #1976d2; color: #fff; }
+    .mbtn.primary:hover { background: #1565c0; }
+    .mbtn.sec { background: #e0e0e0; color: #333; }
+    .mbtn.sec:hover { background: #d0d0d0; }
+    .mbtn.danger-btn { background: #d32f2f; color: #fff; }
+    .mbtn.danger-btn:hover { background: #b71c1c; }
+    body.dark .mbtn.sec { background: #333; color: #bbb; }
+    body.dark .mbtn.sec:hover { background: #3a3a3a; }
+
+    .modal-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: #333;
+    }
+    .modal-menu-item:hover { background: #e3f2fd; color: #1976d2; }
+    body.dark .modal-menu-item { color: #ddd; }
+    body.dark .modal-menu-item:hover { background: #1a2a3a; color: #90caf9; }
+    .modal-menu-item .material-symbols-outlined { font-size: 22px; color: #1976d2; }
+    .modal-menu-item-text .mmt-title { font-size: 14px; font-weight: 500; }
+    .modal-menu-item-text .mmt-sub { font-size: 11px; color: #999; }
+    body.dark .modal-menu-item-text .mmt-sub { color: #666; }
+
+    /* ── Context Menu ── */
+    .win-ctx-menu {
+      position: fixed;
+      background: #fff;
+      border: 1px solid #d0d0d0;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      z-index: 9800;
+      min-width: 210px;
+      padding: 4px 0;
+      display: none;
+      font-size: 13px;
+    }
+    .win-ctx-menu.open { display: block; }
+    body.dark .win-ctx-menu { background: #1e1e1e; border-color: #333; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+
+    .wcm-item {
+      padding: 7px 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: #222;
+      border-radius: 4px;
+      margin: 1px 4px;
+      transition: background 0.1s;
+      white-space: nowrap;
+    }
+    .wcm-item:hover { background: #e3f2fd; color: #1565c0; }
+    .wcm-item.danger:hover { background: #fce4ec; color: #d32f2f; }
+    .wcm-item .material-symbols-outlined { font-size: 16px; color: #555; }
+    .wcm-item:hover .material-symbols-outlined { color: #1565c0; }
+    .wcm-item.danger:hover .material-symbols-outlined { color: #d32f2f; }
+    body.dark .wcm-item { color: #ddd; }
+    body.dark .wcm-item:hover { background: #1a2a3a; color: #90caf9; }
+    body.dark .wcm-item .material-symbols-outlined { color: #aaa; }
+    body.dark .wcm-item:hover .material-symbols-outlined { color: #90caf9; }
+
+    .wcm-sep { height: 1px; background: #eee; margin: 4px 8px; }
+    body.dark .wcm-sep { background: #333; }
+
+    /* ── Color Picker Swatches ── */
+    .color-swatches {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 4px 0 12px;
+    }
+    .color-swatch {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .color-swatch:hover { transform: scale(1.2); border-color: #1976d2; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      padding: 11px 20px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      z-index: 10002;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: #1976d2; }
+    .toast.error { background: #d32f2f; }
+    .toast.info { background: #546e7a; }
+    .toast .material-symbols-outlined { font-size: 16px; }
+
+    /* ── Tip Box ── */
+    #tipBox {
+      position: fixed;
+      bottom: 40px;
+      right: 18px;
+      width: 284px;
+      background: #1976d2;
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+      z-index: 9990;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+      font-family: inherit;
+      pointer-events: none;
+    }
+    #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+    body.dark #tipBox { background: #0d47a1; }
+
+    .tip-prog {
+      height: 3px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 11px;
+    }
+    .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+    .tip-text { font-size: 13px; line-height: 1.5; min-height: 52px; }
+    .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+    .tip-btn {
+      flex: 1;
+      border: none;
+      padding: 6px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .tip-prev { background: rgba(255,255,255,0.15); color: #fff; }
+    .tip-next { background: #fff; color: #1976d2; }
+
+    /* ── View Mode Buttons ── */
+    .view-btn-group {
+      display: flex;
+      background: #f0f4f8;
+      border-radius: 7px;
+      padding: 3px;
+      gap: 2px;
+      flex-shrink: 0;
+    }
+    body.dark .view-btn-group { background: #252525; }
+
+    .view-btn {
+      padding: 5px 10px;
+      background: transparent;
+      border: none;
+      border-radius: 5px;
+      color: #777;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+    .view-btn.active { background: #fff; color: #1976d2; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .view-btn:hover:not(.active) { color: #333; }
+    .view-btn .material-symbols-outlined { font-size: 17px; }
+    body.dark .view-btn.active { background: #1a1a1a; color: #90caf9; }
+    body.dark .view-btn:hover:not(.active) { color: #ddd; }
+
+    /* Hidden file inputs */
+    input[type="file"] { display: none; }
+  </style>
+</head>
+<body>
+
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading IDE...</div>
+</div>
+
+<div id="appContainer">
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="top-bar-title">Frontend IDE</span>
+
+    <div class="toolbar-sep"></div>
+
+    <button class="action-btn" onclick="IDE.showNewFileModal()">
+      <span class="material-symbols-outlined">add</span>
+      New File
+    </button>
+
+    <button class="action-btn secondary" onclick="IDE.showUploadModal()">
+      <span class="material-symbols-outlined">upload_file</span>
+      Upload
+    </button>
+
+    <button class="action-btn secondary" onclick="IDE.showExportModal()">
+      <i class="bi bi-download" style="font-size:15px;"></i>
+      Export
+    </button>
+
+    <button class="action-btn" id="runBtn" onclick="IDE.runCode()" style="background:#388e3c;">
+      <span class="material-symbols-outlined">play_arrow</span>
+      Run
+    </button>
+
+    <div class="toolbar-sep"></div>
+
+    <div class="view-btn-group">
+      <button class="view-btn active" data-mode="both" onclick="IDE.setViewMode('both')">
+        <span class="material-symbols-outlined">view_column</span>
+        Split
+      </button>
+      <button class="view-btn" data-mode="code" onclick="IDE.setViewMode('code')">
+        <span class="material-symbols-outlined">code</span>
+        Code
+      </button>
+      <button class="view-btn" data-mode="preview" onclick="IDE.setViewMode('preview')">
+        <span class="material-symbols-outlined">visibility</span>
+        Preview
+      </button>
+    </div>
+
+    <div class="top-spacer"></div>
+
+    <button class="icon-btn" id="localSaveBtn" onclick="IDE.toggleLocalSave()" title="Local Save">
+      <span class="material-symbols-outlined" id="localSaveIcon">save</span>
+    </button>
+
+    <button class="icon-btn" id="themeBtn" onclick="IDE.toggleTheme()" title="Toggle Theme">
+      <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+    </button>
+  </div>
+
+  <!-- Tabs Bar -->
+  <div class="tabs-bar" id="tabsBar">
+    <div class="tabs-bar-actions">
+      <div class="toolbar-sep"></div>
+      <button class="tbtn" onclick="IDE.undo()" title="Undo">
+        <span class="material-symbols-outlined">undo</span>
+      </button>
+      <button class="tbtn" onclick="IDE.redo()" title="Redo">
+        <span class="material-symbols-outlined">redo</span>
+      </button>
+      <div class="toolbar-sep"></div>
+      <button class="tbtn" onclick="IDE.openFind()" title="Find">
+        <span class="material-symbols-outlined">search</span>
+      </button>
+      <button class="tbtn" onclick="IDE.goToLinePrompt()" title="Go to line">
+        <span class="material-symbols-outlined">format_list_numbered</span>
+      </button>
+      <button class="tbtn" onclick="IDE.copyAll()" title="Copy all">
+        <span class="material-symbols-outlined">content_copy</span>
+      </button>
+      <button class="tbtn" onclick="IDE.pasteAll()" title="Paste from clipboard">
+        <span class="material-symbols-outlined">content_paste</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+
+      <div class="sb-section">
+        <div class="sb-title">Stats</div>
+        <div class="sb-stat" id="statLines">Lines: 0</div>
+        <div class="sb-stat" id="statCursor">Cursor: Ln 1, Col 1</div>
+        <div class="sb-stat" id="statFile">File: —</div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">Go to Line</div>
+        <div class="sb-row">
+          <input type="number" class="sb-input" id="gotoLineInput" placeholder="Line number" min="1"
+            onkeydown="if(event.key==='Enter') IDE.goToLine()">
+          <button class="tbtn" onclick="IDE.goToLine()" title="Go">
+            <span class="material-symbols-outlined" style="font-size:17px;color:#1976d2;">arrow_forward</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">Delete Lines</div>
+        <div class="sb-row">
+          <input type="text" class="sb-input" id="deleteLinesInput" placeholder="e.g. 3-30"
+            onkeydown="if(event.key==='Enter') IDE.deleteLines()">
+          <button class="tbtn" onclick="IDE.deleteLines()" title="Delete range">
+            <span class="material-symbols-outlined" style="font-size:17px;color:#d32f2f;">delete</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">Options</div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Local Save</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="localSaveToggle" onchange="IDE.toggleLocalSaveFromSidebar(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Line Wrap</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="lineWrapToggle" checked onchange="IDE.toggleLineWrap(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Line Numbers</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="lineNumToggle" checked onchange="IDE.toggleLineNumbers(this)">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <button class="collapse-btn" onclick="IDE.toggleSidebar()">
+        <span class="material-symbols-outlined">chevron_left</span>
+        Hide Panel
+      </button>
+    </div>
+
+    <button class="expand-btn" id="expandBtn" onclick="IDE.toggleSidebar()" title="Show panel">
+      <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+    </button>
+
+    <!-- Editor + Preview -->
+    <div class="content-area">
+      <div class="editor-preview-wrap" id="editorPreviewWrap">
+
+        <div id="editorPane">
+          <div class="pane-header">
+            <i class="bi bi-code-slash"></i>
+            Editor
+          </div>
+          <div id="cmWrapper">
+            <textarea id="cmEditor"></textarea>
+          </div>
+          <!-- Find Panel -->
+          <div class="find-panel" id="findPanel">
+            <input type="text" class="find-input" id="findInput" placeholder="Find...">
+            <button class="find-btn" onclick="IDE.findNext()">Next</button>
+            <button class="find-btn" onclick="IDE.findPrev()">Prev</button>
+            <button class="icon-btn" onclick="IDE.closeFind()" style="padding:4px;">
+              <span class="material-symbols-outlined" style="font-size:17px;">close</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="previewPane">
+          <div class="pane-header">
+            <i class="bi bi-eye"></i>
+            Preview
+          </div>
+          <iframe id="previewFrame" sandbox="allow-scripts allow-same-origin"></iframe>
+        </div>
+
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-item">
+          <span class="material-symbols-outlined">description</span>
+          <span id="statusFile">No file</span>
+        </div>
+        <div class="status-sep"></div>
+        <div class="status-item">
+          <span class="material-symbols-outlined">format_list_numbered</span>
+          <span id="statusLines">Lines: 0</span>
+        </div>
+        <div class="status-sep"></div>
+        <div class="status-item">
+          <span class="material-symbols-outlined">my_location</span>
+          <span id="statusCursor">Ln 1, Col 1</span>
+        </div>
+        <div style="flex:1;min-width:8px;"></div>
+        <div class="status-item" id="statusSave" style="opacity:0.7;">
+          <span class="material-symbols-outlined">cloud_off</span>
+          <span>Auto-save off</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="win-ctx-menu" id="ctxMenu">
+  <div class="wcm-item" onclick="IDE.ctxAction('rename')">
+    <span class="material-symbols-outlined">edit</span> Rename
+  </div>
+  <div class="wcm-item" onclick="IDE.ctxAction('color')">
+    <span class="material-symbols-outlined">palette</span> Change Color
+  </div>
+  <div class="wcm-sep"></div>
+  <div class="wcm-item" onclick="IDE.ctxAction('copy')">
+    <span class="material-symbols-outlined">content_copy</span> Copy Content
+  </div>
+  <div class="wcm-item" onclick="IDE.ctxAction('download')">
+    <span class="material-symbols-outlined">download</span> Download File
+  </div>
+  <div class="wcm-sep"></div>
+  <div class="wcm-item danger" onclick="IDE.ctxAction('delete')">
+    <span class="material-symbols-outlined">delete</span> Delete File
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="mbox" id="mbox">
+    <!-- dynamic content -->
+  </div>
+</div>
+
+<!-- Toast anchor -->
+<div id="toastStack"></div>
+
+<!-- Tip Box -->
+<div id="tipBox">
+  <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:20%"></div></div>
+  <div class="tip-text" id="tipText">Welcome to Frontend IDE. Use tabs at the top to manage multiple files.</div>
+  <div class="tip-actions">
+    <button class="tip-btn tip-prev" onclick="IDE.tipNav(-1)">Prev</button>
+    <button class="tip-btn tip-next" onclick="IDE.tipNav(1)">Next</button>
+  </div>
+</div>
+
+<!-- Hidden file inputs -->
+<input type="file" id="zipUpload" accept=".zip" onchange="IDE.handleZipUpload(event)">
+<input type="file" id="fileUpload" multiple onchange="IDE.handleFileUpload(event)">
+
+<script>
+const IDE = {
+  tabs: [],
+  activeTabId: null,
+  nextTabId: 1,
+  cm: null,
+  localSaveEnabled: false,
+  ctxTabId: null,
+  saveTimeout: null,
+  tipIndex: 0,
+
+  TIPS: [
+    "Welcome to Frontend IDE. Use the tabs bar to manage multiple HTML, CSS, and JS files.",
+    "Right-click any tab to rename, recolor, download, or delete the file.",
+    "Use the sidebar to jump to a specific line, delete line ranges, and view live stats.",
+    "The Split / Code / Preview buttons in the top bar control the layout. Run refreshes the preview.",
+    "Enable Local Save from the sidebar or the save icon to persist your project across sessions. Click Next to dismiss."
+  ],
+
+  init() {
+    this.applyTheme();
+    this.initCM();
+
+    this.loadFromStorage().then(loaded => {
+      if (!loaded) {
+        this.addTab('html', 'index.html', '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <title>My Page</title>\n</head>\n<body>\n  <h1>Hello, World!</h1>\n</body>\n</html>');
+      }
+      this.updatePreview();
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('#ctxMenu')) this.closeCtxMenu();
+    });
+
+    document.getElementById('findInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') this.findNext();
+      if (e.key === 'Escape') this.closeFind();
+    });
+
+    setTimeout(() => {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'flex';
+      if (!localStorage.getItem('ide_tips_seen')) {
+        setTimeout(() => this.showTip(0), 800);
+      }
+    }, 600);
+  },
+
+  // ── Theme ──────────────────────────────────────────────
+  applyTheme() {
+    const match = document.cookie.split('; ').find(r => r.startsWith('toolsuite_theme='));
+    const dark = match && match.split('=')[1] === 'dark';
+    document.body.classList.toggle('dark', dark);
+    document.getElementById('themeIcon').textContent = dark ? 'light_mode' : 'dark_mode';
+    if (this.cm) {
+      this.cm.setOption('theme', dark ? 'dracula' : 'default');
+    }
+  },
+
+  toggleTheme() {
+    const isDark = document.body.classList.toggle('dark');
+    document.cookie = `toolsuite_theme=${isDark ? 'dark' : 'light'}; path=/; max-age=31536000; SameSite=Lax`;
+    document.getElementById('themeIcon').textContent = isDark ? 'light_mode' : 'dark_mode';
+    this.cm.setOption('theme', isDark ? 'dracula' : 'default');
+  },
+
+  // ── CodeMirror ─────────────────────────────────────────
+  initCM() {
+    const isDark = document.body.classList.contains('dark');
+    this.cm = CodeMirror.fromTextArea(document.getElementById('cmEditor'), {
+      mode: 'htmlmixed',
+      theme: isDark ? 'dracula' : 'default',
+      lineNumbers: true,
+      lineWrapping: true,
+      autoCloseTags: true,
+      matchBrackets: true,
+      indentUnit: 2,
+      tabSize: 2,
+      undoDepth: 200,
+    });
+
+    this.cm.on('change', () => {
+      const tab = this.tabs.find(t => t.id === this.activeTabId);
+      if (tab) {
+        tab.content = this.cm.getValue();
+        this.updateStats();
+        this.updatePreview();
+        if (this.localSaveEnabled) {
+          clearTimeout(this.saveTimeout);
+          this.saveTimeout = setTimeout(() => this.saveToStorage(), 1000);
+        }
+      }
+    });
+
+    this.cm.on('cursorActivity', () => this.updateCursor());
+  },
+
+  // ── Tabs ───────────────────────────────────────────────
+  addTab(type, name, content = '') {
+    const id = this.nextTabId++;
+    const colors = ['#e53935','#fb8c00','#43a047','#1976d2','#8e24aa','#e91e63','#0097a7','#558b2f'];
+    this.tabs.push({ id, type, name, content, color: colors[Math.floor(Math.random() * colors.length)] });
+    this.renderTabs();
+    this.switchTab(id);
+    if (this.localSaveEnabled) this.saveToStorage();
+  },
+
+  renderTabs() {
+    const bar = document.getElementById('tabsBar');
+    const actions = bar.querySelector('.tabs-bar-actions');
+    // Remove all tab items
+    [...bar.querySelectorAll('.tab-item')].forEach(el => el.remove());
+    // Insert tabs before actions
+    this.tabs.forEach(tab => {
+      const el = document.createElement('button');
+      el.className = `tab-item${tab.id === this.activeTabId ? ' active' : ''}`;
+      el.innerHTML = `
+        <span class="tab-color-dot" style="background:${tab.color}"></span>
+        <span>${tab.name}</span>
+        <button class="tab-close-btn" onclick="event.stopPropagation();IDE.confirmDelete(${tab.id})">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      `;
+      el.addEventListener('click', () => this.switchTab(tab.id));
+      el.addEventListener('contextmenu', e => { e.preventDefault(); this.showCtxMenu(e, tab.id); });
+      bar.insertBefore(el, actions);
+    });
+  },
+
+  switchTab(id) {
+    const tab = this.tabs.find(t => t.id === id);
+    if (!tab) return;
+    this.activeTabId = id;
+    this.cm.setValue(tab.content);
+    const modeMap = { html: 'htmlmixed', css: 'css', javascript: 'javascript' };
+    this.cm.setOption('mode', modeMap[tab.type] || 'htmlmixed');
+    this.renderTabs();
+    this.updateStats();
+    this.updateCursor();
+    this.cm.focus();
+    this.updatePreview();
+  },
+
+  // ── File Operations ────────────────────────────────────
+  showNewFileModal() {
+    this.openModal(`
+      <div class="mhdr">
+        <span class="mtitle">Create New File</span>
+        <button class="mclose" onclick="IDE.closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="frow">
+        <label>File name (include extension)</label>
+        <input class="finput" id="newFileName" placeholder="e.g. styles.css" autofocus>
+      </div>
+      <div class="mfooter">
+        <button class="mbtn sec" onclick="IDE.closeModal()">Cancel</button>
+        <button class="mbtn primary" onclick="IDE.createFile()">Create</button>
+      </div>
+    `);
+    setTimeout(() => document.getElementById('newFileName')?.focus(), 80);
+    document.getElementById('newFileName')?.addEventListener('keydown', e => { if (e.key === 'Enter') this.createFile(); });
+  },
+
+  createFile() {
+    const name = document.getElementById('newFileName').value.trim();
+    if (!name) return this.showToast('Enter a file name.', 'error');
+    if (!name.includes('.')) return this.showToast('Include a file extension (e.g. .html)', 'error');
+    if (this.tabs.some(t => t.name === name)) return this.showToast('A file with that name already exists.', 'error');
+    const ext = name.split('.').pop().toLowerCase();
+    const type = ext === 'css' ? 'css' : ext === 'js' ? 'javascript' : 'html';
+    this.addTab(type, name, '');
+    this.closeModal();
+    this.showToast('File created.', 'success');
+  },
+
+  confirmDelete(id) {
+    const tab = this.tabs.find(t => t.id === id);
+    if (!tab) return;
+    this.openModal(`
+      <div class="mhdr">
+        <span class="mtitle">Delete File</span>
+        <button class="mclose" onclick="IDE.closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <p style="font-size:14px;color:#555;margin-bottom:4px;">Delete <strong>${tab.name}</strong>? This cannot be undone.</p>
+      <div class="mfooter">
+        <button class="mbtn sec" onclick="IDE.closeModal()">Cancel</button>
+        <button class="mbtn danger-btn" onclick="IDE.deleteTab(${id})">Delete</button>
+      </div>
+    `);
+  },
+
+  deleteTab(id) {
+    const idx = this.tabs.findIndex(t => t.id === id);
+    if (idx === -1) return;
+    this.tabs.splice(idx, 1);
+    if (this.activeTabId === id) {
+      if (this.tabs.length > 0) {
+        this.switchTab(this.tabs[Math.min(idx, this.tabs.length - 1)].id);
+      } else {
+        this.activeTabId = null;
+        this.cm.setValue('');
+      }
+    }
+    this.renderTabs();
+    this.closeModal();
+    this.showToast('File deleted.', 'info');
+    if (this.localSaveEnabled) this.saveToStorage();
+  },
+
+  // ── Context Menu ───────────────────────────────────────
+  showCtxMenu(e, id) {
+    this.ctxTabId = id;
+    const menu = document.getElementById('ctxMenu');
+    menu.style.left = e.pageX + 'px';
+    menu.style.top = e.pageY + 'px';
+    menu.classList.add('open');
+  },
+  closeCtxMenu() { document.getElementById('ctxMenu').classList.remove('open'); },
+
+  ctxAction(action) {
+    const tab = this.tabs.find(t => t.id === this.ctxTabId);
+    this.closeCtxMenu();
+    if (!tab) return;
+    if (action === 'rename') this.renameTabModal(tab.id);
+    else if (action === 'color') this.colorTabModal(tab.id);
+    else if (action === 'copy') this.copyTabContent(tab.id);
+    else if (action === 'download') this.downloadTab(tab.id);
+    else if (action === 'delete') this.confirmDelete(tab.id);
+  },
+
+  renameTabModal(id) {
+    const tab = this.tabs.find(t => t.id === id);
+    this.openModal(`
+      <div class="mhdr">
+        <span class="mtitle">Rename File</span>
+        <button class="mclose" onclick="IDE.closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="frow">
+        <label>New file name</label>
+        <input class="finput" id="renameInput" value="${tab.name}">
+      </div>
+      <div class="mfooter">
+        <button class="mbtn sec" onclick="IDE.closeModal()">Cancel</button>
+        <button class="mbtn primary" onclick="IDE.confirmRename(${id})">Rename</button>
+      </div>
+    `);
+    setTimeout(() => { const i = document.getElementById('renameInput'); i?.focus(); i?.select(); }, 80);
+    document.getElementById('renameInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') this.confirmRename(id); });
+  },
+
+  confirmRename(id) {
+    const name = document.getElementById('renameInput').value.trim();
+    if (!name || !name.includes('.')) return this.showToast('Invalid file name.', 'error');
+    if (this.tabs.some(t => t.id !== id && t.name === name)) return this.showToast('Name already taken.', 'error');
+    const tab = this.tabs.find(t => t.id === id);
+    if (tab) {
+      tab.name = name;
+      const ext = name.split('.').pop().toLowerCase();
+      tab.type = ext === 'css' ? 'css' : ext === 'js' ? 'javascript' : 'html';
+      if (this.activeTabId === id) {
+        const modeMap = { html: 'htmlmixed', css: 'css', javascript: 'javascript' };
+        this.cm.setOption('mode', modeMap[tab.type]);
+      }
+      this.renderTabs();
+      this.closeModal();
+      this.showToast('Renamed.', 'success');
+      if (this.localSaveEnabled) this.saveToStorage();
+    }
+  },
+
+  colorTabModal(id) {
+    const colors = ['#e53935','#fb8c00','#43a047','#1976d2','#8e24aa','#e91e63','#0097a7','#558b2f'];
+    const swatches = colors.map(c => `<div class="color-swatch" style="background:${c}" onclick="IDE.setTabColor(${id},'${c}')"></div>`).join('');
+    this.openModal(`
+      <div class="mhdr">
+        <span class="mtitle">Choose Color</span>
+        <button class="mclose" onclick="IDE.closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="color-swatches">${swatches}</div>
+      <div class="mfooter"><button class="mbtn sec" onclick="IDE.closeModal()">Cancel</button></div>
+    `);
+  },
+
+  setTabColor(id, color) {
+    const tab = this.tabs.find(t => t.id === id);
+    if (tab) { tab.color = color; this.renderTabs(); this.closeModal(); this.showToast('Color updated.', 'success'); }
+  },
+
+  async copyTabContent(id) {
+    const tab = this.tabs.find(t => t.id === id);
+    if (!tab) return;
+    try { await navigator.clipboard.writeText(tab.content); this.showToast('Copied to clipboard.', 'success'); }
+    catch { this.showToast('Copy failed.', 'error'); }
+  },
+
+  downloadTab(id) {
+    const tab = this.tabs.find(t => t.id === id);
+    if (!tab) return;
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(new Blob([tab.content], { type: 'text/plain' })),
+      download: tab.name
+    });
+    a.click(); URL.revokeObjectURL(a.href);
+    this.showToast('Downloaded.', 'success');
+  },
+
+  // ── Upload ─────────────────────────────────────────────
+  showUploadModal() {
+    this.openModal(`
+      <div class="mhdr">
+        <span class="mtitle">Upload Files</span>
+        <button class="mclose" onclick="IDE.closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin:4px 0 8px;">
+        <div class="modal-menu-item" onclick="document.getElementById('zipUpload').click();IDE.closeModal();">
+          <span class="material-symbols-outlined">folder_zip</span>
+          <div class="modal-menu-item-text">
+            <div class="mmt-title">Upload ZIP</div>
+            <div class="mmt-sub">Extract and import all files from a ZIP archive</div>
+          </div>
+        </div>
+        <div class="modal-menu-item" onclick="document.getElementById('fileUpload').click();IDE.closeModal();">
+          <span class="material-symbols-outlined">upload_file</span>
+          <div class="modal-menu-item-text">
+            <div class="mmt-title">Upload Files</div>
+            <div class="mmt-sub">Import multiple .html, .css, or .js files</div>
+          </div>
+        </div>
+      </div>
+      <div class="mfooter"><button class="mbtn sec" onclick="IDE.closeModal()">Cancel</button></div>
+    `);
+  },
+
+  handleFileUpload(e) {
+    Array.from(e.target.files).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const type = ext === 'css' ? 'css' : ext === 'js' ? 'javascript' : 'html';
+        this.addTab(type, file.name, ev.target.result);
+      };
+      reader.readAsText(file);
+    });
+    e.target.value = '';
+    this.showToast('Files uploaded.', 'success');
+  },
+
+  handleZipUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    JSZip.loadAsync(file).then(zip => {
+      const proms = [];
+      zip.forEach((path, entry) => {
+        if (!entry.dir) proms.push(entry.async('string').then(content => {
+          const ext = path.split('.').pop().toLowerCase();
+          const type = ext === 'css' ? 'css' : ext === 'js' ? 'javascript' : 'html';
+          this.addTab(type, path, content);
+        }));
+      });
+      Promise.all(proms).then(() => this.showToast('ZIP extracted.', 'success'));
+    });
+    e.target.value = '';
+  },
+
+  // ── Export ─────────────────────────────────────────────
+  showExportModal() {
+    this.openModal(`
+      <div class="mhdr">
+        <span class="mtitle">Export Project</span>
+        <button class="mclose" onclick="IDE.closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin:4px 0 8px;">
+        <div class="modal-menu-item" onclick="IDE.exportCombinedHTML();IDE.closeModal();">
+          <span class="material-symbols-outlined">html</span>
+          <div class="modal-menu-item-text">
+            <div class="mmt-title">Export as Combined HTML</div>
+            <div class="mmt-sub">Merge all files into one standalone HTML file</div>
+          </div>
+        </div>
+        <div class="modal-menu-item" onclick="IDE.exportZip();IDE.closeModal();">
+          <span class="material-symbols-outlined">folder_zip</span>
+          <div class="modal-menu-item-text">
+            <div class="mmt-title">Export as ZIP</div>
+            <div class="mmt-sub">Download all files in a ZIP archive</div>
+          </div>
+        </div>
+        <div class="modal-menu-item" onclick="IDE.exportCurrentFile();IDE.closeModal();">
+          <span class="material-symbols-outlined">description</span>
+          <div class="modal-menu-item-text">
+            <div class="mmt-title">Export Current File</div>
+            <div class="mmt-sub">Download only the active tab</div>
+          </div>
+        </div>
+      </div>
+      <div class="mfooter"><button class="mbtn sec" onclick="IDE.closeModal()">Cancel</button></div>
+    `);
+  },
+
+  exportCombinedHTML() {
+    const htmlTab = this.tabs.find(t => t.type === 'html');
+    if (!htmlTab) return this.showToast('No HTML file found.', 'error');
+    let html = htmlTab.content;
+    const css = this.tabs.filter(t => t.type === 'css').map(t => t.content).join('\n');
+    const js = this.tabs.filter(t => t.type === 'javascript').map(t => t.content).join('\n');
+    if (css) html = html.includes('</head>') ? html.replace('</head>', `<style>\n${css}\n</style>\n</head>`) : html + `<style>${css}</style>`;
+    if (js) html = html.includes('</body>') ? html.replace('</body>', `<script>\n${js}\n<\/script>\n</body>`) : html + `<script>${js}<\/script>`;
+    this._download('combined.html', html, 'text/html');
+    this.showToast('Exported as HTML.', 'success');
+  },
+
+  exportZip() {
+    if (!this.tabs.length) return this.showToast('No files to export.', 'error');
+    const zip = new JSZip();
+    this.tabs.forEach(t => zip.file(t.name, t.content));
+    zip.generateAsync({ type: 'blob' }).then(blob => {
+      this._download('project.zip', blob);
+      this.showToast('Exported as ZIP.', 'success');
+    });
+  },
+
+  exportCurrentFile() {
+    const tab = this.tabs.find(t => t.id === this.activeTabId);
+    if (!tab) return this.showToast('No active file.', 'error');
+    this.downloadTab(tab.id);
+  },
+
+  _download(name, data, type = '') {
+    const url = URL.createObjectURL(typeof data === 'string' ? new Blob([data], { type }) : data);
+    const a = Object.assign(document.createElement('a'), { href: url, download: name });
+    a.click(); URL.revokeObjectURL(url);
+  },
+
+  // ── Run / Preview ──────────────────────────────────────
+  runCode() {
+    const btn = document.getElementById('runBtn');
+    btn.style.opacity = '0.7';
+    setTimeout(() => btn.style.opacity = '1', 500);
+    this.updatePreview();
+    this.showToast('Preview updated.', 'success');
+  },
+
+  updatePreview() {
+    const htmlTab = this.tabs.find(t => t.type === 'html');
+    if (!htmlTab) return;
+    let html = htmlTab.content;
+    const css = this.tabs.filter(t => t.type === 'css').map(t => t.content).join('\n');
+    const js = this.tabs.filter(t => t.type === 'javascript').map(t => t.content).join('\n');
+    if (css) html = html.includes('</head>') ? html.replace('</head>', `<style>\n${css}\n</style>\n</head>`) : html + `<style>${css}</style>`;
+    if (js) html = html.includes('</body>') ? html.replace('</body>', `<script>\n${js}\n<\/script>\n</body>`) : html + `<script>${js}<\/script>`;
+    const frame = document.getElementById('previewFrame');
+    const doc = frame.contentDocument || frame.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+  },
+
+  // ── View Mode ──────────────────────────────────────────
+  setViewMode(mode) {
+    const wrap = document.getElementById('editorPreviewWrap');
+    wrap.className = 'editor-preview-wrap';
+    if (mode === 'code') wrap.classList.add('code-only');
+    else if (mode === 'preview') wrap.classList.add('preview-only');
+    document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+    this.cm.refresh();
+  },
+
+  // ── Sidebar ────────────────────────────────────────────
+  toggleSidebar() {
+    const s = document.getElementById('sidebar');
+    const eb = document.getElementById('expandBtn');
+    const collapsed = s.classList.toggle('collapsed');
+    eb.style.display = collapsed ? 'block' : 'none';
+  },
+
+  // ── Editor Tools ───────────────────────────────────────
+  undo() { this.cm.undo(); this.showToast('Undo.', 'info'); },
+  redo() { this.cm.redo(); this.showToast('Redo.', 'info'); },
+
+  async copyAll() {
+    const tab = this.tabs.find(t => t.id === this.activeTabId);
+    if (!tab) return;
+    try { await navigator.clipboard.writeText(tab.content); this.showToast('All content copied.', 'success'); }
+    catch { this.showToast('Copy failed.', 'error'); }
+  },
+
+  async pasteAll() {
+    try {
+      const text = await navigator.clipboard.readText();
+      this.cm.setValue(text);
+      const tab = this.tabs.find(t => t.id === this.activeTabId);
+      if (tab) tab.content = text;
+      this.showToast('Pasted from clipboard.', 'success');
+    } catch { this.showToast('Clipboard read failed.', 'error'); }
+  },
+
+  openFind() {
+    const panel = document.getElementById('findPanel');
+    panel.classList.add('open');
+    document.getElementById('findInput').focus();
+  },
+  closeFind() { document.getElementById('findPanel').classList.remove('open'); },
+
+  findNext() {
+    const q = document.getElementById('findInput').value;
+    if (!q) return;
+    let cur = this.cm.getSearchCursor(q, this.cm.getCursor());
+    if (cur.findNext()) { this.cm.setSelection(cur.from(), cur.to()); this.cm.scrollIntoView({ from: cur.from(), to: cur.to() }, 80); }
+    else {
+      cur = this.cm.getSearchCursor(q);
+      if (cur.findNext()) { this.cm.setSelection(cur.from(), cur.to()); this.cm.scrollIntoView({ from: cur.from(), to: cur.to() }, 80); }
+      else this.showToast('No matches found.', 'info');
+    }
+  },
+
+  findPrev() {
+    const q = document.getElementById('findInput').value;
+    if (!q) return;
+    let cur = this.cm.getSearchCursor(q, this.cm.getCursor());
+    if (cur.findPrevious()) { this.cm.setSelection(cur.from(), cur.to()); this.cm.scrollIntoView({ from: cur.from(), to: cur.to() }, 80); }
+    else {
+      cur = this.cm.getSearchCursor(q, { line: this.cm.lastLine(), ch: 0 });
+      if (cur.findPrevious()) { this.cm.setSelection(cur.from(), cur.to()); }
+      else this.showToast('No matches found.', 'info');
+    }
+  },
+
+  goToLinePrompt() {
+    this.openModal(`
+      <div class="mhdr">
+        <span class="mtitle">Go to Line</span>
+        <button class="mclose" onclick="IDE.closeModal()"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="frow">
+        <label>Line number</label>
+        <input class="finput" type="number" id="gotoLineModal" min="1" placeholder="e.g. 42">
+      </div>
+      <div class="mfooter">
+        <button class="mbtn sec" onclick="IDE.closeModal()">Cancel</button>
+        <button class="mbtn primary" onclick="IDE.goToLineFromModal()">Go</button>
+      </div>
+    `);
+    setTimeout(() => document.getElementById('gotoLineModal')?.focus(), 80);
+    document.getElementById('gotoLineModal')?.addEventListener('keydown', e => { if (e.key === 'Enter') this.goToLineFromModal(); });
+  },
+
+  goToLineFromModal() {
+    const n = parseInt(document.getElementById('gotoLineModal').value);
+    this.closeModal();
+    this._jumpToLine(n);
+  },
+
+  goToLine() {
+    const n = parseInt(document.getElementById('gotoLineInput').value);
+    document.getElementById('gotoLineInput').value = '';
+    this._jumpToLine(n);
+  },
+
+  _jumpToLine(n) {
+    if (!n || n < 1) return this.showToast('Enter a valid line number.', 'error');
+    const line = Math.min(n - 1, this.cm.lineCount() - 1);
+    this.cm.setCursor({ line, ch: 0 });
+    this.cm.scrollIntoView({ line, ch: 0 }, 200);
+    this.cm.focus();
+    this.showToast(`Jumped to line ${n}.`, 'info');
+  },
+
+  deleteLines() {
+    const val = document.getElementById('deleteLinesInput').value.trim();
+    const m = val.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (!m) return this.showToast('Format: start-end (e.g. 3-30)', 'error');
+    const s = parseInt(m[1]), e = parseInt(m[2]);
+    if (s < 1 || e < s) return this.showToast('Invalid range.', 'error');
+    const total = this.cm.lineCount();
+    if (s > total) return this.showToast(`File only has ${total} lines.`, 'error');
+    this.cm.replaceRange('', { line: s - 1, ch: 0 }, { line: Math.min(e, total), ch: 0 });
+    document.getElementById('deleteLinesInput').value = '';
+    this.showToast(`Deleted lines ${s}–${Math.min(e, total)}.`, 'success');
+  },
+
+  toggleLineWrap(el) { this.cm.setOption('lineWrapping', el.checked); },
+  toggleLineNumbers(el) { this.cm.setOption('lineNumbers', el.checked); },
+
+  // ── Stats ──────────────────────────────────────────────
+  updateStats() {
+    const lines = this.cm.lineCount();
+    const tab = this.tabs.find(t => t.id === this.activeTabId);
+    const name = tab ? tab.name : '—';
+    document.getElementById('statLines').textContent = `Lines: ${lines}`;
+    document.getElementById('statFile').textContent = `File: ${name}`;
+    document.getElementById('statusLines').textContent = `Lines: ${lines}`;
+    document.getElementById('statusFile').textContent = name;
+  },
+
+  updateCursor() {
+    const cur = this.cm.getCursor();
+    const txt = `Ln ${cur.line + 1}, Col ${cur.ch + 1}`;
+    document.getElementById('statCursor').textContent = `Cursor: ${txt}`;
+    document.getElementById('statusCursor').textContent = txt;
+  },
+
+  // ── Local Save ─────────────────────────────────────────
+  toggleLocalSave() {
+    if (this.localSaveEnabled) {
+      this.openModal(`
+        <div class="mhdr">
+          <span class="mtitle">Disable Local Save</span>
+          <button class="mclose" onclick="IDE.closeModal()"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <p style="font-size:14px;color:#555;margin-bottom:4px;">Disabling Local Save will clear saved project data on next reload. Continue?</p>
+        <div class="mfooter">
+          <button class="mbtn sec" onclick="IDE.closeModal()">Cancel</button>
+          <button class="mbtn danger-btn" onclick="IDE.disableLocalSave()">Disable</button>
+        </div>
+      `);
+    } else {
+      this.enableLocalSave();
+    }
+  },
+
+  toggleLocalSaveFromSidebar(el) {
+    if (el.checked) this.enableLocalSave();
+    else this.toggleLocalSave();
+  },
+
+  enableLocalSave() {
+    this.localSaveEnabled = true;
+    localStorage.setItem('ide_local_save', '1');
+    this.saveToStorage();
+    this.updateSaveUI();
+    this.showToast('Local Save enabled.', 'success');
+  },
+
+  disableLocalSave() {
+    this.localSaveEnabled = false;
+    localStorage.setItem('ide_local_save', '0');
+    localStorage.removeItem('ide_project');
+    this.updateSaveUI();
+    this.closeModal();
+    this.showToast('Local Save disabled.', 'info');
+  },
+
+  updateSaveUI() {
+    const icon = document.getElementById('localSaveIcon');
+    const btn = document.getElementById('localSaveBtn');
+    const toggle = document.getElementById('localSaveToggle');
+    const status = document.getElementById('statusSave');
+    icon.textContent = this.localSaveEnabled ? 'cloud_done' : 'save';
+    btn.style.background = this.localSaveEnabled ? '#e3f2fd' : '';
+    if (toggle) toggle.checked = this.localSaveEnabled;
+    status.innerHTML = this.localSaveEnabled
+      ? `<span class="material-symbols-outlined">cloud_done</span><span>Auto-save on</span>`
+      : `<span class="material-symbols-outlined">cloud_off</span><span>Auto-save off</span>`;
+    status.style.opacity = this.localSaveEnabled ? '1' : '0.7';
+  },
+
+  saveToStorage() {
+    if (!this.localSaveEnabled) return;
+    try {
+      localStorage.setItem('ide_project', JSON.stringify({
+        tabs: this.tabs,
+        activeTabId: this.activeTabId,
+        nextTabId: this.nextTabId,
+      }));
+    } catch (e) { this.showToast('Storage full — save failed.', 'error'); }
+  },
+
+  async loadFromStorage() {
+    const saved = localStorage.getItem('ide_local_save') === '1';
+    if (!saved) return false;
+    try {
+      const data = JSON.parse(localStorage.getItem('ide_project') || 'null');
+      if (data && data.tabs && data.tabs.length) {
+        this.tabs = data.tabs;
+        this.activeTabId = data.activeTabId;
+        this.nextTabId = data.nextTabId || data.tabs.length + 1;
+        this.localSaveEnabled = true;
+        this.updateSaveUI();
+        this.renderTabs();
+        if (this.activeTabId) this.switchTab(this.activeTabId);
+        this.showToast('Project loaded from local storage.', 'success');
+        return true;
+      }
+    } catch {}
+    return false;
+  },
+
+  // ── Modal ──────────────────────────────────────────────
+  openModal(html) {
+    document.getElementById('mbox').innerHTML = html;
+    document.getElementById('modal').classList.add('open');
+  },
+  closeModal() { document.getElementById('modal').classList.remove('open'); },
+
+  // ── Toast ──────────────────────────────────────────────
+  showToast(msg, type = 'info') {
+    const icons = { success: 'check_circle', error: 'error', info: 'info' };
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `<span class="material-symbols-outlined">${icons[type] || 'info'}</span>${msg}`;
+    document.getElementById('toastStack').appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+    setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 350); }, 2800);
+  },
+
+  // ── Tips ───────────────────────────────────────────────
+  showTip(idx) {
+    this.tipIndex = idx;
+    document.getElementById('tipText').textContent = this.TIPS[idx];
+    document.getElementById('tipBar').style.width = ((idx + 1) / this.TIPS.length * 100) + '%';
+    const box = document.getElementById('tipBox');
+    box.classList.remove('hide'); box.classList.add('show');
+  },
+
+  tipNav(dir) {
+    const next = this.tipIndex + dir;
+    if (next >= this.TIPS.length) {
+      document.getElementById('tipBox').classList.replace('show', 'hide');
+      localStorage.setItem('ide_tips_seen', '1');
+    } else if (next < 0) {
+      // noop
+    } else {
+      this.showTip(next);
+    }
+  },
+};
+
+// Close modal on backdrop click
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal')) IDE.closeModal();
+});
+
+window.addEventListener('load', () => IDE.init());
+window.open = () => null;
+</script>
+</body>
+</html>

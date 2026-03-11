@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Button Designer</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+(function(){
+  const m=document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));
+  if(m&&m.split('=')[1]==='dark'){document.documentElement.classList.add('dark');}
+})();
+</script>
+<style>
+*{scrollbar-width:none;}
+*::-webkit-scrollbar{display:none;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html.dark body{background:#111;}
+body{font-family:'Inter','Segoe UI',Arial,sans-serif;background:#f0f4f8;overflow:hidden;height:100vh;}
+body.dark{background:#111;}
+
+/* Loading */
+#loadingScreen{display:flex;position:fixed;inset:0;background:#fff;z-index:10000;align-items:center;justify-content:center;flex-direction:column;gap:20px;transition:opacity 0.3s;}
+body.dark #loadingScreen{background:#1a1a1a;}
+.spinner{width:56px;height:56px;border:4px solid #e3f2fd;border-top-color:#1976d2;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:17px;color:#666;font-family:'Inter',sans-serif;}
+body.dark .loading-text{color:#aaa;}
+
+/* App container */
+#appContainer{display:none;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* Top Bar */
+.top-bar{background:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:200;flex-shrink:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+body.dark .top-bar{background:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.5);}
+.top-bar-title{font-size:17px;font-weight:500;color:#1a1a2e;flex-shrink:0;}
+body.dark .top-bar-title{color:#e0e0e0;}
+.top-spacer{flex:1;min-width:8px;}
+.icon-btn{background:none;border:none;cursor:pointer;padding:7px;border-radius:8px;display:flex;align-items:center;color:#1976d2;transition:background 0.2s;flex-shrink:0;}
+.icon-btn:hover{background:#e3f2fd;}
+body.dark .icon-btn:hover{background:#1a2a3a;}
+.icon-btn .material-symbols-outlined{font-size:22px;}
+
+/* Toolbar */
+.toolbar{background:#fff;padding:6px 12px;display:flex;align-items:center;gap:3px;box-shadow:0 2px 4px rgba(0,0,0,0.06);flex-shrink:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+body.dark .toolbar{background:#1a1a1a;}
+.toolbar-sep{width:1px;height:26px;background:#e0e0e0;margin:0 4px;flex-shrink:0;}
+body.dark .toolbar-sep{background:#333;}
+.tbtn{background:transparent;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background 0.15s;flex-shrink:0;font-family:inherit;font-size:13px;color:#333;}
+.tbtn:hover{background:#e3f2fd;}
+.tbtn.active{background:#bbdefb;color:#1976d2;}
+body.dark .tbtn{color:#bbb;}
+body.dark .tbtn:hover{background:#2a2a2a;}
+body.dark .tbtn.active{background:#0d2a4a;color:#90caf9;}
+.tbtn .material-symbols-outlined{font-size:19px;color:#333;}
+body.dark .tbtn .material-symbols-outlined{color:#bbb;}
+
+/* Main */
+.main-content{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+/* Sidebar */
+.sidebar{width:280px;min-width:280px;background:#fff;padding:14px;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,0.06);transition:transform 0.3s,width 0.3s,min-width 0.3s,padding 0.3s;flex-shrink:0;}
+.sidebar.collapsed{transform:translateX(-280px);width:0;min-width:0;padding:0;overflow:hidden;}
+body.dark .sidebar{background:#1a1a1a;border-right:1px solid #2a2a2a;}
+.sb-section{margin-bottom:16px;}
+.sb-title{font-size:11px;font-weight:700;color:#888;margin-bottom:9px;text-transform:uppercase;letter-spacing:0.6px;}
+body.dark .sb-title{color:#666;}
+.sb-label{display:block;font-size:12px;color:#777;margin-bottom:3px;}
+body.dark .sb-label{color:#999;}
+.sb-input{width:100%;padding:7px 9px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fafafa;font-family:inherit;outline:none;transition:border-color 0.2s,box-shadow 0.2s;}
+.sb-input:focus{border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,0.1);background:#fff;}
+body.dark .sb-input{background:#252525 !important;color:#ddd !important;border-color:#444 !important;}
+body.dark .sb-input:focus{background:#2a2a2a !important;}
+select.sb-input{cursor:pointer;}
+.sb-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.sb-row .sb-input{flex:1;}
+.sb-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.sb-toggle-label{font-size:13px;color:#444;}
+body.dark .sb-toggle-label{color:#bbb;}
+.toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:11px;transition:0.3s;}
+.toggle-slider::before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;}
+input:checked+.toggle-slider{background:#1976d2;}
+input:checked+.toggle-slider::before{transform:translateX(18px);}
+body.dark .toggle-slider{background:#444;}
+.color-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.color-row .sb-label{margin:0;flex:1;}
+input[type="color"]{width:32px;height:32px;border:1px solid #e0e0e0;border-radius:50%;cursor:pointer;padding:2px;flex-shrink:0;}
+input[type="color"]::-webkit-color-swatch-wrapper{padding:0;}
+input[type="color"]::-webkit-color-swatch{border:none;border-radius:50%;}
+input[type="range"]{width:100%;accent-color:#1976d2;cursor:pointer;}
+.range-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.range-val{font-size:12px;color:#1976d2;font-weight:600;min-width:34px;text-align:right;flex-shrink:0;}
+body.dark .range-val{color:#90caf9;}
+
+/* Collapse btn */
+.collapse-btn{width:100%;padding:8px;background:#e3f2fd;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:#1976d2;font-weight:600;margin-top:6px;transition:background 0.15s;font-family:inherit;}
+.collapse-btn:hover{background:#bbdefb;}
+body.dark .collapse-btn{background:#1a2a4a !important;color:#90caf9 !important;}
+.expand-btn{position:fixed;left:10px;top:50%;transform:translateY(-50%);background:#fff;border:none;border-radius:8px;padding:10px 5px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.15);z-index:50;display:none;}
+body.dark .expand-btn{background:#1a1a1a;}
+
+/* Content area */
+.content-area{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;background:#f0f4f8;min-width:0;padding:36px 20px;}
+body.dark .content-area{background:#111;}
+
+/* Preview card */
+.preview-card{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);padding:40px;display:flex;flex-direction:column;align-items:center;gap:32px;width:100%;max-width:680px;flex-shrink:0;}
+body.dark .preview-card{background:#1a1a1a;box-shadow:0 4px 24px rgba(0,0,0,0.4);}
+.preview-label{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.6px;align-self:flex-start;}
+body.dark .preview-label{color:#555;}
+.preview-stage{width:100%;min-height:180px;background:#f8f9fc;border-radius:12px;border:2px dashed #e0e0e0;display:flex;align-items:center;justify-content:center;padding:32px;}
+body.dark .preview-stage{background:#141414;border-color:#2a2a2a;}
+#previewStage.dark-bg{background:#1a1a1a;}
+#previewStage.custom-bg{background:var(--stage-bg,#f8f9fc);}
+
+/* The actual preview button - controlled entirely via JS/inline styles */
+#btnPreview{cursor:pointer;position:relative;overflow:hidden;}
+
+/* CSS Code panel */
+.code-panel{background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);padding:24px;width:100%;max-width:680px;flex-shrink:0;margin-top:4px;}
+body.dark .code-panel{background:#1a1a1a;box-shadow:0 4px 24px rgba(0,0,0,0.4);}
+.code-panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.code-panel-title{font-size:13px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.6px;}
+body.dark .code-panel-title{color:#555;}
+.code-tabs{display:flex;gap:4px;}
+.code-tab{padding:5px 12px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:#f0f0f0;color:#555;font-family:inherit;transition:all 0.15s;}
+.code-tab.active{background:#1976d2;color:#fff;}
+body.dark .code-tab{background:#252525;color:#888;}
+body.dark .code-tab.active{background:#1976d2;color:#fff;}
+.code-output{background:#f4f6f9;border-radius:10px;padding:16px;font-family:'Courier New',monospace;font-size:12px;color:#2d3748;white-space:pre-wrap;word-break:break-all;line-height:1.6;max-height:260px;overflow-y:auto;border:1px solid #e8ecf0;}
+body.dark .code-output{background:#111;color:#a0cffe;border-color:#2a2a2a;}
+.action-btn{background:#1976d2;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:inline-flex;align-items:center;gap:6px;transition:background 0.2s;white-space:nowrap;font-family:inherit;flex-shrink:0;}
+.action-btn:hover{background:#1565c0;}
+
+/* Modals */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.48);z-index:8000;align-items:center;justify-content:center;}
+.modal.open{display:flex;}
+.mbox{background:#fff;border-radius:16px;padding:26px;width:90%;max-width:440px;max-height:88vh;overflow-y:auto;position:relative;}
+body.dark .mbox{background:#1e1e1e;color:#ddd;}
+.mhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.mtitle{font-size:19px;font-weight:500;color:#333;}
+body.dark .mtitle{color:#e0e0e0;}
+.mclose{background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center;transition:background 0.15s;}
+.mclose:hover{background:#f5f5f5;}
+body.dark .mclose:hover{background:#2a2a2a;}
+.mclose .material-symbols-outlined{font-size:21px;color:#666;}
+body.dark .mclose .material-symbols-outlined{color:#888;}
+.mfooter{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;}
+.mbtn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:background 0.15s;}
+.mbtn.primary{background:#1976d2;color:#fff;}
+.mbtn.primary:hover{background:#1565c0;}
+.mbtn.sec{background:#e0e0e0;color:#333;}
+.mbtn.sec:hover{background:#d0d0d0;}
+body.dark .mbtn.sec{background:#333;color:#bbb;}
+body.dark .mbtn.sec:hover{background:#3a3a3a;}
+.frow{margin-bottom:13px;}
+.frow label{display:block;font-size:12px;color:#777;margin-bottom:3px;}
+body.dark .frow label{color:#888;}
+.finput{width:100%;padding:8px 10px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;transition:border-color 0.2s;background:#fff;color:#333;}
+.finput:focus{border-color:#1976d2;}
+body.dark .finput{background:#252525 !important;color:#ddd !important;border-color:#444 !important;}
+
+/* Toasts */
+#toastStack{}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);padding:11px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,0.15);z-index:10002;opacity:0;transition:transform 0.3s,opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast.success,.toast.info{background:#1976d2;}
+.toast.error{background:#d32f2f;}
+
+/* Tip box */
+#tipBox{position:fixed;bottom:80px;right:18px;width:284px;background:#1976d2;border-radius:14px;padding:16px;z-index:9999;box-shadow:0 8px 28px rgba(25,118,210,0.3);opacity:0;transform:translateY(20px);pointer-events:none;transition:opacity 0.35s,transform 0.35s;}
+#tipBox.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+#tipBox.hide{opacity:0;transform:translateY(20px);pointer-events:none;}
+body.dark #tipBox{background:#0d47a1;}
+.tip-text{font-size:13px;color:#fff;line-height:1.5;margin-bottom:10px;}
+.tip-bar-track{height:3px;background:rgba(255,255,255,0.3);border-radius:2px;margin-bottom:10px;}
+.tip-bar-fill{height:100%;background:#fff;border-radius:2px;transition:width 0.3s;}
+.tip-btns{display:flex;gap:7px;justify-content:flex-end;}
+.tip-btn-ghost{background:rgba(255,255,255,0.2);color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;}
+.tip-btn-ghost:hover{background:rgba(255,255,255,0.35);}
+.tip-btn-solid{background:#fff;color:#1976d2;border:none;border-radius:7px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.tip-btn-solid:hover{background:#e3f2fd;}
+
+/* Ripple */
+.ripple{position:absolute;border-radius:50%;transform:scale(0);animation:ripple-anim 0.6s linear;background:rgba(255,255,255,0.4);pointer-events:none;}
+@keyframes ripple-anim{to{transform:scale(4);opacity:0;}}
+
+/* Chip presets */
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+.preset-chip{padding:7px 6px;border:1px solid #e0e0e0;border-radius:8px;background:#fafafa;cursor:pointer;font-size:11px;font-weight:600;text-align:center;transition:all 0.15s;font-family:inherit;color:#333;}
+.preset-chip:hover{border-color:#1976d2;background:#e3f2fd;color:#1976d2;}
+body.dark .preset-chip{background:#252525;border-color:#3a3a3a;color:#bbb;}
+body.dark .preset-chip:hover{border-color:#1976d2;background:#1a2a3a;color:#90caf9;}
+
+/* State tabs */
+.state-tabs{display:flex;gap:3px;margin-bottom:10px;}
+.state-tab{flex:1;padding:6px 4px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:#f0f0f0;color:#666;font-family:inherit;transition:all 0.15s;}
+.state-tab.active{background:#1976d2;color:#fff;}
+body.dark .state-tab{background:#252525;color:#777;}
+body.dark .state-tab.active{background:#1976d2;color:#fff;}
+
+/* Section divider */
+.sb-divider{height:1px;background:#f0f0f0;margin:12px 0;}
+body.dark .sb-divider{background:#2a2a2a;}
+
+/* Gradient row */
+.gradient-swatch{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.g-swatch{width:28px;height:28px;border-radius:6px;cursor:pointer;border:2px solid transparent;flex-shrink:0;transition:transform 0.15s,border-color 0.15s;}
+.g-swatch:hover{transform:scale(1.1);}
+.g-swatch.active{border-color:#1976d2;}
+
+/* Font family picker */
+.font-list{display:flex;flex-direction:column;gap:4px;}
+.font-opt{padding:6px 10px;border-radius:7px;font-size:13px;cursor:pointer;border:1px solid transparent;transition:all 0.12s;}
+.font-opt:hover{background:#e3f2fd;border-color:#bbdefb;}
+.font-opt.active{background:#e3f2fd;border-color:#1976d2;color:#1976d2;}
+body.dark .font-opt{color:#bbb;}
+body.dark .font-opt:hover{background:#1a2a3a;}
+body.dark .font-opt.active{background:#0d2a4a;border-color:#1976d2;color:#90caf9;}
+
+/* Icon picker modal */
+.icon-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-height:300px;overflow-y:auto;}
+.icon-item{padding:8px 4px;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:background 0.12s;border:1px solid transparent;}
+.icon-item:hover{background:#e3f2fd;}
+.icon-item.selected{background:#e3f2fd;border-color:#1976d2;}
+body.dark .icon-item:hover{background:#1a2a3a;}
+body.dark .icon-item.selected{background:#0d2a4a;border-color:#1976d2;}
+.icon-item span.material-symbols-outlined{font-size:20px;color:#333;}
+body.dark .icon-item span.material-symbols-outlined{color:#bbb;}
+.icon-item-label{font-size:9px;color:#999;text-align:center;}
+
+/* Keyframe editor */
+.anim-preview-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.anim-dot{width:12px;height:12px;border-radius:50%;background:#1976d2;flex-shrink:0;}
+
+/* Export modal textarea */
+.export-textarea{width:100%;font-family:'Courier New',monospace;font-size:11px;border:1px solid #e0e0e0;border-radius:8px;padding:12px;background:#f8f9fc;color:#333;resize:vertical;outline:none;min-height:200px;}
+body.dark .export-textarea{background:#111;color:#a0cffe;border-color:#2a2a2a;}
+</style>
+</head>
+<body>
+
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading Button Designer…</div>
+</div>
+
+<div id="appContainer">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <span class="material-symbols-outlined" style="font-size:22px;color:#1976d2;flex-shrink:0;">smart_button</span>
+    <span class="top-bar-title">Button Designer</span>
+    <div class="top-spacer"></div>
+    <button class="tbtn" onclick="loadPreset('material')" title="Material preset">
+      <span class="material-symbols-outlined" style="font-size:16px;">auto_awesome</span> Quick Presets
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="icon-btn" onclick="openExportModal()" title="Export code">
+      <span class="material-symbols-outlined">code</span>
+    </button>
+    <button class="icon-btn" onclick="copyCSS()" title="Copy CSS">
+      <i class="bi bi-clipboard" style="font-size:18px;"></i>
+    </button>
+    <button class="icon-btn" onclick="resetAll()" title="Reset">
+      <span class="material-symbols-outlined">restart_alt</span>
+    </button>
+    <button class="icon-btn" id="darkToggleBtn" onclick="toggleDark()" title="Toggle dark mode">
+      <i class="bi bi-moon-fill" style="font-size:18px;" id="darkIcon"></i>
+    </button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <button class="tbtn" onclick="loadPreset('material')" title="Material Design">
+      <span class="material-symbols-outlined" style="font-size:16px;">widgets</span> Material
+    </button>
+    <button class="tbtn" onclick="loadPreset('outline')" title="Outline">
+      <span class="material-symbols-outlined" style="font-size:16px;">crop_square</span> Outline
+    </button>
+    <button class="tbtn" onclick="loadPreset('ghost')" title="Ghost">
+      <span class="material-symbols-outlined" style="font-size:16px;">blur_on</span> Ghost
+    </button>
+    <button class="tbtn" onclick="loadPreset('gradient')" title="Gradient">
+      <span class="material-symbols-outlined" style="font-size:16px;">gradient</span> Gradient
+    </button>
+    <button class="tbtn" onclick="loadPreset('pill')" title="Pill">
+      <span class="material-symbols-outlined" style="font-size:16px;">radio_button_unchecked</span> Pill
+    </button>
+    <button class="tbtn" onclick="loadPreset('neon')" title="Neon glow">
+      <span class="material-symbols-outlined" style="font-size:16px;">flare</span> Neon
+    </button>
+    <button class="tbtn" onclick="loadPreset('neumorphic')" title="Neumorphic">
+      <span class="material-symbols-outlined" style="font-size:16px;">layers</span> Neumorphic
+    </button>
+    <button class="tbtn" onclick="loadPreset('glass')" title="Glassmorphism">
+      <span class="material-symbols-outlined" style="font-size:16px;">water_drop</span> Glass
+    </button>
+    <button class="tbtn" onclick="loadPreset('retro')" title="Retro 3D">
+      <span class="material-symbols-outlined" style="font-size:16px;">3d_rotation</span> Retro 3D
+    </button>
+    <button class="tbtn" onclick="loadPreset('danger')" title="Danger">
+      <span class="material-symbols-outlined" style="font-size:16px;">warning</span> Danger
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" id="stageBgToggle" onclick="cycleStage()">
+      <span class="material-symbols-outlined" style="font-size:16px;">contrast</span> Stage BG
+    </button>
+    <button class="tbtn" onclick="openAnimModal()">
+      <span class="material-symbols-outlined" style="font-size:16px;">animation</span> Animate
+    </button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+
+      <!-- TEXT -->
+      <div class="sb-section">
+        <div class="sb-title">Text</div>
+        <label class="sb-label">Button Label</label>
+        <input class="sb-input" id="btnText" type="text" value="Click Me" oninput="render()"/>
+        <div style="height:8px;"></div>
+        <label class="sb-label">Font Family</label>
+        <select class="sb-input" id="fontFamily" onchange="render()">
+          <option value="Inter, sans-serif">Inter</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="'Courier New', monospace">Courier New</option>
+          <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+          <option value="Verdana, sans-serif">Verdana</option>
+          <option value="system-ui, sans-serif">System UI</option>
+          <option value="Impact, sans-serif">Impact</option>
+          <option value="'Times New Roman', serif">Times New Roman</option>
+          <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+        </select>
+        <div style="height:8px;"></div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Font Size</label>
+          <span class="range-val" id="fontSizeVal">15px</span>
+        </div>
+        <input type="range" min="10" max="48" value="15" id="fontSize" oninput="syncRange('fontSize','fontSizeVal','px');render()"/>
+        <div style="height:6px;"></div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Font Weight</label>
+          <span class="range-val" id="fontWeightVal">500</span>
+        </div>
+        <input type="range" min="100" max="900" step="100" value="500" id="fontWeight" oninput="syncRange('fontWeight','fontWeightVal','');render()"/>
+        <div style="height:6px;"></div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Letter Spacing</label>
+          <span class="range-val" id="letterSpacingVal">0px</span>
+        </div>
+        <input type="range" min="-2" max="10" step="0.5" value="0" id="letterSpacing" oninput="syncRange('letterSpacing','letterSpacingVal','px');render()"/>
+        <div style="height:6px;"></div>
+        <label class="sb-label">Text Transform</label>
+        <select class="sb-input" id="textTransform" onchange="render()">
+          <option value="none">None</option>
+          <option value="uppercase">UPPERCASE</option>
+          <option value="lowercase">lowercase</option>
+          <option value="capitalize">Capitalize</option>
+        </select>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- ICON -->
+      <div class="sb-section">
+        <div class="sb-title">Icon</div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Show Icon</span>
+          <label class="toggle-switch"><input type="checkbox" id="showIcon" onchange="render()"><span class="toggle-slider"></span></label>
+        </div>
+        <label class="sb-label">Icon Name</label>
+        <div class="sb-row">
+          <input class="sb-input" id="iconName" type="text" value="star" oninput="render()" placeholder="e.g. star, download…"/>
+          <button class="icon-btn" style="padding:5px;flex-shrink:0;" onclick="openIconModal()" title="Pick icon">
+            <span class="material-symbols-outlined" style="font-size:18px;">grid_view</span>
+          </button>
+        </div>
+        <label class="sb-label">Icon Position</label>
+        <select class="sb-input" id="iconPos" onchange="render()">
+          <option value="left">Left of text</option>
+          <option value="right">Right of text</option>
+          <option value="only">Icon only</option>
+          <option value="top">Above text</option>
+        </select>
+        <div style="height:6px;"></div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Icon Size</label>
+          <span class="range-val" id="iconSizeVal">20px</span>
+        </div>
+        <input type="range" min="12" max="48" value="20" id="iconSize" oninput="syncRange('iconSize','iconSizeVal','px');render()"/>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- SIZE & SHAPE -->
+      <div class="sb-section">
+        <div class="sb-title">Size &amp; Shape</div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Padding X</label>
+          <span class="range-val" id="padXVal">24px</span>
+        </div>
+        <input type="range" min="4" max="80" value="24" id="padX" oninput="syncRange('padX','padXVal','px');render()"/>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Padding Y</label>
+          <span class="range-val" id="padYVal">12px</span>
+        </div>
+        <input type="range" min="2" max="48" value="12" id="padY" oninput="syncRange('padY','padYVal','px');render()"/>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Min Width</label>
+          <span class="range-val" id="minWidthVal">0px</span>
+        </div>
+        <input type="range" min="0" max="400" step="4" value="0" id="minWidth" oninput="syncRange('minWidth','minWidthVal','px');render()"/>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Border Radius</label>
+          <span class="range-val" id="borderRadiusVal">8px</span>
+        </div>
+        <input type="range" min="0" max="64" value="8" id="borderRadius" oninput="syncRange('borderRadius','borderRadiusVal','px');render()"/>
+        <div style="height:6px;"></div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Full Width</span>
+          <label class="toggle-switch"><input type="checkbox" id="fullWidth" onchange="render()"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- COLORS -->
+      <div class="sb-section">
+        <div class="sb-title">Colors — Normal</div>
+        <div class="color-row"><label class="sb-label">Background</label><input type="color" id="bgColor" value="#1976d2" oninput="render()"/></div>
+        <div class="color-row"><label class="sb-label">Text Color</label><input type="color" id="textColor" value="#ffffff" oninput="render()"/></div>
+        <div class="color-row"><label class="sb-label">Icon Color</label><input type="color" id="iconColor" value="#ffffff" oninput="render()"/></div>
+
+        <div style="height:8px;"></div>
+        <div class="sb-title">Colors — Hover</div>
+        <div class="color-row"><label class="sb-label">Background</label><input type="color" id="hoverBgColor" value="#1565c0" oninput="render()"/></div>
+        <div class="color-row"><label class="sb-label">Text Color</label><input type="color" id="hoverTextColor" value="#ffffff" oninput="render()"/></div>
+
+        <div style="height:8px;"></div>
+        <div class="sb-title">Colors — Active (click)</div>
+        <div class="color-row"><label class="sb-label">Background</label><input type="color" id="activeBgColor" value="#0d47a1" oninput="render()"/></div>
+        <div class="color-row"><label class="sb-label">Text Color</label><input type="color" id="activeTextColor" value="#ffffff" oninput="render()"/></div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- GRADIENT -->
+      <div class="sb-section">
+        <div class="sb-title">Gradient</div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Enable Gradient</span>
+          <label class="toggle-switch"><input type="checkbox" id="useGradient" onchange="render()"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="color-row"><label class="sb-label">Color 1</label><input type="color" id="grad1" value="#1976d2" oninput="render()"/></div>
+        <div class="color-row"><label class="sb-label">Color 2</label><input type="color" id="grad2" value="#9c27b0" oninput="render()"/></div>
+        <label class="sb-label">Direction</label>
+        <select class="sb-input" id="gradDir" onchange="render()">
+          <option value="to right">→ Left to Right</option>
+          <option value="to bottom right">↘ Diagonal</option>
+          <option value="to bottom">↓ Top to Bottom</option>
+          <option value="to left">← Right to Left</option>
+          <option value="135deg">↗ 135°</option>
+          <option value="45deg">↗ 45°</option>
+        </select>
+        <div style="height:6px;"></div>
+        <div class="gradient-swatch">
+          <div class="g-swatch" style="background:linear-gradient(to right,#1976d2,#9c27b0)" onclick="setGrad('#1976d2','#9c27b0')"></div>
+          <div class="g-swatch" style="background:linear-gradient(to right,#e91e63,#ff9800)" onclick="setGrad('#e91e63','#ff9800')"></div>
+          <div class="g-swatch" style="background:linear-gradient(to right,#00bcd4,#4caf50)" onclick="setGrad('#00bcd4','#4caf50')"></div>
+          <div class="g-swatch" style="background:linear-gradient(to right,#f44336,#9c27b0)" onclick="setGrad('#f44336','#9c27b0')"></div>
+          <div class="g-swatch" style="background:linear-gradient(to right,#ff9800,#f44336)" onclick="setGrad('#ff9800','#f44336')"></div>
+          <div class="g-swatch" style="background:linear-gradient(to right,#212121,#546e7a)" onclick="setGrad('#212121','#546e7a')"></div>
+          <div class="g-swatch" style="background:linear-gradient(to right,#00e676,#1976d2)" onclick="setGrad('#00e676','#1976d2')"></div>
+          <div class="g-swatch" style="background:linear-gradient(to right,#ffd700,#ff6b35)" onclick="setGrad('#ffd700','#ff6b35')"></div>
+        </div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- BORDER -->
+      <div class="sb-section">
+        <div class="sb-title">Border</div>
+        <label class="sb-label">Border Style</label>
+        <select class="sb-input" id="borderStyle" onchange="render()">
+          <option value="none">None</option>
+          <option value="solid">Solid</option>
+          <option value="dashed">Dashed</option>
+          <option value="dotted">Dotted</option>
+          <option value="double">Double</option>
+          <option value="groove">Groove</option>
+          <option value="ridge">Ridge</option>
+          <option value="inset">Inset</option>
+          <option value="outset">Outset</option>
+        </select>
+        <div style="height:6px;"></div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Border Width</label>
+          <span class="range-val" id="borderWidthVal">2px</span>
+        </div>
+        <input type="range" min="1" max="12" value="2" id="borderWidth" oninput="syncRange('borderWidth','borderWidthVal','px');render()"/>
+        <div class="color-row" style="margin-top:4px;"><label class="sb-label">Border Color</label><input type="color" id="borderColor" value="#1976d2" oninput="render()"/></div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- SHADOW -->
+      <div class="sb-section">
+        <div class="sb-title">Shadow</div>
+        <label class="sb-label">Shadow Preset</label>
+        <select class="sb-input" id="shadowPreset" onchange="applyShadowPreset()">
+          <option value="none">None</option>
+          <option value="soft">Soft</option>
+          <option value="medium">Medium</option>
+          <option value="hard">Hard</option>
+          <option value="colored">Colored (accent)</option>
+          <option value="neon">Neon Glow</option>
+          <option value="inset">Inset</option>
+          <option value="custom">Custom</option>
+        </select>
+        <div style="height:8px;"></div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Offset X</label>
+          <span class="range-val" id="shadowXVal">0px</span>
+        </div>
+        <input type="range" min="-30" max="30" value="0" id="shadowX" oninput="syncRange('shadowX','shadowXVal','px');render()"/>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Offset Y</label>
+          <span class="range-val" id="shadowYVal">4px</span>
+        </div>
+        <input type="range" min="-30" max="30" value="4" id="shadowY" oninput="syncRange('shadowY','shadowYVal','px');render()"/>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Blur</label>
+          <span class="range-val" id="shadowBlurVal">12px</span>
+        </div>
+        <input type="range" min="0" max="60" value="12" id="shadowBlur" oninput="syncRange('shadowBlur','shadowBlurVal','px');render()"/>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Spread</label>
+          <span class="range-val" id="shadowSpreadVal">0px</span>
+        </div>
+        <input type="range" min="-20" max="20" value="0" id="shadowSpread" oninput="syncRange('shadowSpread','shadowSpreadVal','px');render()"/>
+        <div class="color-row" style="margin-top:4px;"><label class="sb-label">Shadow Color</label><input type="color" id="shadowColor" value="#000000" oninput="render()"/></div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Opacity</label>
+          <span class="range-val" id="shadowOpacityVal">20%</span>
+        </div>
+        <input type="range" min="0" max="100" value="20" id="shadowOpacity" oninput="syncRange('shadowOpacity','shadowOpacityVal','%');render()"/>
+        <div class="sb-toggle-row" style="margin-top:6px;">
+          <span class="sb-toggle-label">Inset Shadow</span>
+          <label class="toggle-switch"><input type="checkbox" id="shadowInset" onchange="render()"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- HOVER EFFECTS -->
+      <div class="sb-section">
+        <div class="sb-title">Hover Effects</div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Scale on Hover</span>
+          <label class="toggle-switch"><input type="checkbox" id="hoverScale" onchange="render()" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Scale Amount</label>
+          <span class="range-val" id="hoverScaleVal">1.04</span>
+        </div>
+        <input type="range" min="1" max="1.3" step="0.01" value="1.04" id="hoverScaleAmt" oninput="syncRange('hoverScaleAmt','hoverScaleVal','');render()"/>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Lift on Hover</span>
+          <label class="toggle-switch"><input type="checkbox" id="hoverLift" onchange="render()"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Ripple Effect</span>
+          <label class="toggle-switch"><input type="checkbox" id="rippleEffect" onchange="render()" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Glow on Hover</span>
+          <label class="toggle-switch"><input type="checkbox" id="hoverGlow" onchange="render()"><span class="toggle-slider"></span></label>
+        </div>
+        <label class="sb-label">Transition Duration</label>
+        <select class="sb-input" id="transitionDur" onchange="render()">
+          <option value="0.1s">Instant (0.1s)</option>
+          <option value="0.2s" selected>Fast (0.2s)</option>
+          <option value="0.35s">Medium (0.35s)</option>
+          <option value="0.5s">Slow (0.5s)</option>
+          <option value="0.8s">Very Slow (0.8s)</option>
+        </select>
+        <label class="sb-label" style="margin-top:6px;">Transition Easing</label>
+        <select class="sb-input" id="transitionEase" onchange="render()">
+          <option value="ease">ease</option>
+          <option value="ease-in">ease-in</option>
+          <option value="ease-out" selected>ease-out</option>
+          <option value="ease-in-out">ease-in-out</option>
+          <option value="linear">linear</option>
+          <option value="cubic-bezier(0.34,1.56,0.64,1)">Spring bounce</option>
+          <option value="cubic-bezier(0.68,-0.55,0.27,1.55)">Elastic</option>
+        </select>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- CLICK / ACTION -->
+      <div class="sb-section">
+        <div class="sb-title">Click Action</div>
+        <label class="sb-label">On Click Do</label>
+        <select class="sb-input" id="clickAction" onchange="toggleActionOpts()">
+          <option value="none">Nothing</option>
+          <option value="alert">Show Alert</option>
+          <option value="redirect">Redirect URL</option>
+          <option value="copy">Copy Text</option>
+          <option value="scroll">Scroll to ID</option>
+          <option value="toggle">Toggle Class</option>
+          <option value="download">Download File</option>
+          <option value="custom">Custom JS</option>
+        </select>
+        <div id="actionAlertOpts" class="action-opt" style="display:none;margin-top:6px;">
+          <label class="sb-label">Alert Message</label>
+          <input class="sb-input" id="alertMsg" type="text" value="Button clicked!" />
+        </div>
+        <div id="actionRedirectOpts" class="action-opt" style="display:none;margin-top:6px;">
+          <label class="sb-label">URL</label>
+          <input class="sb-input" id="redirectUrl" type="text" value="https://" />
+          <div style="height:6px;"></div>
+          <label class="sb-label">Open in</label>
+          <select class="sb-input" id="redirectTarget">
+            <option value="_blank">New Tab</option>
+            <option value="_self">Same Tab</option>
+          </select>
+        </div>
+        <div id="actionCopyOpts" class="action-opt" style="display:none;margin-top:6px;">
+          <label class="sb-label">Text to Copy</label>
+          <input class="sb-input" id="copyText" type="text" value="Hello World!" />
+        </div>
+        <div id="actionScrollOpts" class="action-opt" style="display:none;margin-top:6px;">
+          <label class="sb-label">Target Element ID</label>
+          <input class="sb-input" id="scrollTarget" type="text" value="section1" />
+        </div>
+        <div id="actionToggleOpts" class="action-opt" style="display:none;margin-top:6px;">
+          <label class="sb-label">Element ID</label>
+          <input class="sb-input" id="toggleEl" type="text" value="myElement" />
+          <div style="height:4px;"></div>
+          <label class="sb-label">CSS Class to Toggle</label>
+          <input class="sb-input" id="toggleClass" type="text" value="active" />
+        </div>
+        <div id="actionCustomOpts" class="action-opt" style="display:none;margin-top:6px;">
+          <label class="sb-label">JavaScript Code</label>
+          <textarea class="sb-input" id="customJS" rows="4" style="resize:vertical;">console.log('clicked!');</textarea>
+        </div>
+
+        <div style="height:8px;"></div>
+        <label class="sb-label">Cursor Style</label>
+        <select class="sb-input" id="cursorStyle" onchange="render()">
+          <option value="pointer">pointer</option>
+          <option value="default">default</option>
+          <option value="crosshair">crosshair</option>
+          <option value="grab">grab</option>
+          <option value="zoom-in">zoom-in</option>
+          <option value="not-allowed">not-allowed</option>
+          <option value="wait">wait</option>
+        </select>
+        <div style="height:6px;"></div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Disabled State</span>
+          <label class="toggle-switch"><input type="checkbox" id="isDisabled" onchange="render()"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Disabled Opacity</label>
+          <span class="range-val" id="disabledOpacityVal">45%</span>
+        </div>
+        <input type="range" min="10" max="90" value="45" id="disabledOpacity" oninput="syncRange('disabledOpacity','disabledOpacityVal','%');render()"/>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- OPACITY & TRANSFORMS -->
+      <div class="sb-section">
+        <div class="sb-title">Opacity &amp; Transform</div>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Opacity</label>
+          <span class="range-val" id="btnOpacityVal">100%</span>
+        </div>
+        <input type="range" min="0" max="100" value="100" id="btnOpacity" oninput="syncRange('btnOpacity','btnOpacityVal','%');render()"/>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Rotate</label>
+          <span class="range-val" id="rotateVal">0°</span>
+        </div>
+        <input type="range" min="-180" max="180" value="0" id="rotate" oninput="syncRange('rotate','rotateVal','°');render()"/>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Skew X</label>
+          <span class="range-val" id="skewXVal">0°</span>
+        </div>
+        <input type="range" min="-30" max="30" value="0" id="skewX" oninput="syncRange('skewX','skewXVal','°');render()"/>
+        <div class="range-row">
+          <label class="sb-label" style="margin:0;flex:1;">Scale</label>
+          <span class="range-val" id="baseScaleVal">1.0</span>
+        </div>
+        <input type="range" min="0.5" max="2" step="0.05" value="1" id="baseScale" oninput="syncRange('baseScale','baseScaleVal','');render()"/>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- ADVANCED -->
+      <div class="sb-section">
+        <div class="sb-title">Advanced</div>
+        <label class="sb-label">Overflow</label>
+        <select class="sb-input" id="overflowStyle" onchange="render()">
+          <option value="hidden">hidden (needed for ripple)</option>
+          <option value="visible">visible</option>
+        </select>
+        <div style="height:6px;"></div>
+        <label class="sb-label">Display</label>
+        <select class="sb-input" id="displayStyle" onchange="render()">
+          <option value="inline-flex">inline-flex</option>
+          <option value="flex">flex</option>
+          <option value="inline-block">inline-block</option>
+          <option value="block">block</option>
+        </select>
+        <div style="height:6px;"></div>
+        <label class="sb-label">Text Shadow</label>
+        <select class="sb-input" id="textShadow" onchange="render()">
+          <option value="none">None</option>
+          <option value="0 1px 2px rgba(0,0,0,0.3)">Subtle</option>
+          <option value="0 2px 4px rgba(0,0,0,0.5)">Medium</option>
+          <option value="0 0 8px rgba(255,255,255,0.8)">White Glow</option>
+          <option value="0 0 10px currentColor">Current Color Glow</option>
+          <option value="2px 2px 0 #000">Hard offset</option>
+        </select>
+        <div style="height:6px;"></div>
+        <label class="sb-label">Filter</label>
+        <select class="sb-input" id="filterStyle" onchange="render()">
+          <option value="none">None</option>
+          <option value="brightness(1.1)">Brighter</option>
+          <option value="saturate(1.5)">More Saturated</option>
+          <option value="grayscale(1)">Grayscale</option>
+          <option value="sepia(1)">Sepia</option>
+          <option value="hue-rotate(90deg)">Hue Rotate 90°</option>
+          <option value="blur(1px)">Blur (1px)</option>
+          <option value="invert(1)">Invert</option>
+          <option value="drop-shadow(0 4px 8px rgba(0,0,0,0.3))">Drop Shadow</option>
+        </select>
+        <div style="height:6px;"></div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">Pointer Events: None</span>
+          <label class="toggle-switch"><input type="checkbox" id="noPointer" onchange="render()"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">User Select: None</span>
+          <label class="toggle-switch"><input type="checkbox" id="noSelect" onchange="render()" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="sb-toggle-row">
+          <span class="sb-toggle-label">White Space: Nowrap</span>
+          <label class="toggle-switch"><input type="checkbox" id="nowrap" onchange="render()" checked><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+
+      <div class="sb-divider"></div>
+
+      <!-- CUSTOM ID/CLASS -->
+      <div class="sb-section">
+        <div class="sb-title">ID / Class</div>
+        <label class="sb-label">Button ID</label>
+        <input class="sb-input" id="btnId" type="text" value="myButton" oninput="render()"/>
+        <div style="height:6px;"></div>
+        <label class="sb-label">CSS Classes (space-separated)</label>
+        <input class="sb-input" id="btnClasses" type="text" value="" placeholder="btn btn-primary …" oninput="render()"/>
+        <div style="height:6px;"></div>
+        <label class="sb-label">ARIA Label</label>
+        <input class="sb-input" id="ariaLabel" type="text" value="" placeholder="Accessible label…" oninput="render()"/>
+        <div style="height:6px;"></div>
+        <label class="sb-label">Tooltip (title attr)</label>
+        <input class="sb-input" id="tooltipText" type="text" value="" placeholder="Tooltip text…" oninput="render()"/>
+      </div>
+
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">chevron_left</span> Hide Panel
+      </button>
+    </div>
+
+    <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+      <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+    </button>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+      <div class="preview-card">
+        <span class="preview-label">Live Preview</span>
+        <div class="preview-stage" id="previewStage">
+          <button id="btnPreview">Click Me</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="action-btn" onclick="copyCSS()">
+            <i class="bi bi-clipboard"></i> Copy CSS
+          </button>
+          <button class="action-btn" onclick="copyHTML()" style="background:#546e7a;">
+            <span class="material-symbols-outlined" style="font-size:16px;">code</span> Copy HTML
+          </button>
+          <button class="action-btn" onclick="openExportModal()" style="background:#2e7d32;">
+            <span class="material-symbols-outlined" style="font-size:16px;">download</span> Export
+          </button>
+          <button class="action-btn" onclick="resetAll()" style="background:#888;">
+            <span class="material-symbols-outlined" style="font-size:16px;">restart_alt</span> Reset
+          </button>
+        </div>
+      </div>
+
+      <div class="code-panel" style="margin-top:20px;">
+        <div class="code-panel-header">
+          <span class="code-panel-title">Generated Code</span>
+          <div class="code-tabs">
+            <button class="code-tab active" onclick="switchTab('css',this)">CSS</button>
+            <button class="code-tab" onclick="switchTab('html',this)">HTML</button>
+            <button class="code-tab" onclick="switchTab('full',this)">Full</button>
+          </div>
+        </div>
+        <pre class="code-output" id="codeOutput"></pre>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal" id="exportModal">
+  <div class="mbox wide">
+    <div class="mhdr">
+      <span class="mtitle">Export Button</span>
+      <button class="mclose" onclick="closeModal('exportModal')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="frow">
+      <label>CSS</label>
+      <textarea class="export-textarea" id="exportCSS" readonly></textarea>
+    </div>
+    <div class="frow">
+      <label>HTML</label>
+      <textarea class="export-textarea" id="exportHTML" readonly style="min-height:80px;"></textarea>
+    </div>
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="closeModal('exportModal')">Close</button>
+      <button class="mbtn primary" onclick="copyFromExport()">
+        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;">content_copy</span> Copy All
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ICON PICKER MODAL -->
+<div class="modal" id="iconModal">
+  <div class="mbox wide" style="max-width:480px;">
+    <div class="mhdr">
+      <span class="mtitle">Pick Icon</span>
+      <button class="mclose" onclick="closeModal('iconModal')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="frow">
+      <input class="finput" id="iconSearch" type="text" placeholder="Search icons…" oninput="filterIcons()"/>
+    </div>
+    <div class="icon-grid" id="iconGrid"></div>
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="closeModal('iconModal')">Cancel</button>
+      <button class="mbtn primary" onclick="applyIcon()">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- ANIMATION MODAL -->
+<div class="modal" id="animModal">
+  <div class="mbox wide" style="max-width:400px;">
+    <div class="mhdr">
+      <span class="mtitle">CSS Animation</span>
+      <button class="mclose" onclick="closeModal('animModal')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="frow">
+      <label>Animation Preset</label>
+      <select class="finput" id="animPreset" onchange="applyAnim()">
+        <option value="none">None</option>
+        <option value="pulse">Pulse</option>
+        <option value="bounce">Bounce</option>
+        <option value="shake">Shake</option>
+        <option value="spin">Spin</option>
+        <option value="ping">Ping (attention)</option>
+        <option value="float">Float</option>
+        <option value="heartbeat">Heartbeat</option>
+        <option value="jello">Jello</option>
+        <option value="tada">Tada</option>
+        <option value="wobble">Wobble</option>
+      </select>
+    </div>
+    <div class="frow">
+      <label>Duration</label>
+      <select class="finput" id="animDur">
+        <option value="0.5s">Fast (0.5s)</option>
+        <option value="1s" selected>Normal (1s)</option>
+        <option value="2s">Slow (2s)</option>
+        <option value="3s">Very Slow (3s)</option>
+      </select>
+    </div>
+    <div class="frow">
+      <label>Repeat</label>
+      <select class="finput" id="animIter">
+        <option value="1">Once</option>
+        <option value="2">Twice</option>
+        <option value="3">3 times</option>
+        <option value="infinite" selected>Infinite</option>
+      </select>
+    </div>
+    <div class="frow">
+      <label>Timing</label>
+      <select class="finput" id="animTiming">
+        <option value="ease">ease</option>
+        <option value="ease-in-out" selected>ease-in-out</option>
+        <option value="linear">linear</option>
+      </select>
+    </div>
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="closeModal('animModal')">Cancel</button>
+      <button class="mbtn primary" onclick="applyAnim();closeModal('animModal')">Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast stack -->
+<div id="toastStack"></div>
+
+<!-- Tip box -->
+<div id="tipBox">
+  <div class="tip-text" id="tipText"></div>
+  <div class="tip-bar-track"><div class="tip-bar-fill" id="tipBar"></div></div>
+  <div class="tip-btns">
+    <button class="tip-btn-ghost" onclick="tipNav(-1)">Prev</button>
+    <button class="tip-btn-solid" onclick="tipNav(1)" id="tipNextBtn">Next</button>
+    <button class="tip-btn-ghost" onclick="dismissTips()">✕</button>
+  </div>
+</div>
+
+<style>
+/* Dynamic animation keyframes */
+@keyframes btn-pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+@keyframes btn-bounce{0%,100%{transform:translateY(0);}40%{transform:translateY(-12px);}60%{transform:translateY(-6px);}}
+@keyframes btn-shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+@keyframes btn-spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes btn-ping{0%{box-shadow:0 0 0 0 rgba(25,118,210,0.4);}100%{box-shadow:0 0 0 20px rgba(25,118,210,0);}}
+@keyframes btn-float{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
+@keyframes btn-heartbeat{0%,100%{transform:scale(1);}14%{transform:scale(1.12);}28%{transform:scale(1);}42%{transform:scale(1.08);}70%{transform:scale(1);}}
+@keyframes btn-jello{0%,11.1%,100%{transform:none;}22.2%{transform:skewX(-12.5deg) skewY(-12.5deg);}33.3%{transform:skewX(6.25deg) skewY(6.25deg);}44.4%{transform:skewX(-3.125deg) skewY(-3.125deg);}55.5%{transform:skewX(1.5625deg) skewY(1.5625deg);}66.6%{transform:skewX(-0.78125deg) skewY(-0.78125deg);}77.7%{transform:skewX(0.390625deg) skewY(0.390625deg);}88.8%{transform:skewX(-0.1953125deg) skewY(-0.1953125deg);}}
+@keyframes btn-tada{0%{transform:scale(1);}10%,20%{transform:scale(0.9) rotate(-3deg);}30%,50%,70%,90%{transform:scale(1.1) rotate(3deg);}40%,60%,80%{transform:scale(1.1) rotate(-3deg);}100%{transform:scale(1) rotate(0);}}
+@keyframes btn-wobble{0%,100%{transform:translateX(0) rotate(0);}15%{transform:translateX(-6px) rotate(-3deg);}30%{transform:translateX(5px) rotate(2deg);}45%{transform:translateX(-4px) rotate(-1deg);}60%{transform:translateX(3px) rotate(1deg);}75%{transform:translateX(-2px) rotate(-0.5deg);}}
+</style>
+
+<script>
+// ─── State ──────────────────────────────────────────────
+let currentTab = 'css';
+let currentAnim = 'none';
+let animDur = '1s', animIter = 'infinite', animTiming = 'ease-in-out';
+let stageMode = 0; // 0=light, 1=dark, 2=custom
+let selectedIcon = null;
+
+// ─── Utility ────────────────────────────────────────────
+function v(id){return document.getElementById(id);}
+function syncRange(id, valId, unit){
+  v(valId).textContent = v(id).value + unit;
+}
+function hex2rgb(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return{r,g,b};
+}
+
+// ─── Dark Mode ──────────────────────────────────────────
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  document.documentElement.classList.toggle('dark');
+  const dark = document.body.classList.contains('dark');
+  v('darkIcon').className = dark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  document.cookie = `toolsuite_theme=${dark?'dark':'light'};path=/;max-age=31536000;SameSite=Lax`;
+}
+
+// ─── Sidebar ────────────────────────────────────────────
+function toggleSidebar(){
+  const s=v('sidebar'), e=v('expandBtn');
+  const collapsed=s.classList.contains('collapsed');
+  s.classList.toggle('collapsed');
+  e.style.display=collapsed?'none':'block';
+}
+
+// ─── Stage BG ───────────────────────────────────────────
+function cycleStage(){
+  stageMode=(stageMode+1)%3;
+  const stage=v('previewStage');
+  if(stageMode===0){stage.style.background='';stage.style.setProperty('--stage-bg','');}
+  else if(stageMode===1){stage.style.background='#1a1a1a';}
+  else{stage.style.background='linear-gradient(135deg,#667eea,#764ba2)';}
+}
+
+// ─── Range init ─────────────────────────────────────────
+function initRanges(){
+  const ranges=[
+    ['fontSize','fontSizeVal','px'],['fontWeight','fontWeightVal',''],
+    ['letterSpacing','letterSpacingVal','px'],['padX','padXVal','px'],
+    ['padY','padYVal','px'],['minWidth','minWidthVal','px'],
+    ['borderRadius','borderRadiusVal','px'],['borderWidth','borderWidthVal','px'],
+    ['shadowX','shadowXVal','px'],['shadowY','shadowYVal','px'],
+    ['shadowBlur','shadowBlurVal','px'],['shadowSpread','shadowSpreadVal','px'],
+    ['shadowOpacity','shadowOpacityVal','%'],['hoverScaleAmt','hoverScaleVal',''],
+    ['rotate','rotateVal','°'],['skewX','skewXVal','°'],
+    ['baseScale','baseScaleVal',''],['btnOpacity','btnOpacityVal','%'],
+    ['disabledOpacity','disabledOpacityVal','%'],['iconSize','iconSizeVal','px']
+  ];
+  ranges.forEach(([id,val,unit])=>syncRange(id,val,unit));
+}
+
+// ─── Main render ────────────────────────────────────────
+function render(){
+  const btn = v('btnPreview');
+  const text = v('btnText').value;
+  const showIcon = v('showIcon').checked;
+  const iconName = v('iconName').value.trim()||'star';
+  const iconPos = v('iconPos').value;
+  const iconSize = v('iconSize').value+'px';
+  const iconColor = v('iconColor').value;
+  const fontFamily = v('fontFamily').value;
+  const fontSize = v('fontSize').value+'px';
+  const fontWeight = v('fontWeight').value;
+  const letterSpacing = v('letterSpacing').value+'px';
+  const textTransform = v('textTransform').value;
+  const padX = v('padX').value+'px';
+  const padY = v('padY').value+'px';
+  const minWidth = parseInt(v('minWidth').value);
+  const borderRadius = v('borderRadius').value+'px';
+  const fullWidth = v('fullWidth').checked;
+
+  // Colors
+  const useGrad = v('useGradient').checked;
+  const bgColor = v('bgColor').value;
+  const grad1 = v('grad1').value, grad2 = v('grad2').value, gradDir = v('gradDir').value;
+  const textColor = v('textColor').value;
+
+  // Border
+  const borderStyle = v('borderStyle').value;
+  const borderWidth = v('borderWidth').value+'px';
+  const borderColor = v('borderColor').value;
+
+  // Shadow
+  const sX=v('shadowX').value, sY=v('shadowY').value, sBlur=v('shadowBlur').value,
+    sSpread=v('shadowSpread').value, sColor=v('shadowColor').value,
+    sOpacity=(parseInt(v('shadowOpacity').value)/100).toFixed(2),
+    sInset=v('shadowInset').checked;
+  const {r,g,b}=hex2rgb(sColor);
+  const shadowVal=`${sInset?'inset ':''}${sX}px ${sY}px ${sBlur}px ${sSpread}px rgba(${r},${g},${b},${sOpacity})`;
+
+  // Transforms
+  const rotate=v('rotate').value+'deg';
+  const skewX=v('skewX').value+'deg';
+  const baseScale=v('baseScale').value;
+  const btnOpacity=parseInt(v('btnOpacity').value)/100;
+  const isDisabled=v('isDisabled').checked;
+  const disabledOpacity=parseInt(v('disabledOpacity').value)/100;
+
+  // Misc
+  const cursorStyle=v('cursorStyle').value;
+  const overflowStyle=v('overflowStyle').value;
+  const displayStyle=v('displayStyle').value;
+  const textShadow=v('textShadow').value;
+  const filterStyle=v('filterStyle').value;
+  const noPointer=v('noPointer').checked;
+  const noSelect=v('noSelect').checked;
+  const nowrap=v('nowrap').checked;
+  const transitionDur=v('transitionDur').value;
+  const transitionEase=v('transitionEase').value;
+
+  // Build background
+  let bgStyle;
+  if(useGrad){bgStyle=`linear-gradient(${gradDir},${grad1},${grad2})`;}
+  else{bgStyle=bgColor;}
+
+  // Build inner HTML
+  let inner='';
+  if(showIcon){
+    const iconEl=`<span class="material-symbols-rounded" style="font-size:${iconSize};color:${iconColor};line-height:1;">${iconName}</span>`;
+    if(iconPos==='left'){inner=iconEl+`<span>${text}</span>`;}
+    else if(iconPos==='right'){inner=`<span>${text}</span>`+iconEl;}
+    else if(iconPos==='only'){inner=iconEl;}
+    else if(iconPos==='top'){
+      btn.style.flexDirection='column';
+      inner=iconEl+`<span>${text}</span>`;
+    }
+    if(iconPos!=='top')btn.style.flexDirection='';
+  } else {
+    inner=`<span>${text}</span>`;
+    btn.style.flexDirection='';
+  }
+  btn.innerHTML=inner;
+
+  // Apply styles
+  btn.style.cssText='';
+  btn.style.background=bgStyle;
+  btn.style.color=textColor;
+  btn.style.fontFamily=fontFamily;
+  btn.style.fontSize=fontSize;
+  btn.style.fontWeight=fontWeight;
+  btn.style.letterSpacing=letterSpacing;
+  btn.style.textTransform=textTransform;
+  btn.style.padding=`${padY} ${padX}`;
+  btn.style.borderRadius=borderRadius;
+  btn.style.border=borderStyle==='none'?'none':`${borderWidth} ${borderStyle} ${borderColor}`;
+  btn.style.boxShadow=shadowVal;
+  btn.style.cursor=isDisabled?'not-allowed':cursorStyle;
+  btn.style.opacity=isDisabled?disabledOpacity:btnOpacity;
+  btn.style.overflow=overflowStyle;
+  btn.style.display=displayStyle;
+  btn.style.alignItems='center';
+  btn.style.justifyContent='center';
+  btn.style.gap='8px';
+  btn.style.textShadow=textShadow;
+  btn.style.filter=filterStyle;
+  btn.style.pointerEvents=noPointer?'none':'auto';
+  btn.style.userSelect=noSelect?'none':'auto';
+  btn.style.webkitUserSelect=noSelect?'none':'auto';
+  btn.style.whiteSpace=nowrap?'nowrap':'normal';
+  btn.style.width=fullWidth?'100%':'';
+  if(minWidth>0)btn.style.minWidth=minWidth+'px';
+  const transform=`rotate(${rotate}) skewX(${skewX}) scale(${baseScale})`;
+  btn.style.transform=transform;
+  btn.style.transition=`all ${transitionDur} ${transitionEase}`;
+  btn.style.position='relative';
+
+  // Animation
+  if(currentAnim!=='none'){
+    btn.style.animationName=`btn-${currentAnim}`;
+    btn.style.animationDuration=animDur;
+    btn.style.animationIterationCount=animIter;
+    btn.style.animationTimingFunction=animTiming;
+  } else {
+    btn.style.animationName='none';
+  }
+
+  // Hover / active handling
+  btn.onmouseenter=function(){
+    if(isDisabled)return;
+    const hBg=v('hoverBgColor').value;
+    const hText=v('hoverTextColor').value;
+    if(v('hoverScale').checked){
+      this.style.transform=`rotate(${rotate}) skewX(${skewX}) scale(${parseFloat(v('hoverScaleAmt').value)})`;
+    }
+    if(v('hoverLift').checked){this.style.boxShadow=`0 8px 24px rgba(0,0,0,0.25)`;}
+    if(v('hoverGlow').checked){
+      const {r:gr,g:gg,b:gb}=hex2rgb(useGrad?grad1:bgColor);
+      this.style.boxShadow=`0 0 20px 4px rgba(${gr},${gg},${gb},0.5)`;
+    }
+    if(useGrad){
+      this.style.filter='brightness(1.1)';
+    } else {
+      this.style.background=hBg;
+    }
+    this.style.color=hText;
+  };
+  btn.onmouseleave=function(){
+    if(isDisabled)return;
+    this.style.background=bgStyle;
+    this.style.color=textColor;
+    this.style.transform=transform;
+    this.style.boxShadow=shadowVal;
+    this.style.filter=filterStyle;
+  };
+  btn.onmousedown=function(e){
+    if(isDisabled)return;
+    this.style.background=v('activeBgColor').value;
+    this.style.color=v('activeTextColor').value;
+    this.style.transform=`rotate(${rotate}) skewX(${skewX}) scale(${Math.max(0.95,parseFloat(baseScale)-0.04)})`;
+    if(v('rippleEffect').checked){
+      const rect=this.getBoundingClientRect();
+      const size=Math.max(rect.width,rect.height)*2;
+      const ripple=document.createElement('span');
+      ripple.className='ripple';
+      ripple.style.width=ripple.style.height=size+'px';
+      ripple.style.left=(e.clientX-rect.left-size/2)+'px';
+      ripple.style.top=(e.clientY-rect.top-size/2)+'px';
+      this.appendChild(ripple);
+      setTimeout(()=>ripple.remove(),700);
+    }
+    doClickAction();
+  };
+  btn.onmouseup=function(){
+    if(isDisabled)return;
+    this.style.background=bgStyle;
+    this.style.color=textColor;
+    this.style.transform=transform;
+  };
+
+  // Button attrs
+  const btnId=v('btnId').value;
+  const btnClasses=v('btnClasses').value;
+  const ariaLabel=v('ariaLabel').value;
+  const tooltip=v('tooltipText').value;
+  if(btnId)btn.id='btnPreview'; // keep ID for preview
+  if(btnClasses)btn.setAttribute('data-classes',btnClasses);
+  if(ariaLabel)btn.setAttribute('aria-label',ariaLabel);else btn.removeAttribute('aria-label');
+  if(tooltip)btn.title=tooltip;else btn.title='';
+  if(isDisabled)btn.setAttribute('disabled','');else btn.removeAttribute('disabled');
+
+  updateCode();
+}
+
+// ─── Click Action ────────────────────────────────────────
+function toggleActionOpts(){
+  document.querySelectorAll('.action-opt').forEach(el=>el.style.display='none');
+  const val=v('clickAction').value;
+  const map={alert:'actionAlertOpts',redirect:'actionRedirectOpts',copy:'actionCopyOpts',scroll:'actionScrollOpts',toggle:'actionToggleOpts',custom:'actionCustomOpts'};
+  if(map[val])v(map[val]).style.display='block';
+}
+
+function doClickAction(){
+  const action=v('clickAction').value;
+  if(action==='alert'){setTimeout(()=>alert(v('alertMsg').value),50);}
+  else if(action==='redirect'){
+    const url=v('redirectUrl').value;
+    const target=v('redirectTarget').value;
+    if(url&&url!=='https://')window.open(url,target);
+    else showToast('Set a URL in the sidebar','error');
+  }
+  else if(action==='copy'){
+    navigator.clipboard.writeText(v('copyText').value).then(()=>showToast('Copied!','success'));
+  }
+  else if(action==='scroll'){
+    const el=document.getElementById(v('scrollTarget').value);
+    if(el)el.scrollIntoView({behavior:'smooth'});
+    else showToast('Element not found','error');
+  }
+  else if(action==='toggle'){
+    const el=document.getElementById(v('toggleEl').value);
+    if(el)el.classList.toggle(v('toggleClass').value);
+    else showToast('Element not found','error');
+  }
+  else if(action==='custom'){
+    try{eval(v('customJS').value);}catch(e){showToast('JS Error: '+e.message,'error');}
+  }
+}
+
+// ─── Code generation ─────────────────────────────────────
+function buildCSS(){
+  const btn=v('btnPreview');
+  const s=btn.style;
+  const hBg=v('hoverBgColor').value, hText=v('hoverTextColor').value;
+  const aBg=v('activeBgColor').value, aText=v('activeTextColor').value;
+  const hScale=v('hoverScale').checked?`  transform: scale(${v('hoverScaleAmt').value});`:'';
+  const hLift=v('hoverLift').checked?`  box-shadow: 0 8px 24px rgba(0,0,0,0.25);`:'';
+  const btnId=v('btnId').value||'myButton';
+  const animCSS=currentAnim!=='none'?`  animation: btn-${currentAnim} ${animDur} ${animTiming} ${animIter};`:'';
+
+  return `#${btnId} {
+  background: ${s.background};
+  color: ${s.color};
+  font-family: ${s.fontFamily};
+  font-size: ${s.fontSize};
+  font-weight: ${s.fontWeight};
+  letter-spacing: ${s.letterSpacing};
+  text-transform: ${s.textTransform};
+  padding: ${s.padding};
+  border-radius: ${s.borderRadius};
+  border: ${s.border};
+  box-shadow: ${s.boxShadow};
+  cursor: ${s.cursor};
+  opacity: ${s.opacity||1};
+  overflow: ${s.overflow};
+  display: ${s.display};
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-shadow: ${s.textShadow||'none'};
+  filter: ${s.filter||'none'};
+  user-select: ${s.userSelect||'none'};
+  white-space: ${s.whiteSpace||'nowrap'};
+  transition: ${s.transition};
+  position: relative;
+${s.minWidth?`  min-width: ${s.minWidth};`:''}
+${s.width?`  width: ${s.width};`:''}
+${s.transform&&s.transform!=='none'?`  transform: ${s.transform};`:''}
+${animCSS}
+}
+
+#${btnId}:hover {
+  background: ${v('useGradient').checked?s.background:hBg};
+  color: ${hText};
+${hScale}
+${hLift}
+}
+
+#${btnId}:active {
+  background: ${aBg};
+  color: ${aText};
+}
+${v('isDisabled').checked?`#${btnId}:disabled{opacity:${parseInt(v('disabledOpacity').value)/100};cursor:not-allowed;}`:''}`;
+}
+
+function buildHTML(){
+  const btnId=v('btnId').value||'myButton';
+  const btnClasses=v('btnClasses').value;
+  const ariaLabel=v('ariaLabel').value;
+  const tooltip=v('tooltipText').value;
+  const isDisabled=v('isDisabled').checked;
+  const showIcon=v('showIcon').checked;
+  const iconPos=v('iconPos').value;
+  const iconName=v('iconName').value||'star';
+  const iconSize=v('iconSize').value+'px';
+  const iconColor=v('iconColor').value;
+  const text=v('btnText').value;
+
+  let iconEl=showIcon?`<span class="material-symbols-rounded" style="font-size:${iconSize};color:${iconColor};">${iconName}</span>`:'';
+  let inner='';
+  if(showIcon){
+    if(iconPos==='left')inner=iconEl+text;
+    else if(iconPos==='right')inner=text+iconEl;
+    else if(iconPos==='only')inner=iconEl;
+    else inner=iconEl+'<br>'+text;
+  } else {inner=text;}
+
+  const attrs=[
+    `id="${btnId}"`,
+    btnClasses?`class="${btnClasses}"`:'',
+    ariaLabel?`aria-label="${ariaLabel}"`:'',
+    tooltip?`title="${tooltip}"`:'',
+    isDisabled?'disabled':''
+  ].filter(Boolean).join(' ');
+
+  return `<button ${attrs}>\n  ${inner}\n</button>`;
+}
+
+function updateCode(){
+  if(currentTab==='css')v('codeOutput').textContent=buildCSS();
+  else if(currentTab==='html')v('codeOutput').textContent=buildHTML();
+  else v('codeOutput').textContent=buildCSS()+'\n\n<!-- HTML -->\n'+buildHTML();
+}
+
+function switchTab(tab, el){
+  currentTab=tab;
+  document.querySelectorAll('.code-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  updateCode();
+}
+
+// ─── Copy/Export ─────────────────────────────────────────
+function copyCSS(){
+  navigator.clipboard.writeText(buildCSS()).then(()=>showToast('CSS copied!','success'));
+}
+function copyHTML(){
+  navigator.clipboard.writeText(buildHTML()).then(()=>showToast('HTML copied!','success'));
+}
+function openExportModal(){
+  v('exportCSS').value=buildCSS();
+  v('exportHTML').value=buildHTML();
+  v('exportModal').classList.add('open');
+}
+function copyFromExport(){
+  const all=v('exportCSS').value+'\n\n'+v('exportHTML').value;
+  navigator.clipboard.writeText(all).then(()=>showToast('All code copied!','success'));
+  closeModal('exportModal');
+}
+
+// ─── Modal ───────────────────────────────────────────────
+function closeModal(id){v(id).classList.remove('open');}
+
+// ─── Icon Picker ─────────────────────────────────────────
+const ICONS=['star','favorite','home','search','settings','delete','edit','add','remove','close','check','arrow_forward','arrow_back','menu','info','warning','error','check_circle','cancel','send','share','download','upload','refresh','zoom_in','zoom_out','print','save','copy_all','content_paste','notifications','mail','phone','person','group','lock','visibility','visibility_off','attach_file','image','video_file','music_note','folder','file_copy','code','terminal','bug_report','rocket_launch','bolt','flash_on','light_mode','dark_mode','palette','brush','format_bold','format_italic','format_underlined','link','shopping_cart','payments','credit_card','bar_chart','pie_chart','trending_up','cloud','cloud_upload','cloud_download','wifi','bluetooth','battery_full','gps_fixed','map','navigation','directions','local_fire_department','water_drop','eco','park','filter_list','sort','swap_vert','open_in_new','launch','expand_more','expand_less','chevron_right','chevron_left','more_vert','more_horiz','grid_view','list','apps','tune','auto_awesome','emoji_events','celebration','cake','favorite_border','thumb_up','thumb_down','schedule','event','today','history','bookmark','label','tag','flag','push_pin'];
+
+function buildIconGrid(filter=''){
+  const grid=v('iconGrid');
+  grid.innerHTML='';
+  const filtered=filter?ICONS.filter(i=>i.includes(filter.toLowerCase())):ICONS;
+  filtered.forEach(name=>{
+    const d=document.createElement('div');
+    d.className='icon-item'+(selectedIcon===name?' selected':'');
+    d.innerHTML=`<span class="material-symbols-outlined" style="font-size:20px;">${name}</span><span class="icon-item-label">${name}</span>`;
+    d.onclick=()=>{
+      selectedIcon=name;
+      document.querySelectorAll('.icon-item').forEach(el=>el.classList.remove('selected'));
+      d.classList.add('selected');
+    };
+    grid.appendChild(d);
+  });
+}
+
+function filterIcons(){buildIconGrid(v('iconSearch').value);}
+function openIconModal(){selectedIcon=v('iconName').value;buildIconGrid();v('iconModal').classList.add('open');}
+function applyIcon(){
+  if(selectedIcon){v('iconName').value=selectedIcon;render();}
+  closeModal('iconModal');
+}
+
+// ─── Shadow presets ──────────────────────────────────────
+function applyShadowPreset(){
+  const p=v('shadowPreset').value;
+  const presets={
+    none:[0,0,0,0,'#000000',0,false],
+    soft:[0,2,8,0,'#000000',8,false],
+    medium:[0,4,16,0,'#000000',15,false],
+    hard:[0,6,0,2,'#000000',25,false],
+    colored:[0,4,16,0,'#1976d2',40,false],
+    neon:[0,0,20,4,'#00e5ff',60,false],
+    inset:[0,2,6,0,'#000000',20,true]
+  };
+  if(p==='custom')return;
+  if(presets[p]){
+    const [x,y,blur,spread,color,opacity,inset]=presets[p];
+    v('shadowX').value=x;v('shadowY').value=y;v('shadowBlur').value=blur;
+    v('shadowSpread').value=spread;v('shadowColor').value=color;
+    v('shadowOpacity').value=opacity;v('shadowInset').checked=inset;
+    syncRange('shadowX','shadowXVal','px');syncRange('shadowY','shadowYVal','px');
+    syncRange('shadowBlur','shadowBlurVal','px');syncRange('shadowSpread','shadowSpreadVal','px');
+    syncRange('shadowOpacity','shadowOpacityVal','%');
+    render();
+  }
+}
+
+// ─── Gradient helper ─────────────────────────────────────
+function setGrad(c1,c2){
+  v('grad1').value=c1;v('grad2').value=c2;
+  v('useGradient').checked=true;
+  render();
+}
+
+// ─── Animation ───────────────────────────────────────────
+function openAnimModal(){v('animModal').classList.add('open');}
+function applyAnim(){
+  currentAnim=v('animPreset').value;
+  animDur=v('animDur').value;
+  animIter=v('animIter').value;
+  animTiming=v('animTiming').value;
+  render();
+}
+
+// ─── Presets ─────────────────────────────────────────────
+function loadPreset(name){
+  const presets={
+    material:{bgColor:'#1976d2',textColor:'#ffffff',borderStyle:'none',borderRadius:'8',padX:'24',padY:'12',shadowX:'0',shadowY:'2',shadowBlur:'8',shadowSpread:'0',shadowOpacity:'20',useGradient:false,hoverBgColor:'#1565c0',activeBgColor:'#0d47a1',fontWeight:'500',fontSize:'14'},
+    outline:{bgColor:'#ffffff',textColor:'#1976d2',borderStyle:'solid',borderWidth:'2',borderColor:'#1976d2',borderRadius:'8',padX:'22',padY:'11',shadowX:'0',shadowY:'0',shadowBlur:'0',shadowSpread:'0',useGradient:false,hoverBgColor:'#e3f2fd',activeBgColor:'#bbdefb',fontWeight:'600',fontSize:'14'},
+    ghost:{bgColor:'rgba(0,0,0,0)',textColor:'#1976d2',borderStyle:'none',borderRadius:'8',padX:'20',padY:'10',shadowX:'0',shadowY:'0',shadowBlur:'0',shadowSpread:'0',useGradient:false,hoverBgColor:'#e3f2fd',activeBgColor:'#bbdefb',fontWeight:'500',fontSize:'14'},
+    gradient:{useGradient:true,grad1:'#e91e63',grad2:'#ff9800',gradDir:'to right',textColor:'#ffffff',borderStyle:'none',borderRadius:'30',padX:'28',padY:'14',shadowX:'0',shadowY:'4',shadowBlur:'16',shadowSpread:'0',shadowOpacity:'30',shadowColor:'#e91e63',fontWeight:'700',fontSize:'15',letterSpacing:'0.5'},
+    pill:{bgColor:'#1976d2',textColor:'#ffffff',borderStyle:'none',borderRadius:'50',padX:'28',padY:'13',shadowX:'0',shadowY:'4',shadowBlur:'14',shadowSpread:'0',shadowOpacity:'20',useGradient:false,hoverBgColor:'#1565c0',fontWeight:'600',fontSize:'14'},
+    neon:{bgColor:'#000000',textColor:'#00e5ff',borderStyle:'solid',borderWidth:'2',borderColor:'#00e5ff',borderRadius:'6',padX:'24',padY:'12',shadowX:'0',shadowY:'0',shadowBlur:'20',shadowSpread:'4',shadowOpacity:'80',shadowColor:'#00e5ff',useGradient:false,hoverBgColor:'#001a1f',fontWeight:'700',fontSize:'14',letterSpacing:'2',textTransform:'uppercase'},
+    neumorphic:{bgColor:'#e0e5ec',textColor:'#4a5568',borderStyle:'none',borderRadius:'12',padX:'24',padY:'14',shadowX:'0',shadowY:'0',shadowBlur:'0',shadowSpread:'0',useGradient:false,hoverBgColor:'#d1d9e6',fontWeight:'600',fontSize:'14'},
+    glass:{bgColor:'rgba(255,255,255,0.15)',textColor:'#ffffff',borderStyle:'solid',borderWidth:'1',borderColor:'rgba(255,255,255,0.3)',borderRadius:'12',padX:'24',padY:'12',shadowX:'0',shadowY:'8',shadowBlur:'32',shadowSpread:'0',shadowOpacity:'15',useGradient:false,hoverBgColor:'rgba(255,255,255,0.25)',fontWeight:'600',fontSize:'14'},
+    retro:{bgColor:'#ffd700',textColor:'#000000',borderStyle:'solid',borderWidth:'3',borderColor:'#000000',borderRadius:'4',padX:'22',padY:'11',shadowX:'4',shadowY:'4',shadowBlur:'0',shadowSpread:'0',shadowColor:'#000000',shadowOpacity:'100',useGradient:false,hoverBgColor:'#ffed4a',fontWeight:'800',fontSize:'14',textTransform:'uppercase',letterSpacing:'1'},
+    danger:{bgColor:'#d32f2f',textColor:'#ffffff',borderStyle:'none',borderRadius:'8',padX:'22',padY:'11',shadowX:'0',shadowY:'4',shadowBlur:'12',shadowSpread:'0',shadowOpacity:'25',shadowColor:'#d32f2f',useGradient:false,hoverBgColor:'#b71c1c',activeBgColor:'#7f0000',fontWeight:'600',fontSize:'14'}
+  };
+
+  const p=presets[name];
+  if(!p)return;
+
+  // Apply preset values
+  if(p.bgColor!==undefined)v('bgColor').value=p.bgColor;
+  if(p.textColor!==undefined)v('textColor').value=p.textColor;
+  if(p.hoverBgColor!==undefined)v('hoverBgColor').value=p.hoverBgColor;
+  if(p.activeBgColor!==undefined)v('activeBgColor').value=p.activeBgColor;
+  if(p.borderStyle!==undefined)v('borderStyle').value=p.borderStyle;
+  if(p.borderWidth!==undefined){v('borderWidth').value=p.borderWidth;syncRange('borderWidth','borderWidthVal','px');}
+  if(p.borderColor!==undefined)v('borderColor').value=p.borderColor;
+  if(p.borderRadius!==undefined){v('borderRadius').value=p.borderRadius;syncRange('borderRadius','borderRadiusVal','px');}
+  if(p.padX!==undefined){v('padX').value=p.padX;syncRange('padX','padXVal','px');}
+  if(p.padY!==undefined){v('padY').value=p.padY;syncRange('padY','padYVal','px');}
+  if(p.shadowX!==undefined){v('shadowX').value=p.shadowX;syncRange('shadowX','shadowXVal','px');}
+  if(p.shadowY!==undefined){v('shadowY').value=p.shadowY;syncRange('shadowY','shadowYVal','px');}
+  if(p.shadowBlur!==undefined){v('shadowBlur').value=p.shadowBlur;syncRange('shadowBlur','shadowBlurVal','px');}
+  if(p.shadowSpread!==undefined){v('shadowSpread').value=p.shadowSpread;syncRange('shadowSpread','shadowSpreadVal','px');}
+  if(p.shadowOpacity!==undefined){v('shadowOpacity').value=p.shadowOpacity;syncRange('shadowOpacity','shadowOpacityVal','%');}
+  if(p.shadowColor!==undefined)v('shadowColor').value=p.shadowColor;
+  if(p.useGradient!==undefined)v('useGradient').checked=p.useGradient;
+  if(p.grad1!==undefined)v('grad1').value=p.grad1;
+  if(p.grad2!==undefined)v('grad2').value=p.grad2;
+  if(p.gradDir!==undefined)v('gradDir').value=p.gradDir;
+  if(p.fontWeight!==undefined){v('fontWeight').value=p.fontWeight;syncRange('fontWeight','fontWeightVal','');}
+  if(p.fontSize!==undefined){v('fontSize').value=p.fontSize;syncRange('fontSize','fontSizeVal','px');}
+  if(p.letterSpacing!==undefined){v('letterSpacing').value=p.letterSpacing;syncRange('letterSpacing','letterSpacingVal','px');}
+  if(p.textTransform!==undefined)v('textTransform').value=p.textTransform;
+
+  // Special: neumorphic uses a special box shadow
+  if(name==='neumorphic'){
+    v('shadowX').value=0;v('shadowY').value=0;
+    syncRange('shadowX','shadowXVal','px');syncRange('shadowY','shadowYVal','px');
+    v('btnPreview').style.boxShadow='8px 8px 16px #b8bec9, -8px -8px 16px #ffffff';
+  }
+  // Special: glass needs special stage
+  if(name==='glass'){
+    const stage=v('previewStage');
+    stage.style.background='linear-gradient(135deg,#667eea,#764ba2)';
+    stageMode=2;
+  }
+
+  render();
+  showToast(`Loaded: ${name} preset`,'success');
+}
+
+// ─── Reset ───────────────────────────────────────────────
+function resetAll(){
+  loadPreset('material');
+  v('btnText').value='Click Me';
+  v('showIcon').checked=false;
+  v('iconName').value='star';
+  v('fontFamily').value='Inter, sans-serif';
+  v('textTransform').value='none';
+  v('fullWidth').checked=false;
+  v('hoverScale').checked=true;
+  v('hoverLift').checked=false;
+  v('rippleEffect').checked=true;
+  v('hoverGlow').checked=false;
+  v('isDisabled').checked=false;
+  v('noPointer').checked=false;
+  v('noSelect').checked=true;
+  v('nowrap').checked=true;
+  v('rotate').value=0;v('skewX').value=0;v('baseScale').value=1;v('btnOpacity').value=100;
+  syncRange('rotate','rotateVal','°');syncRange('skewX','skewXVal','°');
+  syncRange('baseScale','baseScaleVal','');syncRange('btnOpacity','btnOpacityVal','%');
+  v('filterStyle').value='none';v('textShadow').value='none';
+  v('displayStyle').value='inline-flex';v('overflowStyle').value='hidden';
+  v('clickAction').value='none';toggleActionOpts();
+  currentAnim='none';
+  v('hoverTextColor').value='#ffffff';
+  v('activeTextColor').value='#ffffff';
+  v('iconColor').value='#ffffff';
+  v('previewStage').style.background='';stageMode=0;
+  render();
+  showToast('Reset to default','info');
+}
+
+// ─── Toast ───────────────────────────────────────────────
+function showToast(message,type='info',duration=2800){
+  const stack=v('toastStack');
+  const toast=document.createElement('div');
+  toast.className=`toast ${type}`;
+  toast.innerHTML=`<span class="material-symbols-outlined" style="font-size:16px;">${type==='error'?'error':'check_circle'}</span>${message}`;
+  stack.appendChild(toast);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>toast.classList.add('show')));
+  setTimeout(()=>{toast.classList.remove('show');setTimeout(()=>toast.remove(),350);},duration);
+}
+
+// ─── Tips ────────────────────────────────────────────────
+const TIPS=[
+  ' Use the sidebar to control every aspect of your button — text, colors, borders, shadows, and more.',
+  ' Try the toolbar presets like Gradient, Neon, or Glass for instant stunning styles.',
+  ' Enable Ripple Effect and Scale on Hover for interactive polish.',
+  ' Set the Click Action to Redirect, Alert, Copy Text, or run custom JavaScript.',
+  ' Copy CSS or HTML with one click — or use Export to get both at once. You\'re all set!'
+];
+let tipIdx=0;
+function showTip(i){
+  v('tipText').textContent=TIPS[i];
+  v('tipBar').style.width=((i+1)/TIPS.length*100)+'%';
+  v('tipNextBtn').textContent=i===TIPS.length-2?'Finish':'Next';
+  const box=v('tipBox');
+  box.classList.remove('hide');box.classList.add('show');
+}
+function tipNav(dir){
+  tipIdx=Math.max(0,Math.min(TIPS.length-1,tipIdx+dir));
+  if(tipIdx===TIPS.length-1&&dir===1){dismissTips();}
+  else showTip(tipIdx);
+}
+function dismissTips(){
+  v('tipBox').classList.replace('show','hide');
+  localStorage.setItem('btn_tips_seen','1');
+}
+
+// ─── Init ────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  // Apply theme from cookie
+  const m=document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));
+  if(m&&m.split('=')[1]==='dark'){
+    document.body.classList.add('dark');
+    v('darkIcon').className='bi bi-sun-fill';
+  }
+  initRanges();
+  toggleActionOpts();
+  setTimeout(()=>{
+    v('loadingScreen').style.opacity='0';
+    setTimeout(()=>{
+      v('loadingScreen').style.display='none';
+      v('appContainer').style.display='flex';
+      render();
+      if(!localStorage.getItem('btn_tips_seen'))setTimeout(()=>showTip(0),800);
+    },300);
+  },600);
+});
+</script>
+</body>
+</html>

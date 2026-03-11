@@ -232,8 +232,8 @@ Asides from the default document editor, the Sugarcane editor is generally a lig
 - **Text Extractor**: Extracting text from sources (e.g., images)
 - **Keyboard Click Test**: Testing keyboard functionality
 - **Frontend IDE**: Integrated Development Environment for frontend coding
-- **HTML Editor**: Editing HTML code
-- **HTML Writer**: Writing or generating HTML content
+- **Code Editor**: Storing and creating code 
+- **Code Playground**: Writing or generating code
 - **Button Designer**: Designing user interface buttons
 - **HTML Splitter**: Splitting HTML files or elements
 - **GoTo Code**: Navigation feature in an IDE/editor

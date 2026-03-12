@@ -1,372 +1,1572 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email Writer</title>
-    <meta name="description" content="DocuWrite Pro is an all-in-one online workspace that lets you write, edit, convert, design, and manage documents and digital content instantly—no installation, no complexity.">
-  <meta name="keywords" content="DocuWrite Pro, Mohtadi Azad Mahi, AI writer, document editor, online text tool, GitHub project, DocuWritePro, Document Editor, Document, Editor, PDF, JPG, Edit, Text, Change File Type, File Changer, Format, Format Changer, Office, Docs, A4, Editor, General document editing, Collab, Editing documents together, Document Viewer, Viewing documents, Word Finder, Searching for specific words, Translator, Language translation, Document Signer, Electronically signing documents, Page Number Adder, Adding page numbers to documents, Chart Maker, Creating data charts, Table Maker, Creating tables, Watermark Adder, Adding watermarks to files, Email Writer, Assisting with writing emails, Spell Checker, Checking spelling and grammar, File Extractor, Extracting contents from files, QR Maker, Creating QR codes, ID Card Maker, Designing and creating ID cards, File Zipper, Compressing or zipping files, PDF Converter, Converting files to or from PDF format, Context Field, Analyzing text (e.g., word count, frequency), Gift Card Maker, Creating custom gift cards, Share File, Uploading or sharing a file, Text Extractor, Extracting text from sources (e.g., images), Keyboard Click Test, Testing keyboard functionality, Frontend IDE, Integrated Development Environment for frontend coding, HTML Editor, Editing HTML code, HTML Writer, Writing or generating HTML content, Button Designer, Designing user interface buttons, HTML Splitter, Splitting HTML files or elements, GoTo Code, Navigation feature in an IDE/editor, Code Snipper, Storing or managing code snippets, Image Editor, Editing images, Image Generator, Generating new images, Drawing Board, A simple drawing or sketching tool, HTML, CSS, JS, Online, Fast, Easy, No login, No signup, Free, No credit card required, Mohtadi, Azad, Mahi, Mohtadi Azad, Mohtadi Azad Mahi, mahi902">
-  <meta name="author" content="Mohtadi Azad Mahi">
-  <meta name="robots" content="index, follow">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Email Drafter</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script>
+(function(){
+  const m=document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));
+  if(m&&m.split('=')[1]==='dark') document.documentElement.classList.add('dark');
+})();
+</script>
+<style>
+*{scrollbar-width:none;}
+*::-webkit-scrollbar{display:none;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html.dark body{background:#111;}
+body{font-family:'Inter','Segoe UI',Arial,sans-serif;background:#f0f4f8;overflow:hidden;height:100vh;}
+body.dark{background:#111;}
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <meta name="theme-color" content="#ffffff">
+#loadingScreen{display:flex;position:fixed;inset:0;background:#fff;z-index:10000;align-items:center;justify-content:center;flex-direction:column;gap:20px;}
+body.dark #loadingScreen{background:#111;}
+.spinner{width:56px;height:56px;border:4px solid #e3f2fd;border-top-color:#1976d2;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:17px;color:#666;font-family:'Inter',sans-serif;}
+body.dark .loading-text{color:#aaa;}
 
-  <!-- App & Brand Metadata -->
-  <meta property="og:site_name" content="DocuWrite Pro">
-  <meta name="application-name" content="DocuWrite Pro">
-  <meta name="apple-mobile-web-app-title" content="DocuWrite Pro">
+#appContainer{display:none;flex-direction:column;height:100vh;overflow:hidden;}
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="DocuWrite Pro — Online Document Editor">
-  <meta property="og:description" content="Edit, format, and export documents easily with DocuWrite Pro by Mohtadi Azad Mahi.">
-  <meta property="og:url" content="https://mahi902.github.io/DocuWritePro/">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+/* TOP BAR */
+.top-bar{background:#fff;padding:10px 16px;display:flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:200;flex-shrink:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+body.dark .top-bar{background:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.5);}
+#toolTitle{font-size:17px;border:none;outline:none;padding:6px 10px;border-radius:8px;font-family:inherit;min-width:100px;max-width:220px;transition:background 0.2s;flex-shrink:0;background:transparent;color:#1a1a2e;}
+#toolTitle:hover,#toolTitle:focus{background:#f5f5f5;}
+body.dark #toolTitle{background:transparent!important;color:#ddd!important;}
+body.dark #toolTitle:hover,body.dark #toolTitle:focus{background:#2a2a2a!important;}
+.top-spacer{flex:1;min-width:8px;}
+.icon-btn{background:none;border:none;cursor:pointer;padding:7px;border-radius:8px;display:flex;align-items:center;color:#1976d2;transition:background 0.2s;flex-shrink:0;}
+.icon-btn:hover{background:#e3f2fd;}
+body.dark .icon-btn:hover{background:#1a2a3a;}
+.icon-btn .material-symbols-outlined{font-size:22px;}
+.action-btn{background:#1976d2;color:#fff;border:none;padding:8px 15px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;transition:background 0.2s;white-space:nowrap;font-family:inherit;flex-shrink:0;}
+.action-btn:hover{background:#1565c0;}
+.action-btn.secondary{background:#546e7a;}
+.action-btn.secondary:hover{background:#37474f;}
+.action-btn.green{background:#2e7d32;}
+.action-btn.green:hover{background:#1b5e20;}
 
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DocuWrite Pro — Online Document Editor">
-  <meta name="twitter:description" content="Create, format, and export documents easily with DocuWrite Pro. Built by Mohtadi Azad Mahi.">
-  <meta name="twitter:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+/* TOOLBAR */
+.toolbar{background:#fff;padding:6px 12px;display:flex;align-items:center;gap:3px;box-shadow:0 2px 4px rgba(0,0,0,0.06);flex-shrink:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+body.dark .toolbar{background:#1a1a1a;}
+.tbtn{background:transparent;border:none;border-radius:6px;padding:6px 7px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:background 0.15s;flex-shrink:0;}
+.tbtn:hover{background:#e3f2fd;}
+.tbtn.active{background:#bbdefb;}
+body.dark .tbtn:hover{background:#2a2a2a;}
+body.dark .tbtn.active{background:#0d2a4a;}
+.tbtn .material-symbols-outlined{font-size:19px;color:#333;}
+body.dark .tbtn .material-symbols-outlined{color:#bbb;}
+.toolbar-sep{width:1px;height:26px;background:#e0e0e0;margin:0 4px;flex-shrink:0;}
+body.dark .toolbar-sep{background:#333;}
+select.tb-select{border:1px solid #e0e0e0;border-radius:6px;padding:4px 7px;font-size:13px;outline:none;cursor:pointer;font-family:inherit;flex-shrink:0;background:#fff;color:#333;height:30px;}
+body.dark select.tb-select{background:#252525!important;color:#ddd!important;border-color:#444!important;}
+.font-size-input{width:44px;border:1px solid #e0e0e0;border-radius:6px;padding:4px 6px;font-size:13px;outline:none;font-family:inherit;flex-shrink:0;background:#fff;color:#333;text-align:center;}
+body.dark .font-size-input{background:#252525;color:#ddd;border-color:#444;}
+input[type="color"]::-webkit-color-swatch-wrapper{padding:0;}
+input[type="color"]::-webkit-color-swatch{border:none;border-radius:50%;}
 
-  <!-- Structured Data (Google Knowledge Graph) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "DocuWrite Pro",
-    "alternateName": "DocuWrite Pro — Online Document Editor",
-    "url": "https://mahi902.github.io/DocuWritePro/",
-    "creator": {
-      "@type": "Person",
-      "name": "Mohtadi Azad Mahi"
-    }
-  }
-  </script>
-    <!-- Google Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Google Fonts for 19 font options -->
-    <link href="https://fonts.googleapis.com/css2?family=Arial&family=Times+New+Roman&family=Courier+New&family=Georgia&family=Verdana&family=Dancing+Script&family=Pacifico&family=Roboto&family=Open+Sans&family=Lato&family=Montserrat&family=Oswald&family=Slabo+27px&family=PT+Sans&family=Source+Sans+Pro&family=Raleway&family=Ubuntu&family=Merriweather&family=Playfair+Display&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f5f5f5;
-        }
-        .container {
-            display: flex;
-            height: 100vh;
-        }
-        .sidebar {
-            width: 300px;
-            padding: 20px;
-            background-color: #f1f1f1;
-            overflow-y: auto;
-        }
-        .sidebar label {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 14px;
-        }
-        .sidebar input[type="text"],
-        .sidebar textarea {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .sidebar textarea {
-            height: 60px;
-            resize: vertical;
-        }
-        .sidebar button {
-            display: flex;
-            align-items: center;
-            padding: 8px 12px;
-            margin: 10px 0;
-            border: none;
-            background-color: #4285f4;
-            color: white;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .sidebar button .material-icons {
-            margin-right: 5px;
-        }
-        .sidebar select {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .main {
-            flex: 1;
-            padding: 20px;
-            background-color: #e0e0e0;
-            overflow: auto;
-        }
-        .a4-page {
-            width: 210mm;
-            height: 297mm;
-            background-color: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            padding: 20mm;
-            margin: 0 auto;
-            background-size: 100% 100%;
-            position: relative;
-        }
-        .with-border {
-            border: 1px solid black;
-        }
-        .email-header p,
-        .email-body p {
-            margin-bottom: 15px;
-            line-height: 1.5;
-        }
-    </style>
+/* MAIN */
+.main-content{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+/* SIDEBAR */
+.sidebar{width:255px;min-width:255px;background:#fff;padding:14px;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,0.06);transition:transform 0.3s,width 0.3s,min-width 0.3s,padding 0.3s;flex-shrink:0;}
+.sidebar.collapsed{transform:translateX(-255px);width:0;min-width:0;padding:0;overflow:hidden;}
+body.dark .sidebar{background:#1a1a1a;}
+.sb-section{margin-bottom:18px;}
+.sb-title{font-size:11px;font-weight:700;color:#888;margin-bottom:9px;text-transform:uppercase;letter-spacing:0.6px;}
+body.dark .sb-title{color:#666;}
+.sb-label{display:block;font-size:12px;color:#777;margin-bottom:3px;}
+body.dark .sb-label{color:#999;}
+.sb-input{width:100%;padding:7px 9px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fafafa;font-family:inherit;outline:none;transition:border-color 0.2s,box-shadow 0.2s;color:#333;}
+.sb-input:focus{border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,0.1);background:#fff;}
+body.dark .sb-input{background:#252525!important;color:#ddd!important;border-color:#444!important;}
+.frow{margin-bottom:10px;}
+.frow label{display:block;font-size:12px;color:#777;margin-bottom:3px;}
+body.dark .frow label{color:#999;}
+.sb-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.sb-toggle-label{font-size:13px;color:#444;}
+body.dark .sb-toggle-label{color:#bbb;}
+.toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:11px;transition:0.3s;}
+.toggle-slider::before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;}
+input:checked+.toggle-slider{background:#1976d2;}
+input:checked+.toggle-slider::before{transform:translateX(18px);}
+body.dark .toggle-slider{background:#444;}
+
+/* Accordion */
+.aw-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f0f7ff;border-radius:8px;cursor:pointer;user-select:none;border:1px solid #dceeff;margin-bottom:6px;}
+.aw-header:hover{background:#e3f2fd;}
+body.dark .aw-header{background:#1a2a3a;border-color:#1e3a5a;}
+body.dark .aw-header:hover{background:#1e3350;}
+.aw-header-label{font-size:12px;font-weight:600;color:#1565c0;}
+body.dark .aw-header-label{color:#90caf9;}
+.aw-chevron{font-size:16px;color:#1976d2;transition:transform 0.25s;}
+.aw-chevron.open{transform:rotate(180deg);}
+body.dark .aw-chevron{color:#90caf9;}
+.aw-dropdown{overflow:hidden;max-height:0;transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1),opacity 0.3s ease;opacity:0;pointer-events:none;}
+.aw-dropdown.open{max-height:1200px;opacity:1;pointer-events:auto;}
+.aw-inner{padding:6px 2px 2px;}
+
+.collapse-btn{width:100%;padding:8px;background:#e3f2fd;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:#1976d2;font-weight:600;margin-top:6px;transition:background 0.15s;font-family:inherit;}
+.collapse-btn:hover{background:#bbdefb;}
+body.dark .collapse-btn{background:#1a2a4a!important;color:#1976d2!important;}
+.expand-btn{position:fixed;left:10px;top:50%;transform:translateY(-50%);background:#fff;border:none;border-radius:8px;padding:10px 5px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.15);z-index:50;display:none;}
+body.dark .expand-btn{background:#1a1a1a;}
+
+/* CONTENT */
+.content-area{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;background:#f0f4f8;min-width:0;padding:24px 20px;}
+body.dark .content-area{background:#111;}
+
+/* EMAIL WRAPPER */
+.email-wrapper{width:100%;max-width:660px;background:#fff;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,0.08);overflow:hidden;flex-shrink:0;margin-bottom:24px;}
+body.dark .email-wrapper{background:#1a1a1a;box-shadow:0 4px 24px rgba(0,0,0,0.4);}
+
+/* BANNER */
+.email-banner{width:100%;min-height:110px;position:relative;overflow:hidden;flex-shrink:0;}
+.banner-bg-layer{position:absolute;inset:0;background:linear-gradient(to right,#1976d2,#42a5f5);}
+/* Fabric canvas wrapper — fabric wraps the canvas in a div */
+#bannerFabricCanvas{display:block;}
+.banner-fabric-wrap{position:absolute;inset:0;pointer-events:none;}
+.banner-fabric-wrap canvas.upper-canvas{pointer-events:auto!important;}
+.banner-overlay-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;font-weight:700;letter-spacing:0.4px;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,0.3);}
+.banner-hint{position:absolute;bottom:5px;right:8px;font-size:10px;color:rgba(255,255,255,0.45);pointer-events:none;}
+
+/* META FIELDS */
+.email-header-bar{display:flex;align-items:center;gap:10px;padding:14px 20px;background:#fafafa;border-bottom:1px solid #f0f0f0;}
+body.dark .email-header-bar{background:#252525;border-color:#333;}
+.email-meta-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#888;white-space:nowrap;}
+body.dark .email-meta-label{color:#666;}
+.email-meta-input{flex:1;border:none;outline:none;font-size:13px;font-family:inherit;color:#333;background:transparent;}
+body.dark .email-meta-input{color:#ddd;}
+.email-meta-input::placeholder{color:#bbb;}
+
+/* BODY */
+.email-body-area{min-height:360px;padding:28px 32px;outline:none;font-size:16px;font-family:'Inter',sans-serif;color:#333;line-height:1.7;cursor:text;}
+body.dark .email-body-area{color:#ddd;}
+.email-body-area:empty::before{content:attr(data-placeholder);color:#bbb;pointer-events:none;}
+.email-body-area a{color:#1976d2;}
+.email-body-area img{max-width:100%;border-radius:8px;display:block;margin:8px 0;}
+.email-body-area table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px;}
+.email-body-area table td,.email-body-area table th{border:1px solid #e0e0e0;padding:8px 12px;text-align:left;}
+.email-body-area table th{background:#f0f7ff;font-weight:600;color:#1565c0;}
+.email-body-area blockquote{border-left:4px solid #1976d2;padding:8px 16px;margin:10px 0;color:#555;background:#f0f7ff;border-radius:0 8px 8px 0;}
+.email-body-area hr{border:none;border-top:1px solid #e0e0e0;margin:18px 0;}
+
+/* SIGNATURE */
+.email-signature{padding:16px 32px;border-top:1px solid #f0f0f0;font-size:13px;color:#777;line-height:1.6;}
+body.dark .email-signature{border-color:#333;color:#aaa;}
+
+/* MODALS */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.48);z-index:8000;align-items:center;justify-content:center;}
+.modal.open{display:flex;}
+.mbox{background:#fff;border-radius:16px;padding:26px;width:90%;max-width:480px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 16px 48px rgba(0,0,0,0.25);}
+body.dark .mbox{background:#1e1e1e;color:#ddd;}
+.mhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.mtitle{font-size:19px;font-weight:500;color:#333;}
+body.dark .mtitle{color:#e0e0e0;}
+.mclose{background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center;transition:background 0.15s;}
+.mclose:hover{background:#f5f5f5;}
+body.dark .mclose:hover{background:#2a2a2a;}
+.mclose .material-symbols-outlined{font-size:21px;color:#666;}
+body.dark .mclose .material-symbols-outlined{color:#aaa;}
+.mfooter{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;}
+.mbtn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:background 0.15s;}
+.mbtn.primary{background:#1976d2;color:#fff;}
+.mbtn.primary:hover{background:#1565c0;}
+.mbtn.sec{background:#e0e0e0;color:#333;}
+.mbtn.sec:hover{background:#d0d0d0;}
+body.dark .mbtn.sec{background:#333;color:#bbb;}
+body.dark .mbtn.sec:hover{background:#3a3a3a;}
+.finput{width:100%;padding:8px 10px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;transition:border-color 0.2s;color:#333;background:#fff;}
+.finput:focus{border-color:#1976d2;}
+body.dark .finput{background:#252525!important;color:#ddd!important;border-color:#444!important;}
+
+/* DROP ZONE */
+.drop-zone{border:2px dashed #1976d2;border-radius:12px;padding:22px 16px;text-align:center;cursor:pointer;background:#fafafa;transition:background 0.15s;}
+.drop-zone:hover,.drop-zone.dragover{background:#e3f2fd;border-color:#1565c0;}
+body.dark .drop-zone{background:#222;border-color:#555;color:#aaa;}
+
+/* BANNER MODE TABS */
+.mode-tabs{display:flex;gap:5px;margin-bottom:10px;}
+.mode-tab{flex:1;padding:7px 4px;border:1px solid #e0e0e0;border-radius:8px;background:#fafafa;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;color:#555;text-align:center;transition:all 0.15s;}
+.mode-tab.active{border-color:#1976d2;background:#e3f2fd;color:#1976d2;}
+body.dark .mode-tab{background:#252525;border-color:#444;color:#aaa;}
+body.dark .mode-tab.active{background:#1a2a3a;border-color:#1976d2;color:#90caf9;}
+.mode-panel{display:none;}
+.mode-panel.active{display:block;}
+
+/* GRADIENT DIRS */
+.grad-dirs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+.grad-dir{width:34px;height:34px;border:2px solid #e0e0e0;border-radius:7px;cursor:pointer;background:#fafafa;display:flex;align-items:center;justify-content:center;transition:all 0.15s;font-size:15px;}
+.grad-dir:hover,.grad-dir.active{border-color:#1976d2;background:#e3f2fd;}
+body.dark .grad-dir{background:#252525;border-color:#444;}
+body.dark .grad-dir.active{background:#1a2a3a;border-color:#1976d2;}
+
+/* STICKERS */
+.sticker-gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px;max-height:190px;overflow-y:auto;}
+.sticker-item{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;border-radius:8px;border:2px solid transparent;transition:all 0.15s;background:#fafafa;}
+.sticker-item:hover{background:#e3f2fd;border-color:#90caf9;transform:scale(1.08);}
+body.dark .sticker-item{background:#252525;}
+body.dark .sticker-item:hover{background:#1a2a3a;}
+.sticker-upload-zone{border:2px dashed #1976d2;border-radius:10px;padding:12px;text-align:center;cursor:pointer;margin-bottom:8px;background:#fafafa;transition:background 0.15s;}
+.sticker-upload-zone:hover{background:#e3f2fd;}
+body.dark .sticker-upload-zone{background:#222;border-color:#555;}
+
+/* PALETTE */
+.pal-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.pal-swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform 0.15s,border-color 0.15s;flex-shrink:0;}
+.pal-swatch:hover{transform:scale(1.2);}
+.pal-swatch.selected{border-color:#1976d2;}
+
+/* TAGS */
+.tag-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;}
+.tag{display:inline-flex;align-items:center;gap:4px;background:#e3f2fd;color:#1976d2;border-radius:99px;padding:3px 9px;font-size:11px;cursor:pointer;font-weight:500;}
+.tag:hover{background:#bbdefb;}
+body.dark .tag{background:#1a2a3a;color:#90caf9;}
+
+.section-note{font-size:11px;color:#999;margin-top:3px;line-height:1.4;}
+body.dark .section-note{color:#666;}
+
+/* OPEN-IN-EMAIL OVERLAY */
+#openEmailOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.52);z-index:9000;align-items:center;justify-content:center;}
+#openEmailOverlay.open{display:flex;}
+.oeo-box{background:#fff;border-radius:20px;padding:32px 28px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.28);position:relative;}
+body.dark .oeo-box{background:#1e1e1e;color:#ddd;}
+.oeo-icon{width:56px;height:56px;background:#e3f2fd;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+.oeo-icon .material-symbols-outlined{font-size:28px;color:#1976d2;}
+.oeo-title{font-size:19px;font-weight:600;color:#1a1a2e;text-align:center;margin-bottom:6px;}
+body.dark .oeo-title{color:#e0e0e0;}
+.oeo-sub{font-size:13px;color:#777;text-align:center;margin-bottom:22px;line-height:1.5;}
+body.dark .oeo-sub{color:#aaa;}
+.oeo-steps{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:24px;}
+.oeo-step{display:flex;align-items:flex-start;gap:12px;}
+.oeo-num{width:26px;height:26px;border-radius:50%;background:#1976d2;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.oeo-step-text{font-size:13px;color:#444;line-height:1.5;}
+body.dark .oeo-step-text{color:#bbb;}
+.oeo-step-text strong{color:#1a1a2e;font-weight:600;}
+body.dark .oeo-step-text strong{color:#e0e0e0;}
+.oeo-apps{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:20px;}
+.oeo-app{background:#f0f4f8;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;color:#555;}
+body.dark .oeo-app{background:#252525;color:#aaa;}
+.oeo-close{width:100%;padding:10px;background:#1976d2;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background 0.15s;}
+.oeo-close:hover{background:#1565c0;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);padding:11px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,0.15);z-index:10002;opacity:0;transition:transform 0.3s,opacity 0.3s;pointer-events:none;white-space:nowrap;font-family:'Inter',sans-serif;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast.success,.toast.info{background:#1976d2;}
+.toast.error{background:#d32f2f;}
+
+/* TIP BOX */
+#tipBox{position:fixed;bottom:80px;right:18px;width:284px;background:#1976d2;color:#fff;border-radius:14px;padding:14px;box-shadow:0 8px 24px rgba(25,118,210,0.3);z-index:9990;opacity:0;transform:translateY(8px);transition:opacity 0.3s,transform 0.3s;font-family:inherit;pointer-events:none;}
+#tipBox.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+#tipBox.hide{opacity:0;transform:translateY(8px);pointer-events:none;}
+body.dark #tipBox{background:#0d47a1;}
+.tip-prog{height:3px;background:rgba(255,255,255,0.2);border-radius:99px;overflow:hidden;margin-bottom:11px;}
+.tip-bar{height:100%;background:#fff;transition:width 0.3s;}
+.tip-text{font-size:13px;line-height:1.5;min-height:58px;}
+.tip-actions{display:flex;gap:7px;margin-top:11px;}
+.tip-btn{flex:1;border:none;padding:6px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.tip-prev{background:rgba(255,255,255,0.15);color:#fff;}
+.tip-next{background:#fff;color:#1976d2;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <strong><label>From: <input type="text" id="from"></label>
-            <label>To: <input type="text" id="to"></label>
-            <label>Sent: <input type="text" id="sent"></label>
-            <label>Subject: <input type="text" id="subject"></label></strong>
-            <label>Greeting: <textarea id="greeting"></textarea></label>
-            <label>Introduction: <textarea id="introduction"></textarea></label>
-            <div id="descriptions">
-                <label>Description 1: <textarea class="description"></textarea></label>
-            </div>
-            <button id="add-description"><i class="material-icons">add</i> Add another Description</button>
-            <label>Bye: <input type="text" id="bye"></label>
-            <label>Your Name: <input type="text" id="from-title"></label>
-            <label>From Title: <input type="text" id="your-name"></label>
-            <label>Sender's Info: <textarea id="sender-info"></textarea></label>
-            <label><input type="checkbox" id="border"> Add border</label>
-            <label>Background Image Link: <input type="text" id="bg-link"></label>
-            <label>Or Upload Image: <input type="file" id="bg-upload" accept="image/*"></label>
-            <label>Font: <select id="font-select">
-                <option value="Arial, sans-serif">Arial</option>
-                <option value="'Times New Roman', serif">Times New Roman</option>
-                <option value="'Courier New', monospace">Courier New</option>
-                <option value="Georgia, serif">Georgia</option>
-                <option value="Verdana, sans-serif">Verdana</option>
-                <option value="'Dancing Script', cursive">Dancing Script</option>
-                <option value="'Pacifico', cursive">Pacifico</option>
-                <option value="Roboto, sans-serif">Roboto</option>
-                <option value="'Open Sans', sans-serif">Open Sans</option>
-                <option value="Lato, sans-serif">Lato</option>
-                <option value="Montserrat, sans-serif">Montserrat</option>
-                <option value="Oswald, sans-serif">Oswald</option>
-                <option value="'Slabo 27px', serif">Slabo 27px</option>
-                <option value="'PT Sans', sans-serif">PT Sans</option>
-                <option value="'Source Sans Pro', sans-serif">Source Sans Pro</option>
-                <option value="Raleway, sans-serif">Raleway</option>
-                <option value="Ubuntu, sans-serif">Ubuntu</option>
-                <option value="Merriweather, serif">Merriweather</option>
-                <option value="'Playfair Display', serif">Playfair Display</option>
-            </select></label>
-            <button id="download-jpg"><i class="material-icons">image</i> Download as JPG</button>
-            <button id="download-pdf"><i class="material-icons">picture_as_pdf</i> Download as PDF</button>
+
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading Email Drafter...</div>
+</div>
+
+<div id="appContainer">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <span class="material-symbols-outlined" style="font-size:22px;color:#1976d2;flex-shrink:0;">mail</span>
+    <input type="text" id="toolTitle" value="Email Drafter" spellcheck="false"/>
+    <div class="top-spacer"></div>
+    <button class="action-btn secondary" onclick="document.getElementById('emlImportInput').click()" title="Import a .eml file to edit">
+      <span class="material-symbols-outlined" style="font-size:16px;">upload_file</span>Import .eml
+    </button>
+    <input type="file" id="emlImportInput" accept=".eml,message/rfc822" style="display:none;" onchange="importEml(this)"/>
+    <button class="action-btn green" onclick="openInEmail()">
+      <span class="material-symbols-outlined" style="font-size:16px;">open_in_new</span>Open in Email
+    </button>
+    <button class="action-btn" onclick="exportEmail()">
+      <span class="material-symbols-outlined" style="font-size:16px;">download</span>Export .eml
+    </button>
+    <button class="action-btn secondary" onclick="copyHTML()">
+      <span class="material-symbols-outlined" style="font-size:16px;">content_copy</span>Copy HTML
+    </button>
+    <button class="icon-btn" onclick="toggleDarkMode()" title="Toggle dark mode">
+      <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+    </button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <button class="tbtn" onclick="document.execCommand('undo')" title="Undo"><span class="material-symbols-outlined">undo</span></button>
+    <button class="tbtn" onclick="document.execCommand('redo')" title="Redo"><span class="material-symbols-outlined">redo</span></button>
+    <div class="toolbar-sep"></div>
+    <select class="tb-select" onchange="execFormat('fontName',this.value)">
+      <option value="Inter, sans-serif">Inter</option>
+      <option value="Georgia, serif">Georgia</option>
+      <option value="'Times New Roman', serif">Times New Roman</option>
+      <option value="Arial, sans-serif">Arial</option>
+      <option value="'Courier New', monospace">Courier New</option>
+      <option value="Verdana, sans-serif">Verdana</option>
+    </select>
+    <input type="number" class="font-size-input" id="fontSizeInput" value="16" min="8" max="72" onchange="applyFontSize(this.value)"/>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" id="btn-bold" onclick="fmt('bold')"><span class="material-symbols-outlined">format_bold</span></button>
+    <button class="tbtn" id="btn-italic" onclick="fmt('italic')"><span class="material-symbols-outlined">format_italic</span></button>
+    <button class="tbtn" id="btn-underline" onclick="fmt('underline')"><span class="material-symbols-outlined">format_underlined</span></button>
+    <button class="tbtn" id="btn-strikethrough" onclick="fmt('strikeThrough')"><span class="material-symbols-outlined">format_strikethrough</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="execFormat('justifyLeft')"><span class="material-symbols-outlined">format_align_left</span></button>
+    <button class="tbtn" onclick="execFormat('justifyCenter')"><span class="material-symbols-outlined">format_align_center</span></button>
+    <button class="tbtn" onclick="execFormat('justifyRight')"><span class="material-symbols-outlined">format_align_right</span></button>
+    <button class="tbtn" onclick="execFormat('justifyFull')"><span class="material-symbols-outlined">format_align_justify</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="execFormat('insertUnorderedList')"><span class="material-symbols-outlined">format_list_bulleted</span></button>
+    <button class="tbtn" onclick="execFormat('insertOrderedList')"><span class="material-symbols-outlined">format_list_numbered</span></button>
+    <div class="toolbar-sep"></div>
+    <select class="tb-select" onchange="applyBlock(this.value)">
+      <option value="p">Paragraph</option>
+      <option value="h1">Heading 1</option>
+      <option value="h2">Heading 2</option>
+      <option value="h3">Heading 3</option>
+      <option value="blockquote">Blockquote</option>
+      <option value="pre">Code</option>
+    </select>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="openModal('textColorModal')"><span class="material-symbols-outlined">format_color_text</span></button>
+    <button class="tbtn" onclick="openModal('highlightModal')"><span class="material-symbols-outlined">format_ink_highlighter</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="openModal('linkModal')"><span class="material-symbols-outlined">link</span></button>
+    <button class="tbtn" onclick="openModal('imageModal')"><span class="material-symbols-outlined">image</span></button>
+    <button class="tbtn" onclick="openModal('tableModal')"><span class="material-symbols-outlined">table_chart</span></button>
+    <button class="tbtn" onclick="insertButton()"><span class="material-symbols-outlined">smart_button</span></button>
+    <button class="tbtn" onclick="insertDivider()"><span class="material-symbols-outlined">horizontal_rule</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="execFormat('indent')"><span class="material-symbols-outlined">format_indent_increase</span></button>
+    <button class="tbtn" onclick="execFormat('outdent')"><span class="material-symbols-outlined">format_indent_decrease</span></button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="clearFormat()"><span class="material-symbols-outlined">format_clear</span></button>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+
+      <div class="sb-section">
+        <div class="sb-title">Email Settings</div>
+        <div class="frow"><label class="sb-label">From Name</label><input class="sb-input" id="fromName" type="text" placeholder="Your Name"/></div>
+        <div class="frow"><label class="sb-label">From Email</label><input class="sb-input" id="fromEmail" type="email" placeholder="you@example.com"/></div>
+        <div class="frow"><label class="sb-label">Reply-To</label><input class="sb-input" id="replyTo" type="email" placeholder="reply@example.com"/></div>
+        <div class="frow">
+          <label class="sb-label">Preheader</label>
+          <input class="sb-input" id="preheader" type="text" placeholder="Short inbox preview..." maxlength="120"/>
+          <div class="section-note">Shown in inbox before opening.</div>
         </div>
-        <div class="main">
-            <div class="a4-page" id="a4-page">
-                <div class="email-header">
-                    <p id="from-display"></p>
-                    <p id="to-display"></p>
-                    <p id="sent-display"></p>
-                    <p id="subject-display"></p>
-                </div>
-                <div class="email-body">
-                    <p id="greeting-display"></p>
-                    <p id="introduction-display"></p>
-                    <div id="descriptions-display">
-                        <p class="description-display"></p>
-                    </div>
-                    <p id="bye-display"></p>
-                    <p id="your-name-display"></p>
-                    <p id="from-title-display"></p>
-                    <p id="sender-info-display"></p>
-                </div>
-            </div>
+      </div>
+
+      <div class="sb-section">
+        <div class="sb-title">Layout</div>
+        <div class="frow">
+          <label class="sb-label">Email Width</label>
+          <select class="sb-input" id="emailWidth" onchange="applyEmailWidth()">
+            <option value="580px">Narrow (580px)</option>
+            <option value="660px" selected>Standard (660px)</option>
+            <option value="760px">Wide (760px)</option>
+          </select>
         </div>
+        <div class="frow">
+          <label class="sb-label">Body Padding</label>
+          <select class="sb-input" id="bodyPadding" onchange="applyBodyPadding()">
+            <option value="16px 20px">Compact</option>
+            <option value="28px 32px" selected>Standard</option>
+            <option value="40px 48px">Spacious</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- BANNER -->
+      <div class="sb-section">
+        <div class="sb-title">Banner</div>
+        <div class="frow">
+          <label class="sb-label">Height</label>
+          <select class="sb-input" id="bannerHeight" onchange="applyBannerHeight()">
+            <option value="60px">Small (60px)</option>
+            <option value="110px" selected>Medium (110px)</option>
+            <option value="160px">Large (160px)</option>
+            <option value="220px">Hero (220px)</option>
+            <option value="0px">None</option>
+          </select>
+        </div>
+
+        <div class="mode-tabs">
+          <button class="mode-tab active" id="tab-gradient" onclick="setBannerMode('gradient')">Gradient</button>
+          <button class="mode-tab" id="tab-image" onclick="setBannerMode('image')">Image</button>
+        </div>
+
+        <!-- Gradient Panel -->
+        <div class="mode-panel active" id="panel-gradient">
+          <div class="frow">
+            <label class="sb-label">Color 1</label>
+            <input type="color" class="sb-input" id="bannerColor1" value="#1976d2" style="height:34px;padding:2px 4px;" oninput="renderBannerBg()"/>
+          </div>
+          <div class="frow">
+            <label class="sb-label">Color 2</label>
+            <input type="color" class="sb-input" id="bannerColor2" value="#42a5f5" style="height:34px;padding:2px 4px;" oninput="renderBannerBg()"/>
+          </div>
+          <label class="sb-label">Direction</label>
+          <div class="grad-dirs" style="margin-bottom:10px;">
+            <div class="grad-dir active" data-dir="to right" onclick="setGradDir(this)">→</div>
+            <div class="grad-dir" data-dir="to bottom" onclick="setGradDir(this)">↓</div>
+            <div class="grad-dir" data-dir="135deg" onclick="setGradDir(this)">↘</div>
+            <div class="grad-dir" data-dir="to top right" onclick="setGradDir(this)">↗</div>
+            <div class="grad-dir" data-dir="to left" onclick="setGradDir(this)">←</div>
+          </div>
+          <label class="sb-label">Presets</label>
+          <div class="tag-row" style="margin-top:5px;">
+            <div class="tag" onclick="setGradPreset('#1976d2','#42a5f5')">Ocean</div>
+            <div class="tag" onclick="setGradPreset('#e65100','#ff8a65')">Sunset</div>
+            <div class="tag" onclick="setGradPreset('#4a148c','#ab47bc')">Purple</div>
+            <div class="tag" onclick="setGradPreset('#1b5e20','#66bb6a')">Forest</div>
+            <div class="tag" onclick="setGradPreset('#b71c1c','#ef9a9a')">Ruby</div>
+            <div class="tag" onclick="setGradPreset('#212121','#616161')">Charcoal</div>
+            <div class="tag" onclick="setGradPreset('#f57f17','#fff176')">Gold</div>
+          </div>
+        </div>
+
+        <!-- Image Panel -->
+        <div class="mode-panel" id="panel-image">
+          <div class="drop-zone" id="bannerDropZone" onclick="document.getElementById('bannerFileInput').click()" style="margin-bottom:8px;">
+            <span class="material-symbols-outlined" style="font-size:28px;color:#1976d2;display:block;margin-bottom:5px;">upload_file</span>
+            <div style="font-size:12px;color:#555;">Click or drop image here</div>
+            <div style="font-size:11px;color:#999;margin-top:3px;">PNG, JPG, WebP</div>
+          </div>
+          <input type="file" id="bannerFileInput" accept="image/*" style="display:none;" onchange="handleBannerFile(this)"/>
+          <div class="frow"><label>Or image URL</label><input class="finput" id="bannerImgUrl" type="url" placeholder="https://..."/></div>
+          <div style="display:flex;gap:6px;">
+            <button class="mbtn primary" style="flex:1;" onclick="applyBannerImage()">Apply</button>
+            <button class="mbtn sec" onclick="clearBannerImage()">Clear</button>
+          </div>
+        </div>
+
+        <!-- Banner Text -->
+        <div style="margin-top:10px;border-top:1px solid #f0f0f0;padding-top:10px;">
+          <div class="sb-toggle-row">
+            <span class="sb-toggle-label">Banner Text</span>
+            <label class="toggle-switch"><input type="checkbox" id="bannerTextToggle" onchange="updateBannerOverlay()" checked/><span class="toggle-slider"></span></label>
+          </div>
+          <div id="bannerTextRow">
+            <input class="sb-input" id="bannerTextInput" type="text" placeholder="Your Brand" oninput="updateBannerOverlay()" style="margin-bottom:5px;"/>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label class="sb-label" style="margin:0;white-space:nowrap;">Text color</label>
+              <input type="color" class="sb-input" id="bannerTextColor" value="#ffffff" style="height:30px;padding:2px 4px;" oninput="updateBannerOverlay()"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STICKERS -->
+      <div class="sb-section">
+        <div class="sb-title">Sticker Gallery</div>
+        <div class="section-note" style="margin-bottom:8px;">Click to add stickers to the banner. Drag and resize them freely.</div>
+        <div class="sticker-gallery" id="stickerGallery"></div>
+        <div class="sticker-upload-zone" id="stickerUploadZone" onclick="document.getElementById('stickerFileInput').click()">
+          <span class="material-symbols-outlined" style="font-size:22px;color:#1976d2;">add_photo_alternate</span>
+          <div style="font-size:11px;color:#777;margin-top:2px;">Upload custom sticker</div>
+        </div>
+        <input type="file" id="stickerFileInput" accept="image/*" style="display:none;" onchange="uploadStickerImage(this)"/>
+        <div style="display:flex;gap:6px;margin-top:7px;">
+          <button class="mbtn sec" style="flex:1;font-size:11px;padding:6px;" onclick="deleteSelectedSticker()">
+            <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">delete</span> Remove
+          </button>
+          <button class="mbtn sec" style="flex:1;font-size:11px;padding:6px;" onclick="clearAllStickers()">
+            <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;">clear_all</span> Clear all
+          </button>
+        </div>
+      </div>
+
+      <!-- COLORS -->
+      <div class="sb-section">
+        <div class="sb-title">Colors</div>
+        <div class="frow"><label class="sb-label">Background</label><input type="color" class="sb-input" id="bgColor" value="#ffffff" style="height:34px;padding:2px 4px;" oninput="applyBgColor()"/></div>
+        <div class="frow"><label class="sb-label">Body Text</label><input type="color" class="sb-input" id="bodyTextColor" value="#333333" style="height:34px;padding:2px 4px;" oninput="applyBodyTextColor()"/></div>
+        <div class="frow"><label class="sb-label">Accent / Links</label><input type="color" class="sb-input" id="accentColor" value="#1976d2" style="height:34px;padding:2px 4px;" oninput="applyAccentColor()"/></div>
+        <label class="sb-label">Presets</label>
+        <div class="tag-row" style="margin-top:5px;">
+          <div class="tag" onclick="applyColorPreset('professional')">Pro</div>
+          <div class="tag" onclick="applyColorPreset('warm')">Warm</div>
+          <div class="tag" onclick="applyColorPreset('dark')">Dark</div>
+          <div class="tag" onclick="applyColorPreset('green')">Nature</div>
+          <div class="tag" onclick="applyColorPreset('purple')">Purple</div>
+        </div>
+      </div>
+
+      <!-- SIGNATURE -->
+      <div class="sb-section">
+        <div class="aw-header" onclick="toggleDropdown(this)">
+          <span class="aw-header-label">Signature</span>
+          <span class="material-symbols-outlined aw-chevron">expand_more</span>
+        </div>
+        <div class="aw-dropdown">
+          <div class="aw-inner">
+            <div class="sb-toggle-row">
+              <span class="sb-toggle-label">Include Signature</span>
+              <label class="toggle-switch"><input type="checkbox" id="signatureToggle" onchange="toggleSignature()" checked/><span class="toggle-slider"></span></label>
+            </div>
+            <div id="signatureFields">
+              <div class="frow"><label class="sb-label">Name</label><input class="sb-input" id="sigName" type="text" placeholder="Full Name" oninput="updateSignature()"/></div>
+              <div class="frow"><label class="sb-label">Title / Role</label><input class="sb-input" id="sigTitle" type="text" placeholder="Product Manager" oninput="updateSignature()"/></div>
+              <div class="frow"><label class="sb-label">Company</label><input class="sb-input" id="sigCompany" type="text" placeholder="Company Inc." oninput="updateSignature()"/></div>
+              <div class="frow"><label class="sb-label">Website</label><input class="sb-input" id="sigWebsite" type="url" placeholder="https://example.com" oninput="updateSignature()"/></div>
+              <div class="frow"><label class="sb-label">Phone</label><input class="sb-input" id="sigPhone" type="tel" placeholder="+1 555 000 0000" oninput="updateSignature()"/></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">chevron_left</span> Hide Panel
+      </button>
     </div>
 
-    <!-- External Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script>
-        const { jsPDF } = window.jspdf;
+    <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+      <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+    </button>
 
-        // Real-time updates from inputs to display
-        document.getElementById('from').addEventListener('input', function() {
-            document.getElementById('from-display').textContent = 'From: ' + this.value;
-        });
-        document.getElementById('to').addEventListener('input', function() {
-            document.getElementById('to-display').textContent = 'To: ' + this.value;
-        });
-        document.getElementById('sent').addEventListener('input', function() {
-            document.getElementById('sent-display').textContent = 'Sent: ' + this.value;
-        });
-        document.getElementById('subject').addEventListener('input', function() {
-            document.getElementById('subject-display').textContent = 'Subject: ' + this.value;
-        });
-        document.getElementById('greeting').addEventListener('input', function() {
-            document.getElementById('greeting-display').textContent = this.value;
-        });
-        document.getElementById('introduction').addEventListener('input', function() {
-            document.getElementById('introduction-display').textContent = this.value;
-        });
-        document.getElementById('bye').addEventListener('input', function() {
-            document.getElementById('bye-display').textContent = this.value;
-        });
-        document.getElementById('your-name').addEventListener('input', function() {
-            document.getElementById('your-name-display').textContent = this.value;
-        });
-        document.getElementById('from-title').addEventListener('input', function() {
-            document.getElementById('from-title-display').textContent = this.value;
-        });
-        document.getElementById('sender-info').addEventListener('input', function() {
-            document.getElementById('sender-info-display').textContent = this.value;
-        });
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+      <div class="email-wrapper" id="emailWrapper">
 
-        // Initial description binding
-        document.querySelector('.description').addEventListener('input', function() {
-            document.querySelector('.description-display').textContent = this.value;
-        });
+        <!-- BANNER -->
+        <div class="email-banner" id="emailBanner" style="min-height:110px;">
+          <div class="banner-bg-layer" id="bannerBgLayer"></div>
+          <!-- Fabric canvas injected here by JS -->
+          <div class="banner-overlay-text" id="bannerOverlayText">Your Brand</div>
+          <div class="banner-hint">Add stickers via the sidebar gallery</div>
+        </div>
 
-        // Add additional description fields
-        let descriptionCount = 1;
-        document.getElementById('add-description').addEventListener('click', function() {
-            descriptionCount++;
-            const newLabel = document.createElement('label');
-            newLabel.textContent = `Description ${descriptionCount}: `;
-            const newTextarea = document.createElement('textarea');
-            newTextarea.className = 'description';
-            newLabel.appendChild(newTextarea);
-            document.getElementById('descriptions').appendChild(newLabel);
+        <!-- META -->
+        <div class="email-header-bar">
+          <span class="email-meta-label">To</span>
+          <input class="email-meta-input" id="emailTo" type="email" placeholder="recipient@example.com" multiple/>
+        </div>
+        <div class="email-header-bar" style="border-top:none;">
+          <span class="email-meta-label">Subject</span>
+          <input class="email-meta-input" id="emailSubject" type="text" placeholder="Your email subject line"/>
+        </div>
+        <div class="email-header-bar" style="border-top:none;border-bottom:none;">
+          <span class="email-meta-label">CC</span>
+          <input class="email-meta-input" id="emailCc" type="email" placeholder="cc@example.com (optional)" multiple/>
+        </div>
 
-            const newP = document.createElement('p');
-            newP.className = 'description-display';
-            document.getElementById('descriptions-display').appendChild(newP);
+        <!-- BODY -->
+        <div class="email-body-area" id="emailBody" contenteditable="true"
+          data-placeholder="Start writing your email here..." spellcheck="true"></div>
 
-            newTextarea.addEventListener('input', function() {
-                newP.textContent = this.value;
-            });
-        });
+        <!-- SIGNATURE -->
+        <div class="email-signature" id="emailSignature">
+          <div id="sigContent" style="color:#bbb;font-size:13px;">Your signature will appear here</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        // Toggle border
-        document.getElementById('border').addEventListener('change', function() {
-            document.getElementById('a4-page').classList.toggle('with-border', this.checked);
-        });
+<!-- MODALS -->
+<div class="modal" id="linkModal">
+  <div class="mbox">
+    <div class="mhdr"><span class="mtitle">Insert Link</span><button class="mclose" onclick="closeModal('linkModal')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="frow"><label>Link Text</label><input class="finput" id="linkText" type="text" placeholder="Click here"/></div>
+    <div class="frow"><label>URL</label><input class="finput" id="linkUrl" type="url" placeholder="https://example.com"/></div>
+    <div class="frow"><label>Open in</label><select class="finput" id="linkTarget"><option value="_blank">New tab</option><option value="_self">Same tab</option></select></div>
+    <div class="mfooter"><button class="mbtn sec" onclick="closeModal('linkModal')">Cancel</button><button class="mbtn primary" onclick="insertLink()">Insert</button></div>
+  </div>
+</div>
 
-        // Set background image from link
-        document.getElementById('bg-link').addEventListener('change', function() {
-            const url = this.value;
-            document.getElementById('a4-page').style.backgroundImage = url ? `url(${url})` : '';
-        });
+<div class="modal" id="imageModal">
+  <div class="mbox" style="max-width:520px;">
+    <div class="mhdr"><span class="mtitle">Insert Image</span><button class="mclose" onclick="closeModal('imageModal')"><span class="material-symbols-outlined">close</span></button></div>
 
-        // Set background image from upload
-        document.getElementById('bg-upload').addEventListener('change', function() {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('a4-page').style.backgroundImage = `url(${e.target.result})`;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+    <!-- Image source tabs -->
+    <div class="mode-tabs" style="margin-bottom:14px;">
+      <button class="mode-tab active" id="imgtab-upload" onclick="setImgTab('upload')">Upload</button>
+      <button class="mode-tab" id="imgtab-url" onclick="setImgTab('url')">URL</button>
+      <button class="mode-tab" id="imgtab-paste" onclick="setImgTab('paste')">Paste</button>
+      <button class="mode-tab" id="imgtab-camera" onclick="setImgTab('camera')">Camera</button>
+    </div>
 
-        // Font selection
-        document.getElementById('font-select').addEventListener('change', function() {
-            document.getElementById('a4-page').style.fontFamily = this.value;
-        });
+    <!-- Upload tab -->
+    <div id="imgpanel-upload">
+      <div class="drop-zone" id="imgDropZone" onclick="document.getElementById('imgFileInput').click()" style="margin-bottom:0;">
+        <span class="material-symbols-outlined" style="font-size:36px;color:#1976d2;display:block;margin-bottom:8px;">upload_file</span>
+        <div style="font-size:13px;color:#555;font-weight:500;">Click to upload or drag &amp; drop</div>
+        <div style="font-size:11px;color:#999;margin-top:4px;">PNG, JPG, GIF, WebP, SVG</div>
+      </div>
+      <input type="file" id="imgFileInput" accept="image/*" style="display:none;" onchange="handleImageFile(this)"/>
+      <div id="imgPreviewWrap" style="display:none;margin-top:10px;text-align:center;">
+        <img id="imgPreview" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid #e0e0e0;"/>
+      </div>
+    </div>
 
-        // Download as JPG
-        document.getElementById('download-jpg').addEventListener('click', function() {
-            html2canvas(document.getElementById('a4-page'), { scale: 2 }).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'email.jpg';
-                link.href = canvas.toDataURL('image/jpeg');
-                link.click();
-            });
-        });
+    <!-- URL tab -->
+    <div id="imgpanel-url" style="display:none;">
+      <div class="frow">
+        <label>Image URL</label>
+        <input class="finput" id="imgUrl" type="url" placeholder="https://example.com/image.png" oninput="previewImgUrl()"/>
+      </div>
+      <div id="imgUrlPreviewWrap" style="display:none;text-align:center;margin-bottom:8px;">
+        <img id="imgUrlPreview" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid #e0e0e0;"/>
+      </div>
+    </div>
 
-        // Download as PDF
-        document.getElementById('download-pdf').addEventListener('click', function() {
-            html2canvas(document.getElementById('a4-page'), { scale: 2 }).then(canvas => {
-                const imgData = canvas.toDataURL('image/jpeg');
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-                pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
-                pdf.save('email.pdf');
-            });
-        });
-    </script>
-    <!-- Load Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <!-- Paste tab -->
+    <div id="imgpanel-paste" style="display:none;">
+      <div id="imgPasteZone" tabindex="0"
+        style="border:2px dashed #1976d2;border-radius:12px;padding:32px 16px;text-align:center;cursor:pointer;background:#fafafa;outline:none;transition:background 0.15s;"
+        onclick="this.focus()"
+        onpaste="handleImgPaste(event)">
+        <span class="material-symbols-outlined" style="font-size:36px;color:#1976d2;display:block;margin-bottom:8px;">content_paste</span>
+        <div style="font-size:13px;color:#555;font-weight:500;">Click here, then press Ctrl+V / Cmd+V</div>
+        <div style="font-size:11px;color:#999;margin-top:4px;">Works with screenshots, copied images, anything on your clipboard</div>
+      </div>
+      <div id="imgPastePreviewWrap" style="display:none;margin-top:10px;text-align:center;">
+        <img id="imgPastePreview" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid #e0e0e0;"/>
+      </div>
+    </div>
+
+    <!-- Camera tab -->
+    <div id="imgpanel-camera" style="display:none;">
+      <div style="text-align:center;margin-bottom:10px;">
+        <video id="cameraFeed" autoplay playsinline style="width:100%;max-height:200px;border-radius:8px;background:#000;display:none;"></video>
+        <canvas id="cameraCanvas" style="display:none;"></canvas>
+        <div id="cameraStart" style="border:2px dashed #1976d2;border-radius:12px;padding:28px 16px;cursor:pointer;background:#fafafa;" onclick="startCamera()">
+          <span class="material-symbols-outlined" style="font-size:36px;color:#1976d2;display:block;margin-bottom:8px;">photo_camera</span>
+          <div style="font-size:13px;color:#555;font-weight:500;">Click to open camera</div>
+        </div>
+        <div id="cameraControls" style="display:none;margin-top:8px;display:none;">
+          <button class="mbtn primary" style="margin-right:6px;" onclick="capturePhoto()">Take Photo</button>
+          <button class="mbtn sec" onclick="stopCamera()">Cancel</button>
+        </div>
+      </div>
+      <div id="cameraPreviewWrap" style="display:none;text-align:center;margin-top:8px;">
+        <img id="cameraPreview" style="max-width:100%;max-height:160px;border-radius:8px;border:1px solid #e0e0e0;"/>
+      </div>
+    </div>
+
+    <!-- Shared options (shown always) -->
+    <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f0f0f0;">
+      <div class="frow"><label>Alt text</label><input class="finput" id="imgAlt" type="text" placeholder="Image description (optional)"/></div>
+      <div class="frow"><label>Width</label>
+        <div style="display:flex;gap:6px;">
+          <input class="finput" id="imgWidth" type="text" value="100%" style="flex:1;"/>
+          <select class="finput" style="width:110px;" onchange="document.getElementById('imgWidth').value=this.value">
+            <option value="100%">Full width</option>
+            <option value="75%">75%</option>
+            <option value="50%">50%</option>
+            <option value="300px">300px</option>
+            <option value="200px">200px</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="closeModal('imageModal');stopCamera()">Cancel</button>
+      <button class="mbtn primary" onclick="insertImage()">Insert</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="tableModal">
+  <div class="mbox">
+    <div class="mhdr"><span class="mtitle">Insert Table</span><button class="mclose" onclick="closeModal('tableModal')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="frow"><label>Rows</label><input class="finput" id="tableRows" type="number" min="1" max="20" value="3"/></div>
+    <div class="frow"><label>Columns</label><input class="finput" id="tableCols" type="number" min="1" max="10" value="3"/></div>
+    <div class="frow"><label>Header row</label><select class="finput" id="tableHeader"><option value="yes">Yes</option><option value="no">No</option></select></div>
+    <div class="mfooter"><button class="mbtn sec" onclick="closeModal('tableModal')">Cancel</button><button class="mbtn primary" onclick="insertTable()">Insert</button></div>
+  </div>
+</div>
+
+<div class="modal" id="textColorModal">
+  <div class="mbox">
+    <div class="mhdr"><span class="mtitle">Text Color</span><button class="mclose" onclick="closeModal('textColorModal')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="pal-row" id="textColorPalette"></div>
+    <div class="frow" style="margin-top:12px;"><label>Custom</label><input type="color" class="finput" id="textColorCustom" value="#1976d2" style="height:38px;padding:2px;"/></div>
+    <div class="mfooter"><button class="mbtn sec" onclick="closeModal('textColorModal')">Cancel</button><button class="mbtn primary" onclick="applyTextColor()">Apply</button></div>
+  </div>
+</div>
+
+<div class="modal" id="highlightModal">
+  <div class="mbox">
+    <div class="mhdr"><span class="mtitle">Highlight Color</span><button class="mclose" onclick="closeModal('highlightModal')"><span class="material-symbols-outlined">close</span></button></div>
+    <div class="pal-row" id="highlightPalette"></div>
+    <div class="frow" style="margin-top:12px;"><label>Custom</label><input type="color" class="finput" id="highlightCustom" value="#fff176" style="height:38px;padding:2px;"/></div>
+    <div class="mfooter"><button class="mbtn sec" onclick="execFormat('removeFormat');closeModal('highlightModal')">Remove</button><button class="mbtn primary" onclick="applyHighlight()">Apply</button></div>
+  </div>
+</div>
+
+<!-- OPEN IN EMAIL OVERLAY -->
+<div id="openEmailOverlay">
+  <div class="oeo-box">
+    <div class="oeo-icon"><span class="material-symbols-outlined">mark_email_unread</span></div>
+    <div class="oeo-title">Your .eml file is downloading</div>
+    <div class="oeo-sub">HTML emails can't be sent through a browser link — the .eml file carries the full design. Here's how to open it:</div>
+    <ul class="oeo-steps">
+      <li class="oeo-step">
+        <div class="oeo-num">1</div>
+        <div class="oeo-step-text">Find the downloaded <strong>.eml file</strong> in your Downloads folder (or browser download bar).</div>
+      </li>
+      <li class="oeo-step">
+        <div class="oeo-num">2</div>
+        <div class="oeo-step-text"><strong>Double-click it</strong> — it opens directly in your default mail app as a compose window.</div>
+      </li>
+      <li class="oeo-step">
+        <div class="oeo-num">3</div>
+        <div class="oeo-step-text">Review, add recipients if needed, then <strong>hit Send</strong>.</div>
+      </li>
+    </ul>
+    <div style="font-size:11px;color:#999;text-align:center;margin-bottom:10px;">Works with</div>
+    <div class="oeo-apps">
+      <span class="oeo-app">Apple Mail</span>
+      <span class="oeo-app">Outlook</span>
+      <span class="oeo-app">Thunderbird</span>
+      <span class="oeo-app">Gmail (desktop)</span>
+    </div>
+    <button class="oeo-close" onclick="document.getElementById('openEmailOverlay').classList.remove('open')">Got it</button>
+  </div>
+</div>
+
+<div id="toastStack"></div>
+<div id="tipBox">
+  <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+  <div class="tip-text" id="tipText"></div>
+  <div class="tip-actions">
+    <button class="tip-btn tip-prev" onclick="tipNav(-1)">Prev</button>
+    <button class="tip-btn tip-next" onclick="tipNav(1)">Next</button>
+  </div>
+</div>
 
 <script>
-// --- Create Toggle Button ---
-const toggle = document.createElement("span");
-toggle.className = "material-symbols-outlined";
-toggle.style.position = "fixed";
-toggle.style.top = "15px";
-toggle.style.right = "15px";
-toggle.style.fontSize = "32px";
-toggle.style.cursor = "pointer";
-toggle.style.zIndex = "999999";
-toggle.style.userSelect = "none";
-document.body.appendChild(toggle);
+// ─── THEME ───────────────────────────────────────────────────────────────────
+function setThemeCookie(v){document.cookie='toolsuite_theme='+v+'; path=/; max-age=31536000; SameSite=Lax';}
+function getThemeCookie(){const m=document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));return m?m.split('=')[1]:null;}
+function toggleDarkMode(){const d=document.body.classList.toggle('dark');document.getElementById('themeIcon').textContent=d?'light_mode':'dark_mode';setThemeCookie(d?'dark':'light');}
+(function(){if(getThemeCookie()==='dark'){document.body.classList.add('dark');document.addEventListener('DOMContentLoaded',()=>{const i=document.getElementById('themeIcon');if(i)i.textContent='light_mode';});}})();
 
-// --- Functions ---
-function enableDark() {
-    document.documentElement.style.filter = "invert(1) hue-rotate(180deg)";
-    localStorage.setItem("theme", "dark");
-    toggle.textContent = "light_mode"; // sun icon
+// ─── TOAST ───────────────────────────────────────────────────────────────────
+function showToast(msg,type='info',dur=2800){
+  const s=document.getElementById('toastStack'),t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<span class="material-symbols-outlined" style="font-size:16px">${type==='error'?'error':'check_circle'}</span>${msg}`;
+  s.appendChild(t);requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),350);},dur);
 }
 
-function disableDark() {
-    document.documentElement.style.filter = "";
-    localStorage.setItem("theme", "light");
-    toggle.textContent = "dark_mode"; // moon icon
+// ─── SIDEBAR ─────────────────────────────────────────────────────────────────
+function toggleSidebar(){
+  const sb=document.querySelector('.sidebar'),eb=document.getElementById('expandBtn'),c=sb.classList.contains('collapsed');
+  sb.classList.toggle('collapsed');eb.style.display=c?'none':'block';
+  setTimeout(resizeFabricCanvas,320);
+}
+function toggleDropdown(h){const ch=h.querySelector('.aw-chevron'),dp=h.nextElementSibling,o=dp.classList.contains('open');dp.classList.toggle('open',!o);ch.classList.toggle('open',!o);}
+
+// ─── MODALS ───────────────────────────────────────────────────────────────────
+let savedRange=null;
+function openModal(id){const sel=window.getSelection();if(sel&&sel.rangeCount>0)savedRange=sel.getRangeAt(0).cloneRange();document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.addEventListener('click',e=>{
+  if(e.target.classList.contains('modal')) e.target.classList.remove('open');
+  if(e.target.id==='openEmailOverlay') e.target.classList.remove('open');
+});
+function restoreSelection(){if(savedRange){const sel=window.getSelection();sel.removeAllRanges();sel.addRange(savedRange);}}
+
+// ─── FORMATTING ───────────────────────────────────────────────────────────────
+function focusBody(){document.getElementById('emailBody').focus();}
+function execFormat(cmd,val=null){focusBody();document.execCommand(cmd,false,val);updateToolbarState();}
+function fmt(cmd){focusBody();document.execCommand(cmd);updateToolbarState();}
+function updateToolbarState(){['bold','italic','underline','strikethrough'].forEach(c=>{const b=document.getElementById('btn-'+c);if(b)b.classList.toggle('active',document.queryCommandState(c==='strikethrough'?'strikeThrough':c));});}
+function applyFontSize(px){restoreSelection();const sel=window.getSelection();if(!sel||sel.rangeCount===0)return;const r=sel.getRangeAt(0);if(r.collapsed)return;const sp=document.createElement('span');sp.style.fontSize=px+'px';try{r.surroundContents(sp);}catch(e){document.execCommand('fontSize',false,'7');document.querySelectorAll('font[size="7"]').forEach(f=>{f.style.fontSize=px+'px';f.removeAttribute('size');});}}
+function applyBlock(tag){focusBody();document.execCommand('formatBlock',false,tag);}
+function clearFormat(){focusBody();document.execCommand('removeFormat');document.execCommand('formatBlock',false,'p');}
+
+// ─── INSERT LINK ──────────────────────────────────────────────────────────────
+function insertLink(){
+  const text=document.getElementById('linkText').value.trim(),url=document.getElementById('linkUrl').value.trim(),target=document.getElementById('linkTarget').value;
+  if(!url){showToast('Please enter a URL','error');return;}
+  restoreSelection();focusBody();
+  const sel=window.getSelection();
+  if(sel&&sel.rangeCount>0&&!sel.getRangeAt(0).collapsed){document.execCommand('createLink',false,url);const a=sel.anchorNode.parentElement.closest('a')||sel.focusNode.parentElement.closest('a');if(a)a.target=target;}
+  else{const a=document.createElement('a');a.href=url;a.target=target;a.textContent=text||url;if(sel&&sel.rangeCount>0){const r=sel.getRangeAt(0);r.collapse(false);r.insertNode(a);}}
+  closeModal('linkModal');document.getElementById('linkText').value='';document.getElementById('linkUrl').value='';showToast('Link inserted');
 }
 
-// --- Load Saved Theme ---
-if (localStorage.getItem("theme") === "dark") {
-    enableDark();
-} else {
-    disableDark();
+// ─── IMAGE MODAL — TABS ───────────────────────────────────────────────────────
+let currentImgSrc = ''; // holds the data URL ready to insert
+let cameraStream = null;
+const IMG_TABS = ['upload','url','paste','camera'];
+
+function setImgTab(tab) {
+  IMG_TABS.forEach(t => {
+    document.getElementById('imgtab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('imgpanel-'+t).style.display = t===tab ? '' : 'none';
+  });
+  if(tab !== 'camera') stopCamera();
 }
 
-// --- Toggle on Click ---
-toggle.onclick = () => {
-    if (localStorage.getItem("theme") === "dark") {
-        disableDark();
-    } else {
-        enableDark();
+// Upload tab
+function handleImageFile(input) {
+  const f = input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = e => {
+    currentImgSrc = e.target.result;
+    const pw = document.getElementById('imgPreviewWrap');
+    document.getElementById('imgPreview').src = currentImgSrc;
+    pw.style.display = '';
+  };
+  r.readAsDataURL(f);
+}
+
+// URL tab
+function previewImgUrl() {
+  const url = document.getElementById('imgUrl').value.trim();
+  const pw = document.getElementById('imgUrlPreviewWrap');
+  if(!url){ pw.style.display='none'; currentImgSrc=''; return; }
+  currentImgSrc = url;
+  const p = document.getElementById('imgUrlPreview');
+  p.src = url;
+  p.onload = () => pw.style.display = '';
+  p.onerror = () => { pw.style.display='none'; };
+}
+
+// Paste tab
+function handleImgPaste(e) {
+  const items = (e.clipboardData||e.originalEvent.clipboardData).items;
+  for(const item of items) {
+    if(item.type.startsWith('image/')) {
+      e.preventDefault();
+      const blob = item.getAsFile();
+      const r = new FileReader();
+      r.onload = ev => {
+        currentImgSrc = ev.target.result;
+        const pw = document.getElementById('imgPastePreviewWrap');
+        document.getElementById('imgPastePreview').src = currentImgSrc;
+        pw.style.display = '';
+        // Flash the paste zone green to confirm
+        const z = document.getElementById('imgPasteZone');
+        z.style.borderColor='#2e7d32'; z.style.background='#e8f5e9';
+        setTimeout(()=>{ z.style.borderColor='#1976d2'; z.style.background='#fafafa'; }, 1000);
+      };
+      r.readAsDataURL(blob);
+      return;
     }
-};
+  }
+  showToast('No image found on clipboard — copy an image first', 'error');
+}
+
+// Camera tab
+async function startCamera() {
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
+    const vid = document.getElementById('cameraFeed');
+    vid.srcObject = cameraStream; vid.style.display = '';
+    document.getElementById('cameraStart').style.display = 'none';
+    document.getElementById('cameraControls').style.display = '';
+  } catch(e) {
+    showToast('Camera access denied or unavailable', 'error');
+  }
+}
+function capturePhoto() {
+  const vid = document.getElementById('cameraFeed');
+  const c = document.getElementById('cameraCanvas');
+  c.width = vid.videoWidth; c.height = vid.videoHeight;
+  c.getContext('2d').drawImage(vid, 0, 0);
+  currentImgSrc = c.toDataURL('image/jpeg', 0.92);
+  document.getElementById('cameraPreview').src = currentImgSrc;
+  document.getElementById('cameraPreviewWrap').style.display = '';
+  stopCamera();
+  showToast('Photo captured');
+}
+function stopCamera() {
+  if(cameraStream){ cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
+  const vid = document.getElementById('cameraFeed');
+  if(vid){ vid.style.display='none'; }
+  const cs = document.getElementById('cameraStart');
+  if(cs) cs.style.display = '';
+  const cc = document.getElementById('cameraControls');
+  if(cc) cc.style.display = 'none';
+}
+
+// Insert — works from any tab (reads currentImgSrc)
+function insertImage() {
+  // Determine src: prefer currentImgSrc (upload/paste/camera), fall back to URL field
+  const src = currentImgSrc || document.getElementById('imgUrl').value.trim();
+  if(!src){ showToast('No image selected', 'error'); return; }
+  const alt = document.getElementById('imgAlt').value.trim();
+  const w = document.getElementById('imgWidth').value.trim() || '100%';
+  restoreSelection(); focusBody();
+  const img = document.createElement('img');
+  img.src = src; img.alt = alt;
+  img.style.cssText = `width:${w};border-radius:8px;display:block;margin:8px 0;max-width:100%;`;
+  const sel = window.getSelection();
+  if(sel && sel.rangeCount > 0) {
+    const r = sel.getRangeAt(0); r.collapse(false); r.insertNode(img);
+    r.setStartAfter(img); r.collapse(true); sel.removeAllRanges(); sel.addRange(r);
+  } else {
+    document.getElementById('emailBody').appendChild(img);
+  }
+  // Reset modal state
+  currentImgSrc = '';
+  document.getElementById('imgUrl').value = '';
+  document.getElementById('imgPreviewWrap').style.display = 'none';
+  document.getElementById('imgUrlPreviewWrap').style.display = 'none';
+  document.getElementById('imgPastePreviewWrap').style.display = 'none';
+  document.getElementById('cameraPreviewWrap').style.display = 'none';
+  closeModal('imageModal');
+  showToast('Image inserted');
+}
+
+// Also support drag-and-drop directly into the email body
+function setupBodyImageDrop() {
+  const body = document.getElementById('emailBody');
+  body.addEventListener('dragover', e => { e.preventDefault(); body.style.outline='2px dashed #1976d2'; });
+  body.addEventListener('dragleave', () => body.style.outline='');
+  body.addEventListener('drop', e => {
+    e.preventDefault(); body.style.outline='';
+    const file = [...e.dataTransfer.files].find(f => f.type.startsWith('image/'));
+    if(!file){ return; }
+    const r = new FileReader();
+    r.onload = ev => {
+      focusBody();
+      // Position caret at drop point
+      let range;
+      if(document.caretRangeFromPoint) range = document.caretRangeFromPoint(e.clientX, e.clientY);
+      else if(document.caretPositionFromPoint){ const pos=document.caretPositionFromPoint(e.clientX,e.clientY); range=document.createRange(); range.setStart(pos.offsetNode,pos.offset); }
+      const img = document.createElement('img');
+      img.src = ev.target.result; img.style.cssText='width:100%;border-radius:8px;display:block;margin:8px 0;max-width:100%;';
+      if(range){ const sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(range); range.insertNode(img); }
+      else body.appendChild(img);
+      showToast('Image dropped in');
+    };
+    r.readAsDataURL(file);
+  });
+  // Also allow paste directly into body
+  body.addEventListener('paste', e => {
+    const items = (e.clipboardData||e.originalEvent.clipboardData||{}).items || [];
+    const imgItem = [...items].find(i => i.type.startsWith('image/'));
+    if(!imgItem) return; // let normal paste happen
+    e.preventDefault();
+    const blob = imgItem.getAsFile();
+    const r = new FileReader();
+    r.onload = ev => {
+      const img = document.createElement('img');
+      img.src = ev.target.result; img.style.cssText='width:100%;border-radius:8px;display:block;margin:8px 0;max-width:100%;';
+      const sel = window.getSelection();
+      if(sel && sel.rangeCount > 0){ const range=sel.getRangeAt(0); range.deleteContents(); range.insertNode(img); }
+      else body.appendChild(img);
+      showToast('Image pasted');
+    };
+    r.readAsDataURL(blob);
+  });
+}
+
+// ─── EML IMPORT ───────────────────────────────────────────────────────────────
+function importEml(input) {
+  const f = input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = e => parseEml(e.target.result);
+  r.readAsText(f, 'utf-8');
+  input.value = '';
+}
+
+function parseEml(raw) {
+  // Split headers from body on first blank line
+  const headerBodySplit = raw.indexOf('\r\n\r\n') !== -1 ? raw.indexOf('\r\n\r\n') : raw.indexOf('\n\n');
+  const headerStr = raw.substring(0, headerBodySplit);
+  const bodyStr = raw.substring(headerBodySplit).replace(/^\r?\n\r?\n?/,'');
+
+  // Parse headers
+  const headers = {};
+  // Unfold multi-line headers first
+  const unfolded = headerStr.replace(/\r?\n[ \t]+/g, ' ');
+  unfolded.split(/\r?\n/).forEach(line => {
+    const m = line.match(/^([^:]+):\s*(.*)/);
+    if(m) headers[m[1].toLowerCase().trim()] = m[2].trim();
+  });
+
+  // Fill meta fields
+  if(headers['to']) document.getElementById('emailTo').value = headers['to'];
+  if(headers['subject']) document.getElementById('emailSubject').value = decodeEncodedWord(headers['subject']);
+  if(headers['cc']) document.getElementById('emailCc').value = headers['cc'];
+  if(headers['from']) {
+    const fromMatch = headers['from'].match(/^(.*?)\s*<(.+)>/) || headers['from'].match(/(.+)/);
+    if(fromMatch && fromMatch[2]) {
+      document.getElementById('fromName').value = fromMatch[1].replace(/"/g,'').trim();
+      document.getElementById('fromEmail').value = fromMatch[2].trim();
+    } else {
+      document.getElementById('fromEmail').value = headers['from'];
+    }
+  }
+
+  // Extract HTML body
+  const ct = headers['content-type'] || '';
+  let html = '';
+
+  if(ct.toLowerCase().includes('multipart')) {
+    html = extractMultipartHtml(raw, ct);
+  } else {
+    // Single part — decode based on content-transfer-encoding
+    const cte = (headers['content-transfer-encoding']||'').toLowerCase();
+    html = decodePart(bodyStr, cte);
+  }
+
+  if(!html) {
+    showToast('Could not find HTML content in this .eml', 'error'); return;
+  }
+
+  // Strip outer email wrapper/styles, extract just inner body content
+  const parsed = new DOMParser().parseFromString(html, 'text/html');
+  // Try to find the main content area (skip wrappers)
+  const bodyEl = parsed.body;
+  // Remove style and script tags
+  bodyEl.querySelectorAll('style,script,link').forEach(el=>el.remove());
+
+  // Inject into editor body
+  document.getElementById('emailBody').innerHTML = bodyEl.innerHTML;
+  showToast('Email imported successfully');
+}
+
+function extractMultipartHtml(raw, ct) {
+  // Get boundary
+  const bm = ct.match(/boundary=["']?([^"';\r\n]+)["']?/i);
+  if(!bm) return '';
+  const boundary = bm[1].trim();
+  // Split on boundary
+  const parts = raw.split(new RegExp('--' + escapeRe(boundary) + '(?:--)?'));
+  for(const part of parts) {
+    if(!part.trim() || part.trim() === '--') continue;
+    const partHeaderEnd = part.indexOf('\r\n\r\n') !== -1 ? part.indexOf('\r\n\r\n') : part.indexOf('\n\n');
+    if(partHeaderEnd === -1) continue;
+    const partHeaderStr = part.substring(0, partHeaderEnd);
+    const partBody = part.substring(partHeaderEnd).replace(/^\r?\n\r?\n?/,'');
+    const partHeaders = {};
+    partHeaderStr.replace(/\r?\n[ \t]+/g,' ').split(/\r?\n/).forEach(line=>{
+      const m=line.match(/^([^:]+):\s*(.*)/); if(m) partHeaders[m[1].toLowerCase().trim()]=m[2].trim();
+    });
+    const partCt = (partHeaders['content-type']||'').toLowerCase();
+    if(partCt.includes('multipart')) {
+      // Nested multipart — recurse
+      const sub = extractMultipartHtml(part, partHeaders['content-type']||'');
+      if(sub) return sub;
+    }
+    if(partCt.includes('text/html')) {
+      const cte = (partHeaders['content-transfer-encoding']||'').toLowerCase();
+      return decodePart(partBody, cte);
+    }
+  }
+  return '';
+}
+
+function decodePart(text, cte) {
+  if(cte === 'base64') {
+    try { return decodeURIComponent(escape(atob(text.replace(/\s/g,'')))); } catch(e) { return atob(text.replace(/\s/g,'')); }
+  }
+  if(cte === 'quoted-printable') {
+    return text
+      .replace(/=\r?\n/g,'')  // soft line breaks
+      .replace(/=([0-9A-Fa-f]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+  }
+  return text; // 7bit / 8bit / identity
+}
+
+function decodeEncodedWord(str) {
+  // RFC 2047: =?charset?encoding?text?=
+  return str.replace(/=\?([^?]+)\?([BQbq])\?([^?]*)\?=/g, (_, charset, enc, text) => {
+    try {
+      if(enc.toUpperCase()==='B') return decodeURIComponent(escape(atob(text)));
+      if(enc.toUpperCase()==='Q') return text.replace(/_/g,' ').replace(/=([0-9A-Fa-f]{2})/g,(_,h)=>String.fromCharCode(parseInt(h,16)));
+    } catch(e) {}
+    return text;
+  });
+}
+
+function escapeRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+
+
+
+// ─── INSERT TABLE ─────────────────────────────────────────────────────────────
+function insertTable(){
+  const rows=parseInt(document.getElementById('tableRows').value)||3,cols=parseInt(document.getElementById('tableCols').value)||3,header=document.getElementById('tableHeader').value==='yes';
+  const cs='border:1px solid #e0e0e0;padding:8px 12px;',hs=cs+'background:#f0f7ff;font-weight:600;color:#1565c0;';
+  let html='<table style="border-collapse:collapse;width:100%;margin:12px 0;font-size:14px;">';
+  if(header){html+=`<tr>${Array(cols).fill(0).map((_,i)=>`<th style="${hs}">Header ${i+1}</th>`).join('')}</tr>`;for(let r=0;r<rows-1;r++)html+=`<tr>${Array(cols).fill(`<td style="${cs}">Cell</td>`).join('')}</tr>`;}
+  else for(let r=0;r<rows;r++)html+=`<tr>${Array(cols).fill(`<td style="${cs}">Cell</td>`).join('')}</tr>`;
+  html+='</table><p><br></p>';restoreSelection();focusBody();document.execCommand('insertHTML',false,html);closeModal('tableModal');showToast('Table inserted');
+}
+
+// ─── INSERT BUTTON / DIVIDER ──────────────────────────────────────────────────
+let accentColor='#1976d2';
+function insertButton(){
+  const url=prompt('Button URL:','https://example.com');if(url===null)return;
+  const label=prompt('Button label:','Get Started');if(!label)return;
+  const html=`<div style="text-align:center;margin:18px 0;"><a href="${url}" style="display:inline-block;padding:12px 30px;background:${accentColor};color:#fff;border-radius:8px;font-weight:600;font-size:14px;text-decoration:none;">${label}</a></div><p><br></p>`;
+  focusBody();restoreSelection();document.execCommand('insertHTML',false,html);showToast('Button inserted');
+}
+function insertDivider(){focusBody();document.execCommand('insertHTML',false,'<hr style="border:none;border-top:1px solid #e0e0e0;margin:18px 0;"/><p><br></p>');}
+
+// ─── COLORS ───────────────────────────────────────────────────────────────────
+const TEXT_COLORS=['#000000','#333333','#d32f2f','#c62828','#f57c00','#2e7d32','#1976d2','#6a1b9a','#ffffff','#fce4ec','#fff9c4','#e8f5e9','#e3f2fd'];
+const HIGHLIGHT_COLORS=['#fff176','#a5d6a7','#90caf9','#f48fb1','#ffe0b2','#b39ddb','#80cbc4'];
+function buildPalette(cid,colors,inputId){
+  const c=document.getElementById(cid);c.innerHTML='';
+  colors.forEach(col=>{const s=document.createElement('div');s.className='pal-swatch';s.style.background=col;if(col==='#ffffff')s.style.border='2px solid #ddd';s.title=col;s.onclick=()=>{document.getElementById(inputId).value=col;c.querySelectorAll('.pal-swatch').forEach(x=>x.classList.remove('selected'));s.classList.add('selected');};c.appendChild(s);});
+}
+function applyTextColor(){const col=document.getElementById('textColorCustom').value;restoreSelection();focusBody();document.execCommand('foreColor',false,col);closeModal('textColorModal');}
+function applyHighlight(){const col=document.getElementById('highlightCustom').value;restoreSelection();focusBody();document.execCommand('hiliteColor',false,col);closeModal('highlightModal');}
+function applyBgColor(){document.getElementById('emailWrapper').style.background=document.getElementById('bgColor').value;}
+function applyBodyTextColor(){document.getElementById('emailBody').style.color=document.getElementById('bodyTextColor').value;}
+function applyAccentColor(){
+  accentColor=document.getElementById('accentColor').value;
+  document.getElementById('dynamicAccentStyle').textContent=`.email-body-area a{color:${accentColor};}.email-body-area table th{background:${accentColor}22;color:${accentColor};}.email-body-area blockquote{border-left-color:${accentColor};background:${accentColor}11;}`;
+}
+function applyColorPreset(name){
+  const p={professional:{bg:'#ffffff',text:'#333333',accent:'#1976d2',b1:'#1976d2',b2:'#42a5f5'},warm:{bg:'#fffdf7',text:'#3e2723',accent:'#e65100',b1:'#e65100',b2:'#ff8a65'},dark:{bg:'#1a1a1a',text:'#dddddd',accent:'#90caf9',b1:'#212121',b2:'#424242'},green:{bg:'#f1f8e9',text:'#1b5e20',accent:'#2e7d32',b1:'#2e7d32',b2:'#66bb6a'},purple:{bg:'#fce4ec',text:'#4a148c',accent:'#6a1b9a',b1:'#6a1b9a',b2:'#ab47bc'}}[name];
+  if(!p)return;
+  ['bgColor','bodyTextColor','accentColor'].forEach((id,i)=>document.getElementById(id).value=[p.bg,p.text,p.accent][i]);
+  document.getElementById('bannerColor1').value=p.b1;document.getElementById('bannerColor2').value=p.b2;
+  applyBgColor();applyBodyTextColor();applyAccentColor();renderBannerBg();showToast('Color preset applied');
+}
+
+// ─── LAYOUT ───────────────────────────────────────────────────────────────────
+function applyEmailWidth(){document.getElementById('emailWrapper').style.maxWidth=document.getElementById('emailWidth').value;setTimeout(resizeFabricCanvas,100);}
+function applyBodyPadding(){document.getElementById('emailBody').style.padding=document.getElementById('bodyPadding').value;}
+
+// ─── BANNER — MODE ────────────────────────────────────────────────────────────
+let bannerMode='gradient',gradDir='to right',bannerImageDataUrl=null;
+
+function setBannerMode(mode){
+  bannerMode=mode;
+  ['gradient','image'].forEach(m=>{
+    document.getElementById('tab-'+m).classList.toggle('active',m===mode);
+    document.getElementById('panel-'+m).classList.toggle('active',m===mode);
+  });
+  renderBannerBg();
+}
+
+// ─── BANNER — GRADIENT ────────────────────────────────────────────────────────
+function setGradDir(el){document.querySelectorAll('.grad-dir').forEach(d=>d.classList.remove('active'));el.classList.add('active');gradDir=el.dataset.dir;renderBannerBg();}
+function setGradPreset(c1,c2){document.getElementById('bannerColor1').value=c1;document.getElementById('bannerColor2').value=c2;renderBannerBg();}
+
+function renderBannerBg(){
+  const layer=document.getElementById('bannerBgLayer');
+  if(bannerMode==='gradient'){
+    const c1=document.getElementById('bannerColor1').value,c2=document.getElementById('bannerColor2').value;
+    layer.style.cssText=`position:absolute;inset:0;background:linear-gradient(${gradDir},${c1},${c2});`;
+  } else if(bannerMode==='image'&&bannerImageDataUrl){
+    layer.style.cssText=`position:absolute;inset:0;background:url('${bannerImageDataUrl}') center/cover no-repeat;`;
+  }
+}
+
+// ─── BANNER — IMAGE ───────────────────────────────────────────────────────────
+function handleBannerFile(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();r.onload=e=>{bannerImageDataUrl=e.target.result;document.getElementById('bannerImgUrl').value=bannerImageDataUrl;};r.readAsDataURL(f);
+}
+function applyBannerImage(){
+  const url=document.getElementById('bannerImgUrl').value.trim();
+  if(!url){showToast('No image provided','error');return;}
+  bannerImageDataUrl=url;bannerMode='image';renderBannerBg();
+  document.getElementById('tab-gradient').classList.remove('active');document.getElementById('tab-image').classList.add('active');
+  document.getElementById('panel-gradient').classList.remove('active');document.getElementById('panel-image').classList.add('active');
+  showToast('Banner image applied');
+}
+function clearBannerImage(){bannerImageDataUrl=null;document.getElementById('bannerImgUrl').value='';setBannerMode('gradient');showToast('Image cleared');}
+
+// ─── BANNER — HEIGHT ──────────────────────────────────────────────────────────
+function applyBannerHeight(){
+  const h=document.getElementById('bannerHeight').value,b=document.getElementById('emailBanner');
+  b.style.minHeight=h;b.style.display=h==='0px'?'none':'block';
+  setTimeout(resizeFabricCanvas,50);
+}
+
+// ─── BANNER — OVERLAY TEXT ────────────────────────────────────────────────────
+function updateBannerOverlay(){
+  const show=document.getElementById('bannerTextToggle').checked;
+  const text=document.getElementById('bannerTextInput').value||'Your Brand';
+  const color=document.getElementById('bannerTextColor').value;
+  const ov=document.getElementById('bannerOverlayText');
+  ov.style.display=show?'flex':'none';ov.textContent=text;ov.style.color=color;
+}
+
+// ─── FABRIC.JS — STICKER CANVAS ───────────────────────────────────────────────
+let fabricCanvas=null;
+
+function initFabricCanvas(){
+  const banner=document.getElementById('emailBanner');
+  const w=banner.offsetWidth||660,h=banner.offsetHeight||110;
+
+  // Create a wrapper div that sits absolutely over the banner
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:absolute;inset:0;z-index:10;';
+  wrap.id='fabricWrap';
+
+  // Create a real canvas element inside it
+  const canvasEl=document.createElement('canvas');
+  canvasEl.id='stickerCanvas';
+  wrap.appendChild(canvasEl);
+  banner.appendChild(wrap);
+
+  fabricCanvas=new fabric.Canvas('stickerCanvas',{
+    width:w,height:h,
+    backgroundColor:'rgba(0,0,0,0)',
+    selection:true,preserveObjectStacking:true,
+  });
+  fabricCanvas.setBackgroundColor('rgba(0,0,0,0)',fabricCanvas.renderAll.bind(fabricCanvas));
+
+  // Style handles
+  fabric.Object.prototype.set({
+    borderColor:'#1976d2',cornerColor:'#1976d2',cornerSize:10,
+    transparentCorners:false,borderScaleFactor:2,
+  });
+
+  // Make only upper canvas (interactive layer) capture events; lower canvas is transparent
+  const upper=fabricCanvas.upperCanvasEl;
+  upper.style.cssText+='position:absolute;top:0;left:0;';
+
+  // Ensure fabric wrapper canvas elements don't block click-through on bg
+  // The fabric upper canvas already handles this
+}
+
+function resizeFabricCanvas(){
+  if(!fabricCanvas)return;
+  const banner=document.getElementById('emailBanner');
+  if(!banner||banner.style.display==='none')return;
+  const w=banner.offsetWidth||660,h=banner.offsetHeight||110;
+  fabricCanvas.setWidth(w);fabricCanvas.setHeight(h);fabricCanvas.renderAll();
+}
+
+// ─── STICKER GALLERY ──────────────────────────────────────────────────────────
+const EMOJI_STICKERS=[
+  '🎉','🎊','🚀','⭐','💡','❤️','🔥','✨','🎨','🏆',
+  '🎁','💌','📧','🌟','🎯','🎶','🌈','🦋','🌸','🍀',
+  '🌙','☀️','⚡','💎','🔔','📣','🥳','👏','💪','🤝',
+  '🌺','🦄','🐬','🦁','🐉','😍','🤩','🥰','😎','🎤',
+];
+
+function buildStickerGallery(){
+  const g=document.getElementById('stickerGallery');g.innerHTML='';
+  EMOJI_STICKERS.forEach(emoji=>{
+    const el=document.createElement('div');el.className='sticker-item';el.textContent=emoji;el.title='Add to banner';
+    el.onclick=()=>addEmojiSticker(emoji);g.appendChild(el);
+  });
+}
+
+function addEmojiSticker(emoji){
+  if(!fabricCanvas){showToast('Canvas not ready','error');return;}
+  // Render emoji on offscreen canvas then load as Fabric image
+  const size=120,oc=document.createElement('canvas');oc.width=size;oc.height=size;
+  const ctx=oc.getContext('2d');ctx.font=`${size*0.75}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(emoji,size/2,size/2);
+  fabric.Image.fromURL(oc.toDataURL(),img=>{
+    img.set({left:fabricCanvas.width/2,top:fabricCanvas.height/2,originX:'center',originY:'center',scaleX:0.55,scaleY:0.55,selectable:true,hasControls:true,hasBorders:true});
+    fabricCanvas.add(img);fabricCanvas.setActiveObject(img);fabricCanvas.renderAll();
+    showToast('Sticker added — drag to reposition');
+  },{crossOrigin:'anonymous'});
+}
+
+function uploadStickerImage(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    fabric.Image.fromURL(e.target.result,img=>{
+      const maxW=fabricCanvas.width*0.45;if(img.width>maxW)img.scaleToWidth(maxW);
+      img.set({left:fabricCanvas.width/2,top:fabricCanvas.height/2,originX:'center',originY:'center',selectable:true,hasControls:true,hasBorders:true});
+      fabricCanvas.add(img);fabricCanvas.setActiveObject(img);fabricCanvas.renderAll();showToast('Custom sticker added');
+    },{crossOrigin:'anonymous'});
+  };r.readAsDataURL(f);input.value='';
+}
+
+function deleteSelectedSticker(){
+  const obj=fabricCanvas&&fabricCanvas.getActiveObject();
+  if(obj){fabricCanvas.remove(obj);fabricCanvas.discardActiveObject();fabricCanvas.renderAll();showToast('Sticker removed');}
+  else showToast('Select a sticker first','error');
+}
+function clearAllStickers(){
+  if(fabricCanvas){fabricCanvas.clear();fabricCanvas.setBackgroundColor('rgba(0,0,0,0)',fabricCanvas.renderAll.bind(fabricCanvas));showToast('All stickers cleared');}
+}
+
+// ─── BANNER → DATA URL (for export) ──────────────────────────────────────────
+function getBannerDataUrl(){
+  return new Promise(resolve=>{
+    const banner=document.getElementById('emailBanner');
+    if(!banner||banner.style.display==='none'){resolve(null);return;}
+    const w=banner.offsetWidth||660,h=banner.offsetHeight||110;
+    const oc=document.createElement('canvas');oc.width=w;oc.height=h;
+    const ctx=oc.getContext('2d');
+
+    const drawStickersAndResolve=()=>{
+      if(fabricCanvas&&fabricCanvas.getObjects().length>0){
+        const fc=fabricCanvas.toDataURL({format:'png',multiplier:1});
+        const img=new Image();img.onload=()=>{ctx.drawImage(img,0,0,w,h);resolve(oc.toDataURL());};img.src=fc;
+      } else {
+        const overlayText=document.getElementById('bannerOverlayText');
+        if(overlayText&&overlayText.style.display!=='none'){
+          ctx.fillStyle=overlayText.style.color||'#fff';ctx.font='bold 16px Inter, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(overlayText.textContent,w/2,h/2);
+        }
+        resolve(oc.toDataURL());
+      }
+    };
+
+    if(bannerMode==='image'&&bannerImageDataUrl){
+      const img=new Image();img.crossOrigin='anonymous';
+      img.onload=()=>{ctx.drawImage(img,0,0,w,h);drawStickersAndResolve();};
+      img.onerror=()=>{drawGradBg(ctx,w,h);drawStickersAndResolve();};
+      img.src=bannerImageDataUrl;
+    } else {
+      drawGradBg(ctx,w,h);drawStickersAndResolve();
+    }
+  });
+}
+
+function drawGradBg(ctx,w,h){
+  const c1=document.getElementById('bannerColor1').value,c2=document.getElementById('bannerColor2').value;
+  const g=ctx.createLinearGradient(0,0,w,h);g.addColorStop(0,c1);g.addColorStop(1,c2);ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+}
+
+// ─── SIGNATURE ────────────────────────────────────────────────────────────────
+function toggleSignature(){const show=document.getElementById('signatureToggle').checked;document.getElementById('signatureFields').style.display=show?'':'none';document.getElementById('emailSignature').style.display=show?'':'none';updateSignature();}
+function updateSignature(){
+  const name=document.getElementById('sigName').value,title=document.getElementById('sigTitle').value,company=document.getElementById('sigCompany').value,website=document.getElementById('sigWebsite').value,phone=document.getElementById('sigPhone').value;
+  if(!name&&!title&&!company){document.getElementById('sigContent').innerHTML='<span style="color:#bbb;">Your signature will appear here</span>';return;}
+  let html=`<strong style="font-size:14px;color:#1a1a2e;">${name}</strong>`;
+  if(title)html+=`<br/><span style="color:#777;">${title}</span>`;
+  if(company)html+=`<br/><span style="color:#555;">${company}</span>`;
+  if(phone)html+=`<br/><span style="color:#777;">${phone}</span>`;
+  if(website)html+=`<br/><a href="${website}" style="color:${accentColor};text-decoration:none;">${website}</a>`;
+  document.getElementById('sigContent').innerHTML=html;
+}
+
+// ─── INLINE IMAGES — convert every <img src> to base64 so they travel in .eml ─
+// Handles: data: URLs (already fine), blob: URLs (draw to canvas), http/https (fetch + canvas)
+async function inlineAllImages(html){
+  // Parse into a temp DOM so we can walk <img> nodes
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(`<body>${html}</body>`,'text/html');
+  const imgs=[...doc.querySelectorAll('img')];
+  await Promise.all(imgs.map(img=>inlineOneImage(img)));
+  return doc.body.innerHTML;
+}
+
+function inlineOneImage(imgEl){
+  return new Promise(resolve=>{
+    const src=imgEl.getAttribute('src')||'';
+    if(!src||src.startsWith('data:')){resolve();return;} // already base64
+    // Draw via Image element → offscreen canvas → data URL
+    const image=new Image();
+    image.crossOrigin='anonymous';
+    image.onload=()=>{
+      try{
+        const oc=document.createElement('canvas');
+        oc.width=image.naturalWidth||image.width||300;
+        oc.height=image.naturalHeight||image.height||200;
+        const ctx=oc.getContext('2d');
+        ctx.drawImage(image,0,0);
+        imgEl.setAttribute('src',oc.toDataURL('image/png'));
+      }catch(e){
+        // CORS tainted canvas — leave src as-is, best effort
+        console.warn('Could not inline image (CORS):', src);
+      }
+      resolve();
+    };
+    image.onerror=()=>{
+      // Broken image — remove src so it doesn't show a broken icon
+      imgEl.removeAttribute('src');
+      resolve();
+    };
+    // blob: URLs are only alive in this session — draw immediately
+    image.src=src;
+  });
+}
+
+// ─── BUILD HTML ───────────────────────────────────────────────────────────────
+async function buildEmailHTML(){
+  const bgCol=document.getElementById('bgColor').value,textCol=document.getElementById('bodyTextColor').value;
+  const preheader=document.getElementById('preheader').value.trim();
+  const sigHTML=document.getElementById('emailSignature').innerHTML;
+  const bannerH=document.getElementById('bannerHeight').value;
+
+  // Inline all images in the body so they embed into the .eml
+  const rawBodyHTML=document.getElementById('emailBody').innerHTML;
+  const bodyHTML=await inlineAllImages(rawBodyHTML);
+
+  let bannerSection='';
+  if(bannerH!=='0px'){
+    // getBannerDataUrl() already returns a base64 data URL — safe to embed directly
+    const bDataUrl=await getBannerDataUrl();
+    bannerSection=`<div style="width:100%;min-height:${bannerH};overflow:hidden;">
+      <img src="${bDataUrl}" style="width:100%;display:block;" alt="banner"/>
+    </div>`;
+  }
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Email</title>
+<style>body{font-family:'Inter','Segoe UI',Arial,sans-serif;background:#f0f4f8;margin:0;padding:20px 0;}.wrapper{max-width:660px;margin:0 auto;background:${bgCol};border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);}.body-area{padding:28px 32px;font-size:16px;color:${textCol};line-height:1.7;}.body-area a{color:${accentColor};}.body-area img{max-width:100%;border-radius:8px;display:block;margin:8px 0;}.body-area table{border-collapse:collapse;width:100%;margin:12px 0;font-size:14px;}.body-area table td,.body-area table th{border:1px solid #e0e0e0;padding:8px 12px;text-align:left;}.body-area table th{background:${accentColor}22;font-weight:600;color:${accentColor};}.body-area blockquote{border-left:4px solid ${accentColor};padding:8px 16px;margin:10px 0;background:${accentColor}11;border-radius:0 8px 8px 0;}.signature{padding:16px 32px;border-top:1px solid #f0f0f0;font-size:13px;color:#777;line-height:1.6;}</style></head><body>
+${preheader?`<div style="display:none;max-height:0;overflow:hidden;font-size:1px;">${preheader}</div>`:''}
+<div class="wrapper">${bannerSection}<div class="body-area">${bodyHTML}</div><div class="signature">${sigHTML}</div></div></body></html>`;
+}
+
+// ─── OPEN IN EMAIL — downloads .eml then shows how-to overlay ────────────────
+async function openInEmail(){
+  showToast('Inlining images...',  'info', 4000);
+  const to=document.getElementById('emailTo').value.trim()||'recipient@example.com';
+  const subject=document.getElementById('emailSubject').value.trim()||'(No subject)';
+  const cc=document.getElementById('emailCc').value.trim();
+  const from=document.getElementById('fromName').value.trim();
+  const fromEmail=document.getElementById('fromEmail').value.trim()||'sender@example.com';
+  const replyTo=document.getElementById('replyTo').value.trim();
+  const fullHTML=await buildEmailHTML();
+  let eml='MIME-Version: 1.0\r\n';
+  eml+=`From: ${from?from+' <'+fromEmail+'>':fromEmail}\r\n`;
+  eml+=`To: ${to}\r\n`;
+  if(cc) eml+=`Cc: ${cc}\r\n`;
+  if(replyTo) eml+=`Reply-To: ${replyTo}\r\n`;
+  eml+=`Subject: ${subject}\r\nDate: ${new Date().toUTCString()}\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n`;
+  eml+=fullHTML;
+  const blob=new Blob([eml],{type:'message/rfc822'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=(subject||'email')+'.eml';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  // Show instructional overlay
+  showOpenInEmailOverlay();
+}
+
+function showOpenInEmailOverlay(){
+  document.getElementById('openEmailOverlay').classList.add('open');
+}
+
+// ─── EXPORT .EML ──────────────────────────────────────────────────────────────
+async function exportEmail(){
+  showToast('Inlining images...', 'info', 4000);
+  const to=document.getElementById('emailTo').value.trim()||'recipient@example.com';
+  const subject=document.getElementById('emailSubject').value.trim()||'(No subject)';
+  const cc=document.getElementById('emailCc').value.trim();
+  const from=document.getElementById('fromName').value.trim();
+  const fromEmail=document.getElementById('fromEmail').value.trim()||'sender@example.com';
+  const replyTo=document.getElementById('replyTo').value.trim();
+  const fullHTML=await buildEmailHTML();
+  let eml='MIME-Version: 1.0\r\n';
+  eml+=`From: ${from?from+' <'+fromEmail+'>':fromEmail}\r\n`;
+  eml+=`To: ${to}\r\n`;
+  if(cc)eml+=`Cc: ${cc}\r\n`;
+  if(replyTo)eml+=`Reply-To: ${replyTo}\r\n`;
+  eml+=`Subject: ${subject}\r\nDate: ${new Date().toUTCString()}\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n`;
+  eml+=fullHTML;
+  const blob=new Blob([eml],{type:'message/rfc822'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=(subject||'email')+'.eml';a.click();URL.revokeObjectURL(url);
+  showToast('Exported as .eml');
+}
+
+// ─── COPY HTML ────────────────────────────────────────────────────────────────
+function copyHTML(){navigator.clipboard.writeText(document.getElementById('emailBody').innerHTML).then(()=>showToast('HTML copied')).catch(()=>showToast('Copy failed','error'));}
+
+// ─── TIPS ────────────────────────────────────────────────────────────────────
+const TIPS=['Fill in To, Subject, and CC directly on the email canvas.','Switch the banner between Gradient and Image modes in the sidebar.','Click any sticker in the gallery to add it to the banner — drag and resize it freely.','Upload your own sticker images via the custom upload zone.','Click "Open in Email" to download a .eml file — double-click it to open the full HTML email in your mail app.'];
+let tipIndex=0;
+function showTip(i){document.getElementById('tipText').textContent=TIPS[i];document.getElementById('tipBar').style.width=((i+1)/TIPS.length*100)+'%';const b=document.getElementById('tipBox');b.classList.remove('hide');b.classList.add('show');}
+function tipNav(dir){tipIndex=Math.max(0,Math.min(TIPS.length-1,tipIndex+dir));if(tipIndex===TIPS.length-1&&dir===1)dismissTips();else showTip(tipIndex);}
+function dismissTips(){document.getElementById('tipBox').classList.replace('show','hide');localStorage.setItem('edrafter_tips3','1');}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  // Dynamic accent style
+  const s=document.createElement('style');s.id='dynamicAccentStyle';document.head.appendChild(s);
+
+  buildPalette('textColorPalette',TEXT_COLORS,'textColorCustom');
+  buildPalette('highlightPalette',HIGHLIGHT_COLORS,'highlightCustom');
+  buildStickerGallery();
+
+  // Image modal drop zone (upload tab)
+  const dz=document.getElementById('imgDropZone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('dragover');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('dragover'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('dragover');
+    const f=e.dataTransfer.files[0];
+    if(f&&f.type.startsWith('image/')){
+      const inp=document.getElementById('imgFileInput');
+      const dt=new DataTransfer();dt.items.add(f);inp.files=dt.files;
+      handleImageFile(inp);
+    }
+  });
+
+  // Banner drop zone
+  const bdz=document.getElementById('bannerDropZone');
+  bdz.addEventListener('dragover',e=>{e.preventDefault();bdz.classList.add('dragover');});
+  bdz.addEventListener('dragleave',()=>bdz.classList.remove('dragover'));
+  bdz.addEventListener('drop',e=>{e.preventDefault();bdz.classList.remove('dragover');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/')){const inp=document.getElementById('bannerFileInput');const dt=new DataTransfer();dt.items.add(f);inp.files=dt.files;handleBannerFile(inp);}});
+
+  // Sticker upload drop zone
+  const sdz=document.getElementById('stickerUploadZone');
+  sdz.addEventListener('dragover',e=>{e.preventDefault();sdz.style.background='#e3f2fd';});
+  sdz.addEventListener('dragleave',()=>sdz.style.background='');
+  sdz.addEventListener('drop',e=>{e.preventDefault();sdz.style.background='';const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/')){const inp=document.getElementById('stickerFileInput');const dt=new DataTransfer();dt.items.add(f);inp.files=dt.files;uploadStickerImage(inp);}});
+
+  // Drag image or .eml directly into the app window
+  document.body.addEventListener('dragover', e => {
+    const types = [...(e.dataTransfer.types||[])];
+    if(types.includes('Files')) e.preventDefault();
+  });
+  document.body.addEventListener('drop', e => {
+    const files = [...e.dataTransfer.files];
+    const eml = files.find(f=>f.name.endsWith('.eml')||f.type==='message/rfc822');
+    if(eml) { e.preventDefault(); const r=new FileReader(); r.onload=ev=>parseEml(ev.target.result); r.readAsText(eml,'utf-8'); return; }
+  });
+
+  // Keyboard shortcut: Ctrl/Cmd+O to import .eml
+  document.addEventListener('keydown', e => {
+    if((e.ctrlKey||e.metaKey) && e.key==='o' && !e.shiftKey) {
+      // Only intercept if not in a text field
+      if(document.activeElement.tagName==='INPUT'||document.activeElement.tagName==='TEXTAREA'||document.activeElement.isContentEditable) return;
+      e.preventDefault();
+      document.getElementById('emlImportInput').click();
+    }
+  });
+
+  document.addEventListener('selectionchange',updateToolbarState);
+
+  // Render initial banner bg
+  renderBannerBg();updateBannerOverlay();
+
+  // Wire up body image drop+paste
+  setupBodyImageDrop();
+
+  // Loading dismiss
+  setTimeout(()=>{
+    document.getElementById('loadingScreen').style.display='none';
+    document.getElementById('appContainer').style.display='flex';
+    requestAnimationFrame(()=>{
+      initFabricCanvas();resizeFabricCanvas();
+      if(!localStorage.getItem('edrafter_tips3')) setTimeout(()=>showTip(0),1100);
+    });
+  },700);
+
+  window.addEventListener('resize',resizeFabricCanvas);
+});
 </script>
-    
 </body>
 </html>
-
-
-
-

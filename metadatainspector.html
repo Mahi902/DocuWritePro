@@ -1,476 +1,1023 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Metadata Inspector</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <!-- Piexifjs for reading/writing JPEG EXIF data -->
-    <script src="https://unpkg.com/piexifjs@1.0.6/piexif.js"></script>
-
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .material-symbols-rounded { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 20px; }
-        .drag-active { border-color: #3b82f6; background-color: #eff6ff; }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        .metadata-row:hover .row-actions { opacity: 1; }
-        .row-actions { opacity: 0; transition: opacity 0.2s; }
-        /* Always show actions on mobile */
-        @media (max-width: 768px) { .row-actions { opacity: 1; } }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Metadata Inspector</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+(function(){
+  const m=document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));
+  if(m&&m.split('=')[1]==='dark') document.documentElement.classList.add('dark');
+})();
+</script>
+<style>
+*{scrollbar-width:none}*::-webkit-scrollbar{display:none}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;font-family:'Inter','Segoe UI',sans-serif;background:#f0f4f8}
+html.dark body{background:#111}
+#loadingScreen{display:flex;position:fixed;inset:0;background:#fff;z-index:10000;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+html.dark #loadingScreen{background:#1a1a1a}
+.spinner{width:52px;height:52px;border:4px solid #e3f2fd;border-top-color:#1976d2;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:16px;color:#888}
+html.dark .loading-text{color:#aaa}
+#app{display:none;flex-direction:column;height:100vh;overflow:hidden}
+.top-bar{display:flex;align-items:center;gap:8px;padding:0 16px;height:52px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.09);flex-shrink:0;overflow-x:auto;overflow-y:hidden;z-index:200}
+html.dark .top-bar{background:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.top-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:#1a1a2e;white-space:nowrap;flex-shrink:0}
+html.dark .top-title{color:#e0e0e0}
+.top-title .ms{font-size:22px;color:#1976d2}
+.spacer{flex:1;min-width:4px}
+.icon-btn{background:none;border:none;cursor:pointer;padding:7px;border-radius:8px;display:flex;align-items:center;color:#1976d2;transition:background .15s;flex-shrink:0}
+.icon-btn:hover{background:#e3f2fd}
+html.dark .icon-btn:hover{background:#1a2a3a}
+.icon-btn .ms{font-size:21px}
+.toolbar{display:flex;align-items:center;gap:2px;padding:4px 12px;height:44px;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.05);flex-shrink:0;overflow-x:auto;overflow-y:hidden}
+html.dark .toolbar{background:#1a1a1a}
+.tsep{width:1px;height:24px;background:#e0e0e0;margin:0 4px;flex-shrink:0}
+html.dark .tsep{background:#333}
+.tbtn{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:none;border-radius:6px;background:transparent;cursor:pointer;font-size:12px;font-weight:500;color:#333;font-family:inherit;flex-shrink:0;white-space:nowrap;transition:background .13s}
+.tbtn:hover{background:#e3f2fd}
+.tbtn:disabled{opacity:.4;pointer-events:none}
+.tbtn .ms{font-size:18px;color:#444}
+html.dark .tbtn{color:#bbb}
+html.dark .tbtn .ms{color:#bbb}
+html.dark .tbtn:hover{background:#1a2a3a}
+.tbtn.accent{color:#1976d2;font-weight:700}
+.tbtn.accent .ms{color:#1976d2}
+.main-content{display:flex;flex:1;min-height:0;overflow:hidden}
+.sidebar{width:255px;min-width:255px;background:#fff;padding:14px;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,.06);flex-shrink:0;display:flex;flex-direction:column;transition:width .3s,min-width .3s,padding .3s}
+.sidebar.collapsed{width:0;min-width:0;padding:0;overflow:hidden}
+html.dark .sidebar{background:#1a1a1a}
+.sb-section{margin-bottom:16px}
+.sb-ttl{font-size:10.5px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+html.dark .sb-ttl{color:#666}
+.sb-lbl{display:block;font-size:12px;color:#777;margin-bottom:3px}
+.sb-input{width:100%;padding:7px 9px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fafafa;font-family:inherit;outline:none;color:#333;transition:border-color .2s,box-shadow .2s}
+.sb-input:focus{border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,.1);background:#fff}
+html.dark .sb-input{background:#252525;color:#ddd;border-color:#444}
+.sb-tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.sb-tog-lbl{font-size:13px;color:#444}
+html.dark .sb-tog-lbl{color:#bbb}
+.tog{position:relative;width:40px;height:22px;flex-shrink:0}
+.tog input{opacity:0;width:0;height:0}
+.tog-sl{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:11px;transition:.3s}
+.tog-sl::before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.tog-sl{background:#1976d2}
+input:checked+.tog-sl::before{transform:translateX(18px)}
+html.dark .tog-sl{background:#444}
+.aw-hdr{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:#f0f7ff;border:1px solid #dceeff;border-radius:8px;cursor:pointer;user-select:none;margin-bottom:4px}
+.aw-hdr:hover{background:#e3f2fd}
+html.dark .aw-hdr{background:#1a2a3a;border-color:#1e3a5a}
+.aw-lbl{font-size:12px;font-weight:600;color:#1565c0}
+html.dark .aw-lbl{color:#90caf9}
+.aw-chev{font-size:16px;color:#1976d2;transition:transform .25s}
+.aw-chev.open{transform:rotate(180deg)}
+html.dark .aw-chev{color:#90caf9}
+.aw-drop{overflow:hidden;max-height:0;opacity:0;pointer-events:none;transition:max-height .3s,opacity .3s}
+.aw-drop.open{max-height:600px;opacity:1;pointer-events:auto}
+.aw-inner{padding:6px 2px 2px}
+.aw-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#555;padding:4px 2px;border-bottom:1px solid #f5f5f5}
+html.dark .aw-row{color:#aaa;border-color:#222}
+.collapse-btn{width:100%;padding:8px;background:#e3f2fd;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:#1976d2;font-weight:600;margin-top:6px;font-family:inherit}
+.collapse-btn:hover{background:#bbdefb}
+html.dark .collapse-btn{background:#1a2a4a;color:#90caf9}
+.expand-btn{position:fixed;left:10px;top:50%;transform:translateY(-50%);background:#fff;border:none;border-radius:8px;padding:10px 5px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.15);z-index:50;display:none}
+html.dark .expand-btn{background:#1a1a1a}
+.content-area{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;align-items:center;background:#f0f4f8;padding:16px;gap:12px;overflow:hidden}
+html.dark .content-area{background:#111}
+.drop-wrap{width:100%;max-width:860px;flex-shrink:0}
+.drop-zone{border:2px dashed #1976d2;border-radius:16px;padding:48px 24px;text-align:center;cursor:pointer;background:#fff;transition:background .15s,border-color .15s}
+.drop-zone:hover,.drop-zone.drag{background:#e3f2fd;border-color:#1565c0}
+html.dark .drop-zone{background:#1a1a1a;border-color:#555}
+html.dark .drop-zone.drag{background:#1a2a3a;border-color:#1976d2}
+.drop-title{font-size:17px;font-weight:600;color:#1a1a2e;margin:10px 0 5px}
+html.dark .drop-title{color:#ddd}
+.drop-sub{font-size:13px;color:#777;margin-bottom:14px}
+html.dark .drop-sub{color:#888}
+.drop-chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.chip{padding:4px 10px;background:#e3f2fd;color:#1565c0;border-radius:20px;font-size:11px;font-weight:600}
+html.dark .chip{background:#0d2a4a;color:#90caf9}
+.meta-panel{width:100%;max-width:860px;background:#fff;border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,.07);display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden}
+html.dark .meta-panel{background:#1a1a1a;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.meta-panel.show{display:flex}
+.panel-hdr{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #f0f0f0;flex-shrink:0;overflow-x:auto;overflow-y:hidden}
+html.dark .panel-hdr{border-color:#2a2a2a}
+.file-icon .ms{font-size:34px;color:#1976d2;flex-shrink:0}
+.file-info{flex:1;min-width:120px}
+.file-name{font-size:15px;font-weight:600;color:#1a1a2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.dark .file-name{color:#ddd}
+.file-sub{font-size:12px;color:#888;margin-top:2px;white-space:nowrap}
+.panel-actions{display:flex;gap:7px;flex-shrink:0;margin-left:auto}
+.abtn{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;white-space:nowrap;transition:background .15s}
+.abtn.primary{background:#1976d2;color:#fff}
+.abtn.primary:hover{background:#1565c0}
+.abtn.sec{background:#546e7a;color:#fff}
+.abtn.sec:hover{background:#37474f}
+.abtn .ms{font-size:15px}
+.tabs-bar{display:flex;border-bottom:1px solid #f0f0f0;padding:0 18px;flex-shrink:0;overflow-x:auto}
+html.dark .tabs-bar{border-color:#2a2a2a}
+.tab{display:flex;align-items:center;gap:5px;padding:10px 13px;font-size:13px;font-weight:500;color:#777;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;transition:color .15s,border-color .15s}
+.tab:hover{color:#1976d2}
+.tab.active{color:#1976d2;border-bottom-color:#1976d2}
+html.dark .tab{color:#888}
+html.dark .tab:hover,.html.dark .tab.active{color:#90caf9}
+html.dark .tab.active{border-bottom-color:#1976d2}
+.tab .ms{font-size:15px}
+.tab-panels{flex:1;min-height:0;position:relative;overflow:hidden}
+.tab-pane{display:none;position:absolute;inset:0;overflow-y:auto;padding:16px 18px;flex-direction:column}
+.tab-pane.active{display:flex}
+.mtbl{width:100%;border-collapse:collapse}
+.mtbl th{text-align:left;font-size:10.5px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;padding:0 10px 7px;border-bottom:1px solid #f0f0f0}
+html.dark .mtbl th{color:#666;border-color:#2a2a2a}
+.mtbl td{padding:9px 10px;font-size:13px;border-bottom:1px solid #f8f8f8;vertical-align:middle}
+html.dark .mtbl td{border-color:#1e1e1e}
+.mtbl tr:hover td{background:#f5f9ff}
+html.dark .mtbl tr:hover td{background:#1a2535}
+.mkey{color:#555;font-weight:500;width:190px;min-width:140px}
+html.dark .mkey{color:#999}
+.mval{color:#222;word-break:break-all}
+html.dark .mval{color:#ddd}
+.mval-input{background:none;border:1px solid transparent;font-size:13px;color:#222;font-family:inherit;width:100%;padding:3px 6px;border-radius:4px;transition:background .15s,border-color .15s;outline:none}
+.mval-input:hover{background:#f4f4f4;border-color:#e0e0e0}
+.mval-input:focus{background:#e8f4fd;border-color:#1976d2}
+html.dark .mval-input{color:#ddd}
+html.dark .mval-input:hover{background:#252525;border-color:#333}
+html.dark .mval-input:focus{background:#1a2535;border-color:#1976d2}
+.row-acts{display:flex;gap:2px;opacity:0;transition:opacity .13s}
+.mtbl tr:hover .row-acts{opacity:1}
+.row-btn{background:none;border:none;cursor:pointer;padding:4px;border-radius:5px;display:flex;align-items:center;color:#aaa;transition:background .13s,color .13s}
+.row-btn:hover{background:#e3f2fd;color:#1976d2}
+.row-btn.del:hover{background:#fce4ec;color:#d32f2f}
+.row-btn .ms{font-size:15px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;padding:2px 0 12px;flex-shrink:0}
+.stat-card{background:#f5f9ff;border:1px solid #e3f2fd;border-radius:12px;padding:13px;text-align:center}
+html.dark .stat-card{background:#0d1a2e;border-color:#0d2a4a}
+.stat-val{font-size:22px;font-weight:700;color:#1976d2}
+html.dark .stat-val{color:#90caf9}
+.stat-lbl{font-size:11px;color:#777;margin-top:3px;text-transform:uppercase;letter-spacing:.4px}
+html.dark .stat-lbl{color:#888}
+.sec-hdr{font-size:13px;font-weight:600;color:#1565c0;padding:4px 0 8px;border-bottom:1px solid #e3f2fd;margin-bottom:10px;display:flex;align-items:center;gap:5px;flex-shrink:0}
+html.dark .sec-hdr{color:#90caf9;border-color:#1a2a3a}
+.sec-hdr .ms{font-size:16px}
+.cat-badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:600;background:#f0f0f0;color:#666}
+.cat-basic{background:#e3f2fd;color:#1565c0}
+.cat-image{background:#f3e5f5;color:#7b1fa2}
+.cat-video{background:#fce4ec;color:#c2185b}
+.cat-audio{background:#e8f5e9;color:#2e7d32}
+.cat-document{background:#fff3e0;color:#e65100}
+.cat-custom{background:#e0f2f1;color:#00695c}
+html.dark .cat-badge{background:#2a2a2a;color:#888}
+html.dark .cat-basic{background:#0d2040;color:#90caf9}
+html.dark .cat-image{background:#2a1040;color:#ce93d8}
+html.dark .cat-audio{background:#0a1f0f;color:#81c784}
+html.dark .cat-document{background:#2a1800;color:#ffb74d}
+html.dark .cat-custom{background:#001a18;color:#80cbc4}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;flex-shrink:0}
+.fchip{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid #e0e0e0;background:#fafafa;color:#555;cursor:pointer;transition:all .13s}
+.fchip:hover{border-color:#1976d2;color:#1976d2;background:#e3f2fd}
+.fchip.on{background:#1976d2;color:#fff;border-color:#1976d2}
+html.dark .fchip{background:#222;color:#888;border-color:#333}
+html.dark .fchip.on{background:#1976d2;color:#fff}
+.add-row{display:flex;gap:8px;align-items:flex-end;padding-top:12px;margin-top:4px;border-top:1px solid #f0f0f0;flex-shrink:0}
+html.dark .add-row{border-color:#222}
+.add-row-f{flex:1;display:flex;flex-direction:column;gap:3px}
+.add-row-lbl{font-size:11px;color:#888}
+.finput{padding:7px 9px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fafafa;color:#333;transition:border-color .15s,box-shadow .15s;width:100%}
+.finput:focus{border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,.1);background:#fff}
+html.dark .finput{background:#1e1e1e;color:#ddd;border-color:#333}
+.exif-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:10px;padding:2px 0}
+.exif-card{background:#f5f9ff;border:1px solid #e3f2fd;border-radius:10px;padding:11px 13px}
+html.dark .exif-card{background:#0d1a2e;border-color:#0d2a4a}
+.exif-key{font-size:11px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+html.dark .exif-key{color:#666}
+.exif-val{font-size:13px;color:#333;word-break:break-all}
+html.dark .exif-val{color:#ccc}
+.hash-row{display:flex;align-items:center;border:1px solid #f0f0f0;border-radius:8px;margin-bottom:7px;overflow:hidden}
+html.dark .hash-row{border-color:#2a2a2a}
+.hash-algo{padding:10px 13px;font-size:12px;font-weight:700;color:#1976d2;min-width:90px;background:#f5f9ff;border-right:1px solid #f0f0f0}
+html.dark .hash-algo{background:#0d1a2e;border-color:#2a2a2a}
+.hash-val{flex:1;padding:10px 12px;font-family:'Courier New',monospace;font-size:12px;color:#333;word-break:break-all}
+html.dark .hash-val{color:#bbb}
+.hash-copy{padding:10px 12px;background:none;border:none;cursor:pointer;color:#1976d2;display:flex;align-items:center;transition:background .13s}
+.hash-copy:hover{background:#e3f2fd}
+.hash-copy .ms{font-size:16px}
+.valid-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+.v-ok{background:#e8f5e9;color:#2e7d32}
+.v-warn{background:#fff3e0;color:#e65100}
+.v-err{background:#fce4ec;color:#c62828}
+html.dark .v-ok{background:#0d2a1a;color:#81c784}
+html.dark .v-warn{background:#2e1a00;color:#ffb74d}
+html.dark .v-err{background:#2e0a0a;color:#ef9a9a}
+.raw-pre{background:#1e1e2e;color:#cdd6f4;border-radius:10px;padding:14px;font-family:'Courier New',monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all;flex:1}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:8000;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.mbox{background:#fff;border-radius:16px;padding:24px;width:90%;max-width:480px;max-height:88vh;overflow-y:auto;box-shadow:0 16px 48px rgba(0,0,0,.25)}
+html.dark .mbox{background:#1e1e1e;color:#ddd}
+.mhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.mtitle{font-size:18px;font-weight:600;color:#222}
+html.dark .mtitle{color:#e0e0e0}
+.mclose{background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center}
+.mclose:hover{background:#f5f5f5}
+html.dark .mclose:hover{background:#333}
+.mclose .ms{font-size:20px;color:#777}
+.mfooter{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.mbtn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:background .13s}
+.mbtn.ok{background:#1976d2;color:#fff}
+.mbtn.ok:hover{background:#1565c0}
+.mbtn.cancel{background:#e0e0e0;color:#333}
+.mbtn.cancel:hover{background:#d0d0d0}
+html.dark .mbtn.cancel{background:#333;color:#bbb}
+.mbtn.danger{background:#d32f2f;color:#fff}
+.mbtn.danger:hover{background:#b71c1c}
+.frow{margin-bottom:12px}
+.frow label{display:block;font-size:12px;color:#777;margin-bottom:3px}
+html.dark .frow label{color:#aaa}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(60px);padding:10px 20px;border-radius:8px;background:#1976d2;color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:10002;opacity:0;transition:transform .3s,opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.err{background:#d32f2f}
+.toast .ms{font-size:15px}
+#tipBox{position:fixed;bottom:78px;right:16px;width:280px;background:#1976d2;color:#fff;border-radius:14px;padding:14px;box-shadow:0 8px 24px rgba(25,118,210,.3);z-index:9990;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s;pointer-events:none;font-family:inherit}
+#tipBox.show{opacity:1;transform:translateY(0);pointer-events:auto}
+#tipBox.hide{opacity:0;transform:translateY(8px);pointer-events:none}
+html.dark #tipBox{background:#0d47a1}
+.tip-prog{height:3px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden;margin-bottom:10px}
+.tip-bar{height:100%;background:#fff;transition:width .3s}
+.tip-txt{font-size:13px;line-height:1.5;min-height:50px}
+.tip-acts{display:flex;gap:6px;margin-top:10px}
+.tip-btn{flex:1;border:none;padding:6px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit}
+.tip-prev{background:rgba(255,255,255,.18);color:#fff}
+.tip-next{background:#fff;color:#1976d2}
+.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.cmp-hdr{font-size:13px;font-weight:600;color:#1976d2;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #1976d2}
+.d-match{}
+.d-add{background:#e8f5e9}
+.d-rem{background:#fce4ec}
+html.dark .d-add{background:#0d2a1a}
+html.dark .d-rem{background:#2a0a0a}
+.hist-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid transparent;cursor:pointer;transition:background .13s}
+.hist-item:hover{background:#e3f2fd;border-color:#bbdefb}
+.hist-name{font-size:13px;font-weight:500;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.dark .hist-name{color:#ddd}
+.hist-sub{font-size:11px;color:#888;margin-top:2px}
+.empty{text-align:center;padding:36px 20px;color:#aaa;display:flex;flex-direction:column;align-items:center;gap:8px}
+.empty .ms{font-size:42px;color:#ccc}
+html.dark .empty .ms{color:#444}
+html.dark .empty{color:#666}
+</style>
 </head>
-<body class="text-slate-800 h-screen flex flex-col overflow-hidden">
+<body>
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading Metadata Inspector...</div>
+</div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-4 py-2 rounded-full shadow-lg text-sm font-medium opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
-        <span class="material-symbols-rounded text-green-400">check_circle</span>
-        <span id="toast-msg">Action Successful</span>
+<div id="app">
+  <div class="top-bar">
+    <div class="top-title"><span class="material-symbols-outlined ms">manage_search</span>Metadata Inspector</div>
+    <div class="spacer"></div>
+    <button class="icon-btn" onclick="openCompare()" title="Compare files"><span class="material-symbols-outlined ms">compare</span></button>
+    <button class="icon-btn" onclick="openHistory()" title="Recent files"><span class="material-symbols-outlined ms">history</span></button>
+    <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme"><span class="material-symbols-outlined ms" id="themeIcon">dark_mode</span></button>
+  </div>
+  <div class="toolbar">
+    <button class="tbtn" onclick="triggerOpen()"><span class="material-symbols-outlined ms">upload_file</span>Open File</button>
+    <div class="tsep"></div>
+    <button class="tbtn" id="btnAdd" onclick="openAddModal()" disabled><span class="material-symbols-outlined ms">add_circle</span>Add Field</button>
+    <button class="tbtn" id="btnClear" onclick="confirmClear()" disabled><span class="material-symbols-outlined ms">delete_sweep</span>Clear Custom</button>
+    <div class="tsep"></div>
+    <button class="tbtn" id="btnJson" onclick="exportJSON()" disabled><span class="material-symbols-outlined ms">data_object</span>JSON</button>
+    <button class="tbtn" id="btnCsv" onclick="exportCSV()" disabled><span class="material-symbols-outlined ms">table_chart</span>CSV</button>
+    <button class="tbtn" id="btnTxt" onclick="exportTXT()" disabled><span class="material-symbols-outlined ms">description</span>TXT</button>
+    <div class="tsep"></div>
+    <button class="tbtn" id="btnCopyAll" onclick="copyAll()" disabled><span class="material-symbols-outlined ms">content_copy</span>Copy All</button>
+    <button class="tbtn" id="btnReload" onclick="reloadFile()" disabled><span class="material-symbols-outlined ms">refresh</span>Reload</button>
+    <div class="tsep"></div>
+    <button class="tbtn accent" id="btnDownload" onclick="downloadFile()" disabled><span class="material-symbols-outlined ms">download</span>Download File</button>
+  </div>
+
+  <div class="main-content">
+    <div class="sidebar" id="sidebar">
+      <div class="sb-section">
+        <div class="sb-ttl">Search &amp; Filter</div>
+        <span class="sb-lbl">Search fields</span>
+        <input class="sb-input" id="sbSearch" placeholder="Key or value..." oninput="applyFilters()">
+      </div>
+      <div class="sb-section">
+        <div class="aw-hdr" onclick="toggleAcc(this)"><span class="aw-lbl">Categories</span><span class="material-symbols-outlined aw-chev open">expand_more</span></div>
+        <div class="aw-drop open"><div class="aw-inner" id="catList"></div></div>
+      </div>
+      <div class="sb-section">
+        <div class="aw-hdr" onclick="toggleAcc(this)"><span class="aw-lbl">Display Options</span><span class="material-symbols-outlined aw-chev">expand_more</span></div>
+        <div class="aw-drop"><div class="aw-inner">
+          <div class="sb-tog-row"><span class="sb-tog-lbl">Show empty fields</span><label class="tog"><input type="checkbox" id="togEmpty" onchange="applyFilters()" checked><span class="tog-sl"></span></label></div>
+          <div class="sb-tog-row"><span class="sb-tog-lbl">Compact rows</span><label class="tog"><input type="checkbox" id="togCompact" onchange="applyCompact()"><span class="tog-sl"></span></label></div>
+          <div class="sb-tog-row"><span class="sb-tog-lbl">Show categories</span><label class="tog"><input type="checkbox" id="togCats" onchange="applyFilters()" checked><span class="tog-sl"></span></label></div>
+        </div></div>
+      </div>
+      <div class="sb-section">
+        <div class="aw-hdr" onclick="toggleAcc(this)"><span class="aw-lbl">File Stats</span><span class="material-symbols-outlined aw-chev">expand_more</span></div>
+        <div class="aw-drop"><div class="aw-inner" id="fileStats"><div style="font-size:12px;color:#999">No file loaded.</div></div></div>
+      </div>
+      <div style="flex:1"></div>
+      <button class="collapse-btn" onclick="toggleSidebar()"><span class="material-symbols-outlined ms">chevron_left</span>Hide Panel</button>
     </div>
+    <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel"><span class="material-symbols-outlined" style="color:#1976d2;font-size:20px">chevron_right</span></button>
 
-    <!-- Header -->
-    <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shadow-sm z-10 shrink-0">
-        <div class="flex items-center gap-2">
-            <span class="material-symbols-rounded text-blue-600 !text-3xl"></span>
-            <h1 class="text-xl font-semibold tracking-tight text-slate-800">Metadata <span class="text-blue-600">Inspector</span></h1>
+    <div class="content-area">
+      <div class="drop-wrap" id="dropWrap">
+        <div class="drop-zone" id="dropZone" onclick="triggerOpen()" ondrop="onDrop(event)" ondragover="onDragOver(event)" ondragleave="onDragLeave()">
+          <input type="file" id="fileInput" style="display:none" onchange="onFileInput(event)">
+          <span class="material-symbols-outlined ms" style="font-size:52px;color:#1976d2;opacity:.7">manage_search</span>
+          <div class="drop-title">Drop any file here to inspect its metadata</div>
+          <div class="drop-sub">Or click to browse — images, audio, video, PDF, text, and any file type</div>
+          <div class="drop-chips"><span class="chip">Images</span><span class="chip">Audio</span><span class="chip">Video</span><span class="chip">PDF</span><span class="chip">Office</span><span class="chip">Any file</span></div>
         </div>
-        <div class="flex gap-3">
-             <button onclick="document.getElementById('fileInput').click()" class="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-medium transition">
-                <span class="material-symbols-rounded">upload_file</span>
-                Open File
-            </button>
+      </div>
+
+      <div class="meta-panel" id="metaPanel">
+        <div class="panel-hdr">
+          <div class="file-icon" id="fileIcon"><span class="material-symbols-outlined ms" style="font-size:34px;color:#1976d2">insert_drive_file</span></div>
+          <div class="file-info"><div class="file-name" id="fileName">—</div><div class="file-sub" id="fileSub">—</div></div>
+          <div class="panel-actions">
+            <button class="abtn primary" onclick="downloadFile()"><span class="material-symbols-outlined ms">download</span>Download File</button>
+            <button class="abtn sec" onclick="triggerOpen()"><span class="material-symbols-outlined ms">upload_file</span>Open New</button>
+          </div>
         </div>
-    </header>
-
-    <!-- Main Layout -->
-    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-
-        <!-- Empty State / Drop Zone (Overlay) -->
-        <div id="dropZone" class="absolute inset-0 z-20 bg-fuchsia-50/50 backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-300" style="display: flex;">
-            <div class="bg-white p-12 rounded-2xl shadow-xl border-2 border-dashed border-slate-300 text-center max-w-md w-full mx-4 hover:border-blue-400 transition-colors cursor-pointer" onclick="document.getElementById('fileInput').click()">
-                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <span class="material-symbols-rounded !text-4xl">cloud_upload</span>
-                </div>
-                <h2 class="text-xl font-semibold mb-2">Upload a file to inspect</h2>
-                <p class="text-slate-500 text-sm mb-6">Drag and drop or click to browse. <br> Full editing support for JPEGs.</p>
-                <button class="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
-                    Select File
-                </button>
-                <input type="file" id="fileInput" class="hidden" accept="*/*">
-            </div>
+        <div class="tabs-bar">
+          <div class="tab active" data-tab="overview" onclick="switchTab(this)"><span class="material-symbols-outlined ms">info</span>Overview</div>
+          <div class="tab" data-tab="fields" onclick="switchTab(this)"><span class="material-symbols-outlined ms">table_rows</span>All Fields</div>
+          <div class="tab" data-tab="image" onclick="switchTab(this)"><span class="material-symbols-outlined ms">image</span>Image</div>
+          <div class="tab" data-tab="hashes" onclick="switchTab(this)"><span class="material-symbols-outlined ms">fingerprint</span>Hashes</div>
+          <div class="tab" data-tab="raw" onclick="switchTab(this)"><span class="material-symbols-outlined ms">code</span>Raw</div>
         </div>
-
-        <!-- Left Panel: Preview -->
-        <div class="w-full md:w-1/3 lg:w-1/4 bg-white border-r border-slate-200 p-6 flex flex-col overflow-y-auto shrink-0 z-10">
-            <div class="mb-6">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">File Preview</h3>
-                <div class="aspect-square bg-slate-100 rounded-xl border border-slate-200 flex items-center justify-center overflow-hidden relative group">
-                    <img id="previewImage" class="w-full h-full object-contain hidden" alt="Preview">
-                    <div id="fileIcon" class="hidden flex-col items-center text-slate-400">
-                        <span class="material-symbols-rounded !text-6xl mb-2">description</span>
-                        <span class="text-xs uppercase font-bold" id="fileExt">FILE</span>
-                    </div>
-                </div>
+        <div class="tab-panels">
+          <div class="tab-pane active" id="pane-overview">
+            <div class="stat-grid" id="statGrid"></div>
+            <div class="sec-hdr"><span class="material-symbols-outlined ms">summarize</span>Key Metadata</div>
+            <table class="mtbl"><thead><tr><th>Field</th><th>Value</th><th>Category</th><th style="width:70px"></th></tr></thead><tbody id="overviewBody"></tbody></table>
+          </div>
+          <div class="tab-pane" id="pane-fields">
+            <div class="chips" id="filterChips"><span class="fchip on" data-cat="all" onclick="chipClick(this)">All</span></div>
+            <table class="mtbl"><thead><tr><th>Field</th><th>Value</th><th>Category</th><th style="width:70px"></th></tr></thead><tbody id="fieldsBody"></tbody></table>
+            <div class="add-row">
+              <div class="add-row-f"><span class="add-row-lbl">Field name</span><input class="finput" id="newKey" placeholder="e.g. Author, Copyright..."></div>
+              <div class="add-row-f"><span class="add-row-lbl">Value</span><input class="finput" id="newVal" placeholder="Value..."></div>
+              <button class="abtn primary" onclick="addFieldInline()"><span class="material-symbols-outlined ms">add</span>Add</button>
             </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs text-slate-500 font-medium">Filename</label>
-                    <p id="metaName" class="text-sm font-medium text-slate-800 break-all">No file selected</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-xs text-slate-500 font-medium">Size</label>
-                        <p id="metaSize" class="text-sm font-medium text-slate-800">-</p>
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-500 font-medium">Type</label>
-                        <p id="metaType" class="text-sm font-medium text-slate-800">-</p>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-xs text-slate-500 font-medium">Last Modified</label>
-                    <p id="metaDate" class="text-sm font-medium text-slate-800">-</p>
-                </div>
+          </div>
+          <div class="tab-pane" id="pane-image">
+            <div id="imgPreviewWrap" style="display:none;margin-bottom:14px"><img id="imgPreview" style="max-width:100%;max-height:240px;border-radius:10px;object-fit:contain;background:#f0f0f0" src="" alt="Preview"></div>
+            <div class="sec-hdr"><span class="material-symbols-outlined ms">photo_camera</span>Image / EXIF Data</div>
+            <div class="exif-grid" id="exifGrid"><div class="empty"><span class="material-symbols-outlined ms">image_not_supported</span>No image metadata. Load an image file to see data.</div></div>
+          </div>
+          <div class="tab-pane" id="pane-hashes">
+            <div class="sec-hdr"><span class="material-symbols-outlined ms">fingerprint</span>File Integrity Hashes</div>
+            <div style="font-size:12px;color:#888;margin-bottom:12px;flex-shrink:0">Cryptographic checksums for file integrity verification.</div>
+            <div id="hashGrid"><div style="color:#999;font-size:13px;padding:10px 0">Computing hashes...</div></div>
+            <div style="margin-top:18px">
+              <div class="sec-hdr"><span class="material-symbols-outlined ms">verified</span>Validation</div>
+              <div id="validArea" style="font-size:13px;color:#888;padding:6px 0">Load a file to see validation info.</div>
             </div>
-
-            <div class="mt-auto pt-6 border-t border-slate-100 space-y-3">
-                 <button id="downloadBtn" class="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white py-2.5 rounded-lg text-sm font-medium transition shadow-lg shadow-slate-900/10 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <span class="material-symbols-rounded">download</span>
-                    Download File
-                </button>
-                <button id="scrubBtn" class="w-full flex items-center justify-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 py-2.5 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                    <span class="material-symbols-rounded">cleaning_services</span>
-                    Erase All Metadata
-                </button>
-            </div>
+          </div>
+          <div class="tab-pane" id="pane-raw">
+            <div class="sec-hdr"><span class="material-symbols-outlined ms">data_object</span>Raw Metadata (JSON)</div>
+            <button class="abtn sec" style="margin-bottom:12px;align-self:flex-start;flex-shrink:0" onclick="copyRaw()"><span class="material-symbols-outlined ms">content_copy</span>Copy</button>
+            <pre class="raw-pre" id="rawPre">{}</pre>
+          </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        <!-- Right Panel: Metadata Editor -->
-        <div class="flex-1 bg-slate-50 flex flex-col overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200 bg-white flex items-center justify-between shrink-0">
-                <div class="flex items-center gap-3">
-                    <h2 class="font-semibold text-slate-800">Metadata Properties</h2>
-                    <span id="tagCount" class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded-full font-medium">0 Tags</span>
-                </div>
-                <div class="text-xs text-slate-400 flex items-center gap-1">
-                    <span class="material-symbols-rounded !text-base">info</span>
-                    <span>Editing supported for JPEG/EXIF</span>
-                </div>
-            </div>
+<div id="toastWrap"></div>
 
-            <div id="metadataList" class="flex-1 overflow-y-auto p-6 space-y-2">
-                <!-- Metadata items injected here -->
-                <div class="flex flex-col items-center justify-center h-full text-slate-400">
-                    <span class="material-symbols-rounded !text-5xl mb-3 opacity-20">dataset</span>
-                    <p>No metadata available to display</p>
-                </div>
-            </div>
-        </div>
+<div id="tipBox">
+  <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:14%"></div></div>
+  <div class="tip-txt" id="tipTxt"></div>
+  <div class="tip-acts"><button class="tip-btn tip-prev" onclick="tipNav(-1)">Back</button><button class="tip-btn tip-next" onclick="tipNav(1)">Next</button></div>
+</div>
 
-    </main>
+<div class="modal" id="addModal">
+  <div class="mbox" style="max-width:400px">
+    <div class="mhdr"><span class="mtitle">Add Metadata Field</span><button class="mclose" onclick="closeModal('addModal')"><span class="material-symbols-outlined ms">close</span></button></div>
+    <div class="frow"><label>Category</label><select class="finput" id="addCat"><option value="custom">Custom</option><option value="basic">Basic</option><option value="document">Document</option><option value="image">Image</option><option value="audio">Audio</option><option value="video">Video</option></select></div>
+    <div class="frow"><label>Field Name</label><input class="finput" id="addKey" placeholder="e.g. Author, Copyright..."></div>
+    <div class="frow"><label>Value</label><input class="finput" id="addVal" placeholder="Value..."></div>
+    <div class="mfooter"><button class="mbtn cancel" onclick="closeModal('addModal')">Cancel</button><button class="mbtn ok" onclick="addFieldModal()">Add Field</button></div>
+  </div>
+</div>
 
-    <script>
-        // --- State ---
-        let currentFile = null;
-        let originalDataUrl = null;
-        let modifiedDataUrl = null;
-        let exifObj = null; // Stores the parsed piexif object
-        let isJpeg = false;
+<div class="modal" id="clearModal">
+  <div class="mbox" style="max-width:380px">
+    <div class="mhdr"><span class="mtitle">Clear Custom Fields</span><button class="mclose" onclick="closeModal('clearModal')"><span class="material-symbols-outlined ms">close</span></button></div>
+    <p style="font-size:14px;color:#555">Remove all custom fields? This cannot be undone.</p>
+    <div class="mfooter"><button class="mbtn cancel" onclick="closeModal('clearModal')">Cancel</button><button class="mbtn danger" onclick="clearCustom()">Clear All</button></div>
+  </div>
+</div>
 
-        // --- DOM Elements ---
-        const dropZone = document.getElementById('dropZone');
-        const fileInput = document.getElementById('fileInput');
-        const metadataList = document.getElementById('metadataList');
-        const previewImage = document.getElementById('previewImage');
-        const fileIcon = document.getElementById('fileIcon');
-        const fileExt = document.getElementById('fileExt');
-        
-        // Buttons
-        const downloadBtn = document.getElementById('downloadBtn');
-        const scrubBtn = document.getElementById('scrubBtn');
+<div class="modal" id="histModal">
+  <div class="mbox" style="max-width:480px">
+    <div class="mhdr"><span class="mtitle">Recent Files</span><button class="mclose" onclick="closeModal('histModal')"><span class="material-symbols-outlined ms">close</span></button></div>
+    <div id="histList"></div>
+    <div class="mfooter"><button class="mbtn cancel" onclick="clearHistory()">Clear History</button><button class="mbtn ok" onclick="closeModal('histModal')">Close</button></div>
+  </div>
+</div>
 
-        // --- Event Listeners ---
-        
-        // Drag & Drop
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            document.body.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        document.body.addEventListener('dragenter', () => dropZone.classList.add('bg-blue-50/90'));
-        document.body.addEventListener('dragleave', (e) => {
-            if (e.relatedTarget === null) dropZone.classList.remove('bg-blue-50/90');
-        });
-
-        document.body.addEventListener('drop', handleDrop, false);
-        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
-        
-        function handleDrop(e) {
-            dropZone.classList.remove('bg-blue-50/90');
-            const dt = e.dataTransfer;
-            const file = dt.files[0];
-            handleFile(file);
-        }
-
-        downloadBtn.addEventListener('click', downloadFile);
-        scrubBtn.addEventListener('click', eraseAllMetadata);
-
-        // --- Core Logic ---
-
-        function handleFile(file) {
-            if (!file) return;
-
-            currentFile = file;
-            
-            // UI Reset
-            dropZone.style.display = 'none';
-            metadataList.innerHTML = '';
-            previewImage.classList.add('hidden');
-            fileIcon.classList.add('hidden');
-            fileIcon.classList.remove('flex');
-            downloadBtn.disabled = false;
-            
-            // Basic File Info
-            document.getElementById('metaName').textContent = file.name;
-            document.getElementById('metaSize').textContent = formatBytes(file.size);
-            document.getElementById('metaType').textContent = file.type || 'Unknown';
-            document.getElementById('metaDate').textContent = new Date(file.lastModified).toLocaleDateString();
-
-            // Check if JPEG
-            isJpeg = file.type === 'image/jpeg' || file.type === 'image/jpg';
-            
-            if (isJpeg) {
-                scrubBtn.disabled = false;
-            } else {
-                scrubBtn.disabled = true; // Can't easily scrub arbitrary file types in browser JS
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                originalDataUrl = e.target.result;
-                modifiedDataUrl = e.target.result;
-
-                // Set Preview
-                if (file.type.startsWith('image/')) {
-                    previewImage.src = originalDataUrl;
-                    previewImage.classList.remove('hidden');
-                } else {
-                    fileIcon.classList.remove('hidden');
-                    fileIcon.classList.add('flex');
-                    fileExt.textContent = file.name.split('.').pop() || 'FILE';
-                }
-
-                if (isJpeg) {
-                    try {
-                        exifObj = piexif.load(originalDataUrl);
-                        renderExifData(exifObj);
-                    } catch (err) {
-                        console.error("Exif parsing failed", err);
-                        renderGenericMessage("Could not parse EXIF data. File might be corrupted or not standard JPEG.");
-                    }
-                } else {
-                    renderGenericMessage("Deep metadata editing is only supported for JPEG files. Basic file properties are shown on the left.");
-                }
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Tag Mapping for Readable Names (Subset of common tags)
-        const TAG_MAP = {
-            "0th": {
-                271: "Make", 272: "Model", 274: "Orientation", 305: "Software", 306: "DateTime", 
-                315: "Artist", 33432: "Copyright", 270: "ImageDescription"
-            },
-            "Exif": {
-                36867: "DateTimeOriginal", 36868: "DateTimeDigitized", 33434: "ExposureTime", 
-                33437: "FNumber", 34850: "ExposureProgram", 34855: "ISOSpeedRatings",
-                37377: "ShutterSpeedValue", 37378: "ApertureValue", 37386: "FocalLength"
-            },
-            "GPS": {
-                // GPS logic is complex (rationals), we might mostly view it or delete it
-                2: "GPSLatitude", 4: "GPSLongitude", 6: "GPSAltitude"
-            }
-        };
-
-        function renderExifData(data) {
-            metadataList.innerHTML = '';
-            let count = 0;
-
-            const ifds = ["0th", "Exif", "GPS", "1st"];
-            
-            ifds.forEach(ifd => {
-                const tags = data[ifd];
-                if (!tags) return;
-
-                for (let tagId in tags) {
-                    const value = tags[tagId];
-                    if (value === null || value === undefined) continue;
-
-                    count++;
-                    const tagName = (TAG_MAP[ifd] && TAG_MAP[ifd][tagId]) ? TAG_MAP[ifd][tagId] : `Tag ${tagId}`;
-                    
-                    // Determine if editable (strings are safe, others risky in simple UI)
-                    const isEditable = typeof value === 'string';
-
-                    createRow(ifd, tagId, tagName, value, isEditable);
-                }
-            });
-
-            document.getElementById('tagCount').textContent = `${count} Tags`;
-
-            if (count === 0) {
-                renderGenericMessage("No EXIF metadata found in this image.");
-            }
-        }
-
-        function createRow(ifd, tagId, key, value, isEditable) {
-            const row = document.createElement('div');
-            row.className = "metadata-row bg-white border border-slate-200 rounded-lg p-3 flex items-center justify-between group hover:border-blue-400 transition-colors";
-            
-            // Format value for display (truncate long strings, handle arrays)
-            let displayValue = value;
-            if (Array.isArray(value)) displayValue = `[${value.length} values]`;
-            if (typeof value === 'string' && value.length > 50) displayValue = value.substring(0, 50) + '...';
-
-            row.innerHTML = `
-                <div class="flex-1 min-w-0 mr-4">
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-xs font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded uppercase">${ifd}</span>
-                        <h4 class="text-sm font-semibold text-slate-700 truncate" title="${key}">${key}</h4>
-                    </div>
-                    <p class="text-sm text-slate-600 mt-1 truncate font-mono" id="val-${ifd}-${tagId}" title="${value}">${displayValue}</p>
-                </div>
-                <div class="row-actions flex items-center gap-1">
-                    ${isEditable ? `
-                        <button onclick="startEdit('${ifd}', '${tagId}')" class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition" title="Edit">
-                            <span class="material-symbols-rounded text-lg">edit</span>
-                        </button>
-                    ` : ''}
-                    <button onclick="deleteTag('${ifd}', '${tagId}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition" title="Delete">
-                        <span class="material-symbols-rounded text-lg">delete</span>
-                    </button>
-                </div>
-            `;
-            metadataList.appendChild(row);
-        }
-
-        // --- Actions ---
-
-        function startEdit(ifd, tagId) {
-            const currentVal = exifObj[ifd][tagId];
-            const newVal = prompt(`Edit value for ${tagId} (${ifd})`, currentVal);
-            
-            if (newVal !== null && newVal !== currentVal) {
-                exifObj[ifd][tagId] = newVal;
-                refreshExif();
-                showToast("Value updated");
-            }
-        }
-
-        function deleteTag(ifd, tagId) {
-            delete exifObj[ifd][tagId];
-            refreshExif();
-            showToast("Tag deleted");
-        }
-
-        function eraseAllMetadata() {
-            if (!confirm("Are you sure you want to remove ALL metadata? This cannot be undone.")) return;
-            
-            // Piexif expects an object with keys but empty values to represent 'clean'
-            exifObj = { "0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": null };
-            refreshExif();
-            showToast("All metadata erased");
-        }
-
-        function refreshExif() {
-            // Re-dump to binary string
-            try {
-                const exifBytes = piexif.dump(exifObj);
-                // Insert into original image data
-                modifiedDataUrl = piexif.insert(exifBytes, originalDataUrl); // Use original to avoid degradation, just updating headers
-                
-                // Update Preview to show changes (unlikely visual, but good practice)
-                previewImage.src = modifiedDataUrl;
-                
-                // Re-render list
-                renderExifData(exifObj);
-            } catch (e) {
-                console.error(e);
-                showToast("Error updating EXIF structure");
-            }
-        }
-
-        function downloadFile() {
-            const link = document.createElement('a');
-            
-            if (isJpeg) {
-                link.href = modifiedDataUrl;
-                // Add _clean suffix
-                const nameParts = currentFile.name.split('.');
-                const ext = nameParts.pop();
-                link.download = `${nameParts.join('.')}_edited.${ext}`;
-            } else {
-                // For non-jpeg, just download original since we didn't edit
-                link.href = originalDataUrl;
-                link.download = currentFile.name;
-            }
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast("Download started");
-        }
-
-        // --- Helpers ---
-
-        function renderGenericMessage(msg) {
-            metadataList.innerHTML = `
-                <div class="flex flex-col items-center justify-center h-full text-slate-400 text-center px-6">
-                    <span class="material-symbols-rounded !text-5xl mb-3 opacity-20">info</span>
-                    <p>${msg}</p>
-                </div>
-            `;
-            document.getElementById('tagCount').textContent = "0 Tags";
-        }
-
-        function formatBytes(bytes, decimals = 2) {
-            if (!+bytes) return '0 Bytes';
-            const k = 1024;
-            const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = message;
-            toast.classList.remove('opacity-0', 'translate-y-4');
-            toast.classList.add('opacity-100', 'translate-y-0');
-            
-            setTimeout(() => {
-                toast.classList.remove('opacity-100', 'translate-y-0');
-                toast.classList.add('opacity-0', 'translate-y-4');
-            }, 3000);
-        }
-    </script>
-    <!-- Load Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+<div class="modal" id="cmpModal">
+  <div class="mbox" style="max-width:680px;width:95vw">
+    <div class="mhdr"><span class="mtitle">Compare Files</span><button class="mclose" onclick="closeModal('cmpModal')"><span class="material-symbols-outlined ms">close</span></button></div>
+    <p style="font-size:13px;color:#888;margin-bottom:12px">Load a second file to compare its metadata side-by-side.</p>
+    <input type="file" id="cmpInput" style="display:none" onchange="loadCmpFile(event)">
+    <button class="abtn primary" style="margin-bottom:14px" onclick="document.getElementById('cmpInput').click()"><span class="material-symbols-outlined ms">upload_file</span>Load File B</button>
+    <div id="cmpResult"></div>
+    <div class="mfooter"><button class="mbtn ok" onclick="closeModal('cmpModal')">Close</button></div>
+  </div>
+</div>
 
 <script>
-// --- Create Toggle Button ---
-const toggle = document.createElement("span");
-toggle.className = "material-symbols-outlined";
-toggle.style.position = "fixed";
-toggle.style.bottom = "15px";     // bottom
-toggle.style.right = "15px";      // right
-toggle.style.fontSize = "32px";
-toggle.style.cursor = "pointer";
-toggle.style.zIndex = "999999";
-toggle.style.userSelect = "none";
-document.body.appendChild(toggle);
+var curFile=null, curMeta={}, customFields={}, fileHistory=[], activeCat='all', activeTab='overview';
+try{ fileHistory=JSON.parse(localStorage.getItem('mi_history')||'[]'); }catch(e){}
 
-// --- Functions ---
-function enableDark() {
-    document.documentElement.style.filter = "invert(1) hue-rotate(180deg)";
-    localStorage.setItem("theme", "dark");
-    toggle.textContent = "light_mode"; // sun icon
+/* THEME */
+function toggleTheme(){
+  const dark=document.documentElement.classList.toggle('dark');
+  document.body.classList.toggle('dark',dark);
+  document.getElementById('themeIcon').textContent=dark?'light_mode':'dark_mode';
+  document.cookie='toolsuite_theme='+(dark?'dark':'light')+';path=/;max-age=31536000';
+}
+if(document.documentElement.classList.contains('dark')){
+  document.body.classList.add('dark');
+  const ic=document.getElementById('themeIcon'); if(ic) ic.textContent='light_mode';
 }
 
-function disableDark() {
-    document.documentElement.style.filter = "";
-    localStorage.setItem("theme", "light");
-    toggle.textContent = "dark_mode"; // moon icon
+/* TOAST */
+function toast(msg,err){
+  var w=document.getElementById('toastWrap'),t=document.createElement('div');
+  t.className='toast'+(err?' err':'');
+  t.innerHTML='<span class="material-symbols-outlined ms">'+(err?'error':'check_circle')+'</span>'+msg;
+  w.appendChild(t);
+  requestAnimationFrame(function(){requestAnimationFrame(function(){t.classList.add('show');});});
+  setTimeout(function(){t.classList.remove('show');setTimeout(function(){t.remove();},350);},2800);
 }
 
-// --- Load Saved Theme ---
-if (localStorage.getItem("theme") === "dark") {
-    enableDark();
-} else {
-    disableDark();
+/* SIDEBAR */
+function toggleSidebar(){
+  var sb=document.getElementById('sidebar'),eb=document.getElementById('expandBtn');
+  var c=sb.classList.toggle('collapsed'); eb.style.display=c?'block':'none';
+}
+function toggleAcc(hdr){
+  var dd=hdr.nextElementSibling,ch=hdr.querySelector('.aw-chev');
+  dd.classList.toggle('open'); ch.classList.toggle('open');
 }
 
-// --- Toggle on Click ---
-toggle.onclick = () => {
-    if (localStorage.getItem("theme") === "dark") {
-        disableDark();
-    } else {
-        enableDark();
-    }
-};
+/* FILE OPEN */
+function triggerOpen(){document.getElementById('fileInput').click();}
+function onFileInput(e){if(e.target.files[0]) processFile(e.target.files[0]);}
+function onDrop(e){e.preventDefault();document.getElementById('dropZone').classList.remove('drag');var f=e.dataTransfer.files[0];if(f) processFile(f);}
+function onDragOver(e){e.preventDefault();document.getElementById('dropZone').classList.add('drag');}
+function onDragLeave(){document.getElementById('dropZone').classList.remove('drag');}
+
+/* FILE ICON */
+function fileIcon(f){
+  var t=f.type||'',n=f.name.toLowerCase();
+  if(t.startsWith('image/')) return 'image';
+  if(t.startsWith('audio/')) return 'music_note';
+  if(t.startsWith('video/')) return 'movie';
+  if(t==='application/pdf') return 'picture_as_pdf';
+  if(n.endsWith('.docx')||n.endsWith('.doc')) return 'description';
+  if(n.endsWith('.xlsx')||n.endsWith('.xls')) return 'table_chart';
+  if(n.endsWith('.pptx')||n.endsWith('.ppt')) return 'slideshow';
+  if(n.endsWith('.zip')||n.endsWith('.rar')||n.endsWith('.7z')) return 'folder_zip';
+  if(t.startsWith('text/')) return 'article';
+  return 'insert_drive_file';
+}
+
+/* UTILS */
+function fsize(b){if(b<1024) return b+' B';if(b<1048576) return (b/1024).toFixed(1)+' KB';if(b<1073741824) return (b/1048576).toFixed(2)+' MB';return (b/1073741824).toFixed(2)+' GB';}
+function fdate(d){return d.toLocaleDateString('en-GB',{year:'numeric',month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function escA(s){return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;');}
+
+/* PROCESS FILE */
+async function processFile(file){
+  curFile=file; customFields={};
+  document.getElementById('dropWrap').style.display='none';
+  var panel=document.getElementById('metaPanel'); panel.classList.add('show');
+  document.getElementById('fileIcon').innerHTML='<span class="material-symbols-outlined ms" style="font-size:34px;color:#1976d2">'+fileIcon(file)+'</span>';
+  document.getElementById('fileName').textContent=file.name;
+  document.getElementById('fileSub').textContent=fsize(file.size)+' \u00b7 '+(file.type||'Unknown type')+' \u00b7 Modified: '+fdate(new Date(file.lastModified));
+  ['btnAdd','btnClear','btnJson','btnCsv','btnTxt','btnCopyAll','btnReload','btnDownload'].forEach(function(id){var el=document.getElementById(id);if(el) el.disabled=false;});
+  curMeta=await extractMeta(file);
+  addHistory(file);
+  renderAll();
+  computeHashes(file);
+  toast('File loaded: '+file.name);
+}
+async function reloadFile(){if(curFile) await processFile(curFile);}
+
+/* EXTRACT META */
+async function extractMeta(file){
+  var m={};
+  function add(k,v,cat){m[k]={value:v,category:cat};}
+  add('File Name',file.name,'basic');
+  add('File Size',fsize(file.size)+' ('+file.size.toLocaleString()+' bytes)','basic');
+  add('MIME Type',file.type||'Unknown','basic');
+  add('Extension',file.name.includes('.')?'.'+file.name.split('.').pop().toUpperCase():'None','basic');
+  add('Last Modified',fdate(new Date(file.lastModified)),'basic');
+  add('Last Modified (ISO)',new Date(file.lastModified).toISOString(),'basic');
+  add('Last Modified (Unix)',Math.floor(file.lastModified/1000).toString(),'basic');
+  var t=file.type||'';
+  if(t.startsWith('image/')) await extractImage(file,m);
+  if(t.startsWith('audio/')||t.startsWith('video/')) await extractMedia(file,m,t);
+  if(t==='application/pdf') await extractPDF(file,m);
+  if(t.startsWith('text/')||file.name.endsWith('.txt')||file.name.endsWith('.csv')) await extractText(file,m);
+  return m;
+}
+
+async function extractImage(file,m){
+  return new Promise(function(resolve){
+    var url=URL.createObjectURL(file),img=new Image();
+    img.onload=function(){
+      m['Width']={value:img.naturalWidth+' px',category:'image'};
+      m['Height']={value:img.naturalHeight+' px',category:'image'};
+      m['Aspect Ratio']={value:(img.naturalWidth/img.naturalHeight).toFixed(4),category:'image'};
+      m['Megapixels']={value:((img.naturalWidth*img.naturalHeight)/1e6).toFixed(2)+' MP',category:'image'};
+      m['Orientation']={value:img.naturalWidth>=img.naturalHeight?'Landscape':'Portrait',category:'image'};
+      try{
+        var c=document.createElement('canvas'),sc=Math.min(1,100/Math.max(img.naturalWidth,img.naturalHeight));
+        c.width=Math.floor(img.naturalWidth*sc);c.height=Math.floor(img.naturalHeight*sc);
+        var ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);
+        var d=ctx.getImageData(0,0,c.width,c.height).data,r=0,g=0,b=0,n=d.length/4;
+        for(var i=0;i<d.length;i+=4){r+=d[i];g+=d[i+1];b+=d[i+2];}
+        r=Math.round(r/n);g=Math.round(g/n);b=Math.round(b/n);
+        var hex='#'+[r,g,b].map(function(x){return x.toString(16).padStart(2,'0');}).join('');
+        m['Average Color (RGB)']={value:'rgb('+r+', '+g+', '+b+')',category:'image'};
+        m['Average Color (HEX)']={value:hex,category:'image'};
+        m['Image Brightness']={value:(0.299*r+0.587*g+0.114*b).toFixed(1)+'/255 ('+(0.299*r+0.587*g+0.114*b<128?'Dark':'Light')+')',category:'image'};
+        if(file.type==='image/png'){var ha=false;for(var j=3;j<d.length;j+=4){if(d[j]<255){ha=true;break;}}m['Has Transparency']={value:ha?'Yes':'No',category:'image'};}
+      }catch(e){}
+      document.getElementById('imgPreviewWrap').style.display='block';
+      document.getElementById('imgPreview').src=url;
+      resolve();
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);resolve();};
+    img.src=url;
+  });
+}
+
+async function extractMedia(file,m,type){
+  return new Promise(function(resolve){
+    var url=URL.createObjectURL(file),el=type.startsWith('video/')?document.createElement('video'):document.createElement('audio'),cat=type.startsWith('video/')?'video':'audio';
+    el.preload='metadata';
+    el.onloadedmetadata=function(){
+      var dur=el.duration;
+      if(!isNaN(dur)){var mn=Math.floor(dur/60),s=Math.floor(dur%60);m['Duration']={value:mn+':'+s.toString().padStart(2,'0')+' ('+dur.toFixed(2)+'s)',category:cat};}
+      if(type.startsWith('video/')&&el.videoWidth){m['Video Width']={value:el.videoWidth+' px',category:'video'};m['Video Height']={value:el.videoHeight+' px',category:'video'};m['Video Aspect Ratio']={value:(el.videoWidth/el.videoHeight).toFixed(4),category:'video'};}
+      URL.revokeObjectURL(url);resolve();
+    };
+    el.onerror=function(){URL.revokeObjectURL(url);resolve();};
+    el.src=url;
+  });
+}
+
+async function extractPDF(file,m){
+  return new Promise(function(resolve){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var txt=e.target.result;
+      function g(rx){var r=txt.match(rx);return r?r[1]:null;}
+      var ver=g(/PDF-(\d+\.\d+)/);if(ver) m['PDF Version']={value:ver,category:'document'};
+      var pages=(txt.match(/\/Type\s*\/Page\b/g)||[]).length;if(pages>0) m['Page Count (est.)']={value:pages.toString(),category:'document'};
+      [['Title',/\/Title\s*\(([^)]+)\)/],['Author',/\/Author\s*\(([^)]+)\)/],['Subject',/\/Subject\s*\(([^)]+)\)/],
+       ['Keywords',/\/Keywords\s*\(([^)]+)\)/],['Creator',/\/Creator\s*\(([^)]+)\)/],['Producer',/\/Producer\s*\(([^)]+)\)/]]
+        .forEach(function(pair){var v=g(pair[1]);if(v) m[pair[0]]={value:v,category:'document'};});
+      resolve();
+    };
+    reader.onerror=resolve;reader.readAsText(file,'latin1');
+  });
+}
+
+async function extractText(file,m){
+  return new Promise(function(resolve){
+    var reader=new FileReader();
+    reader.onload=function(e){
+      var txt=e.target.result,lines=txt.split('\n'),words=txt.trim().split(/\s+/).filter(function(w){return w.length>0;});
+      m['Line Count']={value:lines.length.toLocaleString(),category:'document'};
+      m['Word Count']={value:words.length.toLocaleString(),category:'document'};
+      m['Character Count']={value:txt.length.toLocaleString(),category:'document'};
+      m['Character Count (no spaces)']={value:txt.replace(/\s/g,'').length.toLocaleString(),category:'document'};
+      m['Encoding Hint']={value:/[^\x00-\x7F]/.test(txt.slice(0,2000))?'UTF-8 / Unicode':'ASCII / UTF-8',category:'document'};
+      if(file.name.endsWith('.csv')){
+        var dels=[',',';','\t','|'],bestD=',',bestN=0;
+        dels.forEach(function(d){var n=(lines[0]||'').split(d).length;if(n>bestN){bestN=n;bestD=d;}});
+        m['CSV Delimiter']={value:bestD==='\t'?'Tab':'"'+bestD+'"',category:'document'};
+        m['CSV Columns (est.)']={value:bestN.toString(),category:'document'};
+        m['CSV Rows (est.)']={value:(lines.length-1).toString(),category:'document'};
+      }
+      resolve();
+    };
+    reader.onerror=resolve;reader.readAsText(file);
+  });
+}
+
+/* HASHES */
+async function computeHashes(file){
+  var grid=document.getElementById('hashGrid');
+  grid.innerHTML='<div style="color:#999;font-size:13px;padding:10px 0">Computing...</div>';
+  var buf=await file.arrayBuffer();
+  function crc32(buf){
+    var t=[];for(var i=0;i<256;i++){var c=i;for(var k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c;}
+    var crc=-1,b=new Uint8Array(buf);for(var i=0;i<b.length;i++) crc=t[(crc^b[i])&0xFF]^(crc>>>8);
+    return ((crc^-1)>>>0).toString(16).padStart(8,'0').toUpperCase();
+  }
+  function adler32(buf){
+    var b=new Uint8Array(buf),a=1,bv=0;
+    for(var i=0;i<b.length;i++){a=(a+b[i])%65521;bv=(bv+a)%65521;}
+    return ((bv<<16)|a).toString(16).padStart(8,'0').toUpperCase();
+  }
+  grid.innerHTML='';
+  var algos=[['SHA-256','SHA-256'],['SHA-1','SHA-1'],['SHA-384','SHA-384'],['SHA-512','SHA-512']];
+  for(var ai=0;ai<algos.length;ai++){
+    try{
+      var hb=await crypto.subtle.digest(algos[ai][1],buf);
+      var hex=Array.from(new Uint8Array(hb)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+      grid.appendChild(mkHashRow(algos[ai][0],hex));
+    }catch(e){grid.appendChild(mkHashRow(algos[ai][0],'Error'));}
+  }
+  grid.appendChild(mkHashRow('CRC-32',crc32(buf)));
+  grid.appendChild(mkHashRow('Adler-32',adler32(buf)));
+  document.getElementById('validArea').innerHTML=
+    '<div style="display:flex;flex-direction:column;gap:7px">'+
+    '<div style="display:flex;align-items:center;gap:8px"><span class="valid-badge v-ok"><span class="material-symbols-outlined ms" style="font-size:12px">check_circle</span> Readable</span><span style="font-size:13px;color:#555">File accessed successfully</span></div>'+
+    '<div style="display:flex;align-items:center;gap:8px"><span class="valid-badge '+(file.size>0?'v-ok':'v-err')+'"><span class="material-symbols-outlined ms" style="font-size:12px">'+(file.size>0?'check_circle':'error')+'</span> '+(file.size>0?'Non-empty':'Empty')+'</span><span style="font-size:13px;color:#555">'+fsize(file.size)+'</span></div>'+
+    '<div style="display:flex;align-items:center;gap:8px"><span class="valid-badge '+(file.type?'v-ok':'v-warn')+'"><span class="material-symbols-outlined ms" style="font-size:12px">'+(file.type?'check_circle':'warning')+'</span> '+(file.type?'MIME Known':'Unknown MIME')+'</span><span style="font-size:13px;color:#555">'+(file.type||'Could not determine MIME type')+'</span></div>'+
+    '</div>';
+}
+function mkHashRow(algo,hex){
+  var d=document.createElement('div');d.className='hash-row';
+  d.innerHTML='<div class="hash-algo">'+algo+'</div><div class="hash-val">'+hex+'</div><button class="hash-copy" onclick="copyText(\''+escA(hex)+'\',\''+algo+' hash copied\')" title="Copy"><span class="material-symbols-outlined ms">content_copy</span></button>';
+  return d;
+}
+
+/* RENDER */
+function getAllMeta(){
+  var combined={};Object.assign(combined,curMeta);
+  Object.keys(customFields).forEach(function(k){combined[k]=customFields[k];});
+  return combined;
+}
+function renderAll(){renderOverview();renderFields();renderExif();renderRaw();renderSidebarStats();renderCatFilters();}
+
+function renderOverview(){
+  var all=getAllMeta(),keys=Object.keys(all),cats={};
+  keys.forEach(function(k){var c=all[k].category;cats[c]=(cats[c]||0)+1;});
+  document.getElementById('statGrid').innerHTML=
+    '<div class="stat-card"><div class="stat-val">'+keys.length+'</div><div class="stat-lbl">Total Fields</div></div>'+
+    '<div class="stat-card"><div class="stat-val">'+Object.keys(cats).length+'</div><div class="stat-lbl">Categories</div></div>'+
+    '<div class="stat-card"><div class="stat-val">'+fsize(curFile.size)+'</div><div class="stat-lbl">File Size</div></div>'+
+    '<div class="stat-card"><div class="stat-val">'+Object.keys(customFields).length+'</div><div class="stat-lbl">Custom Fields</div></div>';
+  var priority=['File Name','File Size','MIME Type','Extension','Last Modified','Width','Height','Duration','Aspect Ratio','PDF Version','Author','Title','Creator','Word Count','Line Count'];
+  var shown={},tbody=document.getElementById('overviewBody');tbody.innerHTML='';
+  priority.forEach(function(k){if(all[k]){tbody.appendChild(mkRow(k,all[k]));shown[k]=1;}});
+  keys.forEach(function(k){if(!shown[k]&&tbody.children.length<22) tbody.appendChild(mkRow(k,all[k]));});
+}
+
+function mkRow(key,entry){
+  var tr=document.createElement('tr'),isC=!!customFields[key];
+  var keyCell=document.createElement('td');keyCell.className='mkey';
+  keyCell.textContent=key;
+  if(isC){var badge=document.createElement('span');badge.style.cssText='font-size:10px;color:#1976d2;font-weight:700;margin-left:4px';badge.textContent='CUSTOM';keyCell.appendChild(badge);}
+  var inp=document.createElement('input');inp.className='mval-input';inp.value=entry.value;
+  inp.dataset.key=key;
+  inp.addEventListener('change',function(){updateField(this.dataset.key,this.value);});
+  var valCell=document.createElement('td');valCell.className='mval';valCell.appendChild(inp);
+  var catCell=document.createElement('td');catCell.innerHTML='<span class="cat-badge cat-'+entry.category+'">'+entry.category+'</span>';
+  var copyBtn=document.createElement('button');copyBtn.className='row-btn';copyBtn.title='Copy';copyBtn.innerHTML='<span class="material-symbols-outlined ms">content_copy</span>';
+  copyBtn.dataset.val=entry.value;
+  copyBtn.addEventListener('click',function(){copyText(entry.value,'Copied');});
+  var delBtn=document.createElement('button');delBtn.className='row-btn del';delBtn.title='Delete';delBtn.innerHTML='<span class="material-symbols-outlined ms">delete</span>';
+  delBtn.addEventListener('click',function(){deleteField(key);});
+  var acts=document.createElement('div');acts.className='row-acts';acts.appendChild(copyBtn);acts.appendChild(delBtn);
+  var actCell=document.createElement('td');actCell.appendChild(acts);
+  tr.appendChild(keyCell);tr.appendChild(valCell);tr.appendChild(catCell);tr.appendChild(actCell);
+  return tr;
+}
+
+function renderFields(){
+  var all=getAllMeta(),search=(document.getElementById('sbSearch').value||'').toLowerCase();
+  var showEmpty=document.getElementById('togEmpty').checked,showCats=document.getElementById('togCats').checked;
+  var tbody=document.getElementById('fieldsBody');tbody.innerHTML='';var shown=0;
+  Object.keys(all).forEach(function(key){
+    var entry=all[key];
+    if(!showEmpty&&!entry.value) return;
+    if(activeCat!=='all'&&entry.category!==activeCat) return;
+    if(search&&key.toLowerCase().indexOf(search)<0&&String(entry.value).toLowerCase().indexOf(search)<0) return;
+    shown++;var isC=!!customFields[key];
+    var tr=document.createElement('tr');
+    /* key cell */
+    var keyCell=document.createElement('td');keyCell.className='mkey';keyCell.textContent=key;
+    if(isC){var badge=document.createElement('span');badge.style.cssText='font-size:10px;color:#1976d2;font-weight:700;margin-left:4px';badge.textContent='CUSTOM';keyCell.appendChild(badge);}
+    /* value cell */
+    var inp=document.createElement('input');inp.className='mval-input';inp.value=entry.value;inp.dataset.key=key;
+    inp.addEventListener('change',function(){updateField(this.dataset.key,this.value);});
+    var valCell=document.createElement('td');valCell.className='mval';valCell.appendChild(inp);
+    /* cat cell */
+    var catCell=document.createElement('td');
+    if(showCats) catCell.innerHTML='<span class="cat-badge cat-'+entry.category+'">'+entry.category+'</span>';
+    /* action cell */
+    var copyBtn=document.createElement('button');copyBtn.className='row-btn';copyBtn.title='Copy';copyBtn.innerHTML='<span class="material-symbols-outlined ms">content_copy</span>';
+    (function(v){copyBtn.addEventListener('click',function(){copyText(v,'Copied');});})(entry.value);
+    var delBtn=document.createElement('button');delBtn.className='row-btn del';delBtn.title='Delete';delBtn.innerHTML='<span class="material-symbols-outlined ms">delete</span>';
+    (function(k){delBtn.addEventListener('click',function(){deleteField(k);});})(key);
+    var acts=document.createElement('div');acts.className='row-acts';acts.appendChild(copyBtn);acts.appendChild(delBtn);
+    var actCell=document.createElement('td');actCell.appendChild(acts);
+    tr.appendChild(keyCell);tr.appendChild(valCell);tr.appendChild(catCell);tr.appendChild(actCell);
+    tbody.appendChild(tr);
+  });
+  if(!shown){var tr=document.createElement('tr');tr.innerHTML='<td colspan="4"><div class="empty" style="padding:20px"><span class="material-symbols-outlined ms">search_off</span>No matching fields.</div></td>';tbody.appendChild(tr);}
+}
+
+function renderExif(){
+  if(!curFile) return;
+  var all=getAllMeta(),grid=document.getElementById('exifGrid');
+  var entries=Object.keys(all).filter(function(k){return all[k].category==='image'||all[k].category==='video';});
+  if(!entries.length){grid.innerHTML='<div class="empty"><span class="material-symbols-outlined ms">image_not_supported</span>No image or video metadata found.</div>';return;}
+  grid.innerHTML='';
+  entries.forEach(function(key){
+    var card=document.createElement('div');card.className='exif-card';
+    card.innerHTML='<div class="exif-key">'+esc(key)+'</div><div class="exif-val">'+esc(all[key].value)+'</div>';
+    grid.appendChild(card);
+  });
+}
+
+function renderRaw(){
+  var all=getAllMeta(),obj={};
+  Object.keys(all).forEach(function(k){obj[k]=all[k].value;});
+  document.getElementById('rawPre').textContent=JSON.stringify(obj,null,2);
+}
+
+function renderSidebarStats(){
+  var all=getAllMeta(),cats={};
+  Object.keys(all).forEach(function(k){var c=all[k].category;cats[c]=(cats[c]||0)+1;});
+  document.getElementById('fileStats').innerHTML=Object.keys(cats).map(function(cat){
+    return '<div class="aw-row"><span>'+cat+'</span><span style="color:#1976d2;font-weight:600">'+cats[cat]+'</span></div>';
+  }).join('')||'<div style="font-size:12px;color:#999">No stats.</div>';
+}
+
+function renderCatFilters(){
+  var all=getAllMeta(),cats=new Set(Object.keys(all).map(function(k){return all[k].category;}));
+  var catList=document.getElementById('catList');catList.innerHTML='';
+  cats.forEach(function(cat){var row=document.createElement('div');row.className='aw-row';row.innerHTML='<span>'+cat+'</span><span class="cat-badge cat-'+cat+'">'+cat+'</span>';catList.appendChild(row);});
+  var chips=document.getElementById('filterChips');
+  chips.innerHTML='<span class="fchip on" data-cat="all" onclick="chipClick(this)">All</span>';
+  cats.forEach(function(cat){var c=document.createElement('span');c.className='fchip';c.dataset.cat=cat;c.textContent=cat.charAt(0).toUpperCase()+cat.slice(1);c.onclick=function(){chipClick(this);};chips.appendChild(c);});
+}
+
+/* FIELD CRUD */
+function updateField(key,value){
+  if(customFields.hasOwnProperty(key)) customFields[key].value=value;
+  else if(curMeta.hasOwnProperty(key)) curMeta[key].value=value;
+  else customFields[key]={value:value,category:'custom'};
+  renderRaw();
+}
+function deleteField(key){
+  if(customFields[key]) delete customFields[key];
+  else if(curMeta[key]) delete curMeta[key];
+  renderAll();toast('Field "'+key+'" deleted');
+}
+function addFieldInline(){
+  var k=document.getElementById('newKey').value.trim(),v=document.getElementById('newVal').value.trim();
+  if(!k){toast('Enter a field name',true);return;}
+  customFields[k]={value:v,category:'custom'};
+  document.getElementById('newKey').value='';document.getElementById('newVal').value='';
+  renderAll();toast('Field "'+k+'" added');
+}
+function addFieldModal(){
+  var k=document.getElementById('addKey').value.trim(),v=document.getElementById('addVal').value.trim(),cat=document.getElementById('addCat').value;
+  if(!k){toast('Enter a field name',true);return;}
+  customFields[k]={value:v,category:cat};closeModal('addModal');renderAll();toast('Field "'+k+'" added');
+}
+function clearCustom(){customFields={};closeModal('clearModal');renderAll();toast('Custom fields cleared');}
+
+/* FILTERS */
+function applyFilters(){if(curFile){renderFields();renderOverview();}}
+function applyCompact(){
+  var c=document.getElementById('togCompact').checked;
+  document.querySelectorAll('.mtbl td').forEach(function(td){td.style.padding=c?'5px 10px':'';});
+}
+function chipClick(el){
+  document.querySelectorAll('.fchip').forEach(function(c){c.classList.remove('on');});
+  el.classList.add('on');activeCat=el.dataset.cat;renderFields();
+}
+
+/* TABS */
+function switchTab(el){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
+  el.classList.add('active');
+  var pane=document.getElementById('pane-'+el.dataset.tab);if(pane) pane.classList.add('active');
+  activeTab=el.dataset.tab;
+}
+
+/* EXPORT */
+function exportJSON(){var all=getAllMeta(),obj={};Object.keys(all).forEach(function(k){obj[k]=all[k].value;});dl(JSON.stringify(obj,null,2),curFile.name+'_metadata.json','application/json');toast('JSON exported');}
+function exportCSV(){var all=getAllMeta(),rows=[['Field','Value','Category']];Object.keys(all).forEach(function(k){rows.push([k,all[k].value,all[k].category]);});var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');dl(csv,curFile.name+'_metadata.csv','text/csv');toast('CSV exported');}
+function exportTXT(){var all=getAllMeta(),lines=['Metadata Inspector \u2014 '+curFile.name,'='.repeat(50),''];Object.keys(all).forEach(function(k){lines.push('['+all[k].category.toUpperCase()+'] '+k+': '+all[k].value);});dl(lines.join('\n'),curFile.name+'_metadata.txt','text/plain');toast('TXT exported');}
+function dl(content,filename,mime){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:mime}));a.download=filename;a.click();}
+function dlBlob(blob,filename){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();setTimeout(function(){URL.revokeObjectURL(a.href);},3000);}
+function copyAll(){var all=getAllMeta(),lines=Object.keys(all).map(function(k){return k+': '+all[k].value;}).join('\n');copyText(lines,'All metadata copied');}
+function copyRaw(){copyText(document.getElementById('rawPre').textContent,'Raw JSON copied');}
+function copyText(text,msg){
+  navigator.clipboard.writeText(text).then(function(){toast(msg||'Copied');}).catch(function(){
+    var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast(msg||'Copied');
+  });
+}
+
+/* DOWNLOAD UPDATED FILE */
+async function downloadFile(){
+  if(!curFile) return;
+  var type=curFile.type||'',name=curFile.name;
+  toast('Preparing download...');
+  try{
+    if(type==='image/png'||type==='image/jpeg'||type==='image/webp'){await dlImage();return;}
+    if(type.startsWith('text/')||name.match(/\.(txt|csv|html?|xml|svg|js|css|json|md|log)$/i)){await dlText();return;}
+    if(type==='application/pdf'){await dlPDF();return;}
+    await dlSidecar();
+  }catch(e){console.error(e);await dlSidecar();}
+}
+
+async function dlImage(){
+  var url=URL.createObjectURL(curFile);
+  return new Promise(function(resolve){
+    var img=new Image();
+    img.onload=function(){
+      var canvas=document.createElement('canvas');
+      canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+      canvas.getContext('2d').drawImage(img,0,0);
+      URL.revokeObjectURL(url);
+      var isPNG=curFile.type==='image/png',isJPEG=curFile.type==='image/jpeg';
+      var mime=isPNG?'image/png':(isJPEG?'image/jpeg':'image/webp');
+      canvas.toBlob(async function(blob){
+        var base=curFile.name.replace(/\.[^.]+$/,'');
+        if(isPNG){
+          var ab=await blob.arrayBuffer(),patched=injectPNGText(ab,buildMetaObj());
+          dlBlob(new Blob([patched],{type:'image/png'}),base+'_updated.png');
+        }else{
+          dlBlob(blob,base+(isJPEG?'_updated.jpg':'_updated.webp'));
+        }
+        toast('Image downloaded');resolve();
+      },mime,isJPEG?0.95:undefined);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);dlSidecar().then(resolve);};
+    img.src=url;
+  });
+}
+
+function injectPNGText(arrayBuf,metaObj){
+  var sig=[137,80,78,71,13,10,26,10],src=new Uint8Array(arrayBuf);
+  for(var i=0;i<8;i++) if(src[i]!==sig[i]) return arrayBuf;
+  var enc=new TextEncoder(),chunks=[];
+  Object.keys(metaObj).forEach(function(key){
+    var k=key.replace(/[^\x20-\x7E]/g,'').slice(0,79),v=String(metaObj[key]).replace(/[^\x20-\x7E\n]/g,'');
+    if(!k) return;chunks.push(mkPNGChunk('tEXt',enc.encode(k+'\x00'+v)));
+  });
+  var ihdrLen=((src[8]<<24)|(src[9]<<16)|(src[10]<<8)|src[11])>>>0,insertAt=8+4+4+ihdrLen+4;
+  var before=src.slice(0,insertAt),after=src.slice(insertAt);
+  var total=chunks.reduce(function(s,c){return s+c.length;},0);
+  var out=new Uint8Array(before.length+total+after.length);
+  out.set(before,0);var off=before.length;
+  chunks.forEach(function(c){out.set(c,off);off+=c.length;});
+  out.set(after,off);return out.buffer;
+}
+function mkPNGChunk(type,data){
+  var enc=new TextEncoder(),tb=enc.encode(type),len=data.length,chunk=new Uint8Array(4+4+len+4);
+  chunk[0]=(len>>>24)&0xFF;chunk[1]=(len>>>16)&0xFF;chunk[2]=(len>>>8)&0xFF;chunk[3]=len&0xFF;
+  chunk.set(tb,4);chunk.set(data,8);
+  var cd=new Uint8Array(4+len);cd.set(tb,0);cd.set(data,4);
+  var crc=pngCRC(cd);chunk[8+len]=(crc>>>24)&0xFF;chunk[9+len]=(crc>>>16)&0xFF;chunk[10+len]=(crc>>>8)&0xFF;chunk[11+len]=crc&0xFF;
+  return chunk;
+}
+function pngCRC(data){
+  var t=[];for(var i=0;i<256;i++){var c=i;for(var k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1;t[i]=c;}
+  var crc=-1;for(var i=0;i<data.length;i++) crc=t[(crc^data[i])&0xFF]^(crc>>>8);return (crc^-1)>>>0;
+}
+
+async function dlText(){
+  var original=await curFile.text(),ext=curFile.name.split('.').pop().toLowerCase();
+  var isHTML=['html','htm'].includes(ext)||curFile.type==='text/html';
+  var isJS=['js','ts','jsx','tsx'].includes(ext),isCSS=ext==='css',isJSON=ext==='json'||curFile.type==='application/json';
+  var all=getAllMeta(),output;
+  if(isJSON){try{var obj=JSON.parse(original);obj['_metadata']=buildMetaObj();output=JSON.stringify(obj,null,2);}catch(e){output=original;}}
+  else if(isHTML){
+    var block='<!--METADATA_INSPECTOR_START\n'+Object.keys(all).map(function(k){return '  '+k+': '+all[k].value;}).join('\n')+'\nMETADATA_INSPECTOR_END-->\n';
+    var cleaned=original.replace(/<!--METADATA_INSPECTOR_START[\s\S]*?METADATA_INSPECTOR_END-->\n?/g,'');
+    output=cleaned.includes('<head>')?cleaned.replace('<head>','<head>\n'+block):block+cleaned;
+  }else if(isJS||isCSS){
+    var block='/* METADATA_INSPECTOR_START\n'+Object.keys(all).map(function(k){return '  '+k+': '+all[k].value;}).join('\n')+'\nMETADATA_INSPECTOR_END */\n';
+    output=block+original.replace(/\/\* METADATA_INSPECTOR_START[\s\S]*?METADATA_INSPECTOR_END \*\/\n?/g,'');
+  }else{
+    var block='# METADATA_INSPECTOR_START\n'+Object.keys(all).map(function(k){return '# '+k+': '+all[k].value;}).join('\n')+'\n# METADATA_INSPECTOR_END\n';
+    output=block+original.replace(/# METADATA_INSPECTOR_START[\s\S]*?# METADATA_INSPECTOR_END\n?/g,'');
+  }
+  dl(output,curFile.name.replace(/(\.[^.]+)$/,'_updated$1'),curFile.type||'text/plain');
+  toast('File downloaded with metadata');
+}
+
+async function dlPDF(){
+  var buf=await curFile.arrayBuffer(),bytes=new Uint8Array(buf),pdfTxt='';
+  for(var i=0;i<bytes.length;i++) pdfTxt+=String.fromCharCode(bytes[i]);
+  var all=getAllMeta(),mod=pdfTxt;
+  ['Title','Author','Subject','Keywords','Creator','Producer'].forEach(function(field){
+    var entry=all[field];if(!entry||!entry.value) return;
+    var ev=entry.value.replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
+    var rx=new RegExp('/'+field+'\\s*\\([^)]*\\)','g');
+    if(rx.test(mod)) mod=mod.replace(new RegExp('/'+field+'\\s*\\([^)]*\\)','g'),'/'+field+' ('+ev+')');
+  });
+  var outBytes=new Uint8Array(mod.length);for(var i=0;i<mod.length;i++) outBytes[i]=mod.charCodeAt(i)&0xFF;
+  dlBlob(new Blob([outBytes],{type:'application/pdf'}),curFile.name.replace(/(\.[^.]+)$/,'_updated$1'));
+  toast('PDF downloaded');
+}
+
+async function dlSidecar(){
+  var origUrl=URL.createObjectURL(curFile),a=document.createElement('a');a.href=origUrl;a.download=curFile.name;a.click();
+  setTimeout(function(){URL.revokeObjectURL(origUrl);},2000);
+  setTimeout(function(){dl(JSON.stringify(buildMetaObj(),null,2),curFile.name+'.metadata.json','application/json');toast('File + sidecar JSON downloaded');},600);
+}
+
+function buildMetaObj(){var all=getAllMeta(),obj={};Object.keys(all).forEach(function(k){obj[k]=all[k].value;});return obj;}
+
+/* COMPARE */
+function openCompare(){if(!curFile){toast('Load a file first',true);return;}document.getElementById('cmpResult').innerHTML='';openModal('cmpModal');}
+async function loadCmpFile(e){
+  var file=e.target.files[0];if(!file) return;
+  var bMeta=await extractMeta(file),aAll=getAllMeta(),allKeys=new Set(Object.keys(aAll).concat(Object.keys(bMeta)));
+  var html='<div class="cmp-grid"><div><div class="cmp-hdr">File A: '+esc(curFile.name)+'</div>';
+  allKeys.forEach(function(k){var av=aAll[k]?aAll[k].value:'—',bv=bMeta[k]?bMeta[k].value:'—';var cls=av===bv?'d-match':(av==='—'?'d-add':'d-rem');html+='<div class="'+cls+'" style="padding:5px 2px;border-bottom:1px solid #f5f5f5;font-size:12px"><span style="color:#888;font-size:11px">'+esc(k)+'</span><br><span>'+esc(av)+'</span></div>';});
+  html+='</div><div><div class="cmp-hdr">File B: '+esc(file.name)+'</div>';
+  allKeys.forEach(function(k){var av=aAll[k]?aAll[k].value:'—',bv=bMeta[k]?bMeta[k].value:'—';var cls=av===bv?'d-match':(bv==='—'?'d-rem':'d-add');html+='<div class="'+cls+'" style="padding:5px 2px;border-bottom:1px solid #f5f5f5;font-size:12px"><span style="color:#888;font-size:11px">'+esc(k)+'</span><br><span>'+esc(bv)+'</span></div>';});
+  html+='</div></div><div style="margin-top:10px;font-size:12px;color:#777"><span style="background:#e8f5e9;padding:2px 7px;border-radius:4px">Green: different/added</span> <span style="background:#fce4ec;padding:2px 7px;border-radius:4px">Pink: removed/different</span></div>';
+  document.getElementById('cmpResult').innerHTML=html;
+}
+
+/* HISTORY */
+function addHistory(file){
+  fileHistory=fileHistory.filter(function(h){return h.name!==file.name;});
+  fileHistory.unshift({name:file.name,size:file.size,type:file.type,time:Date.now()});
+  if(fileHistory.length>20) fileHistory.pop();
+  try{localStorage.setItem('mi_history',JSON.stringify(fileHistory));}catch(e){}
+}
+function openHistory(){
+  var list=document.getElementById('histList');
+  if(!fileHistory.length){list.innerHTML='<div class="empty"><span class="material-symbols-outlined ms">history</span>No recent files.</div>';}
+  else{list.innerHTML=fileHistory.map(function(h){return '<div class="hist-item"><span class="material-symbols-outlined ms" style="font-size:22px;color:#1976d2">'+fileIcon({name:h.name,type:h.type||''})+'</span><div style="flex:1;min-width:0"><div class="hist-name">'+esc(h.name)+'</div><div class="hist-sub">'+fsize(h.size)+' \u00b7 '+fdate(new Date(h.time))+'</div></div></div>';}).join('');}
+  openModal('histModal');
+}
+function clearHistory(){fileHistory=[];try{localStorage.removeItem('mi_history');}catch(e){}toast('History cleared');document.getElementById('histList').innerHTML='<div class="empty"><span class="material-symbols-outlined ms">history</span>No recent files.</div>';}
+
+/* MODALS */
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function openAddModal(){document.getElementById('addKey').value='';document.getElementById('addVal').value='';openModal('addModal');}
+function confirmClear(){openModal('clearModal');}
+document.querySelectorAll('.modal').forEach(function(m){m.addEventListener('click',function(e){if(e.target===m) m.classList.remove('open');});});
+
+/* TIPS */
+var TIPS=[
+  'Drop any file onto the app to instantly inspect all its metadata.',
+  'Use the All Fields tab to edit or delete any metadata field inline.',
+  'Click Download File to save the file back with your metadata changes embedded.',
+  'The Hashes tab computes SHA-256, SHA-1, SHA-512 and CRC-32 checksums.',
+  'Use the Compare tool in the top bar to diff metadata between two files.',
+  'Export metadata as JSON, CSV, or plain text using the toolbar.',
+  'Toggle dark mode using the moon icon in the top bar.'
+];
+var tipIdx=0;
+function showTip(i){document.getElementById('tipTxt').textContent=TIPS[i];document.getElementById('tipBar').style.width=((i+1)/TIPS.length*100)+'%';document.getElementById('tipBox').classList.remove('hide');document.getElementById('tipBox').classList.add('show');}
+function tipNav(dir){
+  tipIdx=Math.max(0,Math.min(TIPS.length-1,tipIdx+dir));
+  if(tipIdx===TIPS.length-1&&dir===1){document.getElementById('tipBox').classList.replace('show','hide');try{localStorage.setItem('mi_tips_seen','1');}catch(e){}}
+  else showTip(tipIdx);
+}
+
+/* INIT */
+window.addEventListener('DOMContentLoaded',function(){
+  setTimeout(function(){
+    document.getElementById('loadingScreen').style.display='none';
+    document.getElementById('app').style.display='flex';
+  },600);
+  try{if(!localStorage.getItem('mi_tips_seen')) setTimeout(function(){showTip(0);},1400);}catch(e){}
+  document.addEventListener('keydown',function(e){
+    if((e.ctrlKey||e.metaKey)&&e.key==='o'){e.preventDefault();triggerOpen();}
+    if(e.key==='Escape') document.querySelectorAll('.modal.open').forEach(function(m){m.classList.remove('open');});
+  });
+  document.body.addEventListener('dragover',function(e){e.preventDefault();});
+  document.body.addEventListener('drop',function(e){e.preventDefault();var f=e.dataTransfer.files[0];if(f) processFile(f);});
+});
 </script>
-    
 </body>
 </html>

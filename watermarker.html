@@ -1,1216 +1,1320 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watermark Adder</title>
-    <meta name="description" content="DocuWrite Pro is an all-in-one online workspace that lets you write, edit, convert, design, and manage documents and digital content instantly—no installation, no complexity.">
-  <meta name="keywords" content="DocuWrite Pro, Mohtadi Azad Mahi, AI writer, document editor, online text tool, GitHub project, DocuWritePro, Document Editor, Document, Editor, PDF, JPG, Edit, Text, Change File Type, File Changer, Format, Format Changer, Office, Docs, A4, Editor, General document editing, Collab, Editing documents together, Document Viewer, Viewing documents, Word Finder, Searching for specific words, Translator, Language translation, Document Signer, Electronically signing documents, Page Number Adder, Adding page numbers to documents, Chart Maker, Creating data charts, Table Maker, Creating tables, Watermark Adder, Adding watermarks to files, Email Writer, Assisting with writing emails, Spell Checker, Checking spelling and grammar, File Extractor, Extracting contents from files, QR Maker, Creating QR codes, ID Card Maker, Designing and creating ID cards, File Zipper, Compressing or zipping files, PDF Converter, Converting files to or from PDF format, Context Field, Analyzing text (e.g., word count, frequency), Gift Card Maker, Creating custom gift cards, Share File, Uploading or sharing a file, Text Extractor, Extracting text from sources (e.g., images), Keyboard Click Test, Testing keyboard functionality, Frontend IDE, Integrated Development Environment for frontend coding, HTML Editor, Editing HTML code, HTML Writer, Writing or generating HTML content, Button Designer, Designing user interface buttons, HTML Splitter, Splitting HTML files or elements, GoTo Code, Navigation feature in an IDE/editor, Code Snipper, Storing or managing code snippets, Image Editor, Editing images, Image Generator, Generating new images, Drawing Board, A simple drawing or sketching tool, HTML, CSS, JS, Online, Fast, Easy, No login, No signup, Free, No credit card required, Mohtadi, Azad, Mahi, Mohtadi Azad, Mohtadi Azad Mahi, mahi902">
-  <meta name="author" content="Mohtadi Azad Mahi">
-  <meta name="robots" content="index, follow">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Watermarker — DocuWrite Pro</title>
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <meta name="theme-color" content="#ffffff">
+<!-- CDN: Material Symbols Rounded -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"/>
+<!-- CDN: Material Symbols Outlined -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+<!-- CDN: Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<!-- CDN: Inter font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- CDN: Fabric.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<!-- CDN: PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- CDN: JSZip -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- CDN: jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <!-- App & Brand Metadata -->
-  <meta property="og:site_name" content="DocuWrite Pro">
-  <meta name="application-name" content="DocuWrite Pro">
-  <meta name="apple-mobile-web-app-title" content="DocuWrite Pro">
+<!-- CRITICAL: apply theme before body renders -->
+<script>
+(function(){
+  const m=document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));
+  if(m&&m.split('=')[1]==='dark'){document.documentElement.classList.add('dark');}
+})();
+</script>
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="DocuWrite Pro — Online Document Editor">
-  <meta property="og:description" content="Edit, format, and export documents easily with DocuWrite Pro by Mohtadi Azad Mahi.">
-  <meta property="og:url" content="https://mahi902.github.io/DocuWritePro/">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+<style>
+/* ── Scrollbars hidden globally ── */
+*{scrollbar-width:none;}
+*::-webkit-scrollbar{display:none;}
 
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DocuWrite Pro — Online Document Editor">
-  <meta name="twitter:description" content="Create, format, and export documents easily with DocuWrite Pro. Built by Mohtadi Azad Mahi.">
-  <meta name="twitter:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+/* ── Box model reset ── */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
 
-  <!-- Structured Data (Google Knowledge Graph) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "DocuWrite Pro",
-    "alternateName": "DocuWrite Pro — Online Document Editor",
-    "url": "https://mahi902.github.io/DocuWritePro/",
-    "creator": {
-      "@type": "Person",
-      "name": "Mohtadi Azad Mahi"
-    }
-  }
-  </script>
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.16.0/pdf-lib.min.js"></script>
-    <style>
-        :root {
-            --primary-color: #4285f4;
-            --primary-light: #e8f0fe;
-            --text-primary: #202124;
-            --text-secondary: #5f6368;
-            --background: #f8f9fa;
-            --surface: #ffffff;
-            --error: #d93025;
-            --border: #dadce0;
-        }
-        
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
-        body {
-            font-family: 'Roboto', sans-serif;
-            color: var(--text-primary);
-            background-color: var(--background);
-            line-height: 1.5;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            color: var(--primary-color);
-            font-size: 22px;
-            font-weight: 500;
-            margin-right: 24px;
-        }
-        
-        .logo i {
-            margin-right: 8px;
-            font-size: 28px;
-        }
-        
-        .card {
-            background-color: var(--surface);
-            border-radius: 8px;
-            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 2px 6px 2px rgba(60,64,67,0.15);
-            padding: 24px;
-            margin-bottom: 20px;
-        }
-        
-        .card-title {
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-        }
-        
-        .file-upload {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 20px;
-            border: 2px dashed var(--border);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 16px;
-        }
-        
-        .file-upload:hover {
-            border-color: var(--primary-color);
-            background-color: var(--primary-light);
-        }
-        
-        .file-upload i {
-            font-size: 48px;
-            color: var(--primary-color);
-            margin-bottom: 16px;
-        }
-        
-        .file-upload p {
-            color: var(--text-secondary);
-            text-align: center;
-            margin-bottom: 8px;
-        }
-        
-        .file-upload input {
-            display: none;
-        }
-        
-        .file-info {
-            display: none;
-            margin-top: 16px;
-        }
-        
-        .file-info.show {
-            display: block;
-        }
-        
-        .file-name {
-            font-weight: 500;
-            margin-bottom: 8px;
-        }
-        
-        .file-details {
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 8px 24px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            outline: none;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: #3367d6;
-            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
-        }
-        
-        .btn-outlined {
-            background-color: transparent;
-            border: 1px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-        
-        .btn-outlined:hover {
-            background-color: var(--primary-light);
-        }
-        
-        .btn i {
-            margin-right: 8px;
-            font-size: 18px;
-        }
-        
-        .section-title {
-            font-size: 16px;
-            font-weight: 500;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-        }
-        
-        .form-group {
-            margin-bottom: 16px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-        
-        input[type="text"],
-        input[type="number"],
-        select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-        
-        input[type="text"]:focus,
-        input[type="number"]:focus,
-        select:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 0 2px var(--primary-light);
-        }
-        
-        .color-picker {
-            display: flex;
-            align-items: center;
-        }
-        
-        .color-picker input {
-            width: 50px;
-            height: 36px;
-            margin-right: 12px;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .checkbox-group input {
-            margin-right: 8px;
-        }
-        
-        .preview-container {
-            position: relative;
-            width: 100%;
-            height: 350px;
-            background-color: white;
-            border: 1px solid var(--border);
-            margin-bottom: 16px;
-            overflow: hidden;
-        }
-        
-        .preview-page {
-            width: 210mm;
-            height: 297mm;
-            margin: 20px auto;
-            background-color: white;
-            box-shadow: 0 0 8px rgba(0,0,0,0.1);
-            position: relative;
-            transform: scale(0.5);
-            transform-origin: top center;
-        }
-        
-        .watermark-preview {
-            position: absolute;
-            color: rgba(0,0,0,0.2);
-            font-size: 48px;
-            pointer-events: none;
-            user-select: none;
-            cursor: move;
-        }
-        
-        .pages-container {
-            max-height: 300px;
-            overflow-y: auto;
-            border: 1px solid var(--border);
-            border-radius: 4px;
-            padding: 8px;
-        }
-        
-        .page-thumbnail {
-            display: inline-block;
-            width: 100px;
-            height: 140px;
-            margin: 4px;
-            position: relative;
-            border: 1px solid var(--border);
-            cursor: pointer;
-            overflow: hidden;
-        }
-        
-        .page-thumbnail img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .page-thumbnail.selected {
-            border: 2px solid var(--primary-color);
-        }
-        
-        .page-checkbox {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            z-index: 1;
-        }
-        
-        .actions {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 24px;
-        }
-        
-        .actions .btn {
-            margin-left: 8px;
-        }
-        
-        .loading {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255,255,255,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-        }
-        
-        .loading.show {
-            display: flex;
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid var(--primary-light);
-            border-top: 4px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 16px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .error-message {
-            color: var(--error);
-            font-size: 14px;
-            margin-top: 8px;
-            display: none;
-        }
-        
-        .error-message.show {
-            display: block;
-        }
-    </style>
+/* ── Body ── */
+body{font-family:'Inter','Segoe UI',Arial,sans-serif;background:#f0f4f8;overflow:hidden;height:100vh;color:#333;}
+body.dark{background:#111;color:#ddd;}
+
+/* ── Loading Screen ── */
+#loadingScreen{display:flex;position:fixed;inset:0;background:#fff;z-index:10000;align-items:center;justify-content:center;flex-direction:column;gap:20px;transition:opacity 0.3s;}
+body.dark #loadingScreen{background:#1a1a1a;}
+.spinner{width:56px;height:56px;border:4px solid #e3f2fd;border-top-color:#1976d2;border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-size:17px;color:#666;}
+body.dark .loading-text{color:#aaa;}
+
+/* ── App Container ── */
+#appContainer{display:none;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* ── Top Bar ── */
+.top-bar{background:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:200;flex-shrink:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+body.dark .top-bar{background:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.5);}
+.tool-title{font-size:17px;font-weight:500;color:#1a1a2e;flex-shrink:0;}
+body.dark .tool-title{color:#e0e0e0;}
+.top-spacer{flex:1;min-width:8px;}
+.icon-btn{background:none;border:none;cursor:pointer;padding:7px;border-radius:8px;display:flex;align-items:center;color:#1976d2;transition:background 0.2s;flex-shrink:0;}
+.icon-btn:hover{background:#e3f2fd;}
+body.dark .icon-btn:hover{background:#1a2a3a;}
+.icon-btn .material-symbols-outlined{font-size:22px;}
+
+/* ── Toolbar ── */
+.toolbar{background:#fff;padding:6px 12px;display:flex;align-items:center;gap:3px;box-shadow:0 2px 4px rgba(0,0,0,0.06);flex-shrink:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+body.dark .toolbar{background:#1a1a1a;}
+.tbtn{background:transparent;border:none;border-radius:6px;padding:6px 8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:5px;transition:background 0.15s;flex-shrink:0;font-family:inherit;font-size:12px;color:#333;font-weight:500;}
+.tbtn:hover{background:#e3f2fd;}
+.tbtn.active{background:#bbdefb;}
+.tbtn .material-symbols-outlined{font-size:19px;color:#333;}
+body.dark .tbtn{color:#bbb;}
+body.dark .tbtn .material-symbols-outlined{color:#bbb;}
+body.dark .tbtn:hover{background:#2a2a2a;}
+body.dark .tbtn.active{background:#0d2a4a;}
+.toolbar-sep{width:1px;height:26px;background:#e0e0e0;margin:0 4px;flex-shrink:0;}
+body.dark .toolbar-sep{background:#333;}
+
+/* ── Main Content ── */
+.main-content{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+/* ── Sidebar ── */
+.sidebar{width:255px;min-width:255px;background:#fff;padding:14px;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,0.06);transition:transform 0.3s,width 0.3s,min-width 0.3s,padding 0.3s;flex-shrink:0;}
+.sidebar.collapsed{transform:translateX(-255px);width:0;min-width:0;padding:0;overflow:hidden;}
+body.dark .sidebar{background:#1a1a1a;border-color:#333;}
+.sb-section{margin-bottom:16px;}
+.sb-title{font-size:11px;font-weight:700;color:#888;margin-bottom:9px;text-transform:uppercase;letter-spacing:0.6px;}
+body.dark .sb-title{color:#666;}
+.sb-label{display:block;font-size:12px;color:#777;margin-bottom:3px;}
+body.dark .sb-label{color:#aaa;}
+.sb-input{width:100%;padding:7px 9px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;background:#fafafa;font-family:inherit;outline:none;transition:border-color 0.2s,box-shadow 0.2s;color:#333;}
+.sb-input:focus{border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,0.1);background:#fff;}
+body.dark .sb-input{background:#252525!important;color:#ddd!important;border-color:#444!important;}
+.sb-row{margin-bottom:10px;}
+.sb-toggle-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.sb-toggle-label{font-size:13px;color:#444;}
+body.dark .sb-toggle-label{color:#bbb;}
+.toggle-switch{position:relative;width:40px;height:22px;flex-shrink:0;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:11px;transition:0.3s;}
+.toggle-slider::before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;}
+input:checked+.toggle-slider{background:#1976d2;}
+input:checked+.toggle-slider::before{transform:translateX(18px);}
+body.dark .toggle-slider{background:#444;}
+.collapse-btn{width:100%;padding:8px;background:#e3f2fd;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:#1976d2;font-weight:600;margin-top:6px;transition:background 0.15s;font-family:inherit;}
+.collapse-btn:hover{background:#bbdefb;}
+body.dark .collapse-btn{background:#1a2a4a!important;color:#90caf9!important;}
+.expand-btn{position:fixed;left:10px;top:50%;transform:translateY(-50%);background:#fff;border:none;border-radius:8px;padding:10px 5px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.15);z-index:50;display:none;}
+body.dark .expand-btn{background:#1a1a1a;}
+
+/* ── Accordion dropdowns ── */
+.aw-header{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#f0f7ff;border-radius:8px;cursor:pointer;user-select:none;border:1px solid #dceeff;margin-bottom:5px;}
+.aw-header:hover{background:#e3f2fd;}
+.aw-header-label{font-size:12px;font-weight:600;color:#1565c0;letter-spacing:0.2px;}
+.aw-chevron{font-size:16px;color:#1976d2;transition:transform 0.25s;}
+.aw-chevron.open{transform:rotate(180deg);}
+.aw-dropdown{overflow:hidden;max-height:0;transition:max-height 0.35s cubic-bezier(0.4,0,0.2,1),opacity 0.3s ease;opacity:0;pointer-events:none;}
+.aw-dropdown.open{max-height:800px;opacity:1;pointer-events:auto;}
+.aw-inner{padding:6px 2px 2px;}
+body.dark .aw-header{background:#1a2a3a;border-color:#1e3a5a;}
+body.dark .aw-header:hover{background:#1e3350;}
+body.dark .aw-header-label{color:#90caf9;}
+body.dark .aw-chevron{color:#90caf9;}
+
+/* ── Content Area ── */
+.content-area{flex:1;overflow:auto;display:flex;flex-direction:column;align-items:center;background:#f0f4f8;min-width:0;padding:20px;}
+body.dark .content-area{background:#111;}
+
+/* ── Canvas wrapper / preview ── */
+#previewWrapper{position:relative;background:#fff;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.12);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+body.dark #previewWrapper{background:#222;box-shadow:0 4px 20px rgba(0,0,0,0.5);}
+#designCanvas{display:block;}
+
+/* ── Upload zone ── */
+.drop-zone{border:2px dashed #1976d2;border-radius:12px;padding:32px 16px;text-align:center;cursor:pointer;background:#fafafa;transition:background 0.15s,border-color 0.15s;width:100%;max-width:600px;}
+.drop-zone:hover,.drop-zone.dragover{background:#e3f2fd;border-color:#1565c0;}
+.drop-zone .material-symbols-outlined{font-size:40px;color:#1976d2;display:block;margin-bottom:10px;}
+.drop-zone p{font-size:14px;color:#555;margin-bottom:6px;}
+.drop-zone span{font-size:12px;color:#999;}
+body.dark .drop-zone{background:#222;border-color:#555;color:#aaa;}
+body.dark .drop-zone .material-symbols-outlined{color:#90caf9;}
+body.dark .drop-zone:hover{background:#1a2a3a;}
+body.dark .drop-zone p{color:#bbb;}
+
+/* ── Page thumbnails ── */
+#pagesPanel{width:100%;max-width:800px;margin-top:16px;}
+.pages-grid{display:flex;flex-wrap:wrap;gap:10px;padding:4px;}
+.page-thumb{position:relative;cursor:pointer;border-radius:8px;overflow:hidden;border:2px solid #e0e0e0;transition:border-color 0.15s,box-shadow 0.15s;}
+.page-thumb:hover{border-color:#90caf9;box-shadow:0 2px 8px rgba(25,118,210,0.2);}
+.page-thumb.selected{border-color:#1976d2;box-shadow:0 2px 12px rgba(25,118,210,0.35);}
+.page-thumb canvas{display:block;}
+.page-num{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);color:#fff;font-size:10px;text-align:center;padding:2px;}
+.page-check{position:absolute;top:4px;right:4px;width:18px;height:18px;background:#1976d2;border-radius:50%;display:none;align-items:center;justify-content:center;}
+.page-thumb.selected .page-check{display:flex;}
+.page-check .material-symbols-outlined{font-size:12px;color:#fff;}
+
+/* ── Action Buttons ── */
+.action-btn{background:#1976d2;color:#fff;border:none;padding:8px 18px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px;transition:background 0.2s;white-space:nowrap;font-family:inherit;flex-shrink:0;}
+.action-btn:hover{background:#1565c0;}
+.action-btn:disabled{opacity:0.45;cursor:not-allowed;}
+.action-btn.secondary{background:#546e7a;}
+.action-btn.secondary:hover{background:#37474f;}
+.action-btn.danger{background:#d32f2f;}
+.action-btn.danger:hover{background:#b71c1c;}
+
+/* ── Input number/range row ── */
+.range-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.range-row input[type=range]{flex:1;accent-color:#1976d2;}
+.range-val{font-size:12px;color:#666;min-width:28px;text-align:right;}
+body.dark .range-val{color:#aaa;}
+
+/* ── Color row ── */
+.color-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+input[type="color"]{width:30px;height:30px;border:1px solid #e0e0e0;border-radius:50%;cursor:pointer;padding:2px;flex-shrink:0;}
+input[type="color"]::-webkit-color-swatch-wrapper{padding:0;}
+input[type="color"]::-webkit-color-swatch{border:none;border-radius:50%;}
+
+/* ── Modal ── */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.48);z-index:8000;align-items:center;justify-content:center;}
+.modal.open{display:flex;}
+.mbox{background:#fff;border-radius:16px;padding:26px;width:90%;max-width:520px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 16px 48px rgba(0,0,0,0.25);}
+body.dark .mbox{background:#1e1e1e;color:#ddd;box-shadow:0 16px 48px rgba(0,0,0,0.5);}
+.mhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+.mtitle{font-size:19px;font-weight:500;color:#333;}
+body.dark .mtitle{color:#e0e0e0;}
+.mclose{background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center;transition:background 0.15s;}
+.mclose:hover{background:#f5f5f5;}
+body.dark .mclose:hover{background:#333;}
+.mclose .material-symbols-outlined{font-size:21px;color:#666;}
+body.dark .mclose .material-symbols-outlined{color:#aaa;}
+.mfooter{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;}
+.mbtn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:background 0.15s;}
+.mbtn.primary{background:#1976d2;color:#fff;}
+.mbtn.primary:hover{background:#1565c0;}
+.mbtn.sec{background:#e0e0e0;color:#333;}
+.mbtn.sec:hover{background:#d0d0d0;}
+body.dark .mbtn.sec{background:#333;color:#bbb;}
+body.dark .mbtn.sec:hover{background:#3a3a3a;}
+.frow{margin-bottom:13px;}
+.frow label{display:block;font-size:12px;color:#777;margin-bottom:3px;}
+body.dark .frow label{color:#aaa;}
+.finput{width:100%;padding:8px 10px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;transition:border-color 0.2s;color:#333;background:#fafafa;}
+.finput:focus{border-color:#1976d2;background:#fff;}
+body.dark .finput{background:#252525!important;color:#ddd!important;border-color:#444!important;}
+
+/* ── Toast ── */
+#toastStack{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;z-index:10002;pointer-events:none;}
+.toast{padding:11px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,0.15);opacity:0;transform:translateY(60px);transition:transform 0.3s,opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.success,.toast.info{background:#1976d2;}
+.toast.error{background:#d32f2f;}
+
+/* ── Tip Box ── */
+#tipBox{position:fixed;bottom:80px;right:18px;width:284px;background:#1976d2;color:#fff;border-radius:14px;padding:14px;box-shadow:0 8px 24px rgba(25,118,210,0.3);z-index:9990;opacity:0;transform:translateY(8px);transition:opacity 0.3s,transform 0.3s;pointer-events:none;}
+#tipBox.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+#tipBox.hide{opacity:0;transform:translateY(8px);pointer-events:none;}
+body.dark #tipBox{background:#0d47a1;}
+.tip-prog{height:3px;background:rgba(255,255,255,0.2);border-radius:99px;overflow:hidden;margin-bottom:11px;}
+.tip-bar{height:100%;background:#fff;transition:width 0.3s;}
+.tip-text{font-size:13px;line-height:1.5;min-height:58px;}
+.tip-actions{display:flex;gap:7px;margin-top:11px;}
+.tip-btn{flex:1;border:none;padding:6px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+.tip-prev{background:rgba(255,255,255,0.15);color:#fff;}
+.tip-next{background:#fff;color:#1976d2;}
+
+/* ── Watermark overlay layer ── */
+#wmOverlay{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+
+/* ── Page info bar ── */
+.page-info-bar{display:flex;align-items:center;gap:10px;margin-bottom:12px;width:100%;max-width:800px;flex-wrap:wrap;}
+.page-info-bar select.sb-input{width:auto;min-width:120px;}
+
+/* ── Watermark preview canvas container ── */
+#canvasArea{display:flex;flex-direction:column;align-items:center;gap:16px;width:100%;}
+
+/* ── Floating position dot ── */
+.pos-dot{width:10px;height:10px;background:#1976d2;border-radius:50%;position:absolute;transform:translate(-50%,-50%);cursor:move;z-index:10;box-shadow:0 0 0 3px rgba(25,118,210,0.3);}
+
+/* ── Format row (two-col) ── */
+.fmt-2col{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+
+/* ── Progress bar ── */
+.prog-track{width:100%;height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;margin:12px 0;}
+.prog-fill{height:100%;background:#1976d2;transition:width 0.3s;border-radius:3px;}
+body.dark .prog-track{background:#333;}
+
+/* ── Image upload mini ── */
+.img-upload-box{border:2px dashed #d0d0d0;border-radius:8px;padding:12px;text-align:center;cursor:pointer;font-size:12px;color:#999;transition:all 0.15s;margin-bottom:8px;}
+.img-upload-box:hover{border-color:#1976d2;color:#1976d2;background:#e3f2fd;}
+body.dark .img-upload-box{border-color:#444;color:#666;}
+body.dark .img-upload-box:hover{border-color:#90caf9;color:#90caf9;background:#1a2a3a;}
+
+/* ── Tab selector ── */
+.wm-tabs{display:flex;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0;margin-bottom:12px;}
+.wm-tab{flex:1;padding:7px;background:#fafafa;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;color:#777;transition:all 0.15s;}
+.wm-tab.active{background:#1976d2;color:#fff;}
+.wm-tab:not(.active):hover{background:#e3f2fd;color:#1976d2;}
+body.dark .wm-tab{background:#252525;color:#666;border-color:#333;}
+body.dark .wm-tab.active{background:#1976d2;color:#fff;}
+body.dark .wm-tab:not(.active):hover{background:#1a2a3a;color:#90caf9;}
+
+/* ── Page selector in export modal ── */
+.page-sel-grid{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0;}
+.page-sel-chip{padding:4px 10px;border-radius:6px;border:1px solid #e0e0e0;font-size:12px;cursor:pointer;transition:all 0.15s;background:#fafafa;color:#555;}
+.page-sel-chip.on{background:#1976d2;color:#fff;border-color:#1976d2;}
+.page-sel-chip:hover:not(.on){background:#e3f2fd;border-color:#90caf9;color:#1976d2;}
+body.dark .page-sel-chip{background:#252525;border-color:#444;color:#aaa;}
+body.dark .page-sel-chip.on{background:#1976d2;color:#fff;}
+
+/* ── Inline label-value row ── */
+.lv-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:8px;}
+.lv-row label{font-size:12px;color:#777;flex-shrink:0;}
+body.dark .lv-row label{color:#aaa;}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">
-                <i class="material-icons">water_damage</i>
-                <span>Watermark Adder</span>
-            </div>
-        </header>
-        
-        <div class="card">
-            <h2 class="card-title">Upload Files</h2>
-            <div class="file-upload" id="fileUpload">
-                <i class="material-icons">cloud_upload</i>
-                <p>Drag and drop files here or click to browse</p>
-                <p class="small">Supports JPG files</p>
-                <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg" multiple>
-            </div>
-            <div class="file-info" id="fileInfo">
-                <div class="file-name" id="fileName"></div>
-                <div class="file-details" id="fileDetails"></div>
-            </div>
+
+<!-- Loading Screen -->
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading Watermarker…</div>
+</div>
+
+<!-- App Container -->
+<div id="appContainer">
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="material-symbols-outlined" style="color:#1976d2;font-size:22px;flex-shrink:0;">water_drop</span>
+    <span class="tool-title">Watermarker</span>
+    <div class="top-spacer"></div>
+    <button class="action-btn" id="uploadMoreBtn" onclick="triggerUpload()" style="font-size:12px;padding:6px 12px;">
+      <span class="material-symbols-outlined" style="font-size:16px;">upload_file</span> Upload Files
+    </button>
+    <button class="action-btn secondary" id="exportBtn" onclick="openExportModal()" style="font-size:12px;padding:6px 12px;" disabled>
+      <span class="material-symbols-outlined" style="font-size:16px;">download</span> Export
+    </button>
+    <button class="icon-btn" onclick="toggleDarkMode()" title="Toggle dark mode">
+      <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+    </button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="tbtn" onclick="setWmTab('text')" id="tbText" title="Text Watermark">
+      <span class="material-symbols-outlined">title</span> Text
+    </button>
+    <button class="tbtn" onclick="setWmTab('image')" id="tbImage" title="Image Watermark">
+      <span class="material-symbols-outlined">image</span> Image
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="applyWatermarkToPreview()" title="Preview watermark">
+      <span class="material-symbols-outlined">preview</span> Preview
+    </button>
+    <button class="tbtn" onclick="clearWatermark()" title="Clear watermark">
+      <span class="material-symbols-outlined">layers_clear</span> Clear
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="selectAllPages(true)" title="Select all pages">
+      <span class="material-symbols-outlined">select_all</span> All Pages
+    </button>
+    <button class="tbtn" onclick="selectAllPages(false)" title="Deselect all">
+      <span class="material-symbols-outlined">deselect</span> None
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="openExportModal()" id="tbExport" disabled>
+      <span class="material-symbols-outlined">download</span> Export PDF
+    </button>
+  </div>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+
+      <!-- Watermark type tabs -->
+      <div class="sb-section">
+        <div class="sb-title">Watermark Type</div>
+        <div class="wm-tabs">
+          <button class="wm-tab active" id="tabTextBtn" onclick="setWmTab('text')">Text</button>
+          <button class="wm-tab" id="tabImageBtn" onclick="setWmTab('image')">Image</button>
         </div>
-        
-        <div class="card" id="pagesCard" style="display: none;">
-            <h2 class="card-title">Select Pages</h2>
-            <div class="pages-container" id="pagesContainer"></div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="selectAllPages">
-                <label for="selectAllPages">Select all pages</label>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h2 class="card-title">Watermark Settings</h2>
-            
-            <div class="form-group">
-                <label for="watermarkText">Watermark Text</label>
-                <input type="text" id="watermarkText" placeholder="Enter watermark text" value="CONFIDENTIAL">
-            </div>
-            
-            <div class="form-group">
-                <label>Position</label>
-                <select id="watermarkPosition">
-                    <option value="top-center">Top Center</option>
-                    <option value="middle-center" selected>Middle Center (Behind Text)</option>
-                    <option value="bottom-center">Bottom Center</option>
-                    <option value="diagonal">Diagonal Across Page</option>
-                    <option value="custom">Custom Position (Drag to place)</option>
+      </div>
+
+      <!-- Text Watermark Settings -->
+      <div id="textWmSection">
+        <!-- Text Content -->
+        <div class="sb-section">
+          <div class="aw-header" onclick="toggleDropdown(this)">
+            <span class="aw-header-label">Text Content</span>
+            <span class="material-symbols-outlined aw-chevron open">expand_more</span>
+          </div>
+          <div class="aw-dropdown open">
+            <div class="aw-inner">
+              <div class="sb-row">
+                <label class="sb-label">Watermark text</label>
+                <textarea class="sb-input" id="wmText" rows="2" style="resize:vertical;" oninput="livePreview()">CONFIDENTIAL</textarea>
+              </div>
+              <div class="sb-row">
+                <label class="sb-label">Font family</label>
+                <select class="sb-input" id="wmFont" onchange="livePreview()">
+                  <option value="Inter, Arial, sans-serif">Inter</option>
+                  <option value="Arial, sans-serif">Arial</option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="Times New Roman, serif">Times New Roman</option>
+                  <option value="Courier New, monospace">Courier New</option>
+                  <option value="Verdana, sans-serif">Verdana</option>
+                  <option value="Impact, sans-serif">Impact</option>
+                  <option value="Tahoma, sans-serif">Tahoma</option>
                 </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="watermarkOpacity">Opacity</label>
-                <input type="range" id="watermarkOpacity" min="10" max="100" value="30">
-                <span id="opacityValue">30%</span>
-            </div>
-            
-            <div class="form-group">
-                <label for="watermarkSize">Size</label>
-                <input type="range" id="watermarkSize" min="10" max="200" value="48">
-                <span id="sizeValue">48px</span>
-            </div>
-            
-            <div class="form-group">
-                <label for="watermarkColor">Color</label>
-                <div class="color-picker">
-                    <input type="color" id="watermarkColor" value="#000000">
-                    <select id="watermarkColorPreset">
-                        <option value="#000000">Black</option>
-                        <option value="#808080">Gray</option>
-                        <option value="#FF0000">Red</option>
-                        <option value="#0000FF">Blue</option>
-                        <option value="#008000">Green</option>
-                    </select>
+              </div>
+              <div class="sb-row">
+                <label class="sb-label">Font size (px)</label>
+                <div class="range-row">
+                  <input type="range" id="wmFontSize" min="8" max="200" value="48" oninput="syncRange(this,'wmFontSizeVal');livePreview()">
+                  <span class="range-val" id="wmFontSizeVal">48</span>
                 </div>
+              </div>
             </div>
-            
-            <div class="form-group">
-                <label>Text Style</label>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="watermarkBold">
-                    <label for="watermarkBold">Bold</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="watermarkUnderline">
-                    <label for="watermarkUnderline">Underline</label>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label>Preview</label>
-                <div class="preview-container">
-                    <div class="preview-page" id="previewPage">
-                        <div class="watermark-preview" id="watermarkPreview">CONFIDENTIAL</div>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
-        
-        <div class="actions">
-            <button class="btn btn-outlined" id="resetBtn">
-                <i class="material-icons">refresh</i>
-                Reset
-            </button>
-            <button class="btn btn-primary" id="applyBtn" disabled>
-                <i class="material-icons">done</i>
-                Apply Watermark
-            </button>
-            <button class="btn btn-primary" id="downloadBtn" disabled>
-                <i class="material-icons">download</i>
-                Download
-            </button>
+
+        <!-- Text Style -->
+        <div class="sb-section">
+          <div class="aw-header" onclick="toggleDropdown(this)">
+            <span class="aw-header-label">Text Style</span>
+            <span class="material-symbols-outlined aw-chevron">expand_more</span>
+          </div>
+          <div class="aw-dropdown">
+            <div class="aw-inner">
+              <div class="sb-row">
+                <label class="sb-label">Text color</label>
+                <div class="color-row">
+                  <input type="color" id="wmColor" value="#ff0000" oninput="livePreview()">
+                  <input class="sb-input" id="wmColorHex" value="#ff0000" style="flex:1;" oninput="syncColorFromHex('wmColorHex','wmColor')">
+                </div>
+              </div>
+              <div class="sb-row">
+                <label class="sb-label">Highlight color</label>
+                <div class="sb-toggle-row" style="margin-bottom:5px;">
+                  <span class="sb-toggle-label">Enable highlight</span>
+                  <label class="toggle-switch"><input type="checkbox" id="wmHighlightOn" onchange="livePreview()"><span class="toggle-slider"></span></label>
+                </div>
+                <div class="color-row">
+                  <input type="color" id="wmHighlightColor" value="#ffff00" oninput="livePreview()">
+                  <input class="sb-input" id="wmHighlightHex" value="#ffff00" style="flex:1;" oninput="syncColorFromHex('wmHighlightHex','wmHighlightColor')">
+                </div>
+              </div>
+              <div class="sb-toggle-row">
+                <span class="sb-toggle-label"><b>Bold</b></span>
+                <label class="toggle-switch"><input type="checkbox" id="wmBold" onchange="livePreview()"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="sb-toggle-row">
+                <span class="sb-toggle-label"><i>Italic</i></span>
+                <label class="toggle-switch"><input type="checkbox" id="wmItalic" onchange="livePreview()"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="sb-toggle-row">
+                <span class="sb-toggle-label"><u>Underline</u></span>
+                <label class="toggle-switch"><input type="checkbox" id="wmUnderline" onchange="livePreview()"><span class="toggle-slider"></span></label>
+              </div>
+              <div class="sb-toggle-row">
+                <span class="sb-toggle-label"><s>Strikethrough</s></span>
+                <label class="toggle-switch"><input type="checkbox" id="wmStrike" onchange="livePreview()"><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Image Watermark Settings -->
+      <div id="imageWmSection" style="display:none;">
+        <div class="sb-section">
+          <div class="aw-header" onclick="toggleDropdown(this)">
+            <span class="aw-header-label">Image Source</span>
+            <span class="material-symbols-outlined aw-chevron open">expand_more</span>
+          </div>
+          <div class="aw-dropdown open">
+            <div class="aw-inner">
+              <div class="img-upload-box" onclick="triggerWmImageUpload()" id="wmImgBox">
+                <span class="material-symbols-outlined" style="font-size:28px;display:block;margin-bottom:6px;">add_photo_alternate</span>
+                <span>Click to upload watermark image</span>
+              </div>
+              <input type="file" id="wmImageInput" accept="image/*" style="display:none" onchange="loadWmImage(this)">
+              <div id="wmImgPreview" style="display:none;text-align:center;margin-top:6px;">
+                <img id="wmImgThumb" style="max-width:100%;max-height:80px;border-radius:6px;border:1px solid #e0e0e0;">
+              </div>
+              <div class="sb-row" style="margin-top:8px;">
+                <label class="sb-label">Image width (%)</label>
+                <div class="range-row">
+                  <input type="range" id="wmImgWidth" min="5" max="100" value="30" oninput="syncRange(this,'wmImgWidthVal');livePreview()">
+                  <span class="range-val" id="wmImgWidthVal">30</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Opacity & Rotation -->
+      <div class="sb-section">
+        <div class="aw-header" onclick="toggleDropdown(this)">
+          <span class="aw-header-label">Opacity & Rotation</span>
+          <span class="material-symbols-outlined aw-chevron open">expand_more</span>
+        </div>
+        <div class="aw-dropdown open">
+          <div class="aw-inner">
+            <div class="sb-row">
+              <label class="sb-label">Opacity (%)</label>
+              <div class="range-row">
+                <input type="range" id="wmOpacity" min="1" max="100" value="25" oninput="syncRange(this,'wmOpacityVal');livePreview()">
+                <span class="range-val" id="wmOpacityVal">25</span>
+              </div>
+            </div>
+            <div class="sb-row">
+              <label class="sb-label">Rotation (°)</label>
+              <div class="range-row">
+                <input type="range" id="wmRotation" min="-180" max="180" value="-45" oninput="syncRange(this,'wmRotationVal');livePreview()">
+                <span class="range-val" id="wmRotationVal">-45</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Position & Tiling -->
+      <div class="sb-section">
+        <div class="aw-header" onclick="toggleDropdown(this)">
+          <span class="aw-header-label">Position & Tiling</span>
+          <span class="material-symbols-outlined aw-chevron open">expand_more</span>
+        </div>
+        <div class="aw-dropdown open">
+          <div class="aw-inner">
+            <div class="sb-row">
+              <label class="sb-label">Mode</label>
+              <select class="sb-input" id="wmMode" onchange="onModeChange();livePreview()">
+                <option value="single">Single (custom position)</option>
+                <option value="tile" selected>Tile (repeat)</option>
+                <option value="center">Center only</option>
+                <option value="diagonal">Diagonal strip</option>
+              </select>
+            </div>
+            <!-- Single position controls -->
+            <div id="singlePosCtrl" style="display:none;">
+              <div class="sb-row">
+                <label class="sb-label">X position (%)</label>
+                <div class="range-row">
+                  <input type="range" id="wmPosX" min="0" max="100" value="50" oninput="syncRange(this,'wmPosXVal');livePreview()">
+                  <span class="range-val" id="wmPosXVal">50</span>
+                </div>
+              </div>
+              <div class="sb-row">
+                <label class="sb-label">Y position (%)</label>
+                <div class="range-row">
+                  <input type="range" id="wmPosY" min="0" max="100" value="50" oninput="syncRange(this,'wmPosYVal');livePreview()">
+                  <span class="range-val" id="wmPosYVal">50</span>
+                </div>
+              </div>
+            </div>
+            <!-- Tile spacing controls -->
+            <div id="tilePosCtrl">
+              <div class="sb-row">
+                <label class="sb-label">Horizontal spacing (px)</label>
+                <div class="range-row">
+                  <input type="range" id="wmSpacingX" min="20" max="500" value="180" oninput="syncRange(this,'wmSpacingXVal');livePreview()">
+                  <span class="range-val" id="wmSpacingXVal">180</span>
+                </div>
+              </div>
+              <div class="sb-row">
+                <label class="sb-label">Vertical spacing (px)</label>
+                <div class="range-row">
+                  <input type="range" id="wmSpacingY" min="20" max="500" value="160" oninput="syncRange(this,'wmSpacingYVal');livePreview()">
+                  <span class="range-val" id="wmSpacingYVal">160</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Text Stroke (only for text wm) -->
+      <div class="sb-section" id="strokeSection">
+        <div class="aw-header" onclick="toggleDropdown(this)">
+          <span class="aw-header-label">Stroke / Outline</span>
+          <span class="material-symbols-outlined aw-chevron">expand_more</span>
+        </div>
+        <div class="aw-dropdown">
+          <div class="aw-inner">
+            <div class="sb-toggle-row">
+              <span class="sb-toggle-label">Enable stroke</span>
+              <label class="toggle-switch"><input type="checkbox" id="wmStrokeOn" onchange="livePreview()"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="sb-row">
+              <label class="sb-label">Stroke color</label>
+              <div class="color-row">
+                <input type="color" id="wmStrokeColor" value="#000000" oninput="livePreview()">
+                <input class="sb-input" id="wmStrokeColorHex" value="#000000" style="flex:1;" oninput="syncColorFromHex('wmStrokeColorHex','wmStrokeColor')">
+              </div>
+            </div>
+            <div class="sb-row">
+              <label class="sb-label">Stroke width (px)</label>
+              <div class="range-row">
+                <input type="range" id="wmStrokeWidth" min="0" max="10" value="1" oninput="syncRange(this,'wmStrokeWidthVal');livePreview()">
+                <span class="range-val" id="wmStrokeWidthVal">1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">chevron_left</span> Hide Panel
+      </button>
     </div>
-    
-    <div class="loading" id="loading">
-        <div class="loading-spinner"></div>
-        <div id="loadingText">Processing files...</div>
+
+    <!-- Expand Button -->
+    <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+      <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+    </button>
+
+    <!-- Content Area -->
+    <div class="content-area" id="contentArea">
+
+      <!-- Upload Zone (shown when no files loaded) -->
+      <div id="uploadArea" style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;width:100%;max-width:600px;">
+        <div class="drop-zone" id="dropZone" onclick="triggerUpload()" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+          <span class="material-symbols-outlined">upload_file</span>
+          <p>Drop files here or click to upload</p>
+          <span>Supports: PDF, PNG, JPG, JPEG, WEBP, ZIP (of images)</span>
+        </div>
+        <input type="file" id="fileInput" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.zip" style="display:none" onchange="handleFiles(this.files)">
+      </div>
+
+      <!-- Canvas / Preview Area (shown after upload) -->
+      <div id="canvasArea" style="display:none;">
+        <div class="page-info-bar">
+          <span style="font-size:13px;font-weight:600;color:#1976d2;" id="pageCountLabel">0 pages</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="action-btn" onclick="applyWatermarkToPreview()" style="font-size:12px;padding:6px 12px;">
+              <span class="material-symbols-outlined" style="font-size:15px;">preview</span> Apply Preview
+            </button>
+            <button class="action-btn secondary" onclick="clearWatermark()" style="font-size:12px;padding:6px 12px;">
+              <span class="material-symbols-outlined" style="font-size:15px;">layers_clear</span> Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Preview of first page with draggable watermark -->
+        <div id="previewWrapper" style="max-width:700px;width:100%;">
+          <canvas id="designCanvas"></canvas>
+          <canvas id="wmCanvas" style="position:absolute;inset:0;pointer-events:none;"></canvas>
+        </div>
+        <p style="font-size:11px;color:#aaa;margin-top:4px;">↑ Preview of page 1 — drag to reposition (single mode)</p>
+
+        <!-- Page thumbnails -->
+        <div id="pagesPanel">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <span class="sb-title" style="margin:0;">Pages — click to toggle watermark</span>
+            <div style="display:flex;gap:6px;">
+              <button class="tbtn" onclick="selectAllPages(true)" style="font-size:11px;padding:4px 8px;">All</button>
+              <button class="tbtn" onclick="selectAllPages(false)" style="font-size:11px;padding:4px 8px;">None</button>
+            </div>
+          </div>
+          <div class="pages-grid" id="pagesGrid"></div>
+        </div>
+      </div>
     </div>
-    
-    <script>
-        // Initialize PDF.js worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
-        
-        // DOM elements
-        const fileUpload = document.getElementById('fileUpload');
-        const fileInput = document.getElementById('fileInput');
-        const fileInfo = document.getElementById('fileInfo');
-        const fileName = document.getElementById('fileName');
-        const fileDetails = document.getElementById('fileDetails');
-        const pagesCard = document.getElementById('pagesCard');
-        const pagesContainer = document.getElementById('pagesContainer');
-        const selectAllPages = document.getElementById('selectAllPages');
-        const watermarkText = document.getElementById('watermarkText');
-        const watermarkPosition = document.getElementById('watermarkPosition');
-        const watermarkOpacity = document.getElementById('watermarkOpacity');
-        const opacityValue = document.getElementById('opacityValue');
-        const watermarkSize = document.getElementById('watermarkSize');
-        const sizeValue = document.getElementById('sizeValue');
-        const watermarkColor = document.getElementById('watermarkColor');
-        const watermarkColorPreset = document.getElementById('watermarkColorPreset');
-        const watermarkBold = document.getElementById('watermarkBold');
-        const watermarkUnderline = document.getElementById('watermarkUnderline');
-        const watermarkPreview = document.getElementById('watermarkPreview');
-        const previewPage = document.getElementById('previewPage');
-        const resetBtn = document.getElementById('resetBtn');
-        const applyBtn = document.getElementById('applyBtn');
-        const downloadBtn = document.getElementById('downloadBtn');
-        const loading = document.getElementById('loading');
-        const loadingText = document.getElementById('loadingText');
-        
-        // Global variables
-        let files = [];
-        let processedFiles = [];
-        let isDragging = false;
-        let dragOffsetX = 0;
-        let dragOffsetY = 0;
-        let currentFileType = '';
-        let pageImages = []; // For storing page images data
-        
-        // Event listeners
-        fileUpload.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', handleFileSelect);
-        watermarkText.addEventListener('input', updateWatermarkPreview);
-        watermarkPosition.addEventListener('change', updateWatermarkPosition);
-        watermarkOpacity.addEventListener('input', updateWatermarkOpacity);
-        watermarkSize.addEventListener('input', updateWatermarkSize);
-        watermarkColor.addEventListener('input', updateWatermarkColor);
-        watermarkColorPreset.addEventListener('change', () => {
-            watermarkColor.value = watermarkColorPreset.value;
-            updateWatermarkColor();
-        });
-        watermarkBold.addEventListener('change', updateWatermarkStyle);
-        watermarkUnderline.addEventListener('change', updateWatermarkStyle);
-        selectAllPages.addEventListener('change', toggleSelectAllPages);
-        resetBtn.addEventListener('click', resetAll);
-        applyBtn.addEventListener('click', applyWatermark);
-        downloadBtn.addEventListener('click', downloadFiles);
-        
-        // Watermark preview drag functionality
-        watermarkPreview.addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', handleDrag);
-        document.addEventListener('mouseup', endDrag);
-        
-        // Functions
-        function handleFileSelect(e) {
-            files = Array.from(e.target.files);
-            if (files.length === 0) return;
-            
-            const file = files[0];
-            const fileExt = file.name.split('.').pop().toLowerCase();
-            
-            if (fileExt === 'pdf') {
-                currentFileType = 'pdf';
-                handlePdfFile(file);
-            } else if (fileExt === 'jpg' || fileExt === 'jpeg') {
-                currentFileType = 'image';
-                handleImageFiles(files);
-            } else {
-                showError('Unsupported file type. Please upload PDF or JPG files.');
-                return;
-            }
-            
-            // Update file info
-            fileName.textContent = files.length === 1 ? file.name : `${files.length} files selected`;
-            fileDetails.textContent = files.length === 1 ? 
-                `${formatFileSize(file.size)} • ${fileExt.toUpperCase()}` : 
-                `${files.length} files`;
-            
-            fileInfo.classList.add('show');
-            applyBtn.disabled = false;
-        }
-        
-        async function handlePdfFile(file) {
-            loadingText.textContent = 'Extracting PDF pages...';
-            loading.classList.add('show');
-            
-            try {
-                const pdfData = await readFileAsArrayBuffer(file);
-                const pdf = await pdfjsLib.getDocument({data: pdfData}).promise;
-                
-                // Clear previous thumbnails
-                pagesContainer.innerHTML = '';
-                pageImages = [];
-                
-                // Create thumbnails for each page
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const viewport = page.getViewport({scale: 0.2});
-                    
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-                    
-                    await page.render({
-                        canvasContext: context,
-                        viewport: viewport
-                    }).promise;
-                    
-                    // Store page data for later processing
-                    pageImages.push({
-                        pageNum: i,
-                        imageData: canvas.toDataURL('image/jpeg'),
-                        width: viewport.width,
-                        height: viewport.height
-                    });
-                    
-                    const thumbnail = document.createElement('div');
-                    thumbnail.className = 'page-thumbnail';
-                    thumbnail.dataset.pageNum = i;
-                    
-                    const img = document.createElement('img');
-                    img.src = canvas.toDataURL();
-                    thumbnail.appendChild(img);
-                    
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.className = 'page-checkbox';
-                    checkbox.checked = true;
-                    checkbox.dataset.pageNum = i;
-                    thumbnail.appendChild(checkbox);
-                    
-                    thumbnail.addEventListener('click', (e) => {
-                        if (e.target !== checkbox) {
-                            checkbox.checked = !checkbox.checked;
-                        }
-                        thumbnail.classList.toggle('selected', checkbox.checked);
-                    });
-                    
-                    pagesContainer.appendChild(thumbnail);
-                }
-                
-                pagesCard.style.display = 'block';
-                loading.classList.remove('show');
-            } catch (error) {
-                console.error('Error processing PDF:', error);
-                loading.classList.remove('show');
-                showError('Error processing PDF file. Please try another file.');
-            }
-        }
-        
-        function handleImageFiles(files) {
-            // Clear previous thumbnails
-            pagesContainer.innerHTML = '';
-            pageImages = [];
-            
-            files.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = new Image();
-                    img.onload = function() {
-                        // Store image data for later processing
-                        pageImages.push({
-                            pageNum: index + 1,
-                            imageData: e.target.result,
-                            width: img.width,
-                            height: img.height
-                        });
-                        
-                        const thumbnail = document.createElement('div');
-                        thumbnail.className = 'page-thumbnail';
-                        thumbnail.dataset.pageNum = index + 1;
-                        
-                        const thumbImg = document.createElement('img');
-                        thumbImg.src = e.target.result;
-                        thumbnail.appendChild(thumbImg);
-                        
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        checkbox.className = 'page-checkbox';
-                        checkbox.checked = true;
-                        checkbox.dataset.pageNum = index + 1;
-                        thumbnail.appendChild(checkbox);
-                        
-                        thumbnail.addEventListener('click', (e) => {
-                            if (e.target !== checkbox) {
-                                checkbox.checked = !checkbox.checked;
-                            }
-                            thumbnail.classList.toggle('selected', checkbox.checked);
-                        });
-                        
-                        pagesContainer.appendChild(thumbnail);
-                    };
-                    img.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            });
-            
-            pagesCard.style.display = 'block';
-        }
-        
-        function readFileAsArrayBuffer(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsArrayBuffer(file);
-            });
-        }
-        
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-        
-        function showError(message) {
-            // In a real app, you'd show this to the user
-            console.error(message);
-        }
-        
-        function toggleSelectAllPages() {
-            const checkboxes = document.querySelectorAll('.page-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = selectAllPages.checked;
-                const thumbnail = checkbox.closest('.page-thumbnail');
-                thumbnail.classList.toggle('selected', checkbox.checked);
-            });
-        }
-        
-        function updateWatermarkPreview() {
-            watermarkPreview.textContent = watermarkText.value || 'Watermark';
-        }
-        
-        function updateWatermarkPosition() {
-            const position = watermarkPosition.value;
-            watermarkPreview.style.transform = 'none';
-            watermarkPreview.style.writingMode = 'horizontal-tb';
-            
-            switch(position) {
-                case 'top-center':
-                    watermarkPreview.style.top = '20px';
-                    watermarkPreview.style.left = '50%';
-                    watermarkPreview.style.transform = 'translateX(-50%)';
-                    break;
-                case 'middle-center':
-                    watermarkPreview.style.top = '50%';
-                    watermarkPreview.style.left = '50%';
-                    watermarkPreview.style.transform = 'translate(-50%, -50%)';
-                    break;
-                case 'bottom-center':
-                    watermarkPreview.style.bottom = '20px';
-                    watermarkPreview.style.left = '50%';
-                    watermarkPreview.style.transform = 'translateX(-50%)';
-                    break;
-                case 'diagonal':
-                    watermarkPreview.style.top = '50%';
-                    watermarkPreview.style.left = '50%';
-                    watermarkPreview.style.transform = 'translate(-50%, -50%) rotate(-45deg)';
-                    break;
-                case 'custom':
-                    // Position will be controlled by drag
-                    break;
-            }
-        }
-        
-        function updateWatermarkOpacity() {
-            const opacity = watermarkOpacity.value / 100;
-            opacityValue.textContent = `${watermarkOpacity.value}%`;
-            watermarkPreview.style.opacity = opacity;
-        }
-        
-        function updateWatermarkSize() {
-            sizeValue.textContent = `${watermarkSize.value}px`;
-            watermarkPreview.style.fontSize = `${watermarkSize.value}px`;
-        }
-        
-        function updateWatermarkColor() {
-            watermarkPreview.style.color = watermarkColor.value;
-        }
-        
-        function updateWatermarkStyle() {
-            watermarkPreview.style.fontWeight = watermarkBold.checked ? 'bold' : 'normal';
-            watermarkPreview.style.textDecoration = watermarkUnderline.checked ? 'underline' : 'none';
-        }
-        
-        function startDrag(e) {
-            if (watermarkPosition.value !== 'custom') return;
-            
-            isDragging = true;
-            const rect = watermarkPreview.getBoundingClientRect();
-            dragOffsetX = e.clientX - rect.left;
-            dragOffsetY = e.clientY - rect.top;
-            e.preventDefault();
-        }
-        
-        function handleDrag(e) {
-            if (!isDragging || watermarkPosition.value !== 'custom') return;
-            
-            const pageRect = previewPage.getBoundingClientRect();
-            let x = e.clientX - pageRect.left - dragOffsetX;
-            let y = e.clientY - pageRect.top - dragOffsetY;
-            
-            // Constrain to page boundaries
-            x = Math.max(0, Math.min(x, pageRect.width - watermarkPreview.offsetWidth));
-            y = Math.max(0, Math.min(y, pageRect.height - watermarkPreview.offsetHeight));
-            
-            watermarkPreview.style.left = `${x}px`;
-            watermarkPreview.style.top = `${y}px`;
-        }
-        
-        function endDrag() {
-            isDragging = false;
-        }
-        
-        async function applyWatermark() {
-            loadingText.textContent = 'Applying watermark...';
-            loading.classList.add('show');
-            
-            try {
-                if (currentFileType === 'pdf') {
-                    processedFiles = await processPdfWithWatermark();
-                } else {
-                    processedFiles = await processImagesWithWatermark();
-                }
-                
-                downloadBtn.disabled = false;
-                loading.classList.remove('show');
-            } catch (error) {
-                console.error('Error applying watermark:', error);
-                loading.classList.remove('show');
-                showError('Error applying watermark. Please try again.');
-            }
-        }
-        
-        async function processPdfWithWatermark() {
-            // Get selected pages
-            const selectedPages = [];
-            document.querySelectorAll('.page-checkbox:checked').forEach(checkbox => {
-                selectedPages.push(parseInt(checkbox.dataset.pageNum));
-            });
-            
-            if (selectedPages.length === 0) {
-                showError('Please select at least one page to watermark.');
-                return;
-            }
-            
-            // Load the original PDF
-            const file = files[0];
-            const pdfBytes = await readFileAsArrayBuffer(file);
-            const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
-            
-            // Get watermark settings
-            const watermark = getWatermarkSettings();
-            
-            // Add watermark to each selected page
-            const pages = pdfDoc.getPages();
-            for (const pageNum of selectedPages) {
-                if (pageNum > pages.length) continue;
-                
-                const page = pages[pageNum - 1];
-                const { width, height } = page.getSize();
-                
-                // Create watermark based on position
-                switch(watermark.position) {
-                    case 'top-center':
-                        await addTextWatermark(
-                            page,
-                            watermark.text,
-                            width / 2,
-                            height - 50,
-                            watermark
-                        );
-                        break;
-                    case 'middle-center':
-                        await addTextWatermark(
-                            page,
-                            watermark.text,
-                            width / 2,
-                            height / 2,
-                            watermark
-                        );
-                        break;
-                    case 'bottom-center':
-                        await addTextWatermark(
-                            page,
-                            watermark.text,
-                            width / 2,
-                            50,
-                            watermark
-                        );
-                        break;
-                    case 'diagonal':
-                        await addDiagonalWatermark(page, watermark);
-                        break;
-                    case 'custom':
-                        // Use the preview position scaled to actual page size
-                        const previewRect = previewPage.getBoundingClientRect();
-                        const watermarkRect = watermarkPreview.getBoundingClientRect();
-                        
-                        const xPercent = (watermarkRect.left - previewRect.left) / previewRect.width;
-                        const yPercent = (watermarkRect.top - previewRect.top) / previewRect.height;
-                        
-                        await addTextWatermark(
-                            page,
-                            watermark.text,
-                            width * xPercent,
-                            height * (1 - yPercent),
-                            watermark
-                        );
-                        break;
-                }
-            }
-            
-            // Save the watermarked PDF
-            const watermarkedPdfBytes = await pdfDoc.save();
-            return [new File([watermarkedPdfBytes], `watermarked_${file.name}`, { type: 'application/pdf' })];
-        }
-        
-        async function addTextWatermark(page, text, x, y, settings) {
-            const { rgb, size, opacity, bold, underline } = settings;
-            
-            page.drawText(text, {
-                x,
-                y,
-                size,
-                color: PDFLib.rgb(rgb[0]/255, rgb[1]/255, rgb[2]/255),
-                opacity,
-                font: await page.doc.embedFont(bold ? PDFLib.StandardFonts.HelveticaBold : PDFLib.StandardFonts.Helvetica),
-                rotate: PDFLib.degrees(0),
-            });
-            
-            if (underline) {
-                const textWidth = size * text.length * 0.6; // Approximate width
-                page.drawLine({
-                    start: { x: x - textWidth/2, y: y - 5 },
-                    end: { x: x + textWidth/2, y: y - 5 },
-                    thickness: 1,
-                    color: PDFLib.rgb(rgb[0]/255, rgb[1]/255, rgb[2]/255),
-                    opacity,
-                });
-            }
-        }
-        
-        async function addDiagonalWatermark(page, settings) {
-            const { text, rgb, size, opacity, bold } = settings;
-            const { width, height } = page.getSize();
-            const diagonalLength = Math.sqrt(width * width + height * height);
-            const textWidth = size * text.length * 0.6; // Approximate width
-            const repetitions = Math.ceil(diagonalLength / textWidth);
-            
-            const repeatedText = (text + ' ').repeat(repetitions).trim();
-            
-            page.drawText(repeatedText, {
-                x: width / 2,
-                y: height / 2,
-                size,
-                color: PDFLib.rgb(rgb[0]/255, rgb[1]/255, rgb[2]/255),
-                opacity: opacity * 0.7, // Slightly more transparent for diagonal
-                font: await page.doc.embedFont(bold ? PDFLib.StandardFonts.HelveticaBold : PDFLib.StandardFonts.Helvetica),
-                rotate: PDFLib.degrees(-45),
-            });
-        }
-        
-        async function processImagesWithWatermark() {
-            // Get selected images
-            const selectedImages = [];
-            document.querySelectorAll('.page-checkbox:checked').forEach(checkbox => {
-                selectedImages.push(parseInt(checkbox.dataset.pageNum) - 1);
-            });
-            
-            if (selectedImages.length === 0) {
-                showError('Please select at least one image to watermark.');
-                return;
-            }
-            
-            const watermark = getWatermarkSettings();
-            const watermarkedImages = [];
-            
-            for (const index of selectedImages) {
-                if (index >= pageImages.length) continue;
-                
-                const imgData = pageImages[index];
-                const img = await loadImage(imgData.imageData);
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Set canvas dimensions
-                canvas.width = img.width;
-                canvas.height = img.height;
-                
-                // Draw original image
-                ctx.drawImage(img, 0, 0);
-                
-                // Set watermark styles
-                ctx.font = `${watermark.bold ? 'bold ' : ''}${watermark.size}px Arial`;
-                ctx.fillStyle = `rgba(${watermark.rgb[0]}, ${watermark.rgb[1]}, ${watermark.rgb[2]}, ${watermark.opacity})`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                
-                // Add watermark based on position
-                switch(watermark.position) {
-                    case 'top-center':
-                        ctx.fillText(watermark.text, img.width / 2, 50);
-                        break;
-                    case 'middle-center':
-                        ctx.fillText(watermark.text, img.width / 2, img.height / 2);
-                        break;
-                    case 'bottom-center':
-                        ctx.fillText(watermark.text, img.width / 2, img.height - 50);
-                        break;
-                    case 'diagonal':
-                        ctx.save();
-                        ctx.translate(img.width / 2, img.height / 2);
-                        ctx.rotate(-45 * Math.PI / 180);
-                        ctx.fillText(watermark.text, 0, 0);
-                        ctx.restore();
-                        break;
-                    case 'custom':
-                        // Use the preview position scaled to actual image size
-                        const previewRect = previewPage.getBoundingClientRect();
-                        const watermarkRect = watermarkPreview.getBoundingClientRect();
-                        
-                        const xPercent = (watermarkRect.left - previewRect.left) / previewRect.width;
-                        const yPercent = (watermarkRect.top - previewRect.top) / previewRect.height;
-                        
-                        ctx.fillText(
-                            watermark.text,
-                            img.width * xPercent,
-                            img.height * yPercent
-                        );
-                        break;
-                }
-                
-                // Convert canvas to blob
-                const blob = await new Promise(resolve => {
-                    canvas.toBlob(resolve, 'image/jpeg', 0.9);
-                });
-                
-                watermarkedImages.push(new File([blob], `watermarked_${files[index].name}`, { type: 'image/jpeg' }));
-            }
-            
-            return watermarkedImages;
-        }
-        
-        function loadImage(src) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = reject;
-                img.src = src;
-            });
-        }
-        
-        function getWatermarkSettings() {
-            // Parse color hex to RGB
-            const hex = watermarkColor.value;
-            const rgb = [
-                parseInt(hex.substr(1, 2), 16),
-                parseInt(hex.substr(3, 2), 16),
-                parseInt(hex.substr(5, 2), 16)
-            ];
-            
-            return {
-                text: watermarkText.value || 'Watermark',
-                position: watermarkPosition.value,
-                opacity: watermarkOpacity.value / 100,
-                size: parseInt(watermarkSize.value),
-                rgb,
-                bold: watermarkBold.checked,
-                underline: watermarkUnderline.checked
-            };
-        }
-        
-        function downloadFiles() {
-            if (processedFiles.length === 0) return;
-            
-            if (currentFileType === 'pdf') {
-                // For PDF, download the single watermarked file
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(processedFiles[0]);
-                link.download = processedFiles[0].name;
-                link.click();
-            } else {
-                // For images, create a ZIP file
-                const zip = new JSZip();
-                const imgFolder = zip.folder("watermarked_images");
-                
-                processedFiles.forEach(file => {
-                    imgFolder.file(file.name, file);
-                });
-                
-                zip.generateAsync({type: "blob"}).then(content => {
-                    saveAs(content, "watermarked_images.zip");
-                });
-            }
-        }
-        
-        function resetAll() {
-            fileInput.value = '';
-            files = [];
-            processedFiles = [];
-            pageImages = [];
-            fileInfo.classList.remove('show');
-            pagesCard.style.display = 'none';
-            pagesContainer.innerHTML = '';
-            applyBtn.disabled = true;
-            downloadBtn.disabled = true;
-            
-            // Reset watermark settings to defaults
-            watermarkText.value = 'CONFIDENTIAL';
-            watermarkPosition.value = 'middle-center';
-            watermarkOpacity.value = 30;
-            opacityValue.textContent = '30%';
-            watermarkSize.value = 48;
-            sizeValue.textContent = '48px';
-            watermarkColor.value = '#000000';
-            watermarkColorPreset.value = '#000000';
-            watermarkBold.checked = false;
-            watermarkUnderline.checked = false;
-            
-            updateWatermarkPreview();
-            updateWatermarkPosition();
-            updateWatermarkOpacity();
-            updateWatermarkSize();
-            updateWatermarkColor();
-            updateWatermarkStyle();
-        }
-        
-        // Initialize preview
-        updateWatermarkPreview();
-        updateWatermarkPosition();
-        updateWatermarkOpacity();
-        updateWatermarkSize();
-        updateWatermarkColor();
-        updateWatermarkStyle();
-    </script>
-    <!-- Load Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  </div>
+</div>
+
+<!-- Export Modal -->
+<div class="modal" id="exportModal">
+  <div class="mbox wide">
+    <div class="mhdr">
+      <span class="mtitle">Export Watermarked PDF</span>
+      <button class="mclose" onclick="closeModal('exportModal')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+
+    <div class="frow">
+      <label>Output filename</label>
+      <input class="finput" id="exportFilename" value="watermarked.pdf">
+    </div>
+
+    <div class="frow">
+      <label>Pages to watermark</label>
+      <div style="display:flex;gap:8px;margin-bottom:6px;">
+        <button class="mbtn sec" onclick="exportSelAll(true)" style="font-size:12px;padding:5px 10px;">All</button>
+        <button class="mbtn sec" onclick="exportSelAll(false)" style="font-size:12px;padding:5px 10px;">None</button>
+        <button class="mbtn sec" onclick="exportSelInvert()" style="font-size:12px;padding:5px 10px;">Invert</button>
+      </div>
+      <div class="page-sel-grid" id="exportPageSel"></div>
+    </div>
+
+    <div class="frow">
+      <label>Export format</label>
+      <select class="finput" id="exportFormat">
+        <option value="pdf">PDF (single file)</option>
+        <option value="images">ZIP of images (PNG)</option>
+      </select>
+    </div>
+
+    <div class="frow">
+      <label>PDF quality scale</label>
+      <div class="range-row">
+        <input type="range" id="exportScale" min="0.5" max="3" step="0.1" value="1.5" oninput="syncRange(this,'exportScaleVal')">
+        <span class="range-val" id="exportScaleVal">1.5</span>
+      </div>
+    </div>
+
+    <div id="exportProgress" style="display:none;">
+      <div style="font-size:12px;color:#777;" id="exportProgressLabel">Rendering pages…</div>
+      <div class="prog-track"><div class="prog-fill" id="exportProgFill" style="width:0%"></div></div>
+    </div>
+
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="closeModal('exportModal')">Cancel</button>
+      <button class="mbtn primary" id="doExportBtn" onclick="doExport()">
+        <span style="display:flex;align-items:center;gap:6px;">
+          <span class="material-symbols-outlined" style="font-size:16px;">download</span> Export
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Stack -->
+<div id="toastStack"></div>
+
+<!-- Tip Box -->
+<div id="tipBox">
+  <div class="tip-prog"><div class="tip-bar" id="tipBar"></div></div>
+  <div class="tip-text" id="tipText"></div>
+  <div class="tip-actions">
+    <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+    <button class="tip-btn tip-next" onclick="tipNav(1)">Next →</button>
+  </div>
+</div>
 
 <script>
-// --- Create Toggle Button ---
-const toggle = document.createElement("span");
-toggle.className = "material-symbols-outlined";
-toggle.style.position = "fixed";
-toggle.style.top = "15px";
-toggle.style.right = "15px";
-toggle.style.fontSize = "32px";
-toggle.style.cursor = "pointer";
-toggle.style.zIndex = "999999";
-toggle.style.userSelect = "none";
-document.body.appendChild(toggle);
+// ── PDF.js worker ───────────────────────────────────────────────────────────
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// --- Functions ---
-function enableDark() {
-    document.documentElement.style.filter = "invert(1) hue-rotate(180deg)";
-    localStorage.setItem("theme", "dark");
-    toggle.textContent = "light_mode"; // sun icon
+// ── State ───────────────────────────────────────────────────────────────────
+let pages = [];          // array of {canvas, selected}
+let wmMode = 'tile';
+let wmType = 'text';
+let wmImageDataURL = null;
+let previewDirty = false;
+let draggingPos = false;
+let dragStartX = 0, dragStartY = 0;
+let wmPosXPct = 50, wmPosYPct = 50;
+
+// ── Theme ──────────────────────────────────────────────────────────────────
+function setThemeCookie(v){document.cookie='toolsuite_theme='+v+';path=/;max-age=31536000;SameSite=Lax';}
+function getThemeCookie(){const m=document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));return m?m.split('=')[1]:null;}
+function toggleDarkMode(){
+  const d=document.body.classList.toggle('dark');
+  const i=document.getElementById('themeIcon');
+  if(i)i.textContent=d?'light_mode':'dark_mode';
+  setThemeCookie(d?'dark':'light');
+}
+(function applyThemeOnLoad(){
+  if(getThemeCookie()==='dark'){
+    document.body.classList.add('dark');
+    document.addEventListener('DOMContentLoaded',()=>{
+      const i=document.getElementById('themeIcon');
+      if(i)i.textContent='light_mode';
+    });
+  }
+})();
+
+// ── Sidebar ────────────────────────────────────────────────────────────────
+function toggleSidebar(){
+  const sb=document.querySelector('.sidebar');
+  const eb=document.getElementById('expandBtn');
+  const c=sb.classList.contains('collapsed');
+  sb.classList.toggle('collapsed');
+  eb.style.display=c?'none':'block';
 }
 
-function disableDark() {
-    document.documentElement.style.filter = "";
-    localStorage.setItem("theme", "light");
-    toggle.textContent = "dark_mode"; // moon icon
+// ── Dropdown accordions ───────────────────────────────────────────────────
+function toggleDropdown(hdr){
+  const dd=hdr.nextElementSibling;
+  const ch=hdr.querySelector('.aw-chevron');
+  dd.classList.toggle('open');
+  ch.classList.toggle('open');
 }
 
-// --- Load Saved Theme ---
-if (localStorage.getItem("theme") === "dark") {
-    enableDark();
-} else {
-    disableDark();
+// ── Range sync ────────────────────────────────────────────────────────────
+function syncRange(el,valId){document.getElementById(valId).textContent=el.value;}
+function syncColorFromHex(hexInputId,colorInputId){
+  const v=document.getElementById(hexInputId).value;
+  if(/^#[0-9A-Fa-f]{6}$/.test(v)){document.getElementById(colorInputId).value=v;livePreview();}
 }
 
-// --- Toggle on Click ---
-toggle.onclick = () => {
-    if (localStorage.getItem("theme") === "dark") {
-        disableDark();
-    } else {
-        enableDark();
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg,type='info',dur=2800){
+  const st=document.getElementById('toastStack');
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  t.innerHTML=`<span class="material-symbols-outlined" style="font-size:16px">${type==='error'?'error':'check_circle'}</span>${msg}`;
+  st.appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),350);},dur);
+}
+
+// ── Tips ──────────────────────────────────────────────────────────────────
+const TIPS=[
+  '💧 Upload PDFs, images or a ZIP of images to get started.',
+  '✏️ Use the sidebar to configure text or image watermarks with full style control.',
+  '🔲 Click "tile" mode to repeat your watermark across every page automatically.',
+  '👆 In "single" mode, drag the watermark on the preview to position it precisely.',
+  '📄 Click page thumbnails to toggle which pages get watermarked, then Export!'
+];
+let tipIdx=0;
+function showTip(i){
+  const b=document.getElementById('tipBox'),tx=document.getElementById('tipText'),br=document.getElementById('tipBar');
+  tx.textContent=TIPS[i];br.style.width=((i+1)/TIPS.length*100)+'%';
+  b.classList.remove('hide');b.classList.add('show');
+}
+function tipNav(d){
+  tipIdx=Math.max(0,Math.min(TIPS.length-1,tipIdx+d));
+  if(tipIdx===TIPS.length-1&&d===1)dismissTips();else showTip(tipIdx);
+}
+function dismissTips(){document.getElementById('tipBox').classList.replace('show','hide');localStorage.setItem('wm_tips_seen','1');}
+window.addEventListener('load',()=>{if(!localStorage.getItem('wm_tips_seen'))setTimeout(()=>showTip(0),1400);});
+
+// ── Modal helpers ─────────────────────────────────────────────────────────
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+// ── WM type tabs ──────────────────────────────────────────────────────────
+function setWmTab(t){
+  wmType=t;
+  document.getElementById('textWmSection').style.display=t==='text'?'':'none';
+  document.getElementById('imageWmSection').style.display=t==='image'?'':'none';
+  document.getElementById('strokeSection').style.display=t==='text'?'':'none';
+  document.getElementById('tabTextBtn').classList.toggle('active',t==='text');
+  document.getElementById('tabImageBtn').classList.toggle('active',t==='image');
+  document.getElementById('tbText').classList.toggle('active',t==='text');
+  document.getElementById('tbImage').classList.toggle('active',t==='image');
+  livePreview();
+}
+
+// ── Mode change ───────────────────────────────────────────────────────────
+function onModeChange(){
+  wmMode=document.getElementById('wmMode').value;
+  document.getElementById('singlePosCtrl').style.display=wmMode==='single'?'':'none';
+  document.getElementById('tilePosCtrl').style.display=wmMode==='tile'?'':'none';
+}
+
+// ── Upload files ──────────────────────────────────────────────────────────
+function triggerUpload(){document.getElementById('fileInput').click();}
+function triggerWmImageUpload(){document.getElementById('wmImageInput').click();}
+
+function onDragOver(e){e.preventDefault();document.getElementById('dropZone').classList.add('dragover');}
+function onDragLeave(e){document.getElementById('dropZone').classList.remove('dragover');}
+function onDrop(e){e.preventDefault();document.getElementById('dropZone').classList.remove('dragover');handleFiles(e.dataTransfer.files);}
+
+async function handleFiles(fileList){
+  const files=Array.from(fileList);
+  if(!files.length)return;
+  showToast('Loading files…','info',5000);
+  for(const f of files){
+    const ext=f.name.split('.').pop().toLowerCase();
+    if(ext==='pdf'){await loadPDF(f);}
+    else if(['png','jpg','jpeg','webp'].includes(ext)){await loadImageFile(f);}
+    else if(ext==='zip'){await loadZip(f);}
+  }
+  if(pages.length){
+    showUI();
+    updatePageCountLabel();
+    renderThumbnails();
+    renderPreview();
+    showToast('Files loaded — '+pages.length+' page(s)','success');
+  }
+}
+
+async function loadPDF(file){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  for(let i=1;i<=pdf.numPages;i++){
+    const pg=await pdf.getPage(i);
+    const scale=2;
+    const vp=pg.getViewport({scale});
+    const c=document.createElement('canvas');
+    c.width=vp.width;c.height=vp.height;
+    const ctx=c.getContext('2d');
+    await pg.render({canvasContext:ctx,viewport:vp}).promise;
+    pages.push({canvas:c,selected:true});
+  }
+}
+
+async function loadImageFile(file){
+  return new Promise(res=>{
+    const img=new Image();
+    const url=URL.createObjectURL(file);
+    img.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=img.naturalWidth;c.height=img.naturalHeight;
+      c.getContext('2d').drawImage(img,0,0);
+      URL.revokeObjectURL(url);
+      pages.push({canvas:c,selected:true});
+      res();
+    };
+    img.src=url;
+  });
+}
+
+async function loadZip(file){
+  const zip=await JSZip.loadAsync(await file.arrayBuffer());
+  const imgFiles=Object.values(zip.files).filter(f=>!f.dir&&/\.(png|jpg|jpeg|webp)$/i.test(f.name));
+  imgFiles.sort((a,b)=>a.name.localeCompare(b.name));
+  for(const zf of imgFiles){
+    const blob=await zf.async('blob');
+    const imgFile=new File([blob],zf.name);
+    await loadImageFile(imgFile);
+  }
+}
+
+function loadWmImage(input){
+  const f=input.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    wmImageDataURL=e.target.result;
+    document.getElementById('wmImgThumb').src=wmImageDataURL;
+    document.getElementById('wmImgPreview').style.display='block';
+    document.getElementById('wmImgBox').innerHTML='<span class="material-symbols-outlined" style="font-size:20px;display:block;margin-bottom:4px;color:#1976d2">check_circle</span><span>Image loaded — click to change</span>';
+    livePreview();
+  };
+  reader.readAsDataURL(f);
+}
+
+// ── Show UI after upload ──────────────────────────────────────────────────
+function showUI(){
+  document.getElementById('uploadArea').style.display='none';
+  document.getElementById('canvasArea').style.display='flex';
+  document.getElementById('exportBtn').disabled=false;
+  document.getElementById('tbExport').disabled=false;
+}
+
+function updatePageCountLabel(){
+  document.getElementById('pageCountLabel').textContent=pages.length+' page'+(pages.length===1?'':'s');
+}
+
+// ── Render preview (first page) ──────────────────────────────────────────
+function renderPreview(){
+  if(!pages.length)return;
+  const src=pages[0].canvas;
+  const wrapper=document.getElementById('previewWrapper');
+  const dc=document.getElementById('designCanvas');
+  const wmc=document.getElementById('wmCanvas');
+
+  // Scale to fit ~680px wide
+  const maxW=680;
+  const scale=Math.min(1, maxW/src.width);
+  const W=Math.round(src.width*scale);
+  const H=Math.round(src.height*scale);
+
+  wrapper.style.width=W+'px';
+  wrapper.style.height=H+'px';
+
+  dc.width=W;dc.height=H;
+  wmc.width=W;wmc.height=H;
+  wmc.style.position='absolute';wmc.style.left=0;wmc.style.top=0;
+
+  const ctx=dc.getContext('2d');
+  ctx.drawImage(src,0,0,W,H);
+}
+
+// ── Live preview (draws watermark over page 1) ────────────────────────────
+function livePreview(){
+  if(!pages.length)return;
+  renderPreview();
+  const wmc=document.getElementById('wmCanvas');
+  const W=wmc.width,H=wmc.height;
+  const ctx=wmc.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  drawWatermark(ctx,W,H,getWmSettings());
+}
+
+function getWmSettings(){
+  const mode=document.getElementById('wmMode').value;
+  return{
+    type:wmType,
+    text:document.getElementById('wmText').value||'WATERMARK',
+    font:document.getElementById('wmFont').value,
+    fontSize:parseInt(document.getElementById('wmFontSize').value),
+    color:document.getElementById('wmColor').value,
+    opacity:parseInt(document.getElementById('wmOpacity').value)/100,
+    rotation:parseInt(document.getElementById('wmRotation').value),
+    bold:document.getElementById('wmBold').checked,
+    italic:document.getElementById('wmItalic').checked,
+    underline:document.getElementById('wmUnderline').checked,
+    strike:document.getElementById('wmStrike').checked,
+    highlightOn:document.getElementById('wmHighlightOn').checked,
+    highlightColor:document.getElementById('wmHighlightColor').value,
+    strokeOn:document.getElementById('wmStrokeOn').checked,
+    strokeColor:document.getElementById('wmStrokeColor').value,
+    strokeWidth:parseInt(document.getElementById('wmStrokeWidth').value),
+    mode,
+    posX:wmPosXPct,
+    posY:wmPosYPct,
+    spacingX:parseInt(document.getElementById('wmSpacingX').value),
+    spacingY:parseInt(document.getElementById('wmSpacingY').value),
+    imgDataURL:wmImageDataURL,
+    imgWidth:parseInt(document.getElementById('wmImgWidth').value)/100
+  };
+}
+
+// ── Core draw watermark ───────────────────────────────────────────────────
+function drawWatermark(ctx,W,H,s){
+  ctx.save();
+  ctx.globalAlpha=s.opacity;
+
+  if(s.type==='text'){
+    const weight=(s.bold?'bold ':'')+' '+(s.italic?'italic ':' ');
+    ctx.font=`${s.italic?'italic ':' '}${s.bold?'bold ':' '}${s.fontSize}px ${s.font}`;
+    ctx.fillStyle=s.color;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    if(s.strokeOn&&s.strokeWidth>0){ctx.strokeStyle=s.strokeColor;ctx.lineWidth=s.strokeWidth;}
+
+    const drawTextAt=(x,y)=>{
+      ctx.save();
+      ctx.translate(x,y);
+      ctx.rotate(s.rotation*Math.PI/180);
+      const lines=s.text.split('\n');
+      const lh=s.fontSize*1.3;
+      const totalH=lines.length*lh;
+      lines.forEach((line,i)=>{
+        const ty=-(totalH/2)+(i+0.5)*lh;
+        const tw=ctx.measureText(line).width;
+        if(s.highlightOn){
+          ctx.save();ctx.globalAlpha=1;
+          ctx.fillStyle=s.highlightColor;
+          ctx.fillRect(-tw/2-4,ty-s.fontSize/2-2,tw+8,s.fontSize+4);
+          ctx.restore();
+        }
+        if(s.strokeOn&&s.strokeWidth>0)ctx.strokeText(line,0,ty);
+        ctx.fillText(line,0,ty);
+        if(s.underline){
+          const uy=ty+s.fontSize*0.15;
+          ctx.save();ctx.strokeStyle=s.color;ctx.lineWidth=Math.max(1,s.fontSize/24);
+          ctx.beginPath();ctx.moveTo(-tw/2,uy);ctx.lineTo(tw/2,uy);ctx.stroke();
+          ctx.restore();
+        }
+        if(s.strike){
+          ctx.save();ctx.strokeStyle=s.color;ctx.lineWidth=Math.max(1,s.fontSize/24);
+          ctx.beginPath();ctx.moveTo(-tw/2,ty);ctx.lineTo(tw/2,ty);ctx.stroke();
+          ctx.restore();
+        }
+      });
+      ctx.restore();
+    };
+
+    if(s.mode==='single'){
+      drawTextAt(W*(s.posX/100),H*(s.posY/100));
+    }else if(s.mode==='center'){
+      drawTextAt(W/2,H/2);
+    }else if(s.mode==='tile'){
+      const sx=s.spacingX, sy=s.spacingY;
+      for(let y=-sy;y<H+sy;y+=sy){
+        for(let x=-sx;x<W+sx;x+=sx){drawTextAt(x,y);}
+      }
+    }else if(s.mode==='diagonal'){
+      const diag=Math.sqrt(W*W+H*H);
+      ctx.save();ctx.translate(W/2,H/2);ctx.rotate(-45*Math.PI/180);
+      for(let x=-diag;x<diag;x+=s.spacingX){drawTextAt(x,0);}
+      ctx.restore();
     }
-};
+  } else {
+    // Image watermark
+    if(!s.imgDataURL)return;
+    const img=new Image();
+    img.onload=()=>{
+      const iw=img.naturalWidth,ih=img.naturalHeight;
+      const targetW=W*s.imgWidth;
+      const targetH=(ih/iw)*targetW;
+
+      const drawImgAt=(cx,cy)=>{
+        ctx.save();
+        ctx.translate(cx,cy);
+        ctx.rotate(s.rotation*Math.PI/180);
+        ctx.drawImage(img,-targetW/2,-targetH/2,targetW,targetH);
+        ctx.restore();
+      };
+
+      if(s.mode==='single'){
+        drawImgAt(W*(s.posX/100),H*(s.posY/100));
+      }else if(s.mode==='center'){
+        drawImgAt(W/2,H/2);
+      }else if(s.mode==='tile'){
+        const sx=s.spacingX, sy=s.spacingY;
+        for(let y=-sy;y<H+sy;y+=sy){
+          for(let x=-sx;x<W+sx;x+=sx){drawImgAt(x,y);}
+        }
+      }else if(s.mode==='diagonal'){
+        const diag=Math.sqrt(W*W+H*H);
+        ctx.save();ctx.translate(W/2,H/2);ctx.rotate(-45*Math.PI/180);
+        for(let x=-diag;x<diag;x+=s.spacingX){drawImgAt(x,0);}
+        ctx.restore();
+      }
+      ctx.restore();
+    };
+    img.src=s.imgDataURL;
+    ctx.restore();
+    return;
+  }
+  ctx.restore();
+}
+
+function applyWatermarkToPreview(){livePreview();showToast('Preview updated','success');}
+function clearWatermark(){
+  if(!pages.length)return;
+  const wmc=document.getElementById('wmCanvas');
+  wmc.getContext('2d').clearRect(0,0,wmc.width,wmc.height);
+  showToast('Watermark cleared','info');
+}
+
+// ── Draggable position on canvas ──────────────────────────────────────────
+(function setupDrag(){
+  document.addEventListener('DOMContentLoaded',()=>{
+    const wmc=document.getElementById('wmCanvas');
+    wmc.style.pointerEvents='auto';
+    wmc.style.cursor='crosshair';
+    wmc.addEventListener('mousedown',e=>{
+      if(document.getElementById('wmMode').value!=='single')return;
+      const r=wmc.getBoundingClientRect();
+      wmPosXPct=((e.clientX-r.left)/r.width)*100;
+      wmPosYPct=((e.clientY-r.top)/r.height)*100;
+      document.getElementById('wmPosX').value=Math.round(wmPosXPct);
+      document.getElementById('wmPosY').value=Math.round(wmPosYPct);
+      syncRange(document.getElementById('wmPosX'),'wmPosXVal');
+      syncRange(document.getElementById('wmPosY'),'wmPosYVal');
+      draggingPos=true;
+      livePreview();
+    });
+    wmc.addEventListener('mousemove',e=>{
+      if(!draggingPos)return;
+      const r=wmc.getBoundingClientRect();
+      wmPosXPct=Math.max(0,Math.min(100,((e.clientX-r.left)/r.width)*100));
+      wmPosYPct=Math.max(0,Math.min(100,((e.clientY-r.top)/r.height)*100));
+      document.getElementById('wmPosX').value=Math.round(wmPosXPct);
+      document.getElementById('wmPosY').value=Math.round(wmPosYPct);
+      syncRange(document.getElementById('wmPosX'),'wmPosXVal');
+      syncRange(document.getElementById('wmPosY'),'wmPosYVal');
+      livePreview();
+    });
+    document.addEventListener('mouseup',()=>{draggingPos=false;});
+  });
+})();
+
+// ── PosX/Y range → update vars ────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('wmPosX').addEventListener('input',function(){
+    wmPosXPct=parseInt(this.value);syncRange(this,'wmPosXVal');livePreview();
+  });
+  document.getElementById('wmPosY').addEventListener('input',function(){
+    wmPosYPct=parseInt(this.value);syncRange(this,'wmPosYVal');livePreview();
+  });
+});
+
+// ── Thumbnails ────────────────────────────────────────────────────────────
+function renderThumbnails(){
+  const grid=document.getElementById('pagesGrid');
+  grid.innerHTML='';
+  pages.forEach((p,i)=>{
+    const wrap=document.createElement('div');
+    wrap.className='page-thumb'+(p.selected?' selected':'');
+    wrap.dataset.idx=i;
+
+    const tc=document.createElement('canvas');
+    const th=100, tw=Math.round(p.canvas.width*(th/p.canvas.height));
+    tc.width=tw;tc.height=th;
+    tc.getContext('2d').drawImage(p.canvas,0,0,tw,th);
+
+    const num=document.createElement('div');
+    num.className='page-num';
+    num.textContent='Page '+(i+1);
+
+    const chk=document.createElement('div');
+    chk.className='page-check';
+    chk.innerHTML='<span class="material-symbols-outlined">check</span>';
+
+    wrap.appendChild(tc);
+    wrap.appendChild(num);
+    wrap.appendChild(chk);
+    wrap.addEventListener('click',()=>{togglePageSelect(i);});
+    grid.appendChild(wrap);
+  });
+}
+
+function togglePageSelect(i){
+  pages[i].selected=!pages[i].selected;
+  const thumbs=document.querySelectorAll('.page-thumb');
+  thumbs[i].classList.toggle('selected',pages[i].selected);
+}
+
+function selectAllPages(sel){
+  pages.forEach((p,i)=>{
+    p.selected=sel;
+    const thumbs=document.querySelectorAll('.page-thumb');
+    if(thumbs[i])thumbs[i].classList.toggle('selected',sel);
+  });
+}
+
+// ── Export modal ──────────────────────────────────────────────────────────
+function openExportModal(){
+  if(!pages.length){showToast('Upload files first','error');return;}
+  const sel=document.getElementById('exportPageSel');
+  sel.innerHTML='';
+  pages.forEach((p,i)=>{
+    const chip=document.createElement('div');
+    chip.className='page-sel-chip'+(p.selected?' on':'');
+    chip.textContent='P'+(i+1);
+    chip.dataset.idx=i;
+    chip.addEventListener('click',()=>{chip.classList.toggle('on');});
+    sel.appendChild(chip);
+  });
+  document.getElementById('exportModal').classList.add('open');
+}
+
+function exportSelAll(v){
+  document.querySelectorAll('#exportPageSel .page-sel-chip').forEach(c=>{
+    if(v)c.classList.add('on');else c.classList.remove('on');
+  });
+}
+function exportSelInvert(){
+  document.querySelectorAll('#exportPageSel .page-sel-chip').forEach(c=>c.classList.toggle('on'));
+}
+
+async function doExport(){
+  const selectedIdxs=[...document.querySelectorAll('#exportPageSel .page-sel-chip.on')].map(c=>parseInt(c.dataset.idx));
+  if(!selectedIdxs.length){showToast('Select at least one page','error');return;}
+
+  const fmt=document.getElementById('exportFormat').value;
+  const scale=parseFloat(document.getElementById('exportScale').value);
+  const filename=document.getElementById('exportFilename').value||'watermarked';
+  const s=getWmSettings();
+
+  document.getElementById('doExportBtn').disabled=true;
+  document.getElementById('exportProgress').style.display='block';
+  const progFill=document.getElementById('exportProgFill');
+  const progLabel=document.getElementById('exportProgressLabel');
+
+  const renderedCanvases=[];
+
+  for(let k=0;k<selectedIdxs.length;k++){
+    const i=selectedIdxs[k];
+    progLabel.textContent=`Rendering page ${k+1} of ${selectedIdxs.length}…`;
+    progFill.style.width=((k+1)/selectedIdxs.length*80)+'%';
+    await new Promise(r=>setTimeout(r,0));
+
+    const src=pages[i].canvas;
+    const W=Math.round(src.width*scale);
+    const H=Math.round(src.height*scale);
+    const out=document.createElement('canvas');
+    out.width=W;out.height=H;
+    const ctx=out.getContext('2d');
+    ctx.drawImage(src,0,0,W,H);
+    // Adjust settings for this scale
+    const scaledS=Object.assign({},s,{
+      fontSize:s.fontSize*scale,
+      strokeWidth:s.strokeWidth*scale,
+      spacingX:s.spacingX*scale,
+      spacingY:s.spacingY*scale
+    });
+    // For image wm, draw synchronously via promise
+    if(s.type==='image'&&s.imgDataURL){
+      await new Promise(res=>{
+        const img=new Image();
+        img.onload=()=>{
+          const iw=img.naturalWidth,ih=img.naturalHeight;
+          const targetW=W*s.imgWidth;
+          const targetH=(ih/iw)*targetW;
+          ctx.save();ctx.globalAlpha=s.opacity;
+          const drawImgAt=(cx,cy)=>{
+            ctx.save();ctx.translate(cx,cy);ctx.rotate(s.rotation*Math.PI/180);
+            ctx.drawImage(img,-targetW/2,-targetH/2,targetW,targetH);
+            ctx.restore();
+          };
+          if(s.mode==='single')drawImgAt(W*(s.posX/100),H*(s.posY/100));
+          else if(s.mode==='center')drawImgAt(W/2,H/2);
+          else if(s.mode==='tile'){for(let y=-scaledS.spacingY;y<H+scaledS.spacingY;y+=scaledS.spacingY)for(let x=-scaledS.spacingX;x<W+scaledS.spacingX;x+=scaledS.spacingX)drawImgAt(x,y);}
+          else if(s.mode==='diagonal'){const d=Math.sqrt(W*W+H*H);ctx.save();ctx.translate(W/2,H/2);ctx.rotate(-45*Math.PI/180);for(let x=-d;x<d;x+=scaledS.spacingX)drawImgAt(x,0);ctx.restore();}
+          ctx.restore();res();
+        };
+        img.src=s.imgDataURL;
+      });
+    }else{
+      drawWatermark(ctx,W,H,scaledS);
+    }
+    renderedCanvases.push(out);
+  }
+
+  progLabel.textContent='Building output…';
+  progFill.style.width='90%';
+  await new Promise(r=>setTimeout(r,50));
+
+  if(fmt==='pdf'){
+    const {jsPDF}=window.jspdf;
+    const firstC=renderedCanvases[0];
+    const orientation=firstC.width>firstC.height?'landscape':'portrait';
+    const pdf=new jsPDF({orientation,unit:'px',format:[firstC.width,firstC.height],hotfixes:['px_scaling']});
+    for(let k=0;k<renderedCanvases.length;k++){
+      const c=renderedCanvases[k];
+      if(k>0){pdf.addPage([c.width,c.height],c.width>c.height?'landscape':'portrait');}
+      const imgData=c.toDataURL('image/jpeg',0.92);
+      pdf.addImage(imgData,'JPEG',0,0,c.width,c.height);
+    }
+    pdf.save((filename.replace(/\.pdf$/i,''))+'.pdf');
+  }else{
+    const zip=new JSZip();
+    renderedCanvases.forEach((c,k)=>{
+      const data=c.toDataURL('image/png').split(',')[1];
+      zip.file(`page_${String(k+1).padStart(3,'0')}.png`,data,{base64:true});
+    });
+    const blob=await zip.generateAsync({type:'blob'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=(filename.replace(/\.zip$/i,''))+'.zip';
+    a.click();URL.revokeObjectURL(a.href);
+  }
+
+  progFill.style.width='100%';
+  setTimeout(()=>{
+    document.getElementById('exportProgress').style.display='none';
+    document.getElementById('doExportBtn').disabled=false;
+    progFill.style.width='0%';
+    closeModal('exportModal');
+    showToast('Export complete!','success',3200);
+  },400);
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  // Apply theme
+  if(getThemeCookie()==='dark'){
+    document.body.classList.add('dark');
+    const i=document.getElementById('themeIcon');
+    if(i)i.textContent='light_mode';
+  }
+  // Init mode display
+  onModeChange();
+  // Mark tbText active
+  document.getElementById('tbText').classList.add('active');
+  // Loading done
+  setTimeout(()=>{
+    document.getElementById('loadingScreen').style.display='none';
+    document.getElementById('appContainer').style.display='flex';
+  },600);
+});
 </script>
-    
 </body>
 </html>
-                
-
-
-
-

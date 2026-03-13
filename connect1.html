@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Connect | DM Chat</title>
+  <meta name="description" content="DocuWrite Pro — Connect: peer-to-peer direct messaging.">
+  <meta name="author" content="Mohtadi Azad Mahi">
+  <meta name="robots" content="index, follow">
+  <link rel="icon" type="image/png" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+  <meta name="theme-color" content="#ffffff">
+  <meta property="og:site_name" content="DocuWrite Pro">
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"/>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+
+  <script>
+    (function(){
+      const m=document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));
+      if(m&&m.split('=')[1]==='dark') document.documentElement.classList.add('dark');
+    })();
+  </script>
+
+  <style>
+    *{scrollbar-width:none;}
+    *::-webkit-scrollbar{display:none;}
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter','Segoe UI',Arial,sans-serif;background:#f0f4f8;overflow:hidden;height:100vh;}
+    body.dark{background:#111;}
+    html.dark body{background:#111;}
+
+    /* Loading */
+    #loadingScreen{display:flex;position:fixed;inset:0;background:#fff;z-index:10000;align-items:center;justify-content:center;flex-direction:column;gap:20px;}
+    body.dark #loadingScreen{background:#1a1a1a;}
+    .spinner{width:56px;height:56px;border:4px solid #e3f2fd;border-top-color:#1976d2;border-radius:50%;animation:spin 1s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .loading-text{font-size:17px;color:#666;}
+    body.dark .loading-text{color:#aaa;}
+
+    /* App */
+    #appContainer{display:none;flex-direction:column;height:100vh;overflow:hidden;}
+
+    /* Top bar */
+    .top-bar{background:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);z-index:200;flex-shrink:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+    body.dark .top-bar{background:#1a1a1a;box-shadow:0 2px 8px rgba(0,0,0,0.5);}
+    .top-spacer{flex:1;min-width:8px;}
+    .tool-title{font-size:17px;font-weight:600;color:#1a1a2e;flex-shrink:0;}
+    body.dark .tool-title{color:#e0e0e0;}
+    .id-chip{display:flex;align-items:center;gap:6px;background:#f0f4f8;border:1px solid #e0e0e0;border-radius:8px;padding:5px 10px;font-size:12px;color:#555;font-family:monospace;flex-shrink:0;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;transition:background 0.15s;}
+    .id-chip:hover{background:#e3f2fd;}
+    body.dark .id-chip{background:#252525;border-color:#333;color:#aaa;}
+    body.dark .id-chip:hover{background:#1a2a3a;}
+    .connect-row{display:flex;align-items:center;background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;overflow:hidden;flex-shrink:0;transition:border-color 0.2s,box-shadow 0.2s;}
+    .connect-row:focus-within{border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,0.1);}
+    body.dark .connect-row{background:#252525;border-color:#444;}
+    #peerInput{background:transparent;border:none;outline:none;padding:7px 10px;font-size:13px;font-family:inherit;color:#333;width:150px;}
+    body.dark #peerInput{color:#ddd;}
+    #peerInput::placeholder{color:#999;}
+    #connectBtn{background:#1976d2;border:none;color:#fff;padding:7px 12px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:4px;transition:background 0.15s;white-space:nowrap;font-family:inherit;font-weight:500;}
+    #connectBtn:hover{background:#1565c0;}
+    .icon-btn{background:none;border:none;cursor:pointer;padding:7px;border-radius:8px;display:flex;align-items:center;color:#1976d2;transition:background 0.2s;flex-shrink:0;}
+    .icon-btn:hover{background:#e3f2fd;}
+    .icon-btn .material-symbols-outlined{font-size:22px;}
+    body.dark .icon-btn{color:#90caf9;}
+    body.dark .icon-btn:hover{background:#1a2a3a;}
+
+    /* Toolbar */
+    .toolbar{background:#fff;padding:6px 12px;display:flex;align-items:center;gap:3px;box-shadow:0 2px 4px rgba(0,0,0,0.06);flex-shrink:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;}
+    body.dark .toolbar{background:#1a1a1a;}
+    .tbtn{background:transparent;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:background 0.15s;flex-shrink:0;font-size:13px;color:#444;font-family:inherit;}
+    .tbtn:hover{background:#e3f2fd;}
+    .tbtn .material-symbols-outlined{font-size:19px;color:#333;}
+    body.dark .tbtn{color:#bbb;}
+    body.dark .tbtn .material-symbols-outlined{color:#bbb;}
+    body.dark .tbtn:hover{background:#2a2a2a;}
+    .toolbar-sep{width:1px;height:26px;background:#e0e0e0;margin:0 4px;flex-shrink:0;}
+    body.dark .toolbar-sep{background:#333;}
+
+    /* Layout */
+    .main-content{display:flex;flex:1;overflow:hidden;min-height:0;}
+
+    /* Sidebar */
+    .sidebar{width:255px;min-width:255px;background:#fff;padding:0;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,0.06);transition:transform 0.3s,width 0.3s,min-width 0.3s,padding 0.3s;flex-shrink:0;display:flex;flex-direction:column;}
+    .sidebar.collapsed{transform:translateX(-255px);width:0;min-width:0;padding:0;overflow:hidden;}
+    body.dark .sidebar{background:#1a1a1a;}
+    .sb-header{padding:14px 14px 8px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0f0f0;flex-shrink:0;}
+    body.dark .sb-header{border-color:#2a2a2a;}
+    .sb-title{font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.6px;}
+    body.dark .sb-title{color:#666;}
+    .dm-list{flex:1;overflow-y:auto;padding:6px 0;}
+    .dm-item{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.12s;position:relative;}
+    .dm-item:hover{background:#f5f9ff;}
+    .dm-item.active{background:#e3f2fd;}
+    body.dark .dm-item:hover{background:#1a2535;}
+    body.dark .dm-item.active{background:#1a2a3a;}
+    .dm-av-wrap{position:relative;flex-shrink:0;}
+    .dm-avatar{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid #e0e0e0;}
+    body.dark .dm-avatar{border-color:#333;}
+    .dm-dot{position:absolute;bottom:0;right:0;width:10px;height:10px;border-radius:50%;border:2px solid #fff;}
+    body.dark .dm-dot{border-color:#1a1a1a;}
+    .dm-dot.online{background:#43a047;}
+    .dm-dot.offline{background:#999;}
+    .dm-info{flex:1;min-width:0;}
+    .dm-name{font-size:13px;font-weight:500;color:#333;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    body.dark .dm-name{color:#ddd;}
+    .dm-preview{font-size:11px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
+    body.dark .dm-preview{color:#666;}
+
+    /* Unread badge */
+    .unread-badge{background:#d32f2f;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;padding:0 5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1;}
+
+    /* Sidebar footer */
+    .sb-footer{padding:10px 14px;border-top:1px solid #f0f0f0;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.12s;flex-shrink:0;}
+    .sb-footer:hover{background:#f5f9ff;}
+    body.dark .sb-footer{border-color:#2a2a2a;}
+    body.dark .sb-footer:hover{background:#1a2535;}
+    .collapse-btn{width:100%;padding:8px;background:#e3f2fd;border:none;border-radius:0;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;color:#1976d2;font-weight:600;transition:background 0.15s;font-family:inherit;flex-shrink:0;}
+    .collapse-btn:hover{background:#bbdefb;}
+    body.dark .collapse-btn{background:#1a2a4a !important;color:#1976d2 !important;}
+    .expand-btn{position:fixed;left:10px;top:50%;transform:translateY(-50%);background:#fff;border:none;border-radius:8px;padding:10px 5px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.15);z-index:50;display:none;}
+    body.dark .expand-btn{background:#1a1a1a;}
+
+    /* Content area */
+    .content-area{flex:1;overflow:hidden;display:flex;flex-direction:column;background:#f0f4f8;min-width:0;position:relative;}
+    body.dark .content-area{background:#111;}
+
+    /* DM header */
+    .dm-header{background:#fff;padding:10px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #f0f0f0;flex-shrink:0;}
+    body.dark .dm-header{background:#1a1a1a;border-color:#2a2a2a;}
+    .dm-header-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid #e0e0e0;}
+    body.dark .dm-header-avatar{border-color:#333;}
+    .dm-header-name{font-size:15px;font-weight:600;color:#1a1a2e;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    body.dark .dm-header-name{color:#e0e0e0;}
+    .dm-header-status{font-size:11px;color:#43a047;font-weight:500;}
+    .dm-header-status.offline{color:#999;}
+
+    /* Empty state */
+    .no-dm-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center;}
+    .no-dm-icon{width:72px;height:72px;border-radius:50%;background:#e3f2fd;display:flex;align-items:center;justify-content:center;}
+    .no-dm-icon .material-symbols-outlined{font-size:34px;color:#1976d2;}
+    .no-dm-state h2{font-size:19px;font-weight:500;color:#333;}
+    body.dark .no-dm-state h2{color:#e0e0e0;}
+    .no-dm-state p{font-size:13px;color:#888;max-width:280px;line-height:1.55;}
+
+    /* Chat */
+    #chatBox{flex:1;overflow-y:auto;padding:20px 18px;display:flex;flex-direction:column;gap:14px;}
+
+    /* Messages */
+    .msg-row{display:flex;gap:10px;align-items:flex-end;position:relative;}
+    .msg-row.mine{flex-direction:row-reverse;}
+    .msg-avatar-sm{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid #e0e0e0;}
+    body.dark .msg-avatar-sm{border-color:#333;}
+    .msg-content{display:flex;flex-direction:column;max-width:65%;}
+    .msg-row.mine .msg-content{align-items:flex-end;}
+    .msg-sender-label{font-size:10px;color:#1976d2;font-weight:600;margin-bottom:3px;padding-left:2px;}
+    body.dark .msg-sender-label{color:#90caf9;}
+    .bubble{padding:9px 13px;border-radius:16px;font-size:13px;line-height:1.55;word-break:break-word;}
+    .bubble.theirs{background:#fff;color:#333;border:1px solid #e8e8e8;border-bottom-left-radius:4px;}
+    body.dark .bubble.theirs{background:#252525;color:#ddd;border-color:#333;}
+    .bubble.mine{background:#1976d2;color:#fff;border-bottom-right-radius:4px;}
+    .msg-time{font-size:10px;color:#bbb;margin-top:3px;padding:0 2px;}
+    .reply-quote{font-size:11px;background:rgba(0,0,0,0.06);border-left:3px solid #1976d2;padding:4px 8px;border-radius:0 6px 6px 0;margin-bottom:6px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .bubble.mine .reply-quote{background:rgba(255,255,255,0.18);color:rgba(255,255,255,0.8);border-left-color:rgba(255,255,255,0.5);}
+    .msg-reply-btn{position:absolute;top:50%;transform:translateY(-50%);background:#fff;border:1px solid #e0e0e0;border-radius:20px;padding:4px 10px;font-size:11px;color:#555;cursor:pointer;display:none;align-items:center;gap:4px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,0.08);z-index:5;font-family:inherit;transition:background 0.12s;}
+    .msg-reply-btn:hover{background:#e3f2fd;color:#1976d2;}
+    .msg-row:hover .msg-reply-btn{display:flex;}
+    .msg-row .msg-reply-btn{right:calc(100% + 8px);}
+    .msg-row.mine .msg-reply-btn{left:calc(100% + 8px);right:auto;}
+    body.dark .msg-reply-btn{background:#252525;border-color:#444;color:#aaa;}
+    body.dark .msg-reply-btn:hover{background:#1a2a3a;color:#90caf9;}
+    .sys-msg{text-align:center;font-size:11px;color:#bbb;padding:4px 0;}
+
+    /* File bubble */
+    .file-bubble{background:#f5f9ff;border:1px solid #dceeff;border-radius:12px;padding:11px;display:flex;flex-direction:column;gap:8px;min-width:200px;max-width:260px;}
+    .file-bubble.mine{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.2);}
+    .fb-top{display:flex;align-items:center;gap:10px;}
+    .fb-icon{width:38px;height:38px;border-radius:8px;background:#e3f2fd;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .fb-icon.mine{background:rgba(255,255,255,0.2);}
+    .fb-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .fb-meta{font-size:11px;color:#999;margin-top:1px;}
+    .bubble.mine .fb-meta{color:rgba(255,255,255,0.7);}
+    .fb-dl{display:flex;align-items:center;justify-content:center;gap:5px;padding:6px 10px;border-radius:7px;background:#1976d2;color:#fff;font-size:12px;font-weight:600;text-decoration:none;transition:background 0.15s;border:none;font-family:inherit;cursor:pointer;}
+    .fb-dl:hover{background:#1565c0;}
+    .bubble.mine .fb-dl{background:rgba(255,255,255,0.9);color:#1976d2;}
+    .bubble.mine .fb-dl:hover{background:#fff;}
+
+    /* Reply preview */
+    #replyPreview{display:none;align-items:center;justify-content:space-between;background:#fff;border-top:1px solid #e0e0e0;border-left:4px solid #1976d2;padding:8px 14px;font-size:12px;gap:10px;flex-shrink:0;}
+    body.dark #replyPreview{background:#1e1e1e;border-top-color:#333;}
+    .rp-label{font-size:10px;font-weight:700;color:#1976d2;margin-bottom:2px;}
+    .rp-text{color:#777;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    body.dark .rp-text{color:#aaa;}
+    .rp-close{background:none;border:none;cursor:pointer;color:#bbb;padding:4px;border-radius:50%;display:flex;align-items:center;transition:color 0.15s;flex-shrink:0;}
+    .rp-close:hover{color:#d32f2f;}
+
+    /* Input bar */
+    .input-bar{display:flex;align-items:flex-end;gap:8px;padding:10px 14px;background:#fff;border-top:1px solid #e0e0e0;flex-shrink:0;position:relative;}
+    body.dark .input-bar{background:#1a1a1a;border-top-color:#333;}
+    .input-wrap{flex:1;display:flex;align-items:center;background:#fafafa;border:1px solid #e0e0e0;border-radius:24px;padding:4px 8px;transition:border-color 0.2s,box-shadow 0.2s;min-width:0;}
+    .input-wrap:focus-within{border-color:#1976d2;box-shadow:0 0 0 3px rgba(25,118,210,0.1);background:#fff;}
+    body.dark .input-wrap{background:#252525;border-color:#444;}
+    body.dark .input-wrap:focus-within{background:#2a2a2a;}
+    .iib{background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;display:flex;align-items:center;color:#999;transition:color 0.15s,background 0.15s;flex-shrink:0;}
+    .iib:hover{color:#1976d2;background:#e3f2fd;}
+    body.dark .iib{color:#666;}
+    body.dark .iib:hover{color:#90caf9;background:#1a2a3a;}
+    #msgInput{flex:1;background:transparent;border:none;outline:none;font-size:14px;font-family:inherit;color:#333;padding:6px 4px;min-width:0;}
+    body.dark #msgInput{color:#ddd;}
+    #msgInput::placeholder{color:#bbb;}
+    #sendBtn{background:#1976d2;color:#fff;border:none;border-radius:50%;width:42px;height:42px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s,transform 0.1s;flex-shrink:0;}
+    #sendBtn:hover{background:#1565c0;}
+    #sendBtn:active{transform:scale(0.93);}
+
+    /* Emoji panel */
+    #emojiPanel{position:absolute;bottom:68px;left:14px;background:#fff;border:1px solid #e0e0e0;border-radius:14px;padding:12px 10px;box-shadow:0 4px 20px rgba(0,0,0,0.18);z-index:500;display:none;width:310px;}
+    body.dark #emojiPanel{background:#1e1e1e;border-color:#333;}
+    .ep-search{width:100%;padding:6px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:#fafafa;color:#333;margin-bottom:8px;}
+    .ep-search:focus{border-color:#1976d2;}
+    body.dark .ep-search{background:#252525;border-color:#444;color:#ddd;}
+    .emoji-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;}
+    .emoji-btn{background:none;border:none;cursor:pointer;font-size:20px;padding:4px;border-radius:6px;transition:background 0.1s;line-height:1;}
+    .emoji-btn:hover{background:#e3f2fd;}
+    body.dark .emoji-btn:hover{background:#1a2a3a;}
+
+    /* Modals */
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.48);z-index:8000;align-items:center;justify-content:center;}
+    .modal.open{display:flex;}
+    .mbox{background:#fff;border-radius:16px;padding:26px;width:90%;max-width:400px;max-height:88vh;overflow-y:auto;position:relative;box-shadow:0 16px 48px rgba(0,0,0,0.25);}
+    body.dark .mbox{background:#1e1e1e;color:#ddd;box-shadow:0 16px 48px rgba(0,0,0,0.5);}
+    .mhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+    .mtitle{font-size:19px;font-weight:500;color:#333;}
+    body.dark .mtitle{color:#e0e0e0;}
+    .mclose{background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center;transition:background 0.15s;}
+    .mclose:hover{background:#f5f5f5;}
+    body.dark .mclose:hover{background:#2a2a2a;}
+    .mclose .material-symbols-outlined{font-size:21px;color:#666;}
+    body.dark .mclose .material-symbols-outlined{color:#aaa;}
+    .frow{margin-bottom:13px;}
+    .frow label{display:block;font-size:12px;color:#777;margin-bottom:3px;}
+    body.dark .frow label{color:#888;}
+    .finput{width:100%;padding:8px 10px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;font-family:inherit;outline:none;transition:border-color 0.2s;background:#fafafa;color:#333;}
+    .finput:focus{border-color:#1976d2;}
+    body.dark .finput{background:#252525 !important;color:#ddd !important;border-color:#444 !important;}
+    .mfooter{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;}
+    .mbtn{padding:8px 18px;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-family:inherit;transition:background 0.15s;}
+    .mbtn.primary{background:#1976d2;color:#fff;}
+    .mbtn.primary:hover{background:#1565c0;}
+    .mbtn.sec{background:#e0e0e0;color:#333;}
+    .mbtn.sec:hover{background:#d0d0d0;}
+    body.dark .mbtn.sec{background:#333;color:#bbb;}
+    body.dark .mbtn.sec:hover{background:#3a3a3a;}
+    .av-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:20px;}
+    #modalAvatarPreview{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #e0e0e0;}
+    body.dark #modalAvatarPreview{border-color:#444;}
+    .av-upload{display:flex;align-items:center;gap:5px;font-size:12px;color:#1976d2;cursor:pointer;background:#e3f2fd;border:none;border-radius:7px;padding:5px 12px;font-family:inherit;transition:background 0.15s;}
+    .av-upload:hover{background:#bbdefb;}
+
+    /* Toasts */
+    .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(60px);padding:11px 20px;border-radius:8px;color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,0.15);z-index:10002;opacity:0;transition:transform 0.3s,opacity 0.3s;pointer-events:none;white-space:nowrap;}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+    .toast.success,.toast.info{background:#1976d2;}
+    .toast.error{background:#d32f2f;}
+
+    /* Tip box */
+    #tipBox{position:fixed;bottom:80px;right:18px;width:284px;background:#1976d2;color:#fff;border-radius:14px;padding:14px;box-shadow:0 8px 24px rgba(25,118,210,0.3);z-index:9990;opacity:0;transform:translateY(8px);transition:opacity 0.3s,transform 0.3s;font-family:inherit;pointer-events:none;}
+    #tipBox.show{opacity:1;transform:translateY(0);pointer-events:auto;}
+    #tipBox.hide{opacity:0;transform:translateY(8px);pointer-events:none;}
+    body.dark #tipBox{background:#0d47a1;}
+    .tip-prog{height:3px;background:rgba(255,255,255,0.2);border-radius:99px;overflow:hidden;margin-bottom:11px;}
+    .tip-bar{height:100%;background:#fff;transition:width 0.3s;}
+    .tip-text{font-size:13px;line-height:1.5;min-height:58px;}
+    .tip-actions{display:flex;gap:7px;margin-top:11px;}
+    .tip-btn{flex:1;border:none;padding:6px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}
+    .tip-prev{background:rgba(255,255,255,0.15);color:#fff;}
+    .tip-next{background:#fff;color:#1976d2;}
+
+    /* Connectivity */
+    #connBar{display:none;position:fixed;top:0;left:0;width:100%;padding:4px;text-align:center;font-size:11px;font-weight:600;z-index:9999;}
+    #connBar.offline{background:#d32f2f;color:#fff;display:block;}
+    #connBar.online-back{background:#43a047;color:#fff;display:block;}
+
+    /* Media */
+    .chat-img{max-width:220px;border-radius:10px;cursor:pointer;display:block;margin-top:2px;}
+    .chat-img:hover{opacity:0.9;}
+    .chat-media{max-width:240px;border-radius:10px;display:block;margin-top:2px;}
+  </style>
+</head>
+<body>
+
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Connecting…</div>
+</div>
+
+<div id="appContainer">
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="tool-title">Connect</span>
+    <div class="toolbar-sep"></div>
+    <div class="id-chip" title="Click to copy your ID" onclick="copyMyId()">
+      <span class="material-symbols-outlined" style="font-size:14px;color:#1976d2">wifi</span>
+      <span id="myIdDisplay">Connecting…</span>
+    </div>
+    <div class="connect-row">
+      <input id="peerInput" placeholder="Enter Peer ID…" autocomplete="off"/>
+      <button id="connectBtn">
+        <span class="material-symbols-outlined" style="font-size:16px">add_link</span>
+        Connect
+      </button>
+    </div>
+    <div class="top-spacer"></div>
+    <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">
+      <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+    </button>
+    <button class="icon-btn" onclick="openProfileModal()" title="Edit profile">
+      <span class="material-symbols-outlined">manage_accounts</span>
+    </button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="tbtn" onclick="shareMyId()">
+      <span class="material-symbols-outlined">share</span>Share My ID
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="clearActiveDM()">
+      <span class="material-symbols-outlined">delete_sweep</span>Clear Chat
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="disconnectActive()">
+      <span class="material-symbols-outlined">link_off</span>Disconnect
+    </button>
+    <div class="toolbar-sep"></div>
+    <span id="activeDmStatus" style="font-size:12px;color:#999;padding:0 4px;">No active DM</span>
+  </div>
+
+  <!-- Main -->
+  <div class="main-content">
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <div class="sb-header">
+        <span class="sb-title">Direct Messages</span>
+        <span id="totalUnreadBadge" style="display:none;" class="unread-badge">0</span>
+      </div>
+      <div class="dm-list" id="dmList">
+        <div style="padding:20px 14px;font-size:12px;color:#bbb;text-align:center;">No conversations yet</div>
+      </div>
+      <div class="sb-footer" onclick="openProfileModal()">
+        <div class="dm-av-wrap">
+          <img class="dm-avatar current-user-avatar" src="https://i.ibb.co.com/Cs3vDh96/360-F-553796090-XHr-E6-R9jwm-BJUMo9-HKl41hy-HJ5gqt9oz.jpg" alt="Me"/>
+          <span class="dm-dot online"></span>
+        </div>
+        <div class="dm-info">
+          <div class="dm-name current-user-name" style="font-weight:600;">User</div>
+          <div class="dm-preview" style="color:#43a047;font-weight:500;">● Online</div>
+        </div>
+        <span class="material-symbols-outlined" style="font-size:18px;color:#bbb;flex-shrink:0;">edit</span>
+      </div>
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">chevron_left</span>Hide Panel
+      </button>
+    </div>
+
+    <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()">
+      <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+    </button>
+
+    <!-- Content area -->
+    <div class="content-area">
+
+      <!-- No DM state -->
+      <div class="no-dm-state" id="noDmState">
+        <div class="no-dm-icon"><span class="material-symbols-outlined">forum</span></div>
+        <h2>No conversation open</h2>
+        <p>Connect to a peer using their Peer ID above, or select a DM from the sidebar.</p>
+      </div>
+
+      <!-- DM view -->
+      <div id="dmView" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;">
+        <div class="dm-header">
+          <img class="dm-header-avatar" id="dmHeaderAvatar" src="" alt=""/>
+          <div style="flex:1;min-width:0;">
+            <div class="dm-header-name" id="dmHeaderName">—</div>
+            <div class="dm-header-status" id="dmHeaderStatus">Online</div>
+          </div>
+          <button class="icon-btn" onclick="closeActiveDM()" title="Close">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+        <div id="chatBox"></div>
+        <div id="replyPreview">
+          <div style="min-width:0;flex:1;">
+            <div class="rp-label">Replying to…</div>
+            <div class="rp-text" id="replyTextContent"></div>
+          </div>
+          <button class="rp-close" onclick="cancelReply()">
+            <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+          </button>
+        </div>
+        <div class="input-bar">
+          <div class="input-wrap">
+            <button class="iib" id="emojiBtnEl" title="Emoji">
+              <span class="material-symbols-outlined" style="font-size:20px;">sentiment_satisfied</span>
+            </button>
+            <input id="msgInput" placeholder="Message…" autocomplete="off"/>
+            <label class="iib" title="Attach file">
+              <span class="material-symbols-outlined" style="font-size:20px;">attach_file</span>
+              <input type="file" id="fileInput" style="display:none;" onchange="handleFile(this)"/>
+            </label>
+          </div>
+          <button id="sendBtn">
+            <span class="material-symbols-outlined" style="font-size:20px;">send</span>
+          </button>
+          <!-- Emoji Panel — pure client-side unicode, no module scripts -->
+          <div id="emojiPanel">
+            <input class="ep-search" id="emojiSearch" placeholder="Search emoji…" oninput="filterEmoji(this.value)" autocomplete="off"/>
+            <div class="emoji-grid" id="emojiGrid"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /main-content -->
+</div><!-- /appContainer -->
+
+<!-- Profile modal -->
+<div class="modal" id="profileModal">
+  <div class="mbox">
+    <div class="mhdr">
+      <span class="mtitle">Edit Profile</span>
+      <button class="mclose" onclick="closeProfileModal()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="av-wrap">
+      <img id="modalAvatarPreview" src="" alt="Avatar"/>
+      <label class="av-upload">
+        <span class="material-symbols-outlined" style="font-size:16px;">photo_camera</span>Change Photo
+        <input type="file" id="modalAvatarInput" accept="image/*" style="display:none;" onchange="previewAvatar(this)"/>
+      </label>
+    </div>
+    <div class="frow">
+      <label>Display Name</label>
+      <input class="finput" id="modalNameInput" placeholder="Your name"/>
+    </div>
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="closeProfileModal()">Cancel</button>
+      <button class="mbtn primary" onclick="saveProfile()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastStack"></div>
+
+<div id="tipBox">
+  <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+  <div class="tip-text" id="tipText"></div>
+  <div class="tip-actions">
+    <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+    <button class="tip-btn tip-next" onclick="tipNav(1)">Next →</button>
+  </div>
+</div>
+
+<div id="connBar"></div>
+
+<script>
+// ── Utilities ────────────────────────────────────────────────────────────────
+const $  = id => document.getElementById(id);
+const escHtml = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmtSize = b => { if(!b) return '?'; const k=1024,u=['B','KB','MB','GB']; const i=Math.floor(Math.log(b)/Math.log(k)); return (b/Math.pow(k,i)).toFixed(1)+' '+u[i]; };
+
+// ── Emoji data — pure unicode stored as JS strings, zero encoding issues ─────
+const ALL_EMOJI = [
+  '😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍',
+  '🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔',
+  '🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴',
+  '😷','🤒','🤕','🤢','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐',
+  '😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢',
+  '😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿',
+  '💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖',
+  '👋','🤚','🖐','✋','🖖','👌','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇',
+  '☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','🤝','🙏',
+  '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗',
+  '💖','💘','💝','✨','🔥','💫','⭐','🌟','💥','🎉','🎊','🎈','🎁','🏆',
+  '😺','😸','😹','😻','😼','😽','🙀','😿','😾',
+  '🌈','🌸','🌺','🌻','🌹','🌷','🍀','🌿','🍁','🌊','⛅','❄️','🌙','☀️','⭐',
+  '🍕','🍔','🌮','🍜','🍣','🍦','🎂','🍰','🧁','🍩','🍪','🥤','☕','🍺','🥂',
+  '🚀','✈️','🚗','🏠','💻','📱','🎮','🎵','🎬','📚','💡','🔑','🎯','⚽','🏀'
+];
+
+let filteredEmoji = [...ALL_EMOJI];
+
+function buildEmojiGrid(list){
+  const grid=$('emojiGrid');
+  grid.innerHTML='';
+  (list||ALL_EMOJI).forEach(em=>{
+    const btn=document.createElement('button');
+    btn.className='emoji-btn';
+    // Use textContent so the emoji is stored as a proper JS string, no encoding
+    btn.textContent=em;
+    btn.onclick=()=>insertEmoji(em);
+    grid.appendChild(btn);
+  });
+}
+
+function filterEmoji(q){
+  // Simple filter: just show all on empty, or do a substring match on codepoint name isn't available
+  // so we keep all and just filter by visible character search isn't useful — show all always for simplicity
+  buildEmojiGrid(q ? ALL_EMOJI : ALL_EMOJI);
+}
+
+function insertEmoji(em){
+  const inp=$('msgInput');
+  const pos=inp.selectionStart!=null?inp.selectionStart:inp.value.length;
+  // Insert emoji as raw JS string — guaranteed correct unicode
+  inp.value=inp.value.slice(0,pos)+em+inp.value.slice(pos);
+  inp.focus();
+  try{ inp.setSelectionRange(pos+[...em].length, pos+[...em].length); }catch(e){}
+}
+
+const emojiBtnEl=$('emojiBtnEl');
+const emojiPanel=$('emojiPanel');
+emojiBtnEl.onclick=e=>{
+  e.stopPropagation();
+  const open=emojiPanel.style.display==='block';
+  emojiPanel.style.display=open?'none':'block';
+  if(!open) $('emojiSearch').focus();
+};
+document.addEventListener('click',e=>{
+  if(!emojiPanel.contains(e.target)&&!emojiBtnEl.contains(e.target))
+    emojiPanel.style.display='none';
+});
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function applyTheme(){
+  const dark=document.cookie.split('; ').some(r=>r==='toolsuite_theme=dark');
+  document.body.classList.toggle('dark',dark);
+  $('themeIcon').textContent=dark?'light_mode':'dark_mode';
+}
+function toggleTheme(){
+  const dark=document.body.classList.toggle('dark');
+  document.documentElement.classList.toggle('dark',dark);
+  document.cookie=`toolsuite_theme=${dark?'dark':'light'};path=/;max-age=31536000;SameSite=Lax`;
+  $('themeIcon').textContent=dark?'light_mode':'dark_mode';
+}
+applyTheme();
+
+// ── Sidebar ───────────────────────────────────────────────────────────────────
+function toggleSidebar(){
+  const sb=$('sidebar'),btn=$('expandBtn');
+  const c=sb.classList.toggle('collapsed');
+  btn.style.display=c?'block':'none';
+}
+
+// ── Connectivity ──────────────────────────────────────────────────────────────
+const cb=$('connBar');
+window.addEventListener('offline',()=>{ cb.className='offline'; cb.textContent='⚠ No internet'; });
+window.addEventListener('online',()=>{ cb.className='online-back'; cb.textContent='✓ Back online'; setTimeout(()=>{ cb.className=''; cb.style.display='none'; },2500); });
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg,type='info',dur=2800){
+  const t=document.createElement('div');
+  t.className=`toast ${type}`;
+  // Use textContent for icon, then append text node for message — keeps emoji in messages safe
+  const icon=document.createElement('span');
+  icon.className='material-symbols-outlined';
+  icon.style.fontSize='16px';
+  icon.textContent=type==='error'?'error':'check_circle';
+  t.appendChild(icon);
+  t.appendChild(document.createTextNode(msg));
+  $('toastStack').appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),350); },dur);
+}
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let peer;
+const connections   = {};   // peerId → DataConnection
+const heartbeats    = {};   // peerId → intervalId
+const dmHistory     = {};   // peerId → Array of message objects
+const peerProfiles  = {};   // peerId → {username, avatar, active}
+const unreadCounts  = {};   // peerId → number
+// File chunk reassembly buffers
+const fileBuffers   = {};   // peerId → {meta, chunks:[]}
+let activeDmPeerId  = null;
+let replyingTo      = null;
+let localUsername   = 'User '+Math.floor(1000+Math.random()*9000);
+// Never store base64 avatar locally — use a URL only so profile packets stay tiny
+let localAvatarUrl  = 'https://i.ibb.co.com/Cs3vDh96/360-F-553796090-XHr-E6-R9jwm-BJUMo9-HKl41hy-HJ5gqt9oz.jpg';
+let localAvatarB64  = null; // set only if user uploads a custom one
+
+function getMyAvatar(){ return localAvatarB64 || localAvatarUrl; }
+
+// ── PeerJS ────────────────────────────────────────────────────────────────────
+// Use public STUN servers + a free open TURN server for better NAT traversal
+const ICE_SERVERS = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun.cloudflare.com:3478' },
+  ]
+};
+
+function initPeer(){
+  peer = new Peer(undefined, {
+    debug: 0,
+    config: ICE_SERVERS
+  });
+
+  peer.on('open', id=>{
+    $('myIdDisplay').textContent=id;
+    updateProfileUI();
+    buildEmojiGrid();
+    $('loadingScreen').style.display='none';
+    $('appContainer').style.display='flex';
+    showToast('Ready to connect');
+    const auto=new URLSearchParams(window.location.search).get('id');
+    if(auto) connectToPeer(auto);
+    if(!localStorage.getItem('connect_tips_seen')) setTimeout(()=>showTip(0),1400);
+  });
+
+  peer.on('connection', conn=>setupConn(conn));
+
+  peer.on('disconnected', ()=>{
+    // PeerJS server disconnected — try to reconnect the signalling channel
+    showToast('Reconnecting…','error');
+    setTimeout(()=>{ try{ peer.reconnect(); }catch(e){} }, 2000);
+  });
+
+  peer.on('error', err=>{
+    const msg = err.type==='peer-unavailable' ? 'Peer not found or offline'
+              : err.type==='network'           ? 'Network error — retrying…'
+              : 'Error: '+err.type;
+    showToast(msg,'error');
+  });
+}
+initPeer();
+
+$('connectBtn').onclick=()=>connectToPeer($('peerInput').value.trim());
+$('peerInput').addEventListener('keypress',e=>{ if(e.key==='Enter') connectToPeer($('peerInput').value.trim()); });
+
+function connectToPeer(id){
+  if(!id||id===peer.id) return;
+  if(connections[id]&&connections[id].open){ openDm(id); return; }
+  showToast('Connecting…');
+  // No serialization option — use PeerJS default (binary) which is most stable
+  const conn=peer.connect(id, { reliable:true });
+  setupConn(conn);
+  $('peerInput').value='';
+}
+
+// ── Heartbeat ─────────────────────────────────────────────────────────────────
+// Send a tiny ping every 20s to keep the WebRTC data channel alive through NATs
+function startHeartbeat(conn){
+  stopHeartbeat(conn.peer);
+  heartbeats[conn.peer] = setInterval(()=>{
+    if(conn.open){
+      try{ conn.send(JSON.stringify({type:'ping'})); }catch(e){}
+    } else {
+      stopHeartbeat(conn.peer);
+    }
+  }, 20000);
+}
+function stopHeartbeat(peerId){
+  if(heartbeats[peerId]){ clearInterval(heartbeats[peerId]); delete heartbeats[peerId]; }
+}
+
+// ── File chunking ─────────────────────────────────────────────────────────────
+// Split files into 16KB chunks to avoid WebRTC message size limits causing drops
+const CHUNK_SIZE = 16 * 1024;
+
+function sendFileChunked(conn, file, replyTo){
+  const reader = new FileReader();
+  reader.onload = e => {
+    const b64 = e.target.result; // full data URL
+    const totalChunks = Math.ceil(b64.length / CHUNK_SIZE);
+    const msgId = Date.now()+'_'+Math.random().toString(36).slice(2);
+    // Send meta first
+    conn.send(JSON.stringify({
+      type:'file_meta', msgId, fileName:file.name,
+      fileType:file.type, fileSize:file.size,
+      totalChunks, replyTo
+    }));
+    // Send chunks with small delay to avoid flooding
+    let i=0;
+    function sendNext(){
+      if(i>=totalChunks) return;
+      conn.send(JSON.stringify({
+        type:'file_chunk', msgId, index:i,
+        data: b64.slice(i*CHUNK_SIZE, (i+1)*CHUNK_SIZE)
+      }));
+      i++;
+      setTimeout(sendNext, 10);
+    }
+    sendNext();
+  };
+  reader.readAsDataURL(file);
+}
+
+function setupConn(conn){
+  connections[conn.peer]=conn;
+  if(!peerProfiles[conn.peer]) peerProfiles[conn.peer]={username:conn.peer,avatar:localAvatarUrl,active:false};
+  if(!dmHistory[conn.peer]) dmHistory[conn.peer]=[];
+  if(unreadCounts[conn.peer]==null) unreadCounts[conn.peer]=0;
+  fileBuffers[conn.peer]={};
+
+  conn.on('open',()=>{
+    peerProfiles[conn.peer].active=true;
+    // Profile packet: send only username + avatar URL (never base64 here — keeps packet tiny)
+    conn.send(JSON.stringify({type:'profile', username:localUsername, avatar:localAvatarUrl}));
+    startHeartbeat(conn);
+    addSysMsg(conn.peer,'Connected ✓');
+    updateDmList();
+    showToast('Connected to '+(peerProfiles[conn.peer].username||conn.peer));
+    openDm(conn.peer);
+  });
+
+  conn.on('data', raw=>{
+    let data;
+    try { data = typeof raw==='string' ? JSON.parse(raw) : raw; }
+    catch(e){ return; }
+    if(!data||typeof data!=='object') return;
+
+    if(data.type==='ping') return; // heartbeat — ignore
+
+    if(data.type==='profile'){
+      peerProfiles[conn.peer].username=data.username||conn.peer;
+      peerProfiles[conn.peer].avatar=data.avatar||localAvatarUrl;
+      updateDmList();
+      if(activeDmPeerId===conn.peer) updateDmHeader(conn.peer);
+      return;
+    }
+
+    if(data.type==='file_meta'){
+      fileBuffers[conn.peer][data.msgId]={
+        meta:data, chunks:[], received:0
+      };
+      return;
+    }
+
+    if(data.type==='file_chunk'){
+      const buf=fileBuffers[conn.peer]?.[data.msgId];
+      if(!buf) return;
+      buf.chunks[data.index]=data.data;
+      buf.received++;
+      if(buf.received>=buf.meta.totalChunks){
+        // Reassemble
+        const fullData=buf.chunks.join('');
+        delete fileBuffers[conn.peer][data.msgId];
+        const {fileName,fileType,fileSize,replyTo}=buf.meta;
+        const msg={
+          isMe:false, sender:peerProfiles[conn.peer].username||conn.peer,
+          avatar:peerProfiles[conn.peer].avatar||localAvatarUrl,
+          fileType, fileData:fullData, fileName, fileSize,
+          replyTo:replyTo||null, time:Date.now()
+        };
+        deliverIncoming(conn.peer, msg);
+      }
+      return;
+    }
+
+    if(data.type==='text'){
+      const msg={
+        isMe:false,
+        sender:peerProfiles[conn.peer].username||conn.peer,
+        avatar:peerProfiles[conn.peer].avatar||localAvatarUrl,
+        message:data.message||'',
+        replyTo:data.replyTo||null,
+        time:Date.now()
+      };
+      deliverIncoming(conn.peer, msg);
+    }
+  });
+
+  conn.on('close',()=>{
+    const name=peerProfiles[conn.peer]?.username||conn.peer;
+    if(peerProfiles[conn.peer]) peerProfiles[conn.peer].active=false;
+    stopHeartbeat(conn.peer);
+    delete connections[conn.peer];
+    updateDmList();
+    if(activeDmPeerId===conn.peer) updateDmHeader(conn.peer);
+    addSysMsg(conn.peer,name+' disconnected');
+    showToast(name+' disconnected','error');
+  });
+
+  conn.on('error', err=>{
+    showToast('Connection error','error');
+    console.warn('conn error',err);
+  });
+}
+
+function deliverIncoming(peerId, msg){
+  dmHistory[peerId].push(msg);
+  if(activeDmPeerId===peerId){
+    renderMessage(msg);
+    scrollBottom();
+  } else {
+    unreadCounts[peerId]=(unreadCounts[peerId]||0)+1;
+    updateTotalUnread();
+  }
+  updateDmList();
+}
+
+// ── DM List ───────────────────────────────────────────────────────────────────
+function updateDmList(){
+  const list=$('dmList');
+  const peers=Object.keys(peerProfiles);
+  if(!peers.length){
+    list.innerHTML='<div style="padding:20px 14px;font-size:12px;color:#bbb;text-align:center;">No conversations yet</div>';
+    return;
+  }
+  list.innerHTML='';
+  peers.forEach(id=>{
+    const p=peerProfiles[id];
+    const hist=dmHistory[id]||[];
+    const last=hist.filter(m=>!m.sys).pop();
+    const unread=unreadCounts[id]||0;
+    let preview='No messages yet';
+    if(last){
+      if(last.fileName) preview=(last.isMe?'You: ':'')+'📎 '+last.fileName;
+      else if(last.message) preview=(last.isMe?'You: ':'')+last.message.slice(0,36);
+    }
+    const item=document.createElement('div');
+    item.className='dm-item'+(activeDmPeerId===id?' active':'');
+    item.onclick=()=>openDm(id);
+
+    const avWrap=document.createElement('div'); avWrap.className='dm-av-wrap';
+    const av=document.createElement('img'); av.className='dm-avatar';
+    av.src=p.avatar; av.alt=p.username;
+    av.onerror=()=>{ av.src=localAvatar; };
+    const dot=document.createElement('span'); dot.className='dm-dot '+(p.active?'online':'offline');
+    avWrap.appendChild(av); avWrap.appendChild(dot);
+
+    const info=document.createElement('div'); info.className='dm-info';
+    const nameEl=document.createElement('div'); nameEl.className='dm-name'; nameEl.textContent=p.username;
+    const prevEl=document.createElement('div'); prevEl.className='dm-preview'; prevEl.textContent=preview;
+    info.appendChild(nameEl); info.appendChild(prevEl);
+
+    item.appendChild(avWrap);
+    item.appendChild(info);
+    if(unread>0){
+      const badge=document.createElement('span'); badge.className='unread-badge';
+      badge.textContent=unread>99?'99+':unread;
+      item.appendChild(badge);
+    }
+    list.appendChild(item);
+  });
+}
+
+function updateTotalUnread(){
+  const total=Object.values(unreadCounts).reduce((a,b)=>a+b,0);
+  const badge=$('totalUnreadBadge');
+  badge.textContent=total>99?'99+':total;
+  badge.style.display=total>0?'flex':'none';
+}
+
+// ── Open / Close DM ───────────────────────────────────────────────────────────
+function openDm(peerId){
+  activeDmPeerId=peerId;
+  unreadCounts[peerId]=0;
+  updateDmList();
+  updateTotalUnread();
+  $('noDmState').style.display='none';
+  const dv=$('dmView'); dv.style.display='flex';
+  updateDmHeader(peerId);
+  renderAllMessages(peerId);
+  scrollBottom();
+  $('msgInput').focus();
+}
+
+function closeActiveDM(){
+  activeDmPeerId=null;
+  $('dmView').style.display='none';
+  $('noDmState').style.display='flex';
+  $('activeDmStatus').textContent='No active DM';
+  updateDmList();
+}
+
+function updateDmHeader(peerId){
+  const p=peerProfiles[peerId]||{};
+  $('dmHeaderAvatar').src=p.avatar||localAvatar;
+  $('dmHeaderName').textContent=p.username||peerId;
+  const s=$('dmHeaderStatus');
+  s.textContent=p.active?'● Online':'● Offline';
+  s.className='dm-header-status'+(p.active?'':' offline');
+  $('activeDmStatus').textContent='DM with '+(p.username||peerId);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function renderAllMessages(peerId){
+  const box=$('chatBox');
+  box.innerHTML='';
+  const hist=(dmHistory[peerId]||[]);
+  if(!hist.length){
+    const el=document.createElement('div');
+    el.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:12px;padding:40px;text-align:center;';
+    el.textContent='No messages yet. Say hello!';
+    box.appendChild(el);
+    return;
+  }
+  hist.forEach(msg=>{ if(msg.sys){ const el=document.createElement('div'); el.className='sys-msg'; el.textContent=msg.text; box.appendChild(el); } else renderMessage(msg); });
+}
+
+function renderMessage(msg){
+  const box=$('chatBox');
+  const row=document.createElement('div');
+  row.className='msg-row'+(msg.isMe?' mine':'');
+
+  const av=document.createElement('img');
+  av.className='msg-avatar-sm';
+  av.src=msg.avatar||localAvatarUrl;
+  av.onerror=()=>{ av.src=localAvatarUrl; };
+
+  const col=document.createElement('div');
+  col.className='msg-content';
+
+  if(!msg.isMe){
+    const sl=document.createElement('div');
+    sl.className='msg-sender-label';
+    sl.textContent=msg.sender;
+    col.appendChild(sl);
+  }
+
+  const bubble=document.createElement('div');
+  bubble.className='bubble '+(msg.isMe?'mine':'theirs');
+
+  if(msg.replyTo){
+    const q=document.createElement('div');
+    q.className='reply-quote';
+    // textContent handles emoji correctly
+    q.textContent=(msg.replyTo.sender||'')+': '+(msg.replyTo.message||'').slice(0,50);
+    bubble.appendChild(q);
+  }
+
+  if(msg.message){
+    const body=document.createElement('div');
+    // CRITICAL: use textContent, not innerHTML — this preserves emoji unicode without any mangling
+    body.textContent=msg.message;
+    bubble.appendChild(body);
+  } else if(msg.fileType&&msg.fileData){
+    if(msg.fileType.startsWith('image/')){
+      const img=document.createElement('img');
+      img.className='chat-img'; img.src=msg.fileData;
+      img.onclick=()=>window.open(msg.fileData);
+      bubble.appendChild(img);
+    } else if(msg.fileType.startsWith('audio/')||msg.fileType.startsWith('video/')){
+      const med=document.createElement(msg.fileType.startsWith('audio/')?'audio':'video');
+      med.className='chat-media'; med.src=msg.fileData; med.controls=true;
+      bubble.appendChild(med);
+    } else {
+      bubble.appendChild(buildFileBubble(msg));
+    }
+  }
+
+  const ts=document.createElement('div');
+  ts.className='msg-time';
+  ts.textContent=new Date(msg.time||Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  col.appendChild(bubble);
+  col.appendChild(ts);
+
+  const rb=document.createElement('button');
+  rb.className='msg-reply-btn';
+  const ribIcon=document.createElement('span');
+  ribIcon.className='material-symbols-outlined'; ribIcon.style.fontSize='13px'; ribIcon.textContent='reply';
+  rb.appendChild(ribIcon);
+  rb.appendChild(document.createTextNode('Reply'));
+  rb.onclick=()=>setReply(msg.sender,msg.message||(msg.fileName?'[File: '+msg.fileName+']':'[File]'));
+
+  row.appendChild(av);
+  row.appendChild(col);
+  row.appendChild(rb);
+  box.appendChild(row);
+}
+
+function buildFileBubble(msg){
+  const ext=(msg.fileName||'').split('.').pop().toUpperCase();
+  let icon='description',color='#546e7a';
+  if(msg.fileType.includes('pdf')){icon='picture_as_pdf';color='#d32f2f';}
+  else if(msg.fileType.includes('word')||['DOC','DOCX'].includes(ext)){icon='article';color='#1976d2';}
+  else if(msg.fileType.includes('excel')||['XLS','XLSX'].includes(ext)){icon='grid_on';color='#2e7d32';}
+  else if(msg.fileType.includes('zip')||msg.fileType.includes('rar')){icon='folder_zip';color='#6a1b9a';}
+  else if(['JS','JSON','HTML','CSS','PY'].includes(ext)){icon='code';color='#00838f';}
+
+  const wrap=document.createElement('div');
+  wrap.className='file-bubble'+(msg.isMe?' mine':'');
+
+  const iconEl=document.createElement('span');
+  iconEl.className='material-symbols-outlined';
+  iconEl.style.cssText='font-size:20px;color:'+(msg.isMe?'#fff':color);
+  iconEl.textContent=icon;
+  const iconBox=document.createElement('div');
+  iconBox.className='fb-icon'+(msg.isMe?' mine':'');
+  iconBox.appendChild(iconEl);
+
+  const nameEl=document.createElement('div'); nameEl.className='fb-name'; nameEl.textContent=msg.fileName||'File';
+  const metaEl=document.createElement('div'); metaEl.className='fb-meta'; metaEl.textContent=ext+' · '+fmtSize(msg.fileSize);
+  const fileInfo=document.createElement('div'); fileInfo.style.cssText='min-width:0;flex:1;';
+  fileInfo.appendChild(nameEl); fileInfo.appendChild(metaEl);
+
+  const top=document.createElement('div'); top.className='fb-top';
+  top.appendChild(iconBox); top.appendChild(fileInfo);
+
+  const dl=document.createElement('a');
+  dl.className='fb-dl'; dl.href=msg.fileData; dl.download=msg.fileName||'file';
+  const dlIcon=document.createElement('span');
+  dlIcon.className='material-symbols-outlined'; dlIcon.style.fontSize='14px'; dlIcon.textContent='download';
+  dl.appendChild(dlIcon);
+  dl.appendChild(document.createTextNode('Download'));
+
+  wrap.appendChild(top); wrap.appendChild(dl);
+  return wrap;
+}
+
+function addSysMsg(peerId,text){
+  if(!dmHistory[peerId]) dmHistory[peerId]=[];
+  dmHistory[peerId].push({sys:true,text,time:Date.now()});
+  if(activeDmPeerId===peerId){
+    const el=document.createElement('div');
+    el.className='sys-msg'; el.textContent=text;
+    $('chatBox').appendChild(el);
+    scrollBottom();
+  }
+}
+
+function scrollBottom(){
+  const b=$('chatBox');
+  const near=b.scrollHeight-b.scrollTop<=b.clientHeight+150;
+  if(near) b.scrollTop=b.scrollHeight;
+}
+
+// ── Sending ───────────────────────────────────────────────────────────────────
+$('sendBtn').onclick=sendMessage;
+$('msgInput').addEventListener('keypress',e=>{ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} });
+
+function sendMessage(){
+  if(!activeDmPeerId){ showToast('Open a DM first','error'); return; }
+  const raw=$('msgInput').value;
+  if(!raw.trim()) return;
+
+  const conn=connections[activeDmPeerId];
+  // JSON.stringify ensures full unicode/emoji survive the WebRTC transport untouched
+  if(conn&&conn.open) conn.send(JSON.stringify({type:'text',message:raw,replyTo:replyingTo}));
+
+  const msg={isMe:true,sender:localUsername,avatar:getMyAvatar(),message:raw,replyTo:replyingTo,time:Date.now()};
+  dmHistory[activeDmPeerId].push(msg);
+  renderMessage(msg);
+  scrollBottom();
+  updateDmList();
+  $('msgInput').value='';
+  cancelReply();
+}
+
+function handleFile(input){
+  if(!activeDmPeerId){ showToast('Open a DM first','error'); return; }
+  const file=input.files[0];
+  if(!file) return;
+  const savedReply=replyingTo;
+  const conn=connections[activeDmPeerId];
+  // Show local preview immediately using FileReader
+  const r=new FileReader();
+  r.onload=e=>{
+    const data=e.target.result;
+    const msg={isMe:true,sender:localUsername,avatar:getMyAvatar(),fileType:file.type,fileData:data,fileName:file.name,fileSize:file.size,replyTo:savedReply,time:Date.now()};
+    dmHistory[activeDmPeerId].push(msg);
+    renderMessage(msg);
+    scrollBottom();
+    updateDmList();
+    // Send file in 16KB chunks so large files don't kill the connection
+    if(conn&&conn.open) sendFileChunked(conn, file, savedReply);
+  };
+  r.readAsDataURL(file);
+  cancelReply();
+  input.value='';
+}
+
+// ── Reply ─────────────────────────────────────────────────────────────────────
+function setReply(sender,message){
+  replyingTo={sender,message};
+  $('replyTextContent').textContent=sender+': '+message.slice(0,60);
+  $('replyPreview').style.display='flex';
+  $('msgInput').focus();
+}
+function cancelReply(){
+  replyingTo=null;
+  $('replyPreview').style.display='none';
+}
+
+// ── Toolbar ───────────────────────────────────────────────────────────────────
+function clearActiveDM(){
+  if(!activeDmPeerId){ showToast('No active DM','error'); return; }
+  dmHistory[activeDmPeerId]=[];
+  renderAllMessages(activeDmPeerId);
+  showToast('Chat cleared');
+}
+function disconnectActive(){
+  if(!activeDmPeerId){ showToast('No active DM','error'); return; }
+  const conn=connections[activeDmPeerId];
+  if(conn&&conn.open) conn.close();
+  else showToast('Already disconnected');
+}
+function shareMyId(){
+  const id=peer?.id; if(!id) return;
+  const url=location.origin+location.pathname+'?id='+id;
+  navigator.clipboard.writeText(url).then(()=>showToast('Share link copied!'));
+}
+function copyMyId(){
+  const id=$('myIdDisplay').textContent;
+  if(id==='Connecting…') return;
+  navigator.clipboard.writeText(id).then(()=>showToast('Peer ID copied!'));
+}
+
+// ── Profile ───────────────────────────────────────────────────────────────────
+function updateProfileUI(){
+  const av=getMyAvatar();
+  document.querySelectorAll('.current-user-name').forEach(el=>el.textContent=localUsername);
+  document.querySelectorAll('.current-user-avatar').forEach(el=>el.src=av);
+}
+function openProfileModal(){ $('modalNameInput').value=localUsername; $('modalAvatarPreview').src=getMyAvatar(); $('profileModal').classList.add('open'); }
+function closeProfileModal(){ $('profileModal').classList.remove('open'); }
+function previewAvatar(input){ if(input.files&&input.files[0]){ const r=new FileReader(); r.onload=e=>{ $('modalAvatarPreview').src=e.target.result; }; r.readAsDataURL(input.files[0]); } }
+function saveProfile(){
+  const n=$('modalNameInput').value.trim();
+  if(n) localUsername=n;
+  const s=$('modalAvatarPreview').src;
+  if(s){
+    // If it's a base64 data URL, store it; otherwise keep as URL
+    if(s.startsWith('data:')){ localAvatarB64=s; }
+    else { localAvatarUrl=s; localAvatarB64=null; }
+  }
+  updateProfileUI();
+  // Send only URL (not base64) to peers to keep the packet small
+  Object.values(connections).forEach(c=>{ if(c.open) c.send(JSON.stringify({type:'profile',username:localUsername,avatar:localAvatarUrl})); });
+  closeProfileModal();
+  showToast('Profile updated');
+}
+$('profileModal').addEventListener('click',e=>{ if(e.target===$('profileModal')) closeProfileModal(); });
+
+// ── Tips ──────────────────────────────────────────────────────────────────────
+const TIPS=[
+  ' Welcome to Connect! Each peer gets their own private DM thread.',
+  ' Enter a Peer ID in the top bar to start a one-on-one conversation.',
+  ' New messages show a red badge on the DM in the sidebar.',
+  ' Send files, images, audio and video using the attach button.',
+  ' Pick emoji from the emoji panel — they send perfectly every time.',
+  ' Toggle dark mode with the moon icon in the top bar.',
+  ' All set! Click Next to dismiss this panel.'
+];
+let tipIdx=0;
+function showTip(i){ $('tipText').textContent=TIPS[i]; $('tipBar').style.width=((i+1)/TIPS.length*100)+'%'; $('tipBox').classList.remove('hide'); $('tipBox').classList.add('show'); }
+function tipNav(dir){
+  tipIdx=Math.max(0,Math.min(TIPS.length-1,tipIdx+dir));
+  if(tipIdx===TIPS.length-1&&dir===1){ dismissTips(); } else showTip(tipIdx);
+}
+function dismissTips(){ $('tipBox').classList.replace('show','hide'); localStorage.setItem('connect_tips_seen','1'); }
+</script>
+</body>
+</html>

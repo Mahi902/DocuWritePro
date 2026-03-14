@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Table Maker · TOOLSTRUCTER</title>
+  
+  <!-- ========== REQUIRED CDNs ========== -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+
+  <!-- early theme script -->
+  <script>
+    (function() {
+      const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+      if (match && match.split('=')[1] === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+
+  <style>
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      overflow: hidden;
+      height: 100vh;
+    }
+    body.dark { background: #111; }
+
+    #loadingScreen {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    body.dark #loadingScreen { background: #1a1a1a; }
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border: 4px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 17px; color: #666; }
+    body.dark .loading-text { color: #aaa; }
+
+    #appContainer {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* top bar */
+    .top-bar {
+      background: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 200;
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .top-bar {
+      background: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    #toolTitle {
+      font-size: 17px;
+      font-weight: 500;
+      border: none;
+      outline: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: transparent;
+      min-width: 140px;
+      color: #1a1a2e;
+    }
+    body.dark #toolTitle { color: #e0e0e0; }
+    #toolTitle:hover,
+    #toolTitle:focus { background: #f5f5f5; }
+    body.dark #toolTitle:hover,
+    body.dark #toolTitle:focus { background: #252525; }
+
+    .top-spacer { flex: 1; min-width: 8px; }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 7px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      color: #1976d2;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #e3f2fd; }
+    body.dark .icon-btn:hover { background: #1a2a3a; }
+    .icon-btn .material-symbols-outlined { font-size: 22px; }
+
+    /* toolbar */
+    .toolbar {
+      background: #fff;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .toolbar { background: #1a1a1a; }
+
+    .tbtn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .tbtn:hover { background: #e3f2fd; }
+    body.dark .tbtn:hover { background: #2a2a2a; }
+    .tbtn.active { background: #bbdefb; }
+    body.dark .tbtn.active { background: #0d2a4a; }
+    .tbtn .material-symbols-outlined { font-size: 19px; color: #333; }
+    body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+
+    .toolbar-sep {
+      width: 1px;
+      height: 26px;
+      background: #e0e0e0;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    body.dark .toolbar-sep { background: #333; }
+
+    select.sb-input, #fontSize, #fontFamily {
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 4px 7px;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+      font-family: inherit;
+      flex-shrink: 0;
+      background: #fff;
+      color: #333;
+      height: 32px;
+    }
+    body.dark select.sb-input,
+    body.dark #fontSize,
+    body.dark #fontFamily {
+      background: #252525 !important;
+      color: #ddd !important;
+      border-color: #444 !important;
+    }
+
+    /* main layout */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* sidebar */
+    .sidebar {
+      width: 255px;
+      min-width: 255px;
+      background: #fff;
+      padding: 14px;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    body.dark .sidebar {
+      background: #1a1a1a;
+      border-color: #333;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-255px);
+      width: 0;
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .sb-section { margin-bottom: 18px; }
+    .sb-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      margin-bottom: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    body.dark .sb-title { color: #666; }
+
+    .sb-label {
+      display: block;
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 3px;
+    }
+    .sb-input {
+      width: 100%;
+      padding: 7px 9px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      background: #fafafa;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .sb-input:focus {
+      border-color: #1976d2;
+      box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+      background: #fff;
+    }
+    body.dark .sb-input {
+      background: #252525 !important;
+      color: #ddd !important;
+      border-color: #444 !important;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      margin: 6px 0;
+    }
+    .color-option {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .color-option:hover { transform: scale(1.15); }
+    .color-option.active { border-color: #1976d2; }
+
+    .action-btn {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      white-space: nowrap;
+      font-family: inherit;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 6px;
+    }
+    .action-btn:hover { background: #1565c0; }
+    .action-btn.secondary { background: #546e7a; }
+    .action-btn.secondary:hover { background: #37474f; }
+
+    /* collapse button at BOTTOM of sidebar */
+    .collapse-btn {
+      width: 100%;
+      padding: 8px;
+      background: #e3f2fd;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #1976d2;
+      font-weight: 600;
+      margin-top: auto;  /* pushes it to bottom in flex column */
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .collapse-btn:hover { background: #bbdefb; }
+    body.dark .collapse-btn { background: #1a2a4a; color: #90caf9; }
+
+    .expand-btn {
+      position: fixed;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 50;
+      display: none;
+    }
+    body.dark .expand-btn { background: #1a1a1a; }
+
+    /* content area */
+    .content-area {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      background: #f0f4f8;
+      min-width: 0;
+      padding: 20px;
+    }
+    body.dark .content-area { background: #111; }
+
+    .preview-container {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 24px;
+      display: inline-flex;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .a4-page {
+      background: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .page-portrait { width: 595px; height: 842px; }
+    .page-landscape { width: 842px; height: 595px; }
+    .page-margin {
+      position: absolute;
+      border: 1px dashed #e0e0e0;
+      pointer-events: none;
+    }
+    .table-container {
+      padding: 40px;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+    }
+    .chart-title {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 500;
+      margin-bottom: 30px;
+      padding: 10px;
+      border-bottom: 2px solid #eee;
+      outline: none;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #dadce0;
+      padding: 12px 15px;
+      min-width: 80px;
+      height: 45px;
+    }
+    th { background: #f1f3f4; font-weight: 500; }
+    .selected-cell { outline: 2px solid #1976d2; outline-offset: -1px; }
+
+    .status-bar {
+      background: white;
+      padding: 10px 20px;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+      display: flex;
+      gap: 24px;
+      font-size: 13px;
+      color: #555;
+      flex-shrink: 0;
+    }
+    body.dark .status-bar { background: #1a1a1a; color: #aaa; }
+    .info-item { display: flex; align-items: center; gap: 5px; }
+
+    /* toast */
+    #toastStack { position: fixed; bottom: 20px; left: 0; right: 0; pointer-events: none; z-index: 10002; }
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      padding: 11px 20px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      z-index: 10002;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: #1976d2; }
+    .toast.error { background: #d32f2f; }
+    .toast.info { background: #1976d2; }
+
+    /* tip box */
+    #tipBox {
+      position: fixed;
+      bottom: 80px;
+      right: 18px;
+      width: 284px;
+      background: #1976d2;
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+      z-index: 9990;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+    #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+    body.dark #tipBox { background: #0d47a1; }
+    .tip-prog { height: 3px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 11px; }
+    .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+    .tip-text { font-size: 13px; line-height: 1.5; min-height: 58px; }
+    .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+    .tip-btn {
+      flex: 1; border: none; padding: 6px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .tip-prev { background: rgba(255,255,255,0.15); color: #fff; }
+    .tip-next { background: #fff; color: #1976d2; }
+  </style>
+</head>
+<body>
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading Table Maker ...</div>
+  </div>
+
+  <div id="appContainer">
+    <!-- top bar -->
+    <div class="top-bar">
+      <span class="material-symbols-outlined" style="color:#1976d2;">table_chart</span>
+      <input type="text" id="toolTitle" value="Table Maker Pro" readonly>
+      <div class="top-spacer"></div>
+      <button class="icon-btn" id="themeToggle" title="Toggle dark mode">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
+    </div>
+
+    <!-- toolbar -->
+    <div class="toolbar">
+      <button class="tbtn" data-format="bold" title="Bold"><span class="material-symbols-outlined">format_bold</span></button>
+      <button class="tbtn" data-format="italic" title="Italic"><span class="material-symbols-outlined">format_italic</span></button>
+      <button class="tbtn" data-format="underline" title="Underline"><span class="material-symbols-outlined">format_underlined</span></button>
+      <button class="tbtn" data-format="strikethrough" title="Strikethrough"><span class="material-symbols-outlined">strikethrough_s</span></button>
+      <div class="toolbar-sep"></div>
+      <select id="fontSize" class="sb-input">
+        <option value="12">12px</option><option value="14" selected>14px</option><option value="16">16px</option>
+        <option value="18">18px</option><option value="20">20px</option><option value="24">24px</option>
+      </select>
+      <select id="fontFamily" class="sb-input">
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="'Times New Roman', serif" selected>Times New Roman</option>
+        <option value="'Courier New', monospace">Courier New</option>
+        <option value="Georgia, serif">Georgia</option>
+        <option value="Verdana, sans-serif">Verdana</option>
+      </select>
+    </div>
+
+    <!-- main content -->
+    <div class="main-content">
+      <!-- sidebar -->
+      <div class="sidebar" id="sidebar">
+        <div class="sb-section">
+          <div class="sb-title">Chart settings</div>
+          <div class="sb-label">Rows</div>
+          <input type="number" id="rows" min="1" max="20" value="5" class="sb-input">
+          <div class="sb-label" style="margin-top:8px;">Columns</div>
+          <input type="number" id="columns" min="1" max="15" value="5" class="sb-input">
+          <div class="sb-label" style="margin-top:8px;">Orientation</div>
+          <select id="orientation" class="sb-input">
+            <option value="portrait">Portrait</option><option value="landscape">Landscape</option>
+          </select>
+          <div class="sb-label" style="margin-top:8px;">Margin (mm)</div>
+          <input type="number" id="margin" min="5" max="50" value="20" class="sb-input">
+          <button class="action-btn" id="applySettings" style="margin-top:10px;"><span class="material-symbols-outlined">check</span> Apply</button>
+        </div>
+
+        <div class="sb-section">
+          <div class="sb-title">Text color</div>
+          <div class="color-grid" id="textColorGrid">
+            <div class="color-option active" style="background:#000;" data-color="#000"></div>
+            <div class="color-option" style="background:#fff; border:1px solid #ccc;" data-color="#fff"></div>
+            <div class="color-option" style="background:#f00;" data-color="#f00"></div>
+            <div class="color-option" style="background:#0f0;" data-color="#0f0"></div>
+            <div class="color-option" style="background:#00f;" data-color="#00f"></div>
+            <div class="color-option" style="background:#ff0;" data-color="#ff0"></div>
+            <div class="color-option" style="background:#f0f;" data-color="#f0f"></div>
+            <div class="color-option" style="background:#0ff;" data-color="#0ff"></div>
+          </div>
+          <div class="sb-title" style="margin-top:12px;">Highlight</div>
+          <div class="color-grid" id="highlightGrid">
+            <div class="color-option" style="background:#fff; border:1px solid #ccc;" data-highlight="transparent"></div>
+            <div class="color-option" style="background:#ff0;" data-highlight="#ff0"></div>
+            <div class="color-option" style="background:#ffeb3b;" data-highlight="#ffeb3b"></div>
+            <div class="color-option" style="background:#a5d6a7;" data-highlight="#a5d6a7"></div>
+            <div class="color-option" style="background:#81d4fa;" data-highlight="#81d4fa"></div>
+            <div class="color-option" style="background:#ffcc80;" data-highlight="#ffcc80"></div>
+            <div class="color-option" style="background:#f48fb1;" data-highlight="#f48fb1"></div>
+            <div class="color-option" style="background:#ce93d8;" data-highlight="#ce93d8"></div>
+          </div>
+        </div>
+
+        <div class="sb-section">
+          <div class="sb-title">Cell background</div>
+          <div class="color-grid" id="bgColorGrid">
+            <div class="color-option" style="background:#fff; border:1px solid #ccc;" data-bgcolor="#fff"></div>
+            <div class="color-option" style="background:#f5f5f5;" data-bgcolor="#f5f5f5"></div>
+            <div class="color-option" style="background:#e3f2fd;" data-bgcolor="#e3f2fd"></div>
+            <div class="color-option" style="background:#e8f5e9;" data-bgcolor="#e8f5e9"></div>
+            <div class="color-option" style="background:#fff8e1;" data-bgcolor="#fff8e1"></div>
+            <div class="color-option" style="background:#fbe9e7;" data-bgcolor="#fbe9e7"></div>
+            <div class="color-option" style="background:#f3e5f5;" data-bgcolor="#f3e5f5"></div>
+            <div class="color-option" style="background:#e0f7fa;" data-bgcolor="#e0f7fa"></div>
+          </div>
+          <div class="sb-title" style="margin-top:12px;">Border color</div>
+          <div class="color-grid" id="borderColorGrid">
+            <div class="color-option active" style="background:#000;" data-bordercolor="#000"></div>
+            <div class="color-option" style="background:#ccc;" data-bordercolor="#ccc"></div>
+            <div class="color-option" style="background:#e53935;" data-bordercolor="#e53935"></div>
+            <div class="color-option" style="background:#1e88e5;" data-bordercolor="#1e88e5"></div>
+            <div class="color-option" style="background:#43a047;" data-bordercolor="#43a047"></div>
+            <div class="color-option" style="background:#fdd835;" data-bordercolor="#fdd835"></div>
+            <div class="color-option" style="background:#8e24aa;" data-bordercolor="#8e24aa"></div>
+            <div class="color-option" style="background:#f4511e;" data-bordercolor="#f4511e"></div>
+          </div>
+          <button class="action-btn secondary" id="uploadBtn" style="margin-top:10px;"><span class="material-symbols-outlined">image</span> Background image</button>
+          <input type="file" id="bgImageInput" accept="image/*" style="display:none;">
+        </div>
+
+        <div class="sb-section">
+          <div class="sb-title">Row/col operations</div>
+          <button class="action-btn secondary" id="addRowTop"><span class="material-symbols-outlined">arrow_upward</span> Add row top</button>
+          <button class="action-btn secondary" id="addRowBottom"><span class="material-symbols-outlined">arrow_downward</span> Add row bottom</button>
+          <button class="action-btn secondary" id="addColLeft"><span class="material-symbols-outlined">arrow_back</span> Add col left</button>
+          <button class="action-btn secondary" id="addColRight"><span class="material-symbols-outlined">arrow_forward</span> Add col right</button>
+          <button class="action-btn secondary" id="deleteRow"><span class="material-symbols-outlined">delete</span> Delete row</button>
+          <button class="action-btn secondary" id="deleteCol"><span class="material-symbols-outlined">delete</span> Delete col</button>
+          <button class="action-btn secondary" id="copyCell"><span class="material-symbols-outlined">content_copy</span> Copy cell</button>
+          <button class="action-btn secondary" id="pasteCell"><span class="material-symbols-outlined">content_paste</span> Paste cell</button>
+        </div>
+
+        <button class="action-btn" id="resetTable"><span class="material-symbols-outlined">refresh</span> Reset chart</button>
+        <button class="action-btn" id="downloadTable"><span class="material-symbols-outlined">download</span> Download as image</button>
+
+        <!-- collapse button at BOTTOM -->
+        <button class="collapse-btn" id="collapseSidebarBtn">
+          <span class="material-symbols-outlined">chevron_left</span> Hide panel
+        </button>
+      </div> <!-- /sidebar -->
+
+      <!-- expand button -->
+      <button class="expand-btn" id="expandBtn" title="Show panel"><span class="material-symbols-outlined">chevron_right</span></button>
+
+      <!-- content area -->
+      <div class="content-area">
+        <div class="preview-container">
+          <div class="a4-page page-portrait" id="a4Page">
+            <div class="page-margin" id="pageMargin"></div>
+            <div class="table-container">
+              <div class="chart-title" contenteditable="true" id="chartTitle">Sales Report Q1 2023</div>
+              <table id="dataTable">
+                <thead><tr><th>Product</th><th>Jan</th><th>Feb</th><th>Mar</th><th>Q1 Total</th></tr></thead>
+                <tbody>
+                  <tr><td>Laptops</td><td>$12,450</td><td>$14,200</td><td>$15,800</td><td>$42,450</td></tr>
+                  <tr><td>Monitors</td><td>$8,200</td><td>$9,100</td><td>$9,500</td><td>$26,800</td></tr>
+                  <tr><td>Phones</td><td>$18,300</td><td>$19,500</td><td>$21,200</td><td>$59,000</td></tr>
+                  <tr><td>Tablets</td><td>$10,500</td><td>$11,200</td><td>$12,800</td><td>$34,500</td></tr>
+                  <tr><td>Total</td><td>$49,450</td><td>$54,000</td><td>$59,300</td><td>$162,750</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> <!-- /main-content -->
+
+    <div class="status-bar">
+      <div class="info-item"><span class="material-symbols-outlined" style="font-size:16px;">border_all</span> Selected: <span id="selectedCellDisplay">A1</span></div>
+      <div class="info-item"><span class="material-symbols-outlined" style="font-size:16px;">font_download</span> <span id="currentFont">14px Times New Roman</span></div>
+      <div class="info-item"><span class="material-symbols-outlined" style="font-size:16px;">format_color_fill</span> <span id="currentBg">None</span></div>
+    </div>
+  </div> <!-- /appContainer -->
+
+  <!-- tip box -->
+  <div id="tipBox">
+    <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+    <div class="tip-text" id="tipText">Welcome! Let's create a table.</div>
+    <div class="tip-actions">
+      <button class="tip-btn tip-prev" id="tipPrev">← Prev</button>
+      <button class="tip-btn tip-next" id="tipNext">Next →</button>
+    </div>
+  </div>
+
+  <!-- toast stack -->
+  <div id="toastStack"></div>
+
+  <script>
+    (function() {
+      // --- apply dark from cookie to body ---
+      if (document.documentElement.classList.contains('dark')) {
+        document.body.classList.add('dark');
+      }
+
+      // --- loading screen dismiss ---
+      window.addEventListener('load', function() {
+        setTimeout(() => {
+          document.getElementById('loadingScreen').style.display = 'none';
+          document.getElementById('appContainer').style.display = 'flex';
+        }, 300);
+      });
+
+      // --- theme toggle with cookie ---
+      function setThemeCookie(value) {
+        document.cookie = 'toolsuite_theme=' + value + '; path=/; max-age=31536000; SameSite=Lax';
+      }
+      function toggleDarkMode() {
+        const isDark = document.body.classList.toggle('dark');
+        document.documentElement.classList.toggle('dark', isDark);
+        const icon = document.getElementById('themeIcon');
+        if (icon) icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+        setThemeCookie(isDark ? 'dark' : 'light');
+      }
+      document.getElementById('themeToggle').addEventListener('click', toggleDarkMode);
+      if (document.body.classList.contains('dark')) {
+        document.getElementById('themeIcon').textContent = 'light_mode';
+      }
+
+      // --- sidebar collapse (button at bottom) ---
+      const sidebar = document.getElementById('sidebar');
+      const expandBtn = document.getElementById('expandBtn');
+      function toggleSidebar() {
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        sidebar.classList.toggle('collapsed');
+        expandBtn.style.display = isCollapsed ? 'none' : 'block';
+      }
+      document.getElementById('collapseSidebarBtn').addEventListener('click', toggleSidebar);
+      expandBtn.addEventListener('click', toggleSidebar);
+
+      // --- tip box ---
+      const TIPS = [
+        "👋 Use the sidebar to set rows, columns, and margins.",
+        "🎨 Select a cell and apply colors or formatting.",
+        "🌙 Toggle dark mode with the moon icon in top bar.",
+        "➕ Add or delete rows/columns via sidebar buttons.",
+        "📸 Download your table as an image using the button."
+      ];
+      let tipIndex = 0;
+      const tipBox = document.getElementById('tipBox');
+      const tipText = document.getElementById('tipText');
+      const tipBar = document.getElementById('tipBar');
+      function showTip(index) {
+        tipText.textContent = TIPS[index];
+        tipBar.style.width = ((index + 1) / TIPS.length * 100) + '%';
+        tipBox.classList.remove('hide');
+        tipBox.classList.add('show');
+      }
+      function tipNav(dir) {
+        tipIndex = Math.max(0, Math.min(TIPS.length - 1, tipIndex + dir));
+        if (tipIndex === TIPS.length - 1 && dir === 1) {
+          dismissTips();
+        } else {
+          showTip(tipIndex);
+        }
+      }
+      function dismissTips() {
+        tipBox.classList.replace('show', 'hide');
+        localStorage.setItem('tips_seen', '1');
+      }
+      document.getElementById('tipPrev').addEventListener('click', () => tipNav(-1));
+      document.getElementById('tipNext').addEventListener('click', () => tipNav(1));
+      if (!localStorage.getItem('tips_seen')) {
+        setTimeout(() => showTip(0), 1200);
+      }
+
+      // --- toast helper ---
+      function showToast(message, type = 'info', duration = 2800) {
+        const stack = document.getElementById('toastStack');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${type === 'error' ? 'error' : 'check_circle'}</span>${message}`;
+        stack.appendChild(toast);
+        requestAnimationFrame(() => { requestAnimationFrame(() => toast.classList.add('show')); });
+        setTimeout(() => {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 350);
+        }, duration);
+      }
+
+      // ---------- TABLE MANIPULATION (fully functional) ----------
+      const dataTable = document.getElementById('dataTable');
+      const tbody = dataTable.querySelector('tbody');
+      const thead = dataTable.querySelector('thead');
+      const rowsInput = document.getElementById('rows');
+      const colsInput = document.getElementById('columns');
+      const orientation = document.getElementById('orientation');
+      const marginInput = document.getElementById('margin');
+      const a4Page = document.getElementById('a4Page');
+      const pageMargin = document.getElementById('pageMargin');
+      const chartTitle = document.getElementById('chartTitle');
+
+      let selectedCell = null;
+      let copiedCell = null; // stores clone for copy/paste
+
+      // --- margin and orientation ---
+      function updateMargin() {
+        const m = parseInt(marginInput.value) || 20;
+        pageMargin.style.top = m + 'px';
+        pageMargin.style.right = m + 'px';
+        pageMargin.style.bottom = m + 'px';
+        pageMargin.style.left = m + 'px';
+      }
+      marginInput.addEventListener('input', updateMargin);
+      updateMargin();
+
+      orientation.addEventListener('change', () => {
+        a4Page.classList.toggle('page-portrait', orientation.value === 'portrait');
+        a4Page.classList.toggle('page-landscape', orientation.value === 'landscape');
+      });
+
+      // --- initialize cell selection and status ---
+      function initTableInteraction() {
+        const cells = dataTable.querySelectorAll('th, td');
+        cells.forEach(cell => {
+          cell.contentEditable = true;
+          cell.addEventListener('click', (e) => {
+            if (selectedCell) selectedCell.classList.remove('selected-cell');
+            selectedCell = cell;
+            selectedCell.classList.add('selected-cell');
+            updateStatusBar();
+          });
+        });
+        // select first cell by default
+        if (cells.length && !selectedCell) {
+          cells[0].classList.add('selected-cell');
+          selectedCell = cells[0];
+        }
+        updateStatusBar();
+      }
+
+      function updateStatusBar() {
+        if (!selectedCell) return;
+        const row = selectedCell.parentElement.rowIndex;
+        const col = selectedCell.cellIndex;
+        document.getElementById('selectedCellDisplay').textContent = String.fromCharCode(65 + col) + (row + 1);
+        const fontSize = selectedCell.style.fontSize || '14px';
+        const fontFamily = selectedCell.style.fontFamily || 'Times New Roman';
+        document.getElementById('currentFont').textContent = fontSize + ' ' + fontFamily;
+        document.getElementById('currentBg').textContent = selectedCell.style.backgroundColor || 'None';
+      }
+
+      initTableInteraction();
+
+      // --- apply settings (resize table) ---
+      function updateTableSize(rows, cols) {
+        // update header
+        const headerRow = thead.querySelector('tr');
+        const currentHeaderCols = headerRow.children.length;
+        if (cols > currentHeaderCols) {
+          for (let i = currentHeaderCols; i < cols; i++) {
+            const th = document.createElement('th');
+            th.textContent = `Col ${i+1}`;
+            th.contentEditable = true;
+            headerRow.appendChild(th);
+          }
+        } else if (cols < currentHeaderCols) {
+          for (let i = currentHeaderCols; i > cols; i--) {
+            headerRow.removeChild(headerRow.lastChild);
+          }
+        }
+
+        // update body rows
+        const bodyRows = tbody.querySelectorAll('tr');
+        const currentRows = bodyRows.length;
+        if (rows > currentRows) {
+          for (let i = currentRows; i < rows; i++) {
+            const newRow = document.createElement('tr');
+            for (let j = 0; j < cols; j++) {
+              const td = document.createElement('td');
+              td.textContent = 'data';
+              td.contentEditable = true;
+              newRow.appendChild(td);
+            }
+            tbody.appendChild(newRow);
+          }
+        } else if (rows < currentRows) {
+          for (let i = currentRows; i > rows; i--) {
+            tbody.removeChild(tbody.lastChild);
+          }
+        }
+
+        // adjust columns in existing rows if needed
+        const allRows = dataTable.querySelectorAll('tr');
+        allRows.forEach(row => {
+          const currentCols = row.children.length;
+          if (cols > currentCols) {
+            for (let i = currentCols; i < cols; i++) {
+              const cell = row.parentElement === thead ? document.createElement('th') : document.createElement('td');
+              cell.textContent = 'new';
+              cell.contentEditable = true;
+              row.appendChild(cell);
+            }
+          } else if (cols < currentCols) {
+            for (let i = currentCols; i > cols; i--) {
+              row.removeChild(row.lastChild);
+            }
+          }
+        });
+
+        initTableInteraction(); // re-attach events
+        showToast(`Table resized to ${rows}×${cols}`, 'success');
+      }
+
+      document.getElementById('applySettings').addEventListener('click', () => {
+        const rows = parseInt(rowsInput.value) || 5;
+        const cols = parseInt(colsInput.value) || 5;
+        updateTableSize(rows, cols);
+      });
+
+      // --- formatting buttons ---
+      document.querySelectorAll('.tbtn[data-format]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!selectedCell) return;
+          const fmt = btn.dataset.format;
+          selectedCell.classList.toggle(fmt);
+          btn.classList.toggle('active');
+        });
+      });
+
+      // text color
+      document.querySelectorAll('#textColorGrid .color-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          if (!selectedCell) return;
+          document.querySelectorAll('#textColorGrid .color-option').forEach(o => o.classList.remove('active'));
+          opt.classList.add('active');
+          selectedCell.style.color = opt.dataset.color;
+        });
+      });
+
+      // highlight
+      document.querySelectorAll('#highlightGrid .color-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          if (!selectedCell) return;
+          const color = opt.dataset.highlight;
+          if (color === 'transparent') {
+            selectedCell.style.backgroundColor = '';
+            selectedCell.classList.remove('highlight');
+          } else {
+            selectedCell.style.backgroundColor = color;
+          }
+        });
+      });
+
+      // background color
+      document.querySelectorAll('#bgColorGrid .color-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          if (!selectedCell) return;
+          selectedCell.style.backgroundColor = opt.dataset.bgcolor;
+        });
+      });
+
+      // border color
+      document.querySelectorAll('#borderColorGrid .color-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          if (!selectedCell) return;
+          document.querySelectorAll('#borderColorGrid .color-option').forEach(o => o.classList.remove('active'));
+          opt.classList.add('active');
+          selectedCell.style.borderColor = opt.dataset.bordercolor;
+        });
+      });
+
+      // font size / family
+      document.getElementById('fontSize').addEventListener('change', (e) => {
+        if (!selectedCell) return;
+        selectedCell.style.fontSize = e.target.value + 'px';
+        updateStatusBar();
+      });
+      document.getElementById('fontFamily').addEventListener('change', (e) => {
+        if (!selectedCell) return;
+        selectedCell.style.fontFamily = e.target.value;
+        updateStatusBar();
+      });
+
+      // background image
+      document.getElementById('uploadBtn').addEventListener('click', () => {
+        document.getElementById('bgImageInput').click();
+      });
+      document.getElementById('bgImageInput').addEventListener('change', (e) => {
+        if (!selectedCell || !e.target.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          selectedCell.style.backgroundImage = `url(${ev.target.result})`;
+          selectedCell.style.backgroundSize = 'cover';
+          updateStatusBar();
+        };
+        reader.readAsDataURL(e.target.files[0]);
+      });
+
+      // --- row/column operations ---
+      function getSelectedRowIndex() {
+        if (!selectedCell) return -1;
+        const rows = Array.from(dataTable.querySelectorAll('tr'));
+        return rows.indexOf(selectedCell.parentElement);
+      }
+      function getSelectedColIndex() {
+        if (!selectedCell) return -1;
+        return selectedCell.cellIndex;
+      }
+
+      document.getElementById('addRowTop').addEventListener('click', () => {
+        const idx = getSelectedRowIndex();
+        if (idx === -1) return;
+        const allRows = Array.from(dataTable.querySelectorAll('tr'));
+        const refRow = allRows[idx];
+        const colCount = refRow.children.length;
+        const newRow = document.createElement('tr');
+        for (let i = 0; i < colCount; i++) {
+          const cell = document.createElement(refRow.parentElement === thead ? 'th' : 'td');
+          cell.textContent = 'new';
+          cell.contentEditable = true;
+          newRow.appendChild(cell);
+        }
+        refRow.parentElement.insertBefore(newRow, refRow);
+        initTableInteraction();
+        showToast('Row added above', 'success');
+      });
+
+      document.getElementById('addRowBottom').addEventListener('click', () => {
+        const idx = getSelectedRowIndex();
+        if (idx === -1) return;
+        const allRows = Array.from(dataTable.querySelectorAll('tr'));
+        const refRow = allRows[idx];
+        const colCount = refRow.children.length;
+        const newRow = document.createElement('tr');
+        for (let i = 0; i < colCount; i++) {
+          const cell = document.createElement(refRow.parentElement === thead ? 'th' : 'td');
+          cell.textContent = 'new';
+          cell.contentEditable = true;
+          newRow.appendChild(cell);
+        }
+        refRow.parentElement.insertBefore(newRow, refRow.nextSibling);
+        initTableInteraction();
+        showToast('Row added below', 'success');
+      });
+
+      document.getElementById('addColLeft').addEventListener('click', () => {
+        const colIdx = getSelectedColIndex();
+        if (colIdx === -1) return;
+        const allRows = dataTable.querySelectorAll('tr');
+        allRows.forEach(row => {
+          const cell = document.createElement(row.parentElement === thead ? 'th' : 'td');
+          cell.textContent = 'new';
+          cell.contentEditable = true;
+          row.insertBefore(cell, row.children[colIdx]);
+        });
+        initTableInteraction();
+        showToast('Column added left', 'success');
+      });
+
+      document.getElementById('addColRight').addEventListener('click', () => {
+        const colIdx = getSelectedColIndex();
+        if (colIdx === -1) return;
+        const allRows = dataTable.querySelectorAll('tr');
+        allRows.forEach(row => {
+          const cell = document.createElement(row.parentElement === thead ? 'th' : 'td');
+          cell.textContent = 'new';
+          cell.contentEditable = true;
+          if (colIdx + 1 >= row.children.length) row.appendChild(cell);
+          else row.insertBefore(cell, row.children[colIdx + 1]);
+        });
+        initTableInteraction();
+        showToast('Column added right', 'success');
+      });
+
+      document.getElementById('deleteRow').addEventListener('click', () => {
+        const idx = getSelectedRowIndex();
+        if (idx === -1) return;
+        const allRows = Array.from(dataTable.querySelectorAll('tr'));
+        if (allRows.length <= 1) { showToast('Cannot delete last row', 'error'); return; }
+        const row = allRows[idx];
+        row.parentElement.removeChild(row);
+        selectedCell = null;
+        initTableInteraction();
+        showToast('Row deleted', 'info');
+      });
+
+      document.getElementById('deleteCol').addEventListener('click', () => {
+        const colIdx = getSelectedColIndex();
+        if (colIdx === -1) return;
+        const allRows = dataTable.querySelectorAll('tr');
+        if (allRows[0].children.length <= 1) { showToast('Cannot delete last column', 'error'); return; }
+        allRows.forEach(row => {
+          if (colIdx < row.children.length) row.removeChild(row.children[colIdx]);
+        });
+        selectedCell = null;
+        initTableInteraction();
+        showToast('Column deleted', 'info');
+      });
+
+      // copy/paste
+      document.getElementById('copyCell').addEventListener('click', () => {
+        if (!selectedCell) return;
+        copiedCell = selectedCell.cloneNode(true);
+        showToast('Cell copied', 'success');
+      });
+
+      document.getElementById('pasteCell').addEventListener('click', () => {
+        if (!selectedCell || !copiedCell) return;
+        selectedCell.innerHTML = copiedCell.innerHTML;
+        selectedCell.style.cssText = copiedCell.style.cssText;
+        // copy class list (excluding selected-cell)
+        selectedCell.className = copiedCell.className;
+        showToast('Cell pasted', 'success');
+      });
+
+      // reset table
+      document.getElementById('resetTable').addEventListener('click', () => {
+        if (confirm('Reset table to default?')) {
+          location.reload(); // simplest reset
+        }
+      });
+
+      // download image
+      document.getElementById('downloadTable').addEventListener('click', () => {
+        html2canvas(a4Page).then(canvas => {
+          const link = document.createElement('a');
+          link.download = 'table-maker.png';
+          link.href = canvas.toDataURL('image/png');
+          link.click();
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

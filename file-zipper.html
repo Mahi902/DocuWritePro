@@ -1,508 +1,786 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>File Zipper</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<style>
-  :root {
-    --bg: #000000;
-    --surface: #0d0d0d;
-    --surface2: #161616;
-    --surface3: #1f1f1f;
-    --border: #242424;
-    --border2: #303030;
-    --text: #f5f5f5;
-    --text2: #888888;
-    --text3: #484848;
-    --accent: #4f8ef7;
-    --accent-dim: rgba(79,142,247,0.1);
-    --accent-glow: rgba(79,142,247,0.18);
-    --red: #f75f5f;
-    --green: #3dd68c;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --transition: 0.18s ease;
-    --shadow: 0 4px 24px rgba(0,0,0,0.6);
-    --shadow-sm: 0 2px 10px rgba(0,0,0,0.4);
-  }
-  [data-theme="light"] {
-    --bg: #ffffff;
-    --surface: #ffffff;
-    --surface2: #f0f6ff;
-    --surface3: #e4effe;
-    --border: #daeaff;
-    --border2: #b8d4f8;
-    --text: #0d1a2e;
-    --text2: #5a7a9a;
-    --text3: #9ab4cc;
-    --accent: #2563eb;
-    --accent-dim: rgba(37,99,235,0.07);
-    --accent-glow: rgba(37,99,235,0.16);
-    --red: #e03355;
-    --green: #16a34a;
-    --shadow: 0 4px 24px rgba(37,99,235,0.07);
-    --shadow-sm: 0 2px 10px rgba(37,99,235,0.06);
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Zipper · TOOLSTRUCTER</title>
 
-  * { margin:0; padding:0; box-sizing:border-box; }
+  <!-- ========== EARLY THEME SCRIPT (prevents flash) ========== -->
+  <script>
+    (function() {
+      try {
+        const match = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('toolsuite_theme='));
+        if (match && match.split('=')[1] === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
 
-  html, body {
-    min-height: 100vh;
-    font-family: Arial, Helvetica, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    transition: background 0.25s, color 0.25s;
-    font-size: 14px;
-  }
+  <!-- ========== CDN DEPENDENCIES (exact order) ========== -->
+  <!-- Material Symbols (rounded filled) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+  <!-- Material Symbols (outlined) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <!-- Google Fonts: Inter (UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- JSZip for client-side zipping -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
-  .app { max-width: 1060px; margin: 0 auto; padding: 32px 24px 80px; }
+  <!-- ========== GLOBAL STYLES (inlined, 1:1 with TOOLSTRUCTER) ========== -->
+  <style>
+    /* ----- 6. Global reset & scrollbars hidden ----- */
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      overflow: hidden;
+      height: 100vh;
+    }
+    body.dark {
+      background: #111;
+    }
 
-  /* THEME TOGGLE */
-  .top-bar { display:flex; justify-content:flex-end; margin-bottom:24px; }
-  .theme-toggle {
-    display: flex;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    padding: 4px; gap: 2px;
-  }
-  .theme-btn {
-    padding: 6px 16px; border-radius: 50px; border: none;
-    background: transparent; color: var(--text2);
-    font-size: 13px; font-family: Arial, Helvetica, sans-serif;
-    cursor: pointer; transition: var(--transition); font-weight: 600;
-  }
-  .theme-btn.active { background: var(--accent); color: #fff; }
+    /* ----- 7. Layout architecture ----- */
+    #appContainer {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
 
-  /* DROP ZONE */
-  .dropzone {
-    border: 1.5px dashed var(--border2);
-    border-radius: var(--radius);
-    padding: 52px 40px 44px;
-    text-align: center; cursor: pointer;
-    transition: var(--transition);
-    background: var(--surface2);
-    position: relative; overflow: hidden;
-  }
-  .dropzone::after {
-    content:''; position:absolute; inset:0;
-    background: radial-gradient(ellipse at 50% 60%, var(--accent-glow), transparent 70%);
-    opacity:0; transition:opacity 0.3s; pointer-events:none;
-  }
-  .dropzone:hover, .dropzone.drag-over { border-color:var(--accent); background:var(--accent-dim); }
-  .dropzone:hover::after, .dropzone.drag-over::after { opacity:1; }
-  .dz-icon {
-    width:52px; height:52px; border-radius:14px;
-    background:var(--accent-dim); border:1.5px solid var(--border2);
-    display:flex; align-items:center; justify-content:center;
-    font-size:22px; margin:0 auto 18px;
-    transition: var(--transition);
-  }
-  .dropzone:hover .dz-icon, .dropzone.drag-over .dz-icon {
-    background:var(--accent-glow); border-color:var(--accent);
-  }
-  .dropzone h2 { font-size:18px; font-weight:700; margin-bottom:6px; }
-  .dropzone p  { color:var(--text2); font-size:13px; line-height:1.6; }
-  .dz-browse {
-    display:inline-block; margin-top:20px; padding:10px 26px;
-    background:var(--accent); color:#fff; border-radius:50px;
-    font-weight:700; font-size:13px; cursor:pointer; border:none;
-    font-family:Arial,Helvetica,sans-serif; transition:var(--transition);
-    box-shadow:0 4px 16px var(--accent-glow);
-  }
-  .dz-browse:hover { opacity:0.88; transform:translateY(-1px); }
-  #fileInput { display:none; }
+    /* ----- 8. Top bar ----- */
+    .top-bar {
+      background: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 200;
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    #toolTitle {
+      font-size: 17px;
+      border: none;
+      outline: none;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-family: inherit;
+      min-width: 140px;
+      max-width: 340px;
+      transition: background 0.2s;
+      flex-shrink: 0;
+      background: transparent;
+    }
+    #toolTitle:hover,
+    #toolTitle:focus {
+      background: #f5f5f5;
+    }
+    .top-spacer {
+      flex: 1;
+      min-width: 8px;
+    }
+    body.dark .top-bar {
+      background: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    body.dark #toolTitle {
+      background: transparent !important;
+      color: #ddd !important;
+    }
+    body.dark #toolTitle:hover,
+    body.dark #toolTitle:focus {
+      background: #2a2a2a !important;
+    }
 
-  /* GRID */
-  .content-grid {
-    display:grid; grid-template-columns:1fr 298px;
-    gap:18px; margin-top:22px;
-  }
-  @media (max-width:780px) { .content-grid { grid-template-columns:1fr; } }
+    /* ----- 9. Toolbar ----- */
+    .toolbar {
+      background: #fff;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    .toolbar-sep {
+      width: 1px;
+      height: 26px;
+      background: #e0e0e0;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    .tbtn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+      gap: 5px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .tbtn:hover { background: #e3f2fd; }
+    .tbtn.active { background: #bbdefb; }
+    .tbtn .material-symbols-outlined {
+      font-size: 19px;
+      color: #333;
+    }
+    .tbtn.primary {
+      background: #1976d2;
+      color: #fff;
+    }
+    .tbtn.primary:hover { background: #1565c0; }
+    .tbtn.primary .material-symbols-outlined { color: #fff; }
+    body.dark .toolbar { background: #1a1a1a; }
+    body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+    body.dark .tbtn:hover { background: #2a2a2a; }
+    body.dark .tbtn.primary { background: #1976d2; }
+    body.dark .tbtn.primary .material-symbols-outlined { color: #fff; }
+    body.dark .toolbar-sep { background: #333; }
 
-  /* SECTION HEAD */
-  .sec-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:11px; }
-  .sec-head h3 { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:0.08em; }
-  .badge {
-    font-size:11px; font-weight:700; color:var(--accent);
-    background:var(--accent-dim); padding:3px 10px;
-    border-radius:50px; border:1px solid var(--border2);
-  }
+    /* ----- 10. Sidebar ----- */
+    .sidebar {
+      width: 255px;
+      min-width: 255px;
+      background: #fff;
+      padding: 14px;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+      flex-shrink: 0;
+    }
+    .sidebar.collapsed {
+      transform: translateX(-255px);
+      width: 0;
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    body.dark .sidebar {
+      background: #1a1a1a;
+    }
+    .sb-section {
+      margin-bottom: 18px;
+    }
+    .sb-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      margin-bottom: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    body.dark .sb-title { color: #666; }
 
-  /* FILE LIST */
-  .file-list { display:flex; flex-direction:column; gap:7px; }
-  .file-card {
-    background:var(--surface2); border:1px solid var(--border);
-    border-radius:var(--radius); padding:11px 13px;
-    display:flex; align-items:center; gap:12px;
-    transition:var(--transition); animation:fadeUp 0.2s ease;
-  }
-  @keyframes fadeUp { from{opacity:0;transform:translateY(7px)} to{opacity:1;transform:translateY(0)} }
-  .file-card:hover { border-color:var(--border2); box-shadow:var(--shadow-sm); }
+    /* file list inside sidebar */
+    .file-list {
+      max-height: 280px;
+      overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fafafa;
+      margin-bottom: 8px;
+    }
+    .file-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 12px;
+    }
+    .file-row:last-child { border-bottom: none; }
+    .file-info {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      color: #333;
+    }
+    .file-size {
+      color: #777;
+      font-size: 11px;
+      margin: 0 6px;
+    }
+    .remove-file {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 3px;
+      border-radius: 4px;
+      display: flex;
+      color: #d32f2f;
+    }
+    .remove-file:hover { background: #fce4ec; }
+    body.dark .file-list { background: #252525; border-color: #444; }
+    body.dark .file-row { border-bottom-color: #333; }
+    body.dark .file-info { color: #ddd; }
+    body.dark .file-size { color: #aaa; }
+    body.dark .remove-file { color: #ef9a9a; }
+    body.dark .remove-file:hover { background: #3a1a1a; }
 
-  .file-icon {
-    width:40px; height:40px; border-radius:9px;
-    display:flex; align-items:center; justify-content:center;
-    font-size:17px; flex-shrink:0; position:relative;
-  }
-  .ext-tag {
-    position:absolute; bottom:-3px; right:-4px;
-    font-size:7px; font-weight:700; padding:1px 4px;
-    border-radius:4px; text-transform:uppercase;
-    letter-spacing:0.02em; white-space:nowrap;
-  }
-  .file-info { flex:1; min-width:0; }
-  .file-name-wrap { display:flex; align-items:center; gap:6px; }
-  .file-name {
-    font-size:13px; font-weight:600;
-    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:290px;
-  }
-  .file-name-input {
-    font-size:13px; font-weight:600;
-    background:var(--surface3); border:1px solid var(--accent);
-    border-radius:6px; color:var(--text); padding:3px 8px;
-    font-family:Arial,Helvetica,sans-serif; outline:none; flex:1; max-width:260px;
-  }
-  .file-meta { font-size:11px; color:var(--text3); margin-top:2px; }
-  .file-actions { display:flex; gap:5px; flex-shrink:0; }
-  .icon-btn {
-    width:29px; height:29px; border-radius:7px; border:1px solid var(--border);
-    background:var(--surface3); color:var(--text2); font-size:12px;
-    cursor:pointer; display:flex; align-items:center; justify-content:center;
-    transition:var(--transition);
-  }
-  .icon-btn:hover { border-color:var(--border2); color:var(--text); }
-  .icon-btn.delete:hover { border-color:var(--red); color:var(--red); background:rgba(247,95,95,0.08); }
-  .icon-btn.confirm:hover { border-color:var(--green); color:var(--green); background:rgba(61,214,140,0.08); }
+    /* toggle row */
+    .sb-toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 9px;
+    }
+    .sb-toggle-label { font-size: 13px; color: #444; }
+    body.dark .sb-toggle-label { color: #bbb; }
 
-  /* SIDEBAR */
-  .sidebar { display:flex; flex-direction:column; gap:14px; }
-  .card { background:var(--surface2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+    /* toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity:0; width:0; height:0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ccc;
+      border-radius: 11px;
+      transition: 0.3s;
+    }
+    .toggle-slider::before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    input:checked + .toggle-slider { background: #1976d2; }
+    input:checked + .toggle-slider::before { transform: translateX(18px); }
+    body.dark .toggle-slider { background: #444; }
 
-  /* PIE CHART */
-  .chart-wrap { position:relative; width:148px; height:148px; margin:14px auto 0; }
-  canvas#pieChart { width:148px !important; height:148px !important; }
-  .chart-center {
-    position:absolute; inset:0;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    pointer-events:none;
-  }
-  .chart-total { font-size:28px; font-weight:800; line-height:1; }
-  .chart-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.1em; margin-top:2px; }
-  .legend { margin-top:13px; display:flex; flex-direction:column; gap:6px; }
-  .legend-item { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text2); }
-  .legend-dot { width:8px; height:8px; border-radius:3px; flex-shrink:0; }
-  .legend-name { flex:1; }
-  .legend-count { font-weight:700; color:var(--text); font-size:12px; }
+    /* collapse button */
+    .collapse-btn {
+      width: 100%;
+      padding: 8px;
+      background: #e3f2fd;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #1976d2;
+      font-weight: 600;
+      margin-top: 6px;
+      font-family: inherit;
+    }
+    .collapse-btn:hover { background: #bbdefb; }
+    body.dark .collapse-btn {
+      background: #1a2a4a !important;
+      color: #1976d2 !important;
+    }
 
-  /* ZIP CARD */
-  .zip-label { font-size:11px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:0.07em; display:block; margin-bottom:7px; }
-  .zip-row { display:flex; align-items:center; }
-  .zip-name-input {
-    flex:1; background:var(--surface3); border:1px solid var(--border2);
-    border-right:none; border-radius:var(--radius-sm) 0 0 var(--radius-sm);
-    padding:9px 11px; color:var(--text);
-    font-family:Arial,Helvetica,sans-serif; font-size:13px; font-weight:600;
-    outline:none; transition:var(--transition); min-width:0;
-  }
-  .zip-name-input:focus { border-color:var(--accent); }
-  .zip-ext {
-    background:var(--surface3); border:1px solid var(--border2);
-    border-radius:0 var(--radius-sm) var(--radius-sm) 0;
-    padding:9px 10px; color:var(--text3); font-size:12px; font-weight:700; white-space:nowrap;
-  }
-  .size-row {
-    display:flex; justify-content:space-between; align-items:center;
-    margin-top:10px; padding:9px 11px;
-    background:var(--surface3); border-radius:var(--radius-sm); border:1px solid var(--border);
-  }
-  .size-row-label { font-size:11px; color:var(--text2); font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
-  .size-row-val { font-size:13px; font-weight:700; color:var(--text); }
-  .zip-btn {
-    width:100%; margin-top:11px; padding:12px;
-    background:var(--accent); border:none; border-radius:var(--radius-sm);
-    color:#fff; font-size:14px; font-weight:700;
-    cursor:pointer; font-family:Arial,Helvetica,sans-serif;
-    transition:var(--transition); box-shadow:0 4px 16px var(--accent-glow);
-    display:flex; align-items:center; justify-content:center; gap:7px;
-  }
-  .zip-btn:hover:not(:disabled) { opacity:0.9; transform:translateY(-1px); box-shadow:0 6px 22px var(--accent-glow); }
-  .zip-btn:disabled { opacity:0.3; cursor:not-allowed; transform:none; }
-  .zip-btn.loading { animation:blink 1s infinite; }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    /* expand button (fixed) */
+    .expand-btn {
+      position: fixed;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 50;
+      display: none;
+    }
+    body.dark .expand-btn { background: #1a1a1a; }
 
-  /* TOAST */
-  .toast {
-    position:fixed; bottom:22px; right:22px;
-    background:var(--surface2); border:1px solid var(--border2); border-radius:10px;
-    padding:11px 17px; display:flex; align-items:center; gap:8px;
-    font-size:13px; font-weight:600; box-shadow:var(--shadow);
-    transform:translateY(70px); opacity:0;
-    transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1); z-index:999;
-  }
-  .toast.show { transform:translateY(0); opacity:1; }
-  .toast.success { border-color:var(--green); }
-  .toast.error   { border-color:var(--red); }
+    /* ----- 11. Content area ----- */
+    .content-area {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      background: #f0f4f8;
+      min-width: 0;
+      padding: 36px 20px;
+    }
+    body.dark .content-area { background: #111; }
 
-  ::-webkit-scrollbar { width:5px; }
-  ::-webkit-scrollbar-track { background:transparent; }
-  ::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
-</style>
+    /* drop zone */
+    .drop-zone {
+      border: 2px dashed #1976d2;
+      border-radius: 12px;
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      background: #fafafa;
+      transition: background 0.15s, border-color 0.15s;
+      width: 100%;
+      max-width: 500px;
+      align-self: center;
+    }
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      background: #e3f2fd;
+      border-color: #1565c0;
+    }
+    body.dark .drop-zone {
+      background: #222;
+      border-color: #555;
+      color: #aaa;
+    }
+    body.dark .drop-zone:hover { background: #1a2a3a; }
+
+    /* stats */
+    .file-stats {
+      margin-top: 16px;
+      font-size: 13px;
+      color: #555;
+      text-align: center;
+    }
+    body.dark .file-stats { color: #aaa; }
+
+    /* ----- 12. Buttons & misc (excerpts) ----- */
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 7px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      color: #1976d2;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #e3f2fd; }
+    body.dark .icon-btn { color: #90caf9; }
+    body.dark .icon-btn:hover { background: #2a2a2a; }
+
+    /* ----- 21. Loading screen ----- */
+    #loadingScreen {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border: 4px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 17px; color: #666; }
+
+    /* ----- 20. Tip box ----- */
+    #tipBox {
+      position: fixed;
+      bottom: 80px;
+      right: 18px;
+      width: 284px;
+      background: #1976d2;
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+      z-index: 9990;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+      font-family: inherit;
+      pointer-events: none;
+    }
+    #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+    .tip-prog { height: 3px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 11px; }
+    .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+    .tip-text { font-size: 13px; line-height: 1.5; min-height: 58px; }
+    .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+    .tip-btn { flex:1; border:none; padding:6px; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit; }
+    .tip-prev { background: rgba(255,255,255,0.15); color:#fff; }
+    .tip-next { background:#fff; color:#1976d2; }
+    body.dark #tipBox { background: #0d47a1; }
+
+    /* ----- 19. Toast stack ----- */
+    #toastStack { position: fixed; bottom: 28px; left: 0; right: 0; pointer-events: none; z-index: 10002; }
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      padding: 11px 20px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: #1976d2; }
+    .toast.error   { background: #d32f2f; }
+    .toast.info    { background: #1976d2; }
+
+    /* ----- 25. scrollbar hidden globally already ----- */
+  </style>
 </head>
 <body>
-<div class="app">
-
-  <div class="top-bar">
-    <div class="theme-toggle">
-      <button class="theme-btn" id="btnLight" onclick="setTheme('light')">☀ Light</button>
-      <button class="theme-btn active" id="btnDark"  onclick="setTheme('dark')">◑ Dark</button>
-    </div>
+  <!-- LOADING SCREEN -->
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading File Zipper...</div>
   </div>
 
-  <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
-    <div class="dz-icon">🗜️</div>
-    <h2>Drop files to archive</h2>
-    <p>Any format — images, videos, documents, code, archives and more</p>
-    <button class="dz-browse" onclick="event.stopPropagation();document.getElementById('fileInput').click()">Choose Files</button>
-    <input type="file" id="fileInput" multiple>
-  </div>
-
-  <div class="content-grid" id="contentGrid" style="display:none">
-    <div>
-      <div class="sec-head">
-        <h3>Files</h3>
-        <span class="badge" id="fileCount">0</span>
-      </div>
-      <div class="file-list" id="fileList"></div>
+  <!-- MAIN APP CONTAINER -->
+  <div id="appContainer">
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <input type="text" id="toolTitle" value="File Zipper" spellcheck="false">
+      <div class="top-spacer"></div>
+      <button class="icon-btn" id="themeToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
     </div>
 
-    <div class="sidebar">
-      <div class="card">
-        <div class="sec-head" style="margin-bottom:0">
-          <h3>Breakdown</h3>
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <button class="tbtn" id="addFilesBtn" title="Add files (click or drag)">
+        <span class="material-symbols-outlined">add</span>
+      </button>
+      <button class="tbtn" id="removeSelectedBtn" title="Remove selected (not implemented, use per file)">
+        <span class="material-symbols-outlined">delete</span>
+      </button>
+      <button class="tbtn" id="clearAllBtn" title="Clear all files">
+        <span class="material-symbols-outlined">clear_all</span>
+      </button>
+      <div class="toolbar-sep"></div>
+      <button class="tbtn primary" id="downloadZipBtn" title="Download ZIP">
+        <span class="material-symbols-outlined">download</span>
+        <span>Download</span>
+      </button>
+    </div>
+
+    <!-- MAIN CONTENT (sidebar + content area) -->
+    <div class="main-content">
+      <!-- SIDEBAR -->
+      <div class="sidebar" id="sidebar">
+        <div class="sb-section">
+          <div class="sb-title">Files</div>
+          <div class="file-list" id="fileListContainer">
+            <!-- dynamic rows injected via js -->
+          </div>
+          <div style="font-size:12px; color:#777; margin-top:4px;" id="fileStats">0 files · 0 B</div>
         </div>
-        <div class="chart-wrap">
-          <canvas id="pieChart" width="148" height="148"></canvas>
-          <div class="chart-center">
-            <div class="chart-total" id="chartTotal">0</div>
-            <div class="chart-label">files</div>
+        <div class="sb-section">
+          <div class="sb-title">Settings</div>
+          <div class="sb-toggle-row">
+            <span class="sb-toggle-label">Preserve folder paths</span>
+            <label class="toggle-switch">
+              <input type="checkbox" id="preservePathsToggle" checked>
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         </div>
-        <div class="legend" id="legend"></div>
-      </div>
-
-      <div class="card">
-        <span class="zip-label">Archive name</span>
-        <div class="zip-row">
-          <input type="text" class="zip-name-input" id="zipName" value="my-archive" placeholder="archive-name">
-          <div class="zip-ext">.zip</div>
-        </div>
-        <div class="size-row">
-          <span class="size-row-label">Total size</span>
-          <span class="size-row-val" id="totalSize">0 B</span>
-        </div>
-        <button class="zip-btn" id="zipBtn" onclick="downloadZip()" disabled>
-          ⬇ &nbsp;Download ZIP
+        <!-- collapse button inside sidebar -->
+        <button class="collapse-btn" onclick="toggleSidebar()">
+          <span class="material-symbols-outlined">chevron_left</span>
+          Hide Panel
         </button>
       </div>
-    </div>
-  </div>
-</div>
 
-<div class="toast" id="toast"><span id="toastMsg">Done</span></div>
-
-<script>
-let files = [], nextId = 0;
-
-function setTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  document.getElementById('btnLight').classList.toggle('active', t === 'light');
-  document.getElementById('btnDark').classList.toggle('active', t === 'dark');
-  localStorage.setItem('zf-theme', t);
-  drawPie();
-}
-setTheme(localStorage.getItem('zf-theme') || 'dark');
-
-const TYPES = {
-  jpg:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},jpeg:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},
-  png:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},gif:{icon:'🎞',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},
-  svg:{icon:'✦',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},webp:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},
-  bmp:{icon:'🖼',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},ico:{icon:'🔷',bg:'#ffe4ee',fg:'#e0447a',cat:'Image'},
-  mp4:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},mov:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},
-  avi:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},mkv:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},
-  webm:{icon:'▶',bg:'#fff0e0',fg:'#d97316',cat:'Video'},
-  mp3:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},wav:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},
-  ogg:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},flac:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},
-  m4a:{icon:'♪',bg:'#fefce8',fg:'#ca8a04',cat:'Audio'},
-  pdf:{icon:'📄',bg:'#fee2e2',fg:'#dc2626',cat:'Document'},doc:{icon:'📝',bg:'#ede9fe',fg:'#7c3aed',cat:'Document'},
-  docx:{icon:'📝',bg:'#ede9fe',fg:'#7c3aed',cat:'Document'},xls:{icon:'📊',bg:'#dcfce7',fg:'#16a34a',cat:'Document'},
-  xlsx:{icon:'📊',bg:'#dcfce7',fg:'#16a34a',cat:'Document'},ppt:{icon:'📋',bg:'#fff0e0',fg:'#d97316',cat:'Document'},
-  pptx:{icon:'📋',bg:'#fff0e0',fg:'#d97316',cat:'Document'},txt:{icon:'📃',bg:'#f1f5f9',fg:'#64748b',cat:'Document'},
-  md:{icon:'📝',bg:'#e0f2fe',fg:'#0284c7',cat:'Document'},
-  js:{icon:'⚡',bg:'#fefce8',fg:'#ca8a04',cat:'Code'},ts:{icon:'⚡',bg:'#dbeafe',fg:'#2563eb',cat:'Code'},
-  html:{icon:'<>',bg:'#fff0e0',fg:'#d97316',cat:'Code'},css:{icon:'✦',bg:'#ede9fe',fg:'#7c3aed',cat:'Code'},
-  json:{icon:'{}',bg:'#dcfce7',fg:'#16a34a',cat:'Code'},py:{icon:'🐍',bg:'#dcfce7',fg:'#16a34a',cat:'Code'},
-  java:{icon:'☕',bg:'#fff0e0',fg:'#d97316',cat:'Code'},cpp:{icon:'C+',bg:'#ede9fe',fg:'#7c3aed',cat:'Code'},
-  cs:{icon:'C#',bg:'#ede9fe',fg:'#7c3aed',cat:'Code'},go:{icon:'Go',bg:'#e0f2fe',fg:'#0284c7',cat:'Code'},
-  rs:{icon:'⚙',bg:'#fff0e0',fg:'#d97316',cat:'Code'},php:{icon:'🐘',bg:'#ede9fe',fg:'#7c3aed',cat:'Code'},
-  rb:{icon:'💎',bg:'#fee2e2',fg:'#dc2626',cat:'Code'},sh:{icon:'$_',bg:'#dcfce7',fg:'#16a34a',cat:'Code'},
-  zip:{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},rar:{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},
-  tar:{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},gz:{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},
-  '7z':{icon:'🗜',bg:'#f1f5f9',fg:'#64748b',cat:'Archive'},
-};
-
-const CAT_COLORS = {Image:'#f472b6',Video:'#fb923c',Audio:'#facc15',Document:'#a78bfa',Code:'#34d399',Archive:'#94a3b8',Other:'#38bdf8'};
-
-function getType(name) {
-  const ext = name.split('.').pop().toLowerCase();
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const t = TYPES[ext];
-  if (t) return isDark ? {...t, bg: t.fg+'22'} : t;
-  return isDark ? {icon:'📁',bg:'#38bdf822',fg:'#38bdf8',cat:'Other'} : {icon:'📁',bg:'#e0f2fe',fg:'#0284c7',cat:'Other'};
-}
-
-function formatSize(b) {
-  if (b<1024) return b+' B';
-  if (b<1048576) return (b/1024).toFixed(1)+' KB';
-  if (b<1073741824) return (b/1048576).toFixed(1)+' MB';
-  return (b/1073741824).toFixed(2)+' GB';
-}
-
-const dz = document.getElementById('dropzone');
-dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('drag-over');});
-dz.addEventListener('dragleave', e=>{if(!dz.contains(e.relatedTarget))dz.classList.remove('drag-over');});
-dz.addEventListener('drop', e=>{e.preventDefault();dz.classList.remove('drag-over');addFiles([...e.dataTransfer.files]);});
-document.getElementById('fileInput').addEventListener('change', e=>{addFiles([...e.target.files]);e.target.value='';});
-
-function addFiles(nf) {
-  nf.forEach(f=>files.push({id:nextId++,file:f,name:f.name}));
-  render();
-  if(nf.length) showToast(`✓ Added ${nf.length} file${nf.length>1?'s':''}`, 'success');
-}
-
-function render() {
-  const grid = document.getElementById('contentGrid');
-  const list = document.getElementById('fileList');
-  document.getElementById('fileCount').textContent = files.length;
-  document.getElementById('zipBtn').disabled = !files.length;
-  document.getElementById('totalSize').textContent = formatSize(files.reduce((s,f)=>s+f.file.size,0));
-  grid.style.display = files.length ? 'grid' : 'none';
-  list.innerHTML = '';
-  files.forEach(({id,file,name})=>{
-    const t = getType(name);
-    const ext = name.includes('.') ? name.split('.').pop().toLowerCase() : '';
-    const card = document.createElement('div');
-    card.className='file-card'; card.id=`card-${id}`;
-    card.innerHTML=`
-      <div class="file-icon" style="background:${t.bg};color:${t.fg}">
-        ${t.icon}
-        ${ext?`<span class="ext-tag" style="background:${t.fg};color:#fff">.${ext}</span>`:''}
-      </div>
-      <div class="file-info">
-        <div class="file-name-wrap">
-          <div class="file-name" title="${name}">${name}</div>
+      <!-- CONTENT AREA (drop zone) -->
+      <div class="content-area" id="contentArea">
+        <div class="drop-zone" id="dropZone">
+          <span class="material-symbols-outlined" style="font-size:48px; color:#1976d2;">upload_file</span>
+          <p style="margin-top:8px; font-size:15px; font-weight:500;">Drag & drop files here</p>
+          <p style="font-size:12px; opacity:0.8;">or click to select</p>
+          <input type="file" id="hiddenFileInput" multiple style="display:none;">
         </div>
-        <div class="file-meta">${formatSize(file.size)} &middot; ${t.cat}</div>
       </div>
-      <div class="file-actions">
-        <button class="icon-btn" title="Rename" onclick="startRename(${id})">✏</button>
-        <button class="icon-btn delete" title="Remove" onclick="removeFile(${id})">✕</button>
-      </div>`;
-    list.appendChild(card);
-  });
-  drawPie();
-}
+    </div>
 
-function startRename(id) {
-  const entry = files.find(f=>f.id===id); if(!entry) return;
-  const wrap = document.querySelector(`#card-${id} .file-name-wrap`);
-  wrap.innerHTML=`
-    <input class="file-name-input" id="rinput-${id}" value="${entry.name}">
-    <button class="icon-btn confirm" onclick="confirmRename(${id})">✓</button>
-    <button class="icon-btn" onclick="render()">✕</button>`;
-  const inp = document.getElementById(`rinput-${id}`);
-  inp.focus(); inp.select();
-  inp.addEventListener('keydown', e=>{if(e.key==='Enter')confirmRename(id);if(e.key==='Escape')render();});
-}
-function confirmRename(id) {
-  const inp = document.getElementById(`rinput-${id}`); if(!inp) return;
-  const val = inp.value.trim(); if(!val) return;
-  const entry = files.find(f=>f.id===id);
-  if(entry){entry.name=val;showToast('✎ Renamed','success');}
-  render();
-}
-function removeFile(id) {
-  files=files.filter(f=>f.id!==id); render(); showToast('Removed');
-}
+    <!-- EXPAND BUTTON (hidden by default) -->
+    <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+      <span class="material-symbols-outlined" style="color:#1976d2; font-size:20px;">chevron_right</span>
+    </button>
 
-function drawPie() {
-  const canvas = document.getElementById('pieChart');
-  const ctx = canvas.getContext('2d');
-  const isDark = document.documentElement.getAttribute('data-theme')==='dark';
-  ctx.clearRect(0,0,148,148);
-  document.getElementById('chartTotal').textContent = files.length;
-  const cx=74,cy=74,r=64;
-  if(!files.length){
-    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
-    ctx.strokeStyle=isDark?'#242424':'#daeaff'; ctx.lineWidth=15; ctx.stroke();
-    document.getElementById('legend').innerHTML=''; return;
-  }
-  const cats={};
-  files.forEach(({name})=>{const cat=getType(name).cat; cats[cat]=(cats[cat]||0)+1;});
-  const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
-  let angle=-Math.PI/2;
-  entries.forEach(([cat,count])=>{
-    const slice=(count/files.length)*Math.PI*2;
-    ctx.beginPath(); ctx.moveTo(cx,cy);
-    ctx.arc(cx,cy,r,angle+0.025,angle+slice-0.025); ctx.closePath();
-    ctx.fillStyle=CAT_COLORS[cat]||'#888'; ctx.fill();
-    angle+=slice;
-  });
-  ctx.beginPath(); ctx.arc(cx,cy,43,0,Math.PI*2);
-  ctx.fillStyle=isDark?'#0d0d0d':'#f0f6ff'; ctx.fill();
-  document.getElementById('legend').innerHTML=entries.map(([cat,count])=>`
-    <div class="legend-item">
-      <div class="legend-dot" style="background:${CAT_COLORS[cat]||'#888'}"></div>
-      <div class="legend-name">${cat}</div>
-      <div class="legend-count">${count}</div>
-    </div>`).join('');
-}
+    <!-- TIP BOX (new user) -->
+    <div id="tipBox" class="hide">
+      <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+      <div class="tip-text" id="tipText">Welcome! Let's zip files.</div>
+      <div class="tip-actions">
+        <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+        <button class="tip-btn tip-next" onclick="tipNav(1)">Next →</button>
+      </div>
+    </div>
 
-async function downloadZip() {
-  if(!files.length) return;
-  const btn=document.getElementById('zipBtn');
-  btn.disabled=true; btn.classList.add('loading'); btn.innerHTML='⟳ &nbsp;Compressing...';
-  try {
-    const zip=new JSZip(), seen={};
-    files.forEach(({name,file})=>{
-      let n=name;
-      if(seen[name]!==undefined){seen[name]++;const d=name.lastIndexOf('.');n=d>0?name.slice(0,d)+` (${seen[name]})`+name.slice(d):name+` (${seen[name]})`;}
-      else seen[name]=0;
-      zip.file(n,file);
+    <!-- TOAST STACK -->
+    <div id="toastStack"></div>
+  </div>
+
+  <script>
+    (function() {
+      // ========== THEME COOKIE (already applied early, but ensure body class) ==========
+      function setThemeCookie(value) {
+        document.cookie = 'toolsuite_theme=' + value + '; path=/; max-age=31536000; SameSite=Lax';
+      }
+      function getThemeCookie() {
+        const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+        return match ? match.split('=')[1] : null;
+      }
+      window.toggleDarkMode = function() {
+        const isDark = document.body.classList.toggle('dark');
+        const icon = document.getElementById('themeIcon');
+        if (icon) icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+        setThemeCookie(isDark ? 'dark' : 'light');
+      };
+      // initial sync: if html has dark, also set body
+      if (document.documentElement.classList.contains('dark')) {
+        document.body.classList.add('dark');
+        const icon = document.getElementById('themeIcon');
+        if (icon) icon.textContent = 'light_mode';
+      }
+    })();
+
+    // ========== GLOBAL VARIABLES ==========
+    let filesArray = [];  // store File objects
+    let tipIndex = 0;
+    const TIPS = [
+      "👋 Add files using the toolbar button or drag them onto the drop zone.",
+      "📁 Files appear in the sidebar. Remove any file with the red X icon.",
+      "🔧 Toggle 'Preserve folder paths' to keep subfolder structure inside the zip.",
+      "⬇️ Click the blue Download button to create and save your ZIP archive.",
+      "🌙 Use the moon icon in top bar to switch dark mode (shared across tools)."
+    ];
+
+    // ========== DOM ELEMENTS ==========
+    const loading = document.getElementById('loadingScreen');
+    const app = document.getElementById('appContainer');
+    const fileListDiv = document.getElementById('fileListContainer');
+    const fileStats = document.getElementById('fileStats');
+    const addBtn = document.getElementById('addFilesBtn');
+    const clearBtn = document.getElementById('clearAllBtn');
+    const downloadBtn = document.getElementById('downloadZipBtn');
+    const hiddenInput = document.getElementById('hiddenFileInput');
+    const dropZone = document.getElementById('dropZone');
+    const preserveToggle = document.getElementById('preservePathsToggle');
+    const toolTitle = document.getElementById('toolTitle');
+
+    // ========== HELPER: update file list UI ==========
+    function renderFileList() {
+      let html = '';
+      let totalBytes = 0;
+      filesArray.forEach((file, idx) => {
+        totalBytes += file.size;
+        const sizeStr = file.size < 1024 ? file.size + ' B' :
+                        (file.size < 1048576 ? (file.size/1024).toFixed(1) + ' KB' :
+                        (file.size/1048576).toFixed(1) + ' MB');
+        const displayName = file.webkitRelativePath && file.webkitRelativePath !== '' ? file.webkitRelativePath : file.name;
+        html += `<div class="file-row">
+          <span class="file-info" title="${displayName}">${displayName.length > 30 ? displayName.substr(0,27)+'…' : displayName}</span>
+          <span class="file-size">${sizeStr}</span>
+          <button class="remove-file" onclick="removeFile(${idx})"><span class="material-symbols-outlined" style="font-size:16px;">close</span></button>
+        </div>`;
+      });
+      fileListDiv.innerHTML = html || '<div style="padding:12px; text-align:center; color:#999;">No files added</div>';
+      const totalKB = (totalBytes / 1024).toFixed(1);
+      fileStats.innerText = `${filesArray.length} file(s) · ${totalKB} KB`;
+    }
+
+    // ========== FILE ACTIONS ==========
+    window.removeFile = function(index) {
+      filesArray.splice(index, 1);
+      renderFileList();
+      showToast('File removed', 'info');
+    };
+
+    function clearAll() {
+      filesArray = [];
+      renderFileList();
+      showToast('All files cleared', 'info');
+    }
+
+    function addFilesFromInput(fileList) {
+      if (!fileList.length) return;
+      for (let i = 0; i < fileList.length; i++) {
+        filesArray.push(fileList[i]);
+      }
+      renderFileList();
+      showToast(`Added ${fileList.length} file(s)`, 'success');
+    }
+
+    // ========== DOWNLOAD ZIP ==========
+    async function downloadZip() {
+      if (filesArray.length === 0) {
+        showToast('No files to zip', 'error');
+        return;
+      }
+      const zip = new JSZip();
+      const preserve = preserveToggle.checked;
+
+      for (const file of filesArray) {
+        let path = file.name;
+        if (preserve && file.webkitRelativePath) {
+          path = file.webkitRelativePath; // keep folder structure
+        }
+        // read as arrayBuffer
+        const buffer = await file.arrayBuffer();
+        zip.file(path, buffer);
+      }
+
+      showToast('Creating archive...', 'info');
+      try {
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (toolTitle.value.trim() || 'files') + '.zip';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('ZIP ready', 'success');
+      } catch (e) {
+        showToast('ZIP failed', 'error');
+      }
+    }
+
+    // ========== TOAST ==========
+    function showToast(message, type = 'info', duration = 2800) {
+      const stack = document.getElementById('toastStack');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      const icon = type === 'error' ? 'error' : 'check_circle';
+      toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px;">${icon}</span>${message}`;
+      stack.appendChild(toast);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => toast.classList.add('show'));
+      });
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 350);
+      }, duration);
+    }
+
+    // ========== SIDEBAR COLLAPSE ==========
+    window.toggleSidebar = function() {
+      const sidebar = document.querySelector('.sidebar');
+      const expandBtn = document.getElementById('expandBtn');
+      const isCollapsed = sidebar.classList.contains('collapsed');
+      sidebar.classList.toggle('collapsed');
+      expandBtn.style.display = isCollapsed ? 'none' : 'block';
+    };
+
+    // ========== TIP CAROUSEL ==========
+    window.showTip = function(index) {
+      const box = document.getElementById('tipBox');
+      const text = document.getElementById('tipText');
+      const bar = document.getElementById('tipBar');
+      text.textContent = TIPS[index];
+      bar.style.width = ((index + 1) / TIPS.length * 100) + '%';
+      box.classList.remove('hide');
+      box.classList.add('show');
+    };
+    window.tipNav = function(dir) {
+      tipIndex = Math.max(0, Math.min(TIPS.length - 1, tipIndex + dir));
+      if (tipIndex === TIPS.length - 1 && dir === 1) {
+        dismissTips();
+      } else {
+        showTip(tipIndex);
+      }
+    };
+    function dismissTips() {
+      document.getElementById('tipBox').classList.replace('show', 'hide');
+      localStorage.setItem('tips_seen', '1');
+    }
+
+    // ========== INIT & EVENT LISTENERS ==========
+    window.addEventListener('load', function() {
+      // Hide loading, show app
+      loading.style.display = 'none';
+      app.style.display = 'flex';
+
+      // Tip box
+      if (!localStorage.getItem('tips_seen')) {
+        setTimeout(() => showTip(0), 1200);
+      }
+
+      // File input trigger
+      addBtn.addEventListener('click', () => hiddenInput.click());
+      hiddenInput.addEventListener('change', (e) => addFilesFromInput(e.target.files));
+      clearBtn.addEventListener('click', clearAll);
+      downloadBtn.addEventListener('click', downloadZip);
+
+      // Drag & drop
+      dropZone.addEventListener('click', () => hiddenInput.click());
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+      });
+      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        if (e.dataTransfer.files.length) addFilesFromInput(e.dataTransfer.files);
+      });
+
+      // initial render
+      renderFileList();
     });
-    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressionOptions:{level:6}});
-    const fname=(document.getElementById('zipName').value.trim()||'archive')+'.zip';
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click();
-    URL.revokeObjectURL(a.href);
-    showToast(`⬇ ${fname} saved`,'success');
-  } catch(e){ showToast('⚠ Error building ZIP','error'); }
-  btn.disabled=false; btn.classList.remove('loading'); btn.innerHTML='⬇ &nbsp;Download ZIP';
-}
 
-let _tt;
-function showToast(msg,type=''){
-  const t=document.getElementById('toast');
-  document.getElementById('toastMsg').textContent=msg;
-  t.className='toast '+type; t.classList.add('show');
-  clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),2400);
-}
-
-const zipNameEl=document.getElementById('zipName');
-const sn=localStorage.getItem('zf-zipname'); if(sn) zipNameEl.value=sn;
-zipNameEl.addEventListener('input',()=>localStorage.setItem('zf-zipname',zipNameEl.value));
-render();
-</script>
+    // Remove selected placeholder (just toast)
+    document.getElementById('removeSelectedBtn').addEventListener('click', ()=>{
+      showToast('Click ✖ on individual files to remove', 'info');
+    });
+  </script>
 </body>
 </html>

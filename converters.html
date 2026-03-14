@@ -3,82 +3,875 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DocuWrite Pro PDF Converter</title>
-  <meta name="description" content="DocuWrite Pro is an all-in-one online workspace that lets you write, edit, convert, design, and manage documents and digital content instantly—no installation, no complexity.">
-  <meta name="keywords" content="DocuWrite Pro, Mohtadi Azad Mahi, AI writer, document editor, online text tool, GitHub project, DocuWritePro, Document Editor, Document, Editor, PDF, JPG, Edit, Text, Change File Type, File Changer, Format, Format Changer, Office, Docs, A4, Editor, General document editing, Collab, Editing documents together, Document Viewer, Viewing documents, Word Finder, Searching for specific words, Translator, Language translation, Document Signer, Electronically signing documents, Page Number Adder, Adding page numbers to documents, Chart Maker, Creating data charts, Table Maker, Creating tables, Watermark Adder, Adding watermarks to files, Email Writer, Assisting with writing emails, Spell Checker, Checking spelling and grammar, File Extractor, Extracting contents from files, QR Maker, Creating QR codes, ID Card Maker, Designing and creating ID cards, File Zipper, Compressing or zipping files, PDF Converter, Converting files to or from PDF format, Context Field, Analyzing text (e.g., word count, frequency), Gift Card Maker, Creating custom gift cards, Share File, Uploading or sharing a file, Text Extractor, Extracting text from sources (e.g., images), Keyboard Click Test, Testing keyboard functionality, Frontend IDE, Integrated Development Environment for frontend coding, HTML Editor, Editing HTML code, HTML Writer, Writing or generating HTML content, Button Designer, Designing user interface buttons, HTML Splitter, Splitting HTML files or elements, GoTo Code, Navigation feature in an IDE/editor, Code Snipper, Storing or managing code snippets, Image Editor, Editing images, Image Generator, Generating new images, Drawing Board, A simple drawing or sketching tool, HTML, CSS, JS, Online, Fast, Easy, No login, No signup, Free, No credit card required, Mohtadi, Azad, Mahi, Mohtadi Azad, Mohtadi Azad Mahi, mahi902">
-  <meta name="author" content="Mohtadi Azad Mahi">
-  <meta name="robots" content="index, follow">
+  <title>File Converter</title>
+  <!-- ========== REQUIRED CDNs ========== -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Conversion libraries (30+ conversions) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/13.0.2/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <meta name="theme-color" content="#ffffff">
-
-  <!-- App & Brand Metadata -->
-  <meta property="og:site_name" content="DocuWrite Pro">
-  <meta name="application-name" content="DocuWrite Pro">
-  <meta name="apple-mobile-web-app-title" content="DocuWrite Pro">
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="DocuWrite Pro — Online Document Editor">
-  <meta property="og:description" content="Edit, format, and export documents easily with DocuWrite Pro by Mohtadi Azad Mahi.">
-  <meta property="og:url" content="https://mahi902.github.io/DocuWritePro/">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DocuWrite Pro — Online Document Editor">
-  <meta name="twitter:description" content="Create, format, and export documents easily with DocuWrite Pro. Built by Mohtadi Azad Mahi.">
-  <meta name="twitter:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-
-  <!-- Structured Data (Google Knowledge Graph) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "DocuWrite Pro",
-    "alternateName": "DocuWrite Pro — Online Document Editor",
-    "url": "https://mahi902.github.io/DocuWritePro/",
-    "creator": {
-      "@type": "Person",
-      "name": "Mohtadi Azad Mahi"
-    }
-  }
+  <!-- EARLY THEME SCRIPT (prevent flash) -->
+  <script>
+    (function() {
+      const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+      if (match && match.split('=')[1] === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    })();
   </script>
+
   <style>
-    body {
-      height: 100vh;
+    /* ---------- GLOBAL RESET & SCROLLBARS ---------- */
+    * { scrollbar-width: none; }
+    *::-webkit-scrollbar { display: none; }
+    *, *::before, *::after {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      overflow: hidden;
+      height: 100vh;
+    }
+    body.dark { background: #111; }
+
+    /* ---------- LOADING SCREEN ---------- */
+    #loadingScreen {
+      display: flex;
+      position: fixed;
+      inset: 0;
+      background: #fff;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 20px;
+    }
+    body.dark #loadingScreen { background: #1a1a1a; }
+    .spinner {
+      width: 56px;
+      height: 56px;
+      border: 4px solid #e3f2fd;
+      border-top-color: #1976d2;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 17px; color: #666; }
+    body.dark .loading-text { color: #aaa; }
+
+    /* ---------- APP CONTAINER ---------- */
+    #appContainer {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ---------- TOP BAR ---------- */
+    .top-bar {
+      background: #fff;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      z-index: 200;
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .top-bar {
+      background: #1a1a1a;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    }
+    #toolTitle {
+      font-size: 17px;
+      font-weight: 400;
+      color: #1a1a2e;
+      border: none;
+      background: transparent;
+      padding: 6px 10px;
+      border-radius: 8px;
+      min-width: 200px;
+    }
+    body.dark #toolTitle { color: #e0e0e0; }
+    .top-spacer { flex: 1; min-width: 8px; }
+
+    /* icon button (theme, info) */
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 7px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      color: #1976d2;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover { background: #e3f2fd; }
+    body.dark .icon-btn:hover { background: #2a2a2a; }
+    .icon-btn .material-symbols-outlined { font-size: 22px; }
+
+    /* ---------- TOOLBAR ---------- */
+    .toolbar {
+      background: #fff;
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      flex-shrink: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      white-space: nowrap;
+    }
+    body.dark .toolbar { background: #1a1a1a; }
+    .tbtn {
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 7px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .tbtn:hover { background: #e3f2fd; }
+    body.dark .tbtn:hover { background: #2a2a2a; }
+    .tbtn .material-symbols-outlined { font-size: 19px; color: #333; }
+    body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+    .toolbar-sep {
+      width: 1px;
+      height: 26px;
+      background: #e0e0e0;
+      margin: 0 4px;
+      flex-shrink: 0;
+    }
+    body.dark .toolbar-sep { background: #333; }
+
+    /* ---------- MAIN LAYOUT ---------- */
+    .main-content {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ---------- SIDEBAR ---------- */
+    .sidebar {
+      width: 255px;
+      min-width: 255px;
+      background: #fff;
+      padding: 14px;
+      overflow-y: auto;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+      transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+      flex-shrink: 0;
+    }
+    body.dark .sidebar { background: #1a1a1a; }
+    .sidebar.collapsed {
+      transform: translateX(-255px);
+      width: 0;
+      min-width: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .sb-section { margin-bottom: 18px; }
+    .sb-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+      margin-bottom: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+    body.dark .sb-title { color: #666; }
+    .sb-label {
+      display: block;
+      font-size: 12px;
+      color: #777;
+      margin-bottom: 3px;
+    }
+
+    /* accordion dropdown */
+    .aw-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: #f0f7ff;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid #dceeff;
+    }
+    body.dark .aw-header { background: #1a2a3a; border-color: #1e3a5a; }
+    .aw-header:hover { background: #e3f2fd; }
+    body.dark .aw-header:hover { background: #1e3350; }
+    .aw-header-label { font-size: 12px; font-weight: 600; color: #1565c0; }
+    body.dark .aw-header-label { color: #90caf9; }
+    .aw-chevron {
+      font-size: 16px;
+      color: #1976d2;
+      transition: transform 0.25s;
+    }
+    .aw-chevron.open { transform: rotate(180deg); }
+    .aw-dropdown {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .aw-dropdown.open {
+      max-height: 600px;
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .aw-inner { padding: 6px 2px 2px; }
+    .aw-row {
+      display: flex;
+      align-items: center;
+      padding: 9px 10px;
+      border-radius: 7px;
+      transition: background 0.12s;
+      cursor: pointer;
+      font-size: 12px;
+      color: #333;
+    }
+    body.dark .aw-row { color: #ddd; }
+    .aw-row:hover { background: #f5f9ff; }
+    body.dark .aw-row:hover { background: #1a2535; }
+    .aw-row.selected { background: #bbdefb; color: #1565c0; }
+    body.dark .aw-row.selected { background: #0d2a4a; color: #90caf9; }
+    .aw-row .material-symbols-outlined { font-size: 16px; margin-right: 8px; color: #1976d2; }
+
+    /* collapse button */
+    .collapse-btn {
+      width: 100%;
+      padding: 8px;
+      background: #e3f2fd;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #1976d2;
+      font-weight: 600;
+      margin-top: 6px;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .collapse-btn:hover { background: #bbdefb; }
+    body.dark .collapse-btn { background: #1a2a4a; color: #90caf9; }
+
+    /* expand button (fixed) */
+    .expand-btn {
+      position: fixed;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 5px;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+      z-index: 50;
+      display: none;
+    }
+    body.dark .expand-btn { background: #1a1a1a; }
+
+    /* ---------- CONTENT AREA (converter panels) ---------- */
+    .content-area {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      background: #f0f4f8;
+      min-width: 0;
+    }
+    body.dark .content-area { background: #111; }
+    .converter-panel {
+      flex: 1;
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      background: #f9fafc;
-      font-family: "Segoe UI", sans-serif;
+      gap: 16px;
     }
-    button {
-      background: linear-gradient(135deg, #007bff, #0056b3);
-      border: none;
-      color: white;
-      padding: 15px 35px;
-      margin: 10px;
-      font-size: 18px;
-      border-radius: 10px;
+    body.dark .converter-panel { background: #1a1a1a; color: #ddd; }
+    .panel-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-bottom: 4px;
+    }
+    body.dark .panel-title { color: #e0e0e0; }
+
+    /* drop zone */
+    .drop-zone {
+      border: 2px dashed #1976d2;
+      border-radius: 12px;
+      padding: 32px 16px;
+      text-align: center;
       cursor: pointer;
-      transition: 0.3s;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      background: #fafafa;
+      transition: background 0.15s, border-color 0.15s;
+      font-size: 13px;
+      color: #777;
     }
-    button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+    .drop-zone:hover, .drop-zone.dragover {
+      background: #e3f2fd;
+      border-color: #1565c0;
     }
+    body.dark .drop-zone { background: #252525; color: #aaa; border-color: #555; }
+    body.dark .drop-zone:hover { background: #1a2a3a; border-color: #90caf9; }
+
+    /* preview */
+    .file-preview {
+      background: #fafafa;
+      border-radius: 8px;
+      padding: 12px;
+      max-height: 200px;
+      overflow: auto;
+      border: 1px solid #eee;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    body.dark .file-preview { background: #252525; border-color: #333; color: #ccc; }
+    .preview-image { max-width: 100%; max-height: 180px; object-fit: contain; }
+
+    /* download button */
+    .action-btn {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      white-space: nowrap;
+      font-family: inherit;
+      flex-shrink: 0;
+      justify-content: center;
+    }
+    .action-btn:hover { background: #1565c0; }
+    .action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ---------- TOAST ---------- */
+    #toastStack { position: fixed; bottom: 28px; left: 0; right: 0; pointer-events: none; z-index: 10002; }
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      padding: 11px 20px;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+      z-index: 10002;
+      opacity: 0;
+      transition: transform 0.3s, opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast.success { background: #1976d2; }
+    .toast.error { background: #d32f2f; }
+    .toast.info { background: #1976d2; }
+
+    /* ---------- TIP BOX ---------- */
+    #tipBox {
+      position: fixed;
+      bottom: 80px;
+      right: 18px;
+      width: 284px;
+      background: #1976d2;
+      color: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+      z-index: 9990;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.3s, transform 0.3s;
+      font-family: inherit;
+      pointer-events: none;
+    }
+    body.dark #tipBox { background: #0d47a1; }
+    #tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    #tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+    .tip-prog { height: 3px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 11px; }
+    .tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+    .tip-text { font-size: 13px; line-height: 1.5; min-height: 58px; }
+    .tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+    .tip-btn {
+      flex: 1;
+      border: none;
+      padding: 6px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .tip-prev { background: rgba(255,255,255,0.15); color: #fff; }
+    .tip-next { background: #fff; color: #1976d2; }
   </style>
 </head>
 <body>
-  <button onclick="location.href='https://mahi902.github.io/DocuWritePro/p2j'">PDF to JPG</button>
-  <button onclick="location.href='https://mahi902.github.io/DocuWritePro/j2p'">JPG to PDF</button>
+  <!-- loading screen -->
+  <div id="loadingScreen">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading Ultimate Converter...</div>
+  </div>
+
+  <!-- main app container -->
+  <div id="appContainer">
+    <!-- top bar -->
+    <div class="top-bar">
+      <span id="toolTitle">File Converter</span>
+      <div class="top-spacer"></div>
+      <button class="icon-btn" id="themeToggle" onclick="toggleDarkMode()" title="Toggle dark mode">
+        <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+      </button>
+      <button class="icon-btn" onclick="showToast('Info: Select a conversion from sidebar','info')"><span class="material-symbols-outlined">info</span></button>
+    </div>
+
+    <!-- toolbar -->
+    <div class="toolbar">
+      <button class="tbtn" onclick="triggerFileInput()"><span class="material-symbols-outlined">upload_file</span></button>
+      <button class="tbtn" onclick="convert()"><span class="material-symbols-outlined">swap_horiz</span></button>
+      <button class="tbtn" onclick="downloadOutput()"><span class="material-symbols-outlined">download</span></button>
+      <div class="toolbar-sep"></div>
+      <button class="tbtn" onclick="clearAll()"><span class="material-symbols-outlined">refresh</span></button>
+    </div>
+
+    <!-- main content with sidebar -->
+    <div class="main-content">
+      <!-- sidebar -->
+      <div class="sidebar" id="mainSidebar">
+        <div class="sb-section">
+          <div class="sb-title">conversion type</div>
+          <!-- Accordion categories (5 categories, each with many conversions) -->
+          <div class="aw-header" onclick="toggleDropdown(this, 'dropText')">
+            <span class="aw-header-label">Text</span>
+            <span class="material-symbols-outlined aw-chevron" id="chevText">expand_more</span>
+          </div>
+          <div class="aw-dropdown" id="dropText">
+            <div class="aw-inner" id="textConvList"></div>
+          </div>
+
+          <div class="aw-header" onclick="toggleDropdown(this, 'dropImage')">
+            <span class="aw-header-label">Image</span>
+            <span class="material-symbols-outlined aw-chevron" id="chevImage">expand_more</span>
+          </div>
+          <div class="aw-dropdown" id="dropImage">
+            <div class="aw-inner" id="imageConvList"></div>
+          </div>
+
+          <div class="aw-header" onclick="toggleDropdown(this, 'dropCsv')">
+            <span class="aw-header-label">CSV / JSON</span>
+            <span class="material-symbols-outlined aw-chevron" id="chevCsv">expand_more</span>
+          </div>
+          <div class="aw-dropdown" id="dropCsv">
+            <div class="aw-inner" id="csvConvList"></div>
+          </div>
+
+          <div class="aw-header" onclick="toggleDropdown(this, 'dropMark')">
+            <span class="aw-header-label">Markdown / HTML</span>
+            <span class="material-symbols-outlined aw-chevron" id="chevMark">expand_more</span>
+          </div>
+          <div class="aw-dropdown" id="dropMark">
+            <div class="aw-inner" id="markConvList"></div>
+          </div>
+
+          <div class="aw-header" onclick="toggleDropdown(this, 'dropHash')">
+            <span class="aw-header-label">Hash / other</span>
+            <span class="material-symbols-outlined aw-chevron" id="chevHash">expand_more</span>
+          </div>
+          <div class="aw-dropdown" id="dropHash">
+            <div class="aw-inner" id="hashConvList"></div>
+          </div>
+        </div>
+
+        <!-- resize options (appears when needed) -->
+        <div class="sb-section" id="resizeOptions" style="display:none;">
+          <div class="sb-title">resize settings</div>
+          <label class="sb-label">Width (px)</label>
+          <input type="number" id="resizeWidth" class="sb-input" value="300">
+          <label class="sb-label" style="margin-top:6px;">Height (px)</label>
+          <input type="number" id="resizeHeight" class="sb-input" value="200">
+        </div>
+
+        <!-- collapse button inside sidebar -->
+        <button class="collapse-btn" onclick="toggleSidebar()">
+          <span class="material-symbols-outlined">chevron_left</span> Hide Panel
+        </button>
+      </div>
+
+      <!-- expand button (hidden by default) -->
+      <button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+        <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+      </button>
+
+      <!-- main content area (two panels) -->
+      <div class="content-area">
+        <div class="converter-panel">
+          <div class="panel-title">Input</div>
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <span class="material-symbols-outlined" style="font-size:32px; color:#1976d2;">cloud_upload</span>
+            <p>Drag & drop or click to select file</p>
+          </div>
+          <input type="file" id="fileInput" style="display:none;" onchange="handleFileSelect(this.files[0])">
+          <div class="file-preview" id="inputPreview">No file selected</div>
+        </div>
+        <div class="converter-panel">
+          <div class="panel-title">Output</div>
+          <div class="file-preview" id="outputPreview">Converted content will appear here</div>
+          <button class="action-btn" onclick="downloadOutput()"><span class="material-symbols-outlined">download</span> Download</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- tip box -->
+  <div id="tipBox">
+    <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+    <div class="tip-text" id="tipText">Welcome! Let's convert files.</div>
+    <div class="tip-actions">
+      <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+      <button class="tip-btn tip-next" onclick="tipNav(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- toast stack -->
+  <div id="toastStack"></div>
+
+  <script>
+    (function() {
+      // apply dark class from html to body as well (for body.dark selectors)
+      if (document.documentElement.classList.contains('dark')) {
+        document.body.classList.add('dark');
+        const icon = document.getElementById('themeIcon');
+        if (icon) icon.textContent = 'light_mode';
+      }
+    })();
+
+    /* ---------- GLOBAL VARIABLES ---------- */
+    let currentFile = null;
+    let currentConversion = 'uppercase';  // default
+    let currentOutput = null;
+    let currentOutputBlob = null;
+    let currentOutputExt = 'txt';
+
+    // ---------- CONVERSION LIBRARY (30+ conversions) ----------
+    const conversions = [
+      // TEXT (10)
+      { id: 'uppercase', name: 'Uppercase', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => txt.toUpperCase() },
+      { id: 'lowercase', name: 'Lowercase', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => txt.toLowerCase() },
+      { id: 'capitalize', name: 'Capitalize Words', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => txt.replace(/\b\w/g, l => l.toUpperCase()) },
+      { id: 'reverse', name: 'Reverse string', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => txt.split('').reverse().join('') },
+      { id: 'base64enc', name: 'Base64 Encode', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => btoa(txt) },
+      { id: 'base64dec', name: 'Base64 Decode', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => { try { return atob(txt); } catch { return 'invalid base64'; } } },
+      { id: 'urlenc', name: 'URL Encode', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => encodeURIComponent(txt) },
+      { id: 'urldec', name: 'URL Decode', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => decodeURIComponent(txt) },
+      { id: 'rot13', name: 'ROT13', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => txt.replace(/[a-zA-Z]/g, c => String.fromCharCode( (c<='Z'?90:122) >= (c=c.charCodeAt(0)+13) ? c : c-26 )) },
+      { id: 'slugify', name: 'Slugify', cat: 'text', inType: 'text', outExt: 'txt', fn: (txt) => txt.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') },
+      // IMAGE (10)
+      { id: 'png2jpg', name: 'PNG → JPEG', cat: 'image', inType: 'image', outExt: 'jpg', fn: imageConvert('jpeg') },
+      { id: 'png2webp', name: 'PNG → WebP', cat: 'image', inType: 'image', outExt: 'webp', fn: imageConvert('webp') },
+      { id: 'jpg2png', name: 'JPEG → PNG', cat: 'image', inType: 'image', outExt: 'png', fn: imageConvert('png') },
+      { id: 'jpg2webp', name: 'JPEG → WebP', cat: 'image', inType: 'image', outExt: 'webp', fn: imageConvert('webp') },
+      { id: 'webp2png', name: 'WebP → PNG', cat: 'image', inType: 'image', outExt: 'png', fn: imageConvert('png') },
+      { id: 'webp2jpg', name: 'WebP → JPEG', cat: 'image', inType: 'image', outExt: 'jpg', fn: imageConvert('jpeg') },
+      { id: 'grayscale', name: 'Grayscale', cat: 'image', inType: 'image', outExt: 'png', fn: imageFilter('grayscale') },
+      { id: 'sepia', name: 'Sepia', cat: 'image', inType: 'image', outExt: 'png', fn: imageFilter('sepia') },
+      { id: 'invert', name: 'Invert colors', cat: 'image', inType: 'image', outExt: 'png', fn: imageFilter('invert') },
+      { id: 'resize', name: 'Resize (custom)', cat: 'image', inType: 'image', outExt: 'png', fn: imageResize },
+      // CSV/JSON (4)
+      { id: 'csv2json', name: 'CSV → JSON', cat: 'csv', inType: 'text', outExt: 'json', fn: (txt) => JSON.stringify(Papa.parse(txt, {header:true}).data, null, 2) },
+      { id: 'json2csv', name: 'JSON → CSV', cat: 'csv', inType: 'text', outExt: 'csv', fn: (txt) => { let d=JSON.parse(txt); return Papa.unparse(d); } },
+      { id: 'json2yaml', name: 'JSON → YAML (mock)', cat: 'csv', inType: 'text', outExt: 'yaml', fn: (txt) => { let j=JSON.parse(txt); return 'mock-yaml: '+JSON.stringify(j); } },
+      { id: 'yaml2json', name: 'YAML → JSON (mock)', cat: 'csv', inType: 'text', outExt: 'json', fn: (txt) => '{"mock":"yaml to json"}' },
+      // Markdown/HTML (3)
+      { id: 'md2html', name: 'Markdown → HTML', cat: 'mark', inType: 'text', outExt: 'html', fn: (txt) => marked.parse(txt) },
+      { id: 'html2text', name: 'HTML → Text', cat: 'mark', inType: 'text', outExt: 'txt', fn: (txt) => txt.replace(/<[^>]*>/g, '') },
+      { id: 'text2html', name: 'Text → HTML (pre)', cat: 'mark', inType: 'text', outExt: 'html', fn: (txt) => `<pre>${txt}</pre>` },
+      // Hash (4)
+      { id: 'md5', name: 'MD5 hash', cat: 'hash', inType: 'text', outExt: 'txt', fn: (txt) => CryptoJS.MD5(txt).toString() },
+      { id: 'sha1', name: 'SHA1 hash', cat: 'hash', inType: 'text', outExt: 'txt', fn: (txt) => CryptoJS.SHA1(txt).toString() },
+      { id: 'sha256', name: 'SHA256', cat: 'hash', inType: 'text', outExt: 'txt', fn: (txt) => CryptoJS.SHA256(txt).toString() },
+      { id: 'wordcount', name: 'Word count', cat: 'hash', inType: 'text', outExt: 'txt', fn: (txt) => 'Words: ' + txt.split(/\s+/).filter(Boolean).length },
+    ];
+
+    // Helper for image conversions
+    function imageConvert(format) {
+      return function(file, options) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            canvas.toBlob(blob => resolve(blob), 'image/'+format, 0.9);
+          };
+          img.onerror = reject;
+          img.src = URL.createObjectURL(file);
+        });
+      };
+    }
+    function imageFilter(type) {
+      return function(file) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0,0,canvas.width,canvas.height);
+            const data = imageData.data;
+            for (let i=0; i<data.length; i+=4) {
+              let r=data[i], g=data[i+1], b=data[i+2];
+              if (type==='grayscale') { let gray = 0.34*r+0.5*g+0.16*b; data[i]=data[i+1]=data[i+2]=gray; }
+              else if (type==='sepia') { data[i]=r*0.393+g*0.769+b*0.189; data[i+1]=r*0.349+g*0.686+b*0.168; data[i+2]=r*0.272+g*0.534+b*0.131; }
+              else if (type==='invert') { data[i]=255-r; data[i+1]=255-g; data[i+2]=255-b; }
+            }
+            ctx.putImageData(imageData,0,0);
+            canvas.toBlob(blob => resolve(blob), 'image/png');
+          };
+          img.src = URL.createObjectURL(file);
+        });
+      };
+    }
+    function imageResize(file, options) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const w = parseInt(document.getElementById('resizeWidth').value) || img.width;
+          const h = parseInt(document.getElementById('resizeHeight').value) || img.height;
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob(blob => resolve(blob), 'image/png');
+        };
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    // populate sidebar lists
+    function populateLists() {
+      const containers = { text:'textConvList', image:'imageConvList', csv:'csvConvList', mark:'markConvList', hash:'hashConvList' };
+      for (let cat in containers) {
+        const list = document.getElementById(containers[cat]);
+        list.innerHTML = '';
+        conversions.filter(c => c.cat === cat).forEach(c => {
+          const div = document.createElement('div');
+          div.className = 'aw-row';
+          div.setAttribute('data-id', c.id);
+          div.innerHTML = `<span class="material-symbols-outlined">${c.cat==='image'?'image':'text_snippet'}</span>${c.name}`;
+          div.onclick = (e) => {
+            e.stopPropagation();
+            document.querySelectorAll('.aw-row').forEach(el => el.classList.remove('selected'));
+            div.classList.add('selected');
+            currentConversion = c.id;
+            if (c.id === 'resize') document.getElementById('resizeOptions').style.display = 'block';
+            else document.getElementById('resizeOptions').style.display = 'none';
+            showToast(`Selected: ${c.name}`, 'info');
+          };
+          list.appendChild(div);
+        });
+      }
+    }
+
+    // file handling
+    function handleFileSelect(file) {
+      if (!file) return;
+      currentFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (file.type.startsWith('image/')) {
+          document.getElementById('inputPreview').innerHTML = `<img src="${e.target.result}" class="preview-image">`;
+        } else {
+          document.getElementById('inputPreview').textContent = e.target.result.slice(0,500) + (e.target.result.length>500?'...':'');
+        }
+      };
+      if (file.type.startsWith('image/')) reader.readAsDataURL(file);
+      else reader.readAsText(file);
+    }
+    function triggerFileInput() { document.getElementById('fileInput').click(); }
+
+    async function convert() {
+      if (!currentFile) { showToast('Select a file first', 'error'); return; }
+      const conv = conversions.find(c => c.id === currentConversion);
+      if (!conv) return;
+      try {
+        let output;
+        if (conv.inType === 'image' && !currentFile.type.startsWith('image/')) {
+          showToast('Please select an image', 'error'); return;
+        }
+        if (conv.inType === 'text' && currentFile.type.startsWith('image/')) {
+          showToast('Please select a text file', 'error'); return;
+        }
+        if (conv.fn.constructor.name === 'AsyncFunction' || conv.inType==='image') {
+          output = await conv.fn(currentFile, {});
+          if (output instanceof Blob) {
+            currentOutputBlob = output;
+            const url = URL.createObjectURL(output);
+            document.getElementById('outputPreview').innerHTML = conv.outExt.match(/jpg|png|webp/) ? `<img src="${url}" class="preview-image">` : 'Binary output (click download)';
+          } else {
+            document.getElementById('outputPreview').textContent = output;
+            currentOutput = output;
+            currentOutputBlob = new Blob([output], {type: 'text/plain'});
+          }
+        } else {
+          const text = await new Promise(resolve => {
+            const r = new FileReader();
+            r.onload = e => resolve(e.target.result);
+            r.readAsText(currentFile);
+          });
+          output = conv.fn(text);
+          document.getElementById('outputPreview').textContent = output;
+          currentOutput = output;
+          currentOutputBlob = new Blob([output], {type: 'text/plain'});
+        }
+        currentOutputExt = conv.outExt;
+        showToast('Conversion done', 'success');
+      } catch (e) { showToast('Error: '+e.message, 'error'); }
+    }
+
+    function downloadOutput() {
+      if (!currentOutputBlob) { showToast('Nothing to download', 'error'); return; }
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(currentOutputBlob);
+      a.download = 'converted.' + currentOutputExt;
+      a.click();
+    }
+    function clearAll() {
+      currentFile = null;
+      currentOutputBlob = null;
+      document.getElementById('inputPreview').innerHTML = 'No file selected';
+      document.getElementById('outputPreview').innerHTML = 'Converted content will appear here';
+      document.getElementById('fileInput').value = '';
+    }
+
+    // sidebar collapse
+    function toggleSidebar() {
+      const s = document.getElementById('mainSidebar');
+      const e = document.getElementById('expandBtn');
+      s.classList.toggle('collapsed');
+      e.style.display = s.classList.contains('collapsed') ? 'block' : 'none';
+    }
+
+    // dropdown accordion
+    function toggleDropdown(header, id) {
+      const drop = document.getElementById(id);
+      const chev = header.querySelector('.aw-chevron');
+      drop.classList.toggle('open');
+      chev.classList.toggle('open');
+    }
+
+    // tip box
+    const TIPS = [
+      "👋 Select a conversion from the sidebar.",
+      "💡 Upload a file using drag & drop or the toolbar.",
+      "🌙 Toggle dark mode using the moon icon.",
+      "📁 Use the resize tool for custom dimensions.",
+      "✅ Click 'Convert' and download your file."
+    ];
+    let tipIndex = 0;
+    function showTip(i) {
+      document.getElementById('tipText').textContent = TIPS[i];
+      document.getElementById('tipBar').style.width = ((i+1)/TIPS.length*100)+'%';
+    }
+    function tipNav(d) {
+      tipIndex = Math.min(Math.max(0, tipIndex+d), TIPS.length-1);
+      showTip(tipIndex);
+      if (tipIndex === TIPS.length-1 && d===1) dismissTips();
+    }
+    function dismissTips() {
+      document.getElementById('tipBox').classList.replace('show','hide');
+      localStorage.setItem('tips_seen','1');
+    }
+
+    // toast
+    function showToast(msg, type='info', dur=2800) {
+      const stack = document.getElementById('toastStack');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${type==='error'?'error':'check_circle'}</span>${msg}`;
+      stack.appendChild(t);
+      requestAnimationFrame(() => { requestAnimationFrame(() => t.classList.add('show')); });
+      setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, dur);
+    }
+
+    // dark mode with cookie
+    function toggleDarkMode() {
+      const b = document.body;
+      const icon = document.getElementById('themeIcon');
+      const isDark = b.classList.toggle('dark');
+      if (icon) icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+      setThemeCookie(isDark ? 'dark' : 'light');
+    }
+    function setThemeCookie(v) {
+      document.cookie = 'toolsuite_theme=' + v + '; path=/; max-age=31536000; SameSite=Lax';
+    }
+
+    // init
+    window.addEventListener('load', () => {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('appContainer').style.display = 'flex';
+      populateLists();
+      if (!localStorage.getItem('tips_seen')) {
+        setTimeout(() => { document.getElementById('tipBox').classList.add('show'); showTip(0); }, 1200);
+      }
+      // set default selected conversion (uppercase)
+      document.querySelector('[data-id="uppercase"]')?.classList.add('selected');
+      // drag & drop
+      const drop = document.getElementById('dropZone');
+      drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('dragover'); });
+      drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+      drop.addEventListener('drop', (e) => {
+        e.preventDefault(); drop.classList.remove('dragover');
+        if (e.dataTransfer.files.length) handleFileSelect(e.dataTransfer.files[0]);
+      });
+    });
+  </script>
 </body>
 </html>

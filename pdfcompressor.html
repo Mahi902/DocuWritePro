@@ -1,341 +1,1304 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Compressor</title>
-    <meta name="description" content="DocuWrite Pro is an all-in-one online workspace that lets you write, edit, convert, design, and manage documents and digital content instantly—no installation, no complexity.">
-  <meta name="keywords" content="DocuWrite Pro, Mohtadi Azad Mahi, AI writer, document editor, online text tool, GitHub project, DocuWritePro, Document Editor, Document, Editor, PDF, JPG, Edit, Text, Change File Type, File Changer, Format, Format Changer, Office, Docs, A4, Editor, General document editing, Collab, Editing documents together, Document Viewer, Viewing documents, Word Finder, Searching for specific words, Translator, Language translation, Document Signer, Electronically signing documents, Page Number Adder, Adding page numbers to documents, Chart Maker, Creating data charts, Table Maker, Creating tables, Watermark Adder, Adding watermarks to files, Email Writer, Assisting with writing emails, Spell Checker, Checking spelling and grammar, File Extractor, Extracting contents from files, QR Maker, Creating QR codes, ID Card Maker, Designing and creating ID cards, File Zipper, Compressing or zipping files, PDF Converter, Converting files to or from PDF format, Context Field, Analyzing text (e.g., word count, frequency), Gift Card Maker, Creating custom gift cards, Share File, Uploading or sharing a file, Text Extractor, Extracting text from sources (e.g., images), Keyboard Click Test, Testing keyboard functionality, Frontend IDE, Integrated Development Environment for frontend coding, HTML Editor, Editing HTML code, HTML Writer, Writing or generating HTML content, Button Designer, Designing user interface buttons, HTML Splitter, Splitting HTML files or elements, GoTo Code, Navigation feature in an IDE/editor, Code Snipper, Storing or managing code snippets, Image Editor, Editing images, Image Generator, Generating new images, Drawing Board, A simple drawing or sketching tool, HTML, CSS, JS, Online, Fast, Easy, No login, No signup, Free, No credit card required, Mohtadi, Azad, Mahi, Mohtadi Azad, Mohtadi Azad Mahi, mahi902">
-  <meta name="author" content="Mohtadi Azad Mahi">
-  <meta name="robots" content="index, follow">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PDF Compressor — DocuWrite Pro</title>
 
-  <!-- Favicon & App Icons -->
-  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="icon" type="image/png" sizes="192x192" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <link rel="apple-touch-icon" href="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
-  <meta name="theme-color" content="#ffffff">
+<!-- Material Symbols Rounded (filled, active states) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"/>
+<!-- Material Symbols Outlined (default icons) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<!-- Inter font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <!-- App & Brand Metadata -->
-  <meta property="og:site_name" content="DocuWrite Pro">
-  <meta name="application-name" content="DocuWrite Pro">
-  <meta name="apple-mobile-web-app-title" content="DocuWrite Pro">
+<!-- pdf-lib for PDF manipulation -->
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<!-- PDF.js for rendering pages as canvas (for image recompression) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-  <!-- Open Graph -->
-  <meta property="og:title" content="DocuWrite Pro — Online Document Editor">
-  <meta property="og:description" content="Edit, format, and export documents easily with DocuWrite Pro by Mohtadi Azad Mahi.">
-  <meta property="og:url" content="https://mahi902.github.io/DocuWritePro/">
-  <meta property="og:type" content="website">
-  <meta property="og:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+<!-- TOOLSTRUCTER: prevent theme flash -->
+<script>
+(function(){
+  const m = document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));
+  if(m && m.split('=')[1]==='dark'){
+    document.documentElement.classList.add('dark');
+  }
+})();
+</script>
 
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="DocuWrite Pro — Online Document Editor">
-  <meta name="twitter:description" content="Create, format, and export documents easily with DocuWrite Pro. Built by Mohtadi Azad Mahi.">
-  <meta name="twitter:image" content="https://i.ibb.co.com/k2QvnvMz/IMG-20251010-111934.jpg">
+<style>
+/* ── Scrollbars hidden globally ── */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
 
-  <!-- Structured Data (Google Knowledge Graph) -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "DocuWrite Pro",
-    "alternateName": "DocuWrite Pro — Online Document Editor",
-    "url": "https://mahi902.github.io/DocuWritePro/",
-    "creator": {
-      "@type": "Person",
-      "name": "Mohtadi Azad Mahi"
-    }
-  }
-  </script>
-    <!-- Tailwind CSS CDN for modern styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'primary-blue': '#1A73E8', // Google Blue
-                        'primary-blue-hover': '#186ADF',
-                        'light-gray': '#F1F3F4', // Light gray background
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Google Fonts - Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <!-- PDF Libraries (Keeping the original algorithm) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-    <style>
-        /* Custom styles for file input aesthetic */
-        .file-upload-label {
-            display: block;
-            cursor: pointer;
-            border: 2px dashed #D2E3FC;
-            background-color: #F8F9FA;
-            padding: 40px 20px;
-            border-radius: 12px;
-            text-align: center;
-            transition: all 0.2s ease;
-        }
-        .file-upload-label:hover {
-            border-color: #AECBFA;
-            background-color: #EDF5FF;
-        }
-        #pdfUpload {
-            display: none; /* Hide the default input */
-        }
-    </style>
+/* ── Box model reset ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+/* ── Body ── */
+body {
+  font-family: 'Inter','Segoe UI',Arial,sans-serif;
+  background: #f0f4f8;
+  overflow: hidden;
+  height: 100vh;
+}
+body.dark { background: #111; }
+
+/* ── Loading screen ── */
+#loadingScreen {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+}
+body.dark #loadingScreen { background: #1a1a1a; }
+.spinner {
+  width: 56px; height: 56px;
+  border: 4px solid #e3f2fd;
+  border-top-color: #1976d2;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 17px; color: #666; }
+body.dark .loading-text { color: #aaa; }
+
+/* ── App Container ── */
+#appContainer {
+  display: none;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Top Bar ── */
+.top-bar {
+  background: #fff;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 200;
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+body.dark .top-bar { background: #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+
+.tool-title {
+  font-size: 17px;
+  font-weight: 500;
+  color: #1a1a2e;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+body.dark .tool-title { color: #e0e0e0; }
+.tool-title .material-symbols-outlined { font-size: 22px; color: #1976d2; }
+
+.top-spacer { flex: 1; min-width: 8px; }
+
+.icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 7px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  color: #1976d2;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.icon-btn:hover { background: #e3f2fd; }
+.icon-btn .material-symbols-outlined { font-size: 22px; }
+body.dark .icon-btn .material-symbols-outlined { color: #90caf9; }
+
+/* ── Toolbar ── */
+.toolbar {
+  background: #fff;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  flex-shrink: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+body.dark .toolbar { background: #1a1a1a; }
+
+.tbtn {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #333;
+  font-family: inherit;
+  transition: background 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.tbtn:hover { background: #e3f2fd; }
+.tbtn.active { background: #bbdefb; }
+.tbtn .material-symbols-outlined { font-size: 19px; color: #333; }
+body.dark .tbtn { color: #bbb; }
+body.dark .tbtn .material-symbols-outlined { color: #bbb; }
+body.dark .tbtn:hover { background: #2a2a2a; }
+
+.toolbar-sep {
+  width: 1px; height: 26px;
+  background: #e0e0e0;
+  margin: 0 4px; flex-shrink: 0;
+}
+body.dark .toolbar-sep { background: #333; }
+
+/* ── Main Content ── */
+.main-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 255px; min-width: 255px;
+  background: #fff;
+  padding: 14px;
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+  transition: transform 0.3s, width 0.3s, min-width 0.3s, padding 0.3s;
+  flex-shrink: 0;
+}
+.sidebar.collapsed {
+  transform: translateX(-255px);
+  width: 0; min-width: 0; padding: 0;
+  overflow: hidden;
+}
+body.dark .sidebar { background: #1a1a1a; border-color: #333; }
+
+.sb-section { margin-bottom: 18px; }
+.sb-title {
+  font-size: 11px; font-weight: 700;
+  color: #888; margin-bottom: 9px;
+  text-transform: uppercase; letter-spacing: 0.6px;
+}
+body.dark .sb-title { color: #666; }
+
+.sb-label { display: block; font-size: 12px; color: #777; margin-bottom: 3px; }
+body.dark .sb-label { color: #888; }
+
+.sb-input {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #fafafa;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  color: #333;
+}
+.sb-input:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+  background: #fff;
+}
+body.dark .sb-input { background: #252525 !important; color: #ddd !important; border-color: #444 !important; }
+
+select.sb-input { cursor: pointer; }
+
+.sb-toggle-row {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+}
+.sb-toggle-label { font-size: 13px; color: #444; }
+body.dark .sb-toggle-label { color: #aaa; }
+
+.toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; cursor: pointer; inset: 0;
+  background: #ccc; border-radius: 11px; transition: 0.3s;
+}
+.toggle-slider::before {
+  position: absolute; content: "";
+  height: 16px; width: 16px;
+  left: 3px; bottom: 3px;
+  background: #fff; border-radius: 50%; transition: 0.3s;
+}
+input:checked + .toggle-slider { background: #1976d2; }
+input:checked + .toggle-slider::before { transform: translateX(18px); }
+body.dark .toggle-slider { background: #444; }
+
+/* Sidebar accordion */
+.aw-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 10px;
+  background: #f0f7ff; border-radius: 8px;
+  cursor: pointer; user-select: none;
+  border: 1px solid #dceeff;
+  margin-bottom: 6px;
+}
+.aw-header:hover { background: #e3f2fd; }
+.aw-header-label { font-size: 12px; font-weight: 600; color: #1565c0; letter-spacing: 0.2px; }
+.aw-chevron { font-size: 16px; color: #1976d2; transition: transform 0.25s; }
+.aw-chevron.open { transform: rotate(180deg); }
+.aw-dropdown {
+  overflow: hidden; max-height: 0;
+  transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+  opacity: 0; pointer-events: none;
+}
+.aw-dropdown.open { max-height: 600px; opacity: 1; pointer-events: auto; }
+.aw-inner { padding: 4px 2px 6px; }
+body.dark .aw-header { background: #1a2a3a; border-color: #1e3a5a; }
+body.dark .aw-header:hover { background: #1e3350; }
+body.dark .aw-header-label { color: #90caf9; }
+body.dark .aw-chevron { color: #90caf9; }
+
+.collapse-btn {
+  width: 100%; padding: 8px;
+  background: #e3f2fd; border: none;
+  border-radius: 8px; cursor: pointer;
+  display: flex; align-items: center;
+  justify-content: center; gap: 6px;
+  font-size: 13px; color: #1976d2;
+  font-weight: 600; margin-top: 6px;
+  transition: background 0.15s; font-family: inherit;
+}
+.collapse-btn:hover { background: #bbdefb; }
+body.dark .collapse-btn { background: #1a2a4a !important; color: #1976d2 !important; }
+
+.expand-btn {
+  position: fixed; left: 10px; top: 50%;
+  transform: translateY(-50%);
+  background: #fff; border: none;
+  border-radius: 8px; padding: 10px 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+  z-index: 50; display: none;
+}
+body.dark .expand-btn { background: #1a1a1a; }
+
+/* ── Content Area ── */
+.content-area {
+  flex: 1; overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  background: #f0f4f8;
+  min-width: 0;
+  padding: 36px 20px;
+}
+body.dark .content-area { background: #111; }
+
+/* ── Main workspace card ── */
+.workspace {
+  width: 100%;
+  max-width: 680px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed #1976d2;
+  border-radius: 14px;
+  padding: 44px 24px;
+  text-align: center;
+  cursor: pointer;
+  background: #fff;
+  transition: background 0.15s, border-color 0.15s;
+  position: relative;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  background: #e3f2fd;
+  border-color: #1565c0;
+}
+body.dark .drop-zone { background: #1a1a1a; border-color: #444; }
+body.dark .drop-zone:hover, body.dark .drop-zone.dragover { background: #1a2a3a; border-color: #1976d2; }
+.drop-icon { font-size: 48px; color: #1976d2; margin-bottom: 10px; display: block; }
+.drop-title { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 6px; }
+.drop-sub { font-size: 13px; color: #777; }
+body.dark .drop-title { color: #ddd; }
+body.dark .drop-sub { color: #888; }
+#fileInput { display: none; }
+
+/* File list area */
+.file-list-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+body.dark .file-list-card { background: #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+
+.file-list-hdr {
+  padding: 13px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex; align-items: center;
+  justify-content: space-between;
+}
+body.dark .file-list-hdr { border-color: #2a2a2a; }
+.file-list-title {
+  font-size: 13px; font-weight: 600; color: #333;
+  display: flex; align-items: center; gap: 7px;
+}
+body.dark .file-list-title { color: #ddd; }
+.file-list-title .material-symbols-outlined { font-size: 18px; color: #1976d2; }
+
+.file-item {
+  padding: 12px 16px;
+  display: flex; align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #f5f5f5;
+  transition: background 0.12s;
+}
+.file-item:last-child { border-bottom: none; }
+.file-item:hover { background: #f9fafb; }
+body.dark .file-item { border-color: #222; }
+body.dark .file-item:hover { background: #1e1e1e; }
+.fi-icon { font-size: 28px; color: #d32f2f; flex-shrink: 0; }
+.fi-info { flex: 1; min-width: 0; }
+.fi-name { font-size: 13px; font-weight: 500; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fi-meta { font-size: 11px; color: #999; margin-top: 2px; }
+body.dark .fi-name { color: #ddd; }
+body.dark .fi-meta { color: #666; }
+.fi-status { font-size: 11px; font-weight: 600; flex-shrink: 0; padding: 3px 8px; border-radius: 6px; }
+.fi-status.pending { background: #f0f4f8; color: #777; }
+.fi-status.compressing { background: #e3f2fd; color: #1976d2; }
+.fi-status.done { background: #e8f5e9; color: #388e3c; }
+.fi-status.error { background: #fce4ec; color: #d32f2f; }
+body.dark .fi-status.pending { background: #252525; color: #888; }
+body.dark .fi-status.compressing { background: #1a2a3a; color: #90caf9; }
+body.dark .fi-status.done { background: #1a2e1a; color: #81c784; }
+body.dark .fi-status.error { background: #2e1a1a; color: #ef9a9a; }
+
+.fi-remove {
+  background: none; border: none; cursor: pointer;
+  padding: 4px; border-radius: 6px; color: #bbb;
+  transition: background 0.12s, color 0.12s;
+  display: flex; align-items: center;
+}
+.fi-remove:hover { background: #fce4ec; color: #d32f2f; }
+
+/* Progress bar */
+.prog-track {
+  width: 100%; height: 6px;
+  background: #e0e0e0; border-radius: 3px;
+  overflow: hidden; margin: 4px 0 2px;
+}
+.prog-fill { height: 100%; background: #1976d2; transition: width 0.3s; border-radius: 3px; }
+body.dark .prog-track { background: #333; }
+
+/* Compression stats card */
+.stats-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  display: none;
+}
+body.dark .stats-card { background: #1a1a1a; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+.stats-card.show { display: block; }
+.stats-title { font-size: 13px; font-weight: 700; color: #333; margin-bottom: 14px; display: flex; align-items: center; gap: 7px; }
+body.dark .stats-title { color: #ddd; }
+.stats-title .material-symbols-outlined { font-size: 18px; color: #1976d2; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.stat-box {
+  background: #f0f4f8; border-radius: 10px;
+  padding: 12px; text-align: center;
+}
+body.dark .stat-box { background: #252525; }
+.stat-val { font-size: 19px; font-weight: 700; color: #1976d2; }
+.stat-lbl { font-size: 11px; color: #777; margin-top: 2px; }
+body.dark .stat-lbl { color: #888; }
+.stat-box.saving .stat-val { color: #388e3c; }
+body.dark .stat-box.saving .stat-val { color: #81c784; }
+
+/* Action row */
+.action-row {
+  display: flex; gap: 9px; align-items: center;
+  flex-wrap: wrap;
+}
+.action-btn {
+  background: #1976d2; color: #fff;
+  border: none; padding: 9px 18px;
+  border-radius: 8px; cursor: pointer;
+  font-size: 13px; display: flex;
+  align-items: center; gap: 6px;
+  transition: background 0.2s; white-space: nowrap;
+  font-family: inherit; flex-shrink: 0;
+  font-weight: 500;
+}
+.action-btn:hover { background: #1565c0; }
+.action-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.action-btn.secondary { background: #546e7a; }
+.action-btn.secondary:hover { background: #37474f; }
+.action-btn .material-symbols-outlined { font-size: 18px; }
+
+/* Compression progress overlay */
+.comp-progress {
+  padding: 12px 16px 14px;
+  border-top: 1px solid #f0f0f0;
+  display: none;
+}
+body.dark .comp-progress { border-color: #2a2a2a; }
+.comp-progress.show { display: block; }
+.comp-prog-label { font-size: 12px; color: #777; margin-bottom: 5px; display: flex; justify-content: space-between; }
+body.dark .comp-prog-label { color: #888; }
+
+/* Preset level badges */
+.level-btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.lvl-btn {
+  padding: 5px 12px; border: 2px solid #e0e0e0;
+  border-radius: 20px; font-size: 12px; font-weight: 600;
+  cursor: pointer; background: #fafafa; color: #555;
+  font-family: inherit; transition: all 0.15s;
+  flex-shrink: 0;
+}
+.lvl-btn:hover { border-color: #90caf9; background: #e8f4fd; color: #1565c0; }
+.lvl-btn.active { border-color: #1976d2; background: #e3f2fd; color: #1976d2; }
+body.dark .lvl-btn { background: #252525; border-color: #444; color: #aaa; }
+body.dark .lvl-btn:hover { border-color: #1976d2; background: #1a2a3a; color: #90caf9; }
+body.dark .lvl-btn.active { border-color: #1976d2; background: #1a2a3a; color: #90caf9; }
+
+/* sb-row for paired label+control */
+.sb-row { margin-bottom: 11px; }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  padding: 11px 20px; border-radius: 8px;
+  color: #fff; font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  z-index: 10002; opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
+  pointer-events: none; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.success, .toast.info { background: #1976d2; }
+.toast.error { background: #d32f2f; }
+
+/* Tip box */
+#tipBox {
+  position: fixed; bottom: 80px; right: 18px;
+  width: 284px; background: #1976d2;
+  color: #fff; border-radius: 14px; padding: 14px;
+  box-shadow: 0 8px 24px rgba(25,118,210,0.3);
+  z-index: 9990; opacity: 0; transform: translateY(8px);
+  transition: opacity 0.3s, transform 0.3s;
+  font-family: inherit; pointer-events: none;
+}
+#tipBox.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#tipBox.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
+body.dark #tipBox { background: #0d47a1; }
+.tip-prog { height: 3px; background: rgba(255,255,255,0.2); border-radius: 99px; overflow: hidden; margin-bottom: 11px; }
+.tip-bar { height: 100%; background: #fff; transition: width 0.3s; }
+.tip-text { font-size: 13px; line-height: 1.5; min-height: 58px; }
+.tip-actions { display: flex; gap: 7px; margin-top: 11px; }
+.tip-btn { flex: 1; border: none; padding: 6px; border-radius: 7px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.tip-prev { background: rgba(255,255,255,0.15); color: #fff; }
+.tip-next { background: #fff; color: #1976d2; }
+
+/* Empty state */
+.empty-hint {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 32px 0; color: #bbb; gap: 8px;
+}
+.empty-hint .material-symbols-outlined { font-size: 40px; }
+.empty-hint span { font-size: 13px; }
+body.dark .empty-hint { color: #555; }
+</style>
 </head>
-<body class="bg-light-gray min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+<body>
 
-    <!-- Main Card Container -->
-    <div class="w-full max-w-xl bg-white p-8 md:p-10 rounded-2xl shadow-xl shadow-gray-200/50">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">
-                <svg xmlns="http://www.w3.org/2000/svg" class="inline-block w-8 h-8 mr-2 text-primary-blue" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2-12H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V4a2 2 0 00-2-2z" />
-                </svg>
-                PDF Compressor
-            </h1>
-            <p class="text-gray-500 mt-2">Reduce file size while maintaining excellent document quality.</p>
-        </header>
+<!-- Loading Screen -->
+<div id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading PDF Compressor…</div>
+</div>
 
-        <!-- File Input Area -->
-        <input type="file" id="pdfUpload" accept="application/pdf">
-        <label for="pdfUpload" class="file-upload-label">
-            <p id="fileStatus" class="text-lg font-medium text-gray-600">
-                Drag & Drop or Click to Upload PDF
-            </p>
-            <p class="text-sm text-gray-400 mt-1">Maximum file size 100MB</p>
-        </label>
+<!-- Toast container -->
+<div id="toastStack"></div>
 
-        <!-- Action Button -->
-        <button id="compressBtn" disabled class="mt-6 w-full py-3 px-4 text-white font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-primary-blue/50 disabled:opacity-50 bg-primary-blue hover:bg-primary-blue-hover">
-            Compress PDF
-        </button>
+<!-- Tip Box -->
+<div id="tipBox">
+  <div class="tip-prog"><div class="tip-bar" id="tipBar" style="width:0%"></div></div>
+  <div class="tip-text" id="tipText"></div>
+  <div class="tip-actions">
+    <button class="tip-btn tip-prev" onclick="tipNav(-1)">← Prev</button>
+    <button class="tip-btn tip-next" onclick="tipNav(1)">Next →</button>
+  </div>
+</div>
 
-        <!-- Status and Download Area -->
-        <div class="mt-4 flex flex-col items-center">
-            <!-- Progress text for steps -->
-            <div id="progress" class="text-sm font-medium text-gray-600 h-6"></div>
-            
-            <!-- Result metrics (Initially hidden) -->
-            <div id="metrics" class="text-center mt-4 w-full p-4 border rounded-xl bg-light-gray hidden">
-                <p class="text-lg font-semibold text-green-700 mb-2" id="resultMessage"></p>
-                <div class="flex justify-between text-sm text-gray-700">
-                    <span>Original Size: <strong id="oldSize">--</strong></span>
-                    <span>New Size: <strong id="newSize">--</strong></span>
-                    <span>Saved: <strong id="percentage" class="text-primary-blue">--</strong></span>
-                </div>
-            </div>
+<!-- Expand sidebar button -->
+<button class="expand-btn" id="expandBtn" onclick="toggleSidebar()" title="Show panel">
+  <span class="material-symbols-outlined" style="color:#1976d2;font-size:20px;">chevron_right</span>
+</button>
 
-            <!-- Download Button (Initially hidden) -->
-            <button id="downloadBtn" class="mt-6 py-3 px-6 text-white font-semibold rounded-xl bg-green-600 hover:bg-green-700 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-green-600/50 hidden">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2 -mt-0.5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L10 11.586l1.293-1.293a1 1 0 111.414 1.414l-2 2a1 1 0 01-1.414 0l-2-2a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v7a1 1 0 11-2 0V3a1 1 0 011-1z" clip-rule="evenodd" />
-                </svg>
-                Download Compressed PDF
-            </button>
+<!-- App Container -->
+<div id="appContainer">
+
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <span class="material-symbols-outlined" style="font-size:22px;color:#1976d2;">compress</span>
+    <span class="tool-title">PDF Compressor</span>
+    <div class="top-spacer"></div>
+    <button class="icon-btn" onclick="clearAll()" title="Clear all files">
+      <span class="material-symbols-outlined">delete_sweep</span>
+    </button>
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle dark mode">
+      <span class="material-symbols-outlined" id="themeIcon">dark_mode</span>
+    </button>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <button class="tbtn" onclick="document.getElementById('fileInput').click()">
+      <span class="material-symbols-outlined">upload_file</span> Add PDFs
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="startCompression()" id="compressBtn">
+      <span class="material-symbols-outlined">compress</span> Compress All
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="downloadAll()" id="downloadAllBtn" style="display:none">
+      <span class="material-symbols-outlined">download</span> Download All
+    </button>
+    <div class="toolbar-sep"></div>
+    <button class="tbtn" onclick="clearAll()">
+      <span class="material-symbols-outlined">delete_sweep</span> Clear
+    </button>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+
+      <!-- Compression Level -->
+      <div class="sb-section">
+        <div class="sb-title">Compression Level</div>
+        <div class="level-btns">
+          <button class="lvl-btn" onclick="setLevel('low')">Low</button>
+          <button class="lvl-btn active" onclick="setLevel('medium')">Medium</button>
+          <button class="lvl-btn" onclick="setLevel('high')">High</button>
+          <button class="lvl-btn" onclick="setLevel('max')">Max</button>
         </div>
+        <div class="sb-label" id="levelDesc" style="font-size:11px;line-height:1.5;color:#888;margin-top:4px;">
+          Good balance of size and quality.
+        </div>
+      </div>
+
+      <!-- Image Settings accordion -->
+      <div class="sb-section">
+        <div class="aw-header" onclick="toggleDropdown(this)">
+          <span class="aw-header-label">Image Optimization</span>
+          <span class="material-symbols-outlined aw-chevron open">expand_more</span>
+        </div>
+        <div class="aw-dropdown open">
+          <div class="aw-inner">
+            <div class="sb-row">
+              <label class="sb-label">JPEG Quality (%)</label>
+              <input type="range" id="imgQuality" class="sb-input" min="5" max="95" value="55"
+                style="padding:4px 0;height:22px;background:transparent;border:none;box-shadow:none;"
+                oninput="document.getElementById('qualityVal').textContent=this.value+'%'">
+              <div style="text-align:right;font-size:12px;color:#1976d2;margin-top:2px;" id="qualityVal">55%</div>
+            </div>
+            <div class="sb-row">
+              <label class="sb-label">Max Image Resolution</label>
+              <select class="sb-input" id="imgRes">
+                <option value="2400">Original (no downscale)</option>
+                <option value="1800">1800px max</option>
+                <option value="1200" selected>1200px max</option>
+                <option value="900">900px max</option>
+                <option value="600">600px max</option>
+              </select>
+            </div>
+            <div class="sb-toggle-row">
+              <span class="sb-toggle-label">Grayscale images</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="grayscaleToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF Structure accordion -->
+      <div class="sb-section">
+        <div class="aw-header" onclick="toggleDropdown(this)">
+          <span class="aw-header-label">PDF Structure</span>
+          <span class="material-symbols-outlined aw-chevron">expand_more</span>
+        </div>
+        <div class="aw-dropdown">
+          <div class="aw-inner">
+            <div class="sb-toggle-row">
+              <span class="sb-toggle-label">Remove metadata</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="removeMetaToggle" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="sb-toggle-row">
+              <span class="sb-toggle-label">Remove annotations</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="removeAnnotToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="sb-toggle-row">
+              <span class="sb-toggle-label">Remove bookmarks</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="removeBookmarksToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="sb-toggle-row">
+              <span class="sb-toggle-label">Flatten form fields</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="flattenFormsToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Output accordion -->
+      <div class="sb-section">
+        <div class="aw-header" onclick="toggleDropdown(this)">
+          <span class="aw-header-label">Output</span>
+          <span class="material-symbols-outlined aw-chevron">expand_more</span>
+        </div>
+        <div class="aw-dropdown">
+          <div class="aw-inner">
+            <div class="sb-row">
+              <label class="sb-label">Filename suffix</label>
+              <input type="text" class="sb-input" id="suffixInput" value="_compressed" placeholder="e.g. _compressed">
+            </div>
+            <div class="sb-toggle-row">
+              <span class="sb-toggle-label">Auto-download on done</span>
+              <label class="toggle-switch">
+                <input type="checkbox" id="autoDownloadToggle">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="collapse-btn" onclick="toggleSidebar()">
+        <span class="material-symbols-outlined">chevron_left</span> Hide Panel
+      </button>
     </div>
 
-<script>
-    // --- Utility Function ---
-    // Helper to convert bytes to readable format (KB, MB)
-    const formatBytes = (bytes, decimals = 2) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const dm = decimals < 0 ? 0 : decimals;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
+    <!-- Content Area -->
+    <div class="content-area">
+      <div class="workspace">
 
-    // --- DOM Elements & State ---
-    const fileInput = document.getElementById('pdfUpload');
-    const compressBtn = document.getElementById('compressBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const progressText = document.getElementById('progress');
-    const fileStatus = document.getElementById('fileStatus');
-    const metricsDiv = document.getElementById('metrics');
-    const resultMessageEl = document.getElementById('resultMessage');
-    const oldSizeEl = document.getElementById('oldSize');
-    const newSizeEl = document.getElementById('newSize');
-    const percentageEl = document.getElementById('percentage');
+        <!-- Drop zone -->
+        <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()"
+          ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+          <span class="material-symbols-outlined drop-icon">upload_file</span>
+          <div class="drop-title">Drop PDFs here or click to browse</div>
+          <div class="drop-sub">Supports multiple files · All processing is local — nothing is uploaded</div>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf" multiple onchange="handleFiles(this.files)">
 
-    let pdfData = null;
-    let compressedBlob = null; // Variable to store the resulting blob
+        <!-- File list -->
+        <div class="file-list-card" id="fileListCard" style="display:none">
+          <div class="file-list-hdr">
+            <span class="file-list-title">
+              <span class="material-symbols-outlined">description</span>
+              <span id="fileCount">0 files</span>
+            </span>
+            <span style="font-size:11px;color:#999;" id="totalSize"></span>
+          </div>
+          <div id="fileListBody">
+            <div class="empty-hint">
+              <span class="material-symbols-outlined">inbox</span>
+              <span>No files added yet</span>
+            </div>
+          </div>
+          <div class="comp-progress" id="compProgress">
+            <div class="comp-prog-label">
+              <span id="compLabel">Compressing…</span>
+              <span id="compPct">0%</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" id="compFill" style="width:0%"></div></div>
+          </div>
+        </div>
 
-    // Function to hide the result/download areas
-    const resetUI = () => {
-        downloadBtn.classList.add('hidden');
-        metricsDiv.classList.add('hidden');
-        progressText.textContent = "";
-        fileStatus.classList.remove('text-primary-blue');
-        fileStatus.classList.add('text-gray-600');
-    }
+        <!-- Stats card -->
+        <div class="stats-card" id="statsCard">
+          <div class="stats-title">
+            <span class="material-symbols-outlined">analytics</span> Compression Summary
+          </div>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-val" id="statOrig">—</div>
+              <div class="stat-lbl">Original Size</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-val" id="statComp">—</div>
+              <div class="stat-lbl">Compressed Size</div>
+            </div>
+            <div class="stat-box saving">
+              <div class="stat-val" id="statSaved">—</div>
+              <div class="stat-lbl">Space Saved</div>
+            </div>
+          </div>
+        </div>
 
-    // Enable button and update status when file selected
-    fileInput.addEventListener('change', (e) => {
-        pdfData = e.target.files[0];
-        resetUI();
-        if (pdfData) {
-            compressBtn.disabled = false;
-            fileStatus.textContent = `File Selected: ${pdfData.name} (${formatBytes(pdfData.size)})`;
-            fileStatus.classList.remove('text-gray-600');
-            fileStatus.classList.add('text-primary-blue');
-        } else {
-            compressBtn.disabled = true;
-            fileStatus.textContent = "Drag & Drop or Click to Upload PDF";
-        }
-    });
+        <!-- Action row -->
+        <div class="action-row" id="actionRow" style="display:none">
+          <button class="action-btn" onclick="startCompression()" id="mainCompressBtn">
+            <span class="material-symbols-outlined">compress</span> Compress All
+          </button>
+          <button class="action-btn secondary" id="mainDownloadBtn" style="display:none" onclick="downloadAll()">
+            <span class="material-symbols-outlined">download</span> Download All
+          </button>
+        </div>
 
-    // Handle manual download when button is clicked
-    downloadBtn.addEventListener('click', () => {
-        if (compressedBlob) {
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(compressedBlob);
-            link.download = "compressed_optimized.pdf";
-            link.click();
-        }
-    });
-
-    // Main Compression Logic
-    compressBtn.addEventListener('click', async () => {
-        if (!pdfData) return;
-        
-        // Setup initial state
-        const originalSize = pdfData.size;
-        compressBtn.disabled = true;
-        compressBtn.textContent = "Working...";
-        progressText.textContent = "Reading file and initializing...";
-        resetUI(); // Clear previous results
-
-        try {
-            const arrayBuffer = await pdfData.arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const outputPdf = await PDFLib.PDFDocument.create();
-
-            for (let i = 1; i <= pdf.numPages; i++) {
-                progressText.textContent = `Rendering page ${i} of ${pdf.numPages}...`;
-                const page = await pdf.getPage(i);
-                
-                // High quality rendering: scale is set to 2.5
-                const viewport = page.getViewport({ scale: 2.5 }); 
-                
-                const canvas = document.createElement("canvas");
-                const context = canvas.getContext("2d");
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                
-                await page.render({ canvasContext: context, viewport }).promise;
-
-                // Convert canvas content to high-quality JPEG (0.95 quality)
-                const imgData = canvas.toDataURL("image/jpeg", 0.95);
-                const imgBytes = await fetch(imgData).then(r => r.arrayBuffer());
-                
-                const pdfImage = await outputPdf.embedJpg(imgBytes);
-                const pageNew = outputPdf.addPage([viewport.width, viewport.height]);
-                
-                pageNew.drawImage(pdfImage, { 
-                    x: 0, y: 0, width: viewport.width, height: viewport.height 
-                });
-            }
-
-            progressText.textContent = "Finalizing PDF...";
-            const pdfBytes = await outputPdf.save();
-            const newSize = pdfBytes.length;
-
-            // --- Calculation & Metrics Display ---
-            const sizeDifference = originalSize - newSize;
-            const percentage = ((sizeDifference / originalSize) * 100).toFixed(1);
-
-            // Store the blob and update UI
-            compressedBlob = new Blob([pdfBytes], { type: "application/pdf" });
-            
-            // Set metrics
-            oldSizeEl.textContent = formatBytes(originalSize);
-            newSizeEl.textContent = formatBytes(newSize);
-            percentageEl.textContent = `${percentage}%`;
-
-            if (percentage > 0.1) {
-                resultMessageEl.textContent = "Compression Successful!";
-                percentageEl.classList.add('text-green-600');
-            } else {
-                resultMessageEl.textContent = "Compression Complete (Minimal Change)";
-                percentageEl.classList.add('text-yellow-600');
-            }
-            
-            progressText.textContent = "Ready to download your optimized file.";
-            metricsDiv.classList.remove('hidden'); // Show metrics
-            downloadBtn.classList.remove('hidden'); // Show download button
-            fileStatus.textContent = "Compression successful. Ready to download.";
-
-
-        } catch (error) {
-            console.error("Compression failed:", error);
-            progressText.textContent = `❌ Error: Compression failed. Please try a different file. (${error.message})`;
-            metricsDiv.classList.add('hidden'); // Hide metrics on failure
-        } finally {
-            compressBtn.disabled = false;
-            compressBtn.textContent = "Compress PDF";
-            // Do not clear pdfData so user can retry compression if needed
-            fileInput.value = ''; // Reset file input UI
-        }
-    });
-</script>
-    <!-- Load Material Symbols -->
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
-// --- Create Toggle Button ---
-const toggle = document.createElement("span");
-toggle.className = "material-symbols-outlined";
-toggle.style.position = "fixed";
-toggle.style.top = "15px";
-toggle.style.right = "15px";
-toggle.style.fontSize = "32px";
-toggle.style.cursor = "pointer";
-toggle.style.zIndex = "999999";
-toggle.style.userSelect = "none";
-document.body.appendChild(toggle);
+// ── PDFJS worker setup ──
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// --- Functions ---
-function enableDark() {
-    document.documentElement.style.filter = "invert(1) hue-rotate(180deg)";
-    localStorage.setItem("theme", "dark");
-    toggle.textContent = "light_mode"; // sun icon
-}
+// ── State ──
+let files = []; // {id, file, name, origSize, status, result, resultBlob}
+let idCounter = 0;
+let isCompressing = false;
 
-function disableDark() {
-    document.documentElement.style.filter = "";
-    localStorage.setItem("theme", "light");
-    toggle.textContent = "dark_mode"; // moon icon
-}
-
-// --- Load Saved Theme ---
-if (localStorage.getItem("theme") === "dark") {
-    enableDark();
-} else {
-    disableDark();
-}
-
-// --- Toggle on Click ---
-toggle.onclick = () => {
-    if (localStorage.getItem("theme") === "dark") {
-        disableDark();
-    } else {
-        enableDark();
-    }
+// ── Settings state ──
+const settings = {
+  imgQuality: 55,
+  imgRes: 1200,
+  grayscale: false,
+  removeMeta: true,
+  removeAnnot: false,
+  removeBookmarks: false,
+  flattenForms: false,
+  suffix: '_compressed',
+  autoDownload: false,
+  level: 'medium'
 };
+
+const levelPresets = {
+  low:    { imgQuality: 80, imgRes: 2400, label: 'Minimal compression — best quality.' },
+  medium: { imgQuality: 55, imgRes: 1200, label: 'Good balance of size and quality.' },
+  high:   { imgQuality: 30, imgRes: 900,  label: 'Aggressive — noticeably smaller files.' },
+  max:    { imgQuality: 12, imgRes: 600,  label: 'Maximum compression — lowest quality.' }
+};
+
+// ── Theme ──
+function initTheme() {
+  const isDark = document.body.classList.contains('dark') ||
+    document.documentElement.classList.contains('dark');
+  if (isDark) {
+    document.body.classList.add('dark');
+    document.getElementById('themeIcon').textContent = 'light_mode';
+  }
+}
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  document.getElementById('themeIcon').textContent = isDark ? 'light_mode' : 'dark_mode';
+  document.cookie = `toolsuite_theme=${isDark?'dark':'light'}; path=/; max-age=31536000; SameSite=Lax`;
+}
+
+// ── Sidebar ──
+function toggleSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const btn = document.getElementById('expandBtn');
+  const collapsed = sb.classList.contains('collapsed');
+  sb.classList.toggle('collapsed');
+  btn.style.display = collapsed ? 'none' : 'block';
+}
+
+// ── Accordion ──
+function toggleDropdown(hdr) {
+  const chevron = hdr.querySelector('.aw-chevron');
+  const dd = hdr.nextElementSibling;
+  const isOpen = dd.classList.contains('open');
+  dd.classList.toggle('open', !isOpen);
+  chevron.classList.toggle('open', !isOpen);
+}
+
+// ── Level presets ──
+function setLevel(level) {
+  settings.level = level;
+  const p = levelPresets[level];
+  settings.imgQuality = p.imgQuality;
+  settings.imgRes = p.imgRes;
+  document.getElementById('imgQuality').value = p.imgQuality;
+  document.getElementById('qualityVal').textContent = p.imgQuality + '%';
+  document.getElementById('imgRes').value = p.imgRes;
+  document.getElementById('levelDesc').textContent = p.label;
+  document.querySelectorAll('.lvl-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase() === level);
+  });
+}
+
+// ── Settings sync ──
+function syncSettings() {
+  settings.imgQuality = parseInt(document.getElementById('imgQuality').value);
+  settings.imgRes = parseInt(document.getElementById('imgRes').value);
+  settings.grayscale = document.getElementById('grayscaleToggle').checked;
+  settings.removeMeta = document.getElementById('removeMetaToggle').checked;
+  settings.removeAnnot = document.getElementById('removeAnnotToggle').checked;
+  settings.removeBookmarks = document.getElementById('removeBookmarksToggle').checked;
+  settings.flattenForms = document.getElementById('flattenFormsToggle').checked;
+  settings.suffix = document.getElementById('suffixInput').value || '_compressed';
+  settings.autoDownload = document.getElementById('autoDownloadToggle').checked;
+}
+
+// ── File handling ──
+function handleDragOver(e) { e.preventDefault(); document.getElementById('dropZone').classList.add('dragover'); }
+function handleDragLeave(e) { document.getElementById('dropZone').classList.remove('dragover'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('dragover');
+  const dropped = [...e.dataTransfer.files].filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+  if (dropped.length) addFiles(dropped);
+  else showToast('Only PDF files are supported', 'error');
+}
+function handleFiles(fileList) {
+  const pdfs = [...fileList].filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
+  if (pdfs.length) addFiles(pdfs);
+  else showToast('Only PDF files are supported', 'error');
+  document.getElementById('fileInput').value = '';
+}
+function addFiles(newFiles) {
+  newFiles.forEach(f => {
+    files.push({ id: ++idCounter, file: f, name: f.name, origSize: f.size, status: 'pending', result: null, resultBlob: null });
+  });
+  renderFileList();
+}
+function removeFile(id) {
+  files = files.filter(f => f.id !== id);
+  renderFileList();
+}
+function clearAll() {
+  files = [];
+  renderFileList();
+  document.getElementById('statsCard').classList.remove('show');
+  document.getElementById('mainDownloadBtn').style.display = 'none';
+  document.getElementById('downloadAllBtn').style.display = 'none';
+}
+
+function renderFileList() {
+  const card = document.getElementById('fileListCard');
+  const body = document.getElementById('fileListBody');
+  const actionRow = document.getElementById('actionRow');
+
+  if (files.length === 0) {
+    card.style.display = 'none';
+    actionRow.style.display = 'none';
+    return;
+  }
+  card.style.display = 'block';
+  actionRow.style.display = 'flex';
+
+  document.getElementById('fileCount').textContent = files.length + (files.length === 1 ? ' file' : ' files');
+  document.getElementById('totalSize').textContent = 'Total: ' + fmtSize(files.reduce((a, f) => a + f.origSize, 0));
+
+  body.innerHTML = '';
+  files.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.id = 'fi-' + f.id;
+
+    let statusHtml = '';
+    let progHtml = '';
+    if (f.status === 'pending') statusHtml = '<span class="fi-status pending">Pending</span>';
+    else if (f.status === 'compressing') {
+      statusHtml = '<span class="fi-status compressing">Compressing…</span>';
+      progHtml = `<div class="prog-track" style="margin:4px 0 0"><div class="prog-fill" id="fprog-${f.id}" style="width:0%"></div></div>`;
+    }
+    else if (f.status === 'done') {
+      const saved = f.origSize - f.result.size;
+      const pct = Math.round(saved / f.origSize * 100);
+      statusHtml = `<span class="fi-status done">−${pct}%</span>`;
+    }
+    else if (f.status === 'error') statusHtml = '<span class="fi-status error">Error</span>';
+
+    let metaText = fmtSize(f.origSize);
+    if (f.status === 'done') metaText += ` → ${fmtSize(f.result.size)}`;
+
+    div.innerHTML = `
+      <i class="bi bi-file-earmark-pdf fi-icon"></i>
+      <div class="fi-info">
+        <div class="fi-name">${escHtml(f.name)}</div>
+        <div class="fi-meta">${metaText}</div>
+        ${progHtml}
+      </div>
+      ${statusHtml}
+      ${f.status === 'done' ? `<button class="action-btn" style="padding:5px 10px;font-size:12px;" onclick="downloadFile(${f.id})"><span class="material-symbols-outlined" style="font-size:15px;">download</span></button>` : ''}
+      <button class="fi-remove" onclick="removeFile(${f.id})" title="Remove">
+        <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+      </button>`;
+    body.appendChild(div);
+  });
+}
+
+// ── Compression engine ──
+async function startCompression() {
+  if (isCompressing) return;
+  if (files.length === 0) { showToast('Add at least one PDF', 'error'); return; }
+  syncSettings();
+  isCompressing = true;
+  document.getElementById('mainCompressBtn').disabled = true;
+  document.getElementById('compressBtn').disabled = true;
+  document.getElementById('compProgress').classList.add('show');
+  document.getElementById('statsCard').classList.remove('show');
+  document.getElementById('mainDownloadBtn').style.display = 'none';
+  document.getElementById('downloadAllBtn').style.display = 'none';
+
+  const total = files.length;
+  let done = 0;
+
+  for (const f of files) {
+    f.status = 'compressing';
+    f.result = null;
+    f.resultBlob = null;
+    renderFileList();
+    updateGlobalProgress(done, total, `Compressing: ${f.name}`);
+
+    try {
+      const result = await compressPDF(f);
+      f.status = 'done';
+      f.result = result;
+      f.resultBlob = result.blob;
+    } catch (e) {
+      f.status = 'error';
+      console.error(e);
+    }
+    done++;
+    renderFileList();
+    updateGlobalProgress(done, total);
+  }
+
+  isCompressing = false;
+  document.getElementById('mainCompressBtn').disabled = false;
+  document.getElementById('compressBtn').disabled = false;
+
+  const doneFiles = files.filter(f => f.status === 'done');
+  if (doneFiles.length > 0) {
+    const origTotal = doneFiles.reduce((a, f) => a + f.origSize, 0);
+    const compTotal = doneFiles.reduce((a, f) => a + f.result.size, 0);
+    const saved = origTotal - compTotal;
+    const pct = Math.round(saved / origTotal * 100);
+    document.getElementById('statOrig').textContent = fmtSize(origTotal);
+    document.getElementById('statComp').textContent = fmtSize(compTotal);
+    document.getElementById('statSaved').textContent = pct + '%';
+    document.getElementById('statsCard').classList.add('show');
+
+    if (doneFiles.length > 1) {
+      document.getElementById('mainDownloadBtn').style.display = 'flex';
+      document.getElementById('downloadAllBtn').style.display = 'inline-flex';
+    }
+    showToast(`Compressed ${doneFiles.length} file${doneFiles.length>1?'s':''}. Saved ${pct}%!`, 'success');
+    if (settings.autoDownload) downloadAll();
+  }
+
+  document.getElementById('compProgress').classList.remove('show');
+}
+
+function updateGlobalProgress(done, total, label) {
+  const pct = Math.round(done / total * 100);
+  document.getElementById('compFill').style.width = pct + '%';
+  document.getElementById('compPct').textContent = pct + '%';
+  document.getElementById('compLabel').textContent = label || `Done: ${done}/${total}`;
+}
+
+// ── Core PDF compression algorithm ──
+async function compressPDF(fileEntry) {
+  const arrayBuffer = await fileEntry.file.arrayBuffer();
+
+  // Strategy 1: Try pdf-lib pass (clean/optimize structure, remove unwanted parts)
+  const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
+
+  // Remove metadata
+  if (settings.removeMeta) {
+    try { pdfDoc.setTitle(''); pdfDoc.setAuthor(''); pdfDoc.setSubject('');
+      pdfDoc.setKeywords([]); pdfDoc.setProducer(''); pdfDoc.setCreator(''); } catch(e) {}
+  }
+
+  // Remove annotations
+  if (settings.removeAnnot) {
+    const pages = pdfDoc.getPages();
+    for (const page of pages) {
+      try {
+        const annots = page.node.lookup(PDFLib.PDFName.of('Annots'));
+        if (annots) page.node.delete(PDFLib.PDFName.of('Annots'));
+      } catch(e) {}
+    }
+  }
+
+  // Flatten forms
+  if (settings.flattenForms) {
+    try { pdfDoc.getForm().flatten(); } catch(e) {}
+  }
+
+  // Remove bookmarks/outlines
+  if (settings.removeBookmarks) {
+    try {
+      const catalog = pdfDoc.catalog;
+      catalog.delete(PDFLib.PDFName.of('Outlines'));
+    } catch(e) {}
+  }
+
+  // Strategy 2: Re-render each page as canvas and re-embed as JPEG image
+  // This is the most effective size-reduction technique for image-heavy or scanned PDFs
+  const shouldRerender = settings.imgQuality < 95 || settings.grayscale;
+
+  let finalBlob;
+
+  if (shouldRerender) {
+    finalBlob = await rerenderPDF(arrayBuffer, pdfDoc);
+  } else {
+    // Just save the cleaned pdf-lib doc
+    const bytes = await pdfDoc.save({ useObjectStreams: true, addDefaultPage: false });
+    finalBlob = new Blob([bytes], { type: 'application/pdf' });
+  }
+
+  // Pick whichever is smaller: re-rendered vs original cleaned
+  const cleanedBytes = await pdfDoc.save({ useObjectStreams: true });
+  const cleanedBlob = new Blob([cleanedBytes], { type: 'application/pdf' });
+
+  const best = finalBlob.size < cleanedBlob.size ? finalBlob : cleanedBlob;
+
+  return { blob: best, size: best.size };
+}
+
+// Re-render PDF pages via PDF.js → canvas → JPEG → new pdf-lib doc
+async function rerenderPDF(arrayBuffer, originalDoc) {
+  const quality = settings.imgQuality / 100;
+  const maxRes = settings.imgRes;
+  const grayscale = settings.grayscale;
+
+  // Load with PDF.js
+  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer.slice(0) });
+  const pdfJsDoc = await loadingTask.promise;
+  const pageCount = pdfJsDoc.numPages;
+
+  const newDoc = await PDFLib.PDFDocument.create();
+
+  for (let i = 1; i <= pageCount; i++) {
+    const page = await pdfJsDoc.getPage(i);
+    const viewport = page.getViewport({ scale: 1 });
+
+    // Compute scale to fit maxRes while maintaining aspect ratio
+    const longestSide = Math.max(viewport.width, viewport.height);
+    let scale = longestSide > maxRes ? maxRes / longestSide : 1;
+    // Boost scale for rendering quality if small
+    if (scale < 1.5 && longestSide < maxRes) scale = Math.min(1.5, maxRes / longestSide);
+
+    const scaledViewport = page.getViewport({ scale });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(scaledViewport.width);
+    canvas.height = Math.round(scaledViewport.height);
+    const ctx = canvas.getContext('2d');
+
+    // White background (important for JPEG transparency handling)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+
+    // Apply grayscale filter if requested
+    if (grayscale) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      for (let j = 0; j < data.length; j += 4) {
+        const g = 0.299 * data[j] + 0.587 * data[j+1] + 0.114 * data[j+2];
+        data[j] = data[j+1] = data[j+2] = g;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    // Convert to JPEG bytes
+    const jpegDataUrl = canvas.toDataURL('image/jpeg', quality);
+    const jpegBase64 = jpegDataUrl.split(',')[1];
+    const jpegBytes = Uint8Array.from(atob(jpegBase64), c => c.charCodeAt(0));
+
+    // Embed into new PDF page
+    const jpegImage = await newDoc.embedJpg(jpegBytes);
+    const newPage = newDoc.addPage([viewport.width, viewport.height]);
+    newPage.drawImage(jpegImage, {
+      x: 0, y: 0,
+      width: viewport.width,
+      height: viewport.height,
+    });
+
+    // Update per-file progress UI
+    const fileEl = document.getElementById(`fprog-${idCounter}`);
+    // Update any visible progress bars
+    document.querySelectorAll('[id^="fprog-"]').forEach(el => {
+      el.style.width = Math.round(i / pageCount * 100) + '%';
+    });
+  }
+
+  const bytes = await newDoc.save({ useObjectStreams: true });
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+// ── Download ──
+function downloadFile(id) {
+  const f = files.find(x => x.id === id);
+  if (!f || !f.resultBlob) return;
+  const base = f.name.replace(/\.pdf$/i, '');
+  const outName = base + settings.suffix + '.pdf';
+  const url = URL.createObjectURL(f.resultBlob);
+  const a = document.createElement('a');
+  a.href = url; a.download = outName;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+async function downloadAll() {
+  const doneFiles = files.filter(f => f.status === 'done' && f.resultBlob);
+  if (doneFiles.length === 0) { showToast('No compressed files to download', 'error'); return; }
+  if (doneFiles.length === 1) { downloadFile(doneFiles[0].id); return; }
+
+  // Multiple files: download as ZIP using JSZip if available, else download one by one
+  try {
+    // Try dynamic JSZip load
+    if (typeof JSZip === 'undefined') {
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    }
+    const zip = new JSZip();
+    doneFiles.forEach(f => {
+      const base = f.name.replace(/\.pdf$/i, '');
+      zip.file(base + settings.suffix + '.pdf', f.resultBlob);
+    });
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'compressed_pdfs.zip';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showToast('Downloaded as ZIP!', 'success');
+  } catch(e) {
+    // Fallback: download sequentially
+    for (const f of doneFiles) downloadFile(f.id);
+  }
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+// ── Toast ──
+function showToast(message, type = 'info', duration = 2800) {
+  const stack = document.getElementById('toastStack');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  const icon = type === 'error' ? 'error' : 'check_circle';
+  toast.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px">${icon}</span>${message}`;
+  stack.appendChild(toast);
+  requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 350);
+  }, duration);
+}
+
+// ── Tips ──
+const TIPS = [
+  '📎 Drop multiple PDFs at once — they\'ll all be compressed in one batch.',
+  '⚡ "Max" compression re-renders each page as a JPEG — biggest savings for image-heavy PDFs.',
+  '🎨 Enable Grayscale to convert colorful PDFs to black & white for extra savings.',
+  '🧹 "Remove Metadata" strips author/title/date info — great for privacy + smaller files.',
+  '💾 Use "Download All" to grab a ZIP of all compressed files at once.'
+];
+let tipIndex = 0;
+function showTip(index) {
+  const box = document.getElementById('tipBox');
+  document.getElementById('tipText').textContent = TIPS[index];
+  document.getElementById('tipBar').style.width = ((index + 1) / TIPS.length * 100) + '%';
+  box.classList.remove('hide'); box.classList.add('show');
+}
+function tipNav(dir) {
+  tipIndex = Math.max(0, Math.min(TIPS.length - 1, tipIndex + dir));
+  if (tipIndex === TIPS.length - 1 && dir === 1) dismissTips();
+  else showTip(tipIndex);
+}
+function dismissTips() {
+  document.getElementById('tipBox').classList.replace('show', 'hide');
+  localStorage.setItem('pdf_compressor_tips_seen', '1');
+}
+
+// ── Helpers ──
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+}
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Init ──
+window.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+
+  // Wire input events
+  document.getElementById('imgQuality').addEventListener('input', function() {
+    document.getElementById('qualityVal').textContent = this.value + '%';
+  });
+
+  // Dismiss loading
+  setTimeout(() => {
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'flex';
+  }, 900);
+
+  // Tips
+  if (!localStorage.getItem('pdf_compressor_tips_seen')) {
+    setTimeout(() => showTip(0), 1400);
+  }
+});
 </script>
-    
 </body>
 </html>

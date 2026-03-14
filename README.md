@@ -220,7 +220,7 @@ Asides from the default document editor, the Sugarcane editor is generally a lig
 - **QR Maker**: Creating QR codes
 - **ID Card Maker**: Designing and creating ID cards
 - **File Zipper**: Compressing or zipping files
-- **PDF Converter**: Converting files to or from PDF format
+- **Format Converter**: Converting files to or from different formats
 - **PDF Compressor**: Compress PDFs and shrink file size
 - **Markdown Editor**: Edit or convert plain text to markdown .md
 

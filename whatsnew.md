@@ -1,12 +1,5 @@
-* Added welcome screen.
-* Added about app option.
-* Added new icons.
-* Added new animations.
-* Added new templates.
-* Completely revamped tool UIs.
-* Added Recents menu.
-* Added in-app document saving.
-* Made Drawing Board default image engine.
-* Made Sugercane default document engine.
-* Moved scanner to tools menu's hold option.
-* Better UI optimization for smaller displays.
+* Added new login system wiht Google OAuth.
+* Added live document storing using Google Drive.
+* Added special user system and roles.
+* Revamped the recents menu.
+* Added new FAB on home screen.

@@ -4,132 +4,214 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us</title>
-    <!-- Use Inter font for a modern look -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap">
-    <!-- Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Font Awesome for the email icon -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/css/intlTelInput.css">
+    
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #ffffff; /* The body background is now white */
-            padding: 2rem;
+        body { font-family: 'Inter', sans-serif; background-color: #ffffff; padding: 2rem; }
+        
+        /* Ensure the telephone input takes full width */
+        .iti { width: 100%; }
+        .iti__outer-wrapper { margin-top: 0.25rem; }
+        
+        #linkedin-container {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
         }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .error-text { color: #dc2626; font-size: 0.75rem; margin-top: 0.25rem; display: none; }
+        input:invalid:not(:placeholder-shown) { border-color: #dc2626; }
     </style>
 </head>
 <body class="bg-white text-gray-800">
 
-    <!-- The form container is now a regular block on the page, with no box or shadow -->
     <div class="mx-auto w-full max-w-lg py-8 sm:py-10 md:py-12">
-        <!-- Form Header -->
         <div class="mb-6 text-center">
             <h2 class="text-3xl sm:text-4xl font-bold text-gray-900">Contact Us</h2>
         </div>
 
-        <!-- The main form -->
-        <form id="contact-form" class="space-y-5">
-            <!-- Name -->
+        <form id="contact-form" class="space-y-5" novalidate>
             <div>
                 <label for="name" class="block text-sm font-medium text-gray-700">Your Name</label>
                 <input type="text" id="name" name="name" required
-                       class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                       class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200">
             </div>
 
-            <!-- Phone -->
             <div>
                 <label for="phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                <input type="tel" id="phone" name="phone"
-                       class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                <input type="tel" id="phone" name="phone" required
+                       class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200">
+                <p id="phone-error" class="error-text">Please enter a valid phone number for the selected country.</p>
             </div>
 
-            <!-- Region -->
             <div>
-                <label for="region" class="block text-sm font-medium text-gray-700">Region</label>
+                <label for="region" class="block text-sm font-medium text-gray-700">Region / City</label>
                 <input type="text" id="region" name="region"
-                       class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                       class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200">
             </div>
 
-            <!-- Email -->
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
                 <input type="email" id="email" name="email" required
-                       class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                       placeholder="example@domain.com"
+                       class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200">
+                <p id="email-error" class="error-text">Please enter a valid email address.</p>
             </div>
 
-            <!-- Tool and Type of Message -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                    <label for="tool" class="block text-sm font-medium text-gray-700">Tool with Issue</label>
-                    <input type="text" id="tool" name="tool"
-                           class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                <div id="dynamic-field-container">
+                    <label id="dynamic-label" for="tool" class="block text-sm font-medium text-gray-700">Tool with Issue</label>
+                    <div id="input-wrapper">
+                        <input type="text" id="tool" name="tool"
+                               class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200">
+                    </div>
                 </div>
                 <div>
                     <label for="type" class="block text-sm font-medium text-gray-700">Message Type</label>
                     <select id="type" name="type" required
-                            class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                            class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200">
                         <option value="Report">Report</option>
                         <option value="Suggestion">Suggestion</option>
                         <option value="Query">Query</option>
+                        <option value="Role">Role</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Main Message -->
+            <div id="linkedin-container">
+                <label for="linkedin" class="block text-sm font-medium text-gray-700">LinkedIn Profile URL</label>
+                <input type="url" id="linkedin" name="linkedin" 
+                       placeholder="https://www.linkedin.com/in/username"
+                       class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200">
+                <p id="linkedin-error" class="error-text">Please enter a valid LinkedIn profile URL.</p>
+            </div>
+
             <div>
                 <label for="message" class="block text-sm font-medium text-gray-700">Main Message</label>
                 <textarea id="message" name="message" rows="5" required
-                          class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200 focus:ring-opacity-50"></textarea>
+                          class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600 focus:ring focus:ring-blue-200"></textarea>
             </div>
 
-            <!-- Submit Button -->
             <button type="submit"
-                    class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md
-                           hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center space-x-2">
+                    class="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2">
                 <i class="fas fa-envelope"></i>
-                <span>Contact Us</span>
+                <span>Send Message</span>
             </button>
         </form>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/intlTelInput.min.js"></script>
+    
     <script>
+        const phoneInput = document.querySelector("#phone");
+        const iti = window.intlTelInput(phoneInput, {
+            utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.10/build/js/utils.js",
+            initialCountry: "auto",
+            geoIpLookup: callback => {
+                fetch("https://ipapi.co/json")
+                    .then(res => res.json())
+                    .then(data => callback(data.country_code))
+                    .catch(() => callback("us"));
+            },
+            separateDialCode: true,
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             const contactForm = document.getElementById('contact-form');
+            const typeSelect = document.getElementById('type');
+            const dynamicLabel = document.getElementById('dynamic-label');
+            const inputWrapper = document.getElementById('input-wrapper');
+            const linkedinContainer = document.getElementById('linkedin-container');
+            const linkedinInput = document.getElementById('linkedin');
 
-            // The form now directly handles the mailto link upon submission
+            // Toggle Role fields
+            typeSelect.addEventListener('change', () => {
+                if (typeSelect.value === 'Role') {
+                    dynamicLabel.textContent = 'Role Activity';
+                    inputWrapper.innerHTML = `
+                        <select id="tool" name="tool" required class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600">
+                            <option value="Apply for a role">Apply for a role</option>
+                            <option value="Revoke a role">Revoke a role</option>
+                        </select>`;
+                    linkedinContainer.style.display = 'block';
+                } else {
+                    dynamicLabel.textContent = 'Tool with Issue';
+                    inputWrapper.innerHTML = `
+                        <input type="text" id="tool" name="tool" class="mt-1 block w-full rounded-lg border border-gray-400 shadow-sm p-3 focus:border-blue-600">`;
+                    linkedinContainer.style.display = 'none';
+                }
+            });
+
             contactForm.addEventListener('submit', (e) => {
-                e.preventDefault(); // Prevent the default form submission
+                e.preventDefault();
+                let isValid = true;
 
-                // Create a FormData object from the form to easily get all the values
+                // 1. Validate Phone
+                const phoneError = document.getElementById('phone-error');
+                if (!iti.isValidNumber()) {
+                    phoneError.style.display = 'block';
+                    isValid = false;
+                } else {
+                    phoneError.style.display = 'none';
+                }
+
+                // 2. Validate Email (Strict Regex)
+                const emailInput = document.getElementById('email');
+                const emailError = document.getElementById('email-error');
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(emailInput.value)) {
+                    emailError.style.display = 'block';
+                    isValid = false;
+                } else {
+                    emailError.style.display = 'none';
+                }
+
+                // 3. Validate LinkedIn (Strict Regex)
+                if (typeSelect.value === 'Role') {
+                    const linkedinError = document.getElementById('linkedin-error');
+                    const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/(in|company)\/[\w-]+\/?$/;
+                    if (!linkedinRegex.test(linkedinInput.value)) {
+                        linkedinError.style.display = 'block';
+                        isValid = false;
+                    } else {
+                        linkedinError.style.display = 'none';
+                    }
+                }
+
+                if (!isValid) return;
+
+                // Process Form
                 const formData = new FormData(contactForm);
                 const data = Object.fromEntries(formData.entries());
+                const fullPhone = iti.getNumber();
+                const countryData = iti.getSelectedCountryData();
 
-                // Construct the email subject and body
-                const subject = `Contact Form Submission: ${data.type}`;
-                const body = `
-Message Type: ${data.type}
-Tool with Issue: ${data.tool}
+                const subject = `DocuWrite Pro: ${data.type}`;
+                let body = `
 Name: ${data.name}
 Email: ${data.email}
-Phone: ${data.phone}
+Phone: ${fullPhone} (${countryData.name})
 Region: ${data.region}
+Message Type: ${data.type}
+${data.type === 'Role' ? 'Role Activity' : 'Tool'}: ${data.tool}
+${data.type === 'Role' ? 'LinkedIn: ' + data.linkedin : ''}
 
 --------------------------
 Message:
 ${data.message}
                 `.trim();
 
-                // Create the mailto URL with the subject and body
-                const mailtoUrl = `mailto:ebma@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-
-                // Open the user's default email client
-                window.location.href = mailtoUrl;
-
-                // Clear the form fields after submission
+                window.location.href = `mailto:ebma@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
                 contactForm.reset();
             });
         });
     </script>
-
 </body>
 </html>

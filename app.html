@@ -2934,5 +2934,50 @@
             appInitFromCookie();
         });
     </script>
+
+<script>
+/* --- Session Persistence Fix --- */
+(function() {
+    // 1. Force setup completion state to prevent redirection to setup screen
+    if (localStorage.getItem('app_setup_done') !== 'true') {
+        localStorage.setItem('app_setup_done', 'true');
+    }
+
+    // 2. Comprehensive Cookie Check on Load
+    function restoreSession() {
+        const userCookie = appReadUserCookie(); // Uses your existing logic
+        
+        if (userCookie) {
+            // Assign cookie data to the global user variable
+            window._appUser = userCookie;
+            
+            // Update UI components (Avatar, Name, Settings)
+            appUpdateUI(); 
+            
+            // Ensure we are on the home tab
+            switchTab('home');
+            
+            console.log("Session restored for:", _appUser.name);
+        } else {
+            console.log("No active session found in cookies.");
+        }
+    }
+
+    // Run immediately to catch the variable state
+    restoreSession();
+
+    // Run again on DOMContentLoaded to ensure UI elements exist
+    document.addEventListener('DOMContentLoaded', () => {
+        restoreSession();
+        
+        // Re-apply theme from cookie to prevent white-flash
+        const theme = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+        if (theme && theme.split('=')[1] === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    });
+})();
+</script>
+    
 </body>
 </html>

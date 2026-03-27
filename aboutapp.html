@@ -80,6 +80,7 @@
         .setting-row:active { background: var(--separator); }
 
         .setting-label { font-size: 16px; font-weight: 500; }
+        .setting-label.blue-link { color: var(--primary-color); font-size: 14px; }
         .setting-chevron { color: var(--text-secondary); font-size: 20px; opacity: 0.5; }
 
         .section-title {
@@ -90,7 +91,7 @@
             letter-spacing: 0.03em;
         }
 
-        /* What's New sheet */
+        /* Sheets */
         .sheet-overlay {
             display: none;
             position: fixed;
@@ -255,16 +256,20 @@
             padding: 12px;
             border-radius: 10px;
         }
+
+        .contact-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
 
-    <!-- App Title -->
     <div class="app-header">
         <h1 class="app-title loading" id="appTitle">Loading…</h1>
     </div>
 
-    <!-- General Section -->
     <h3 class="section-title">General</h3>
     <div class="settings-group">
         <div class="setting-row" id="whatsNewRow">
@@ -273,7 +278,6 @@
         </div>
     </div>
 
-    <!-- Legal & Resources Section -->
     <h3 class="section-title">Legal &amp; Resources</h3>
     <div class="settings-group">
         <a href="https://mahi902.github.io/DocuWritePro/mit.md" class="setting-row">
@@ -292,14 +296,17 @@
             <span class="setting-label">Third Party Notices</span>
             <span class="material-symbols-rounded setting-chevron">chevron_right</span>
         </a>
+        <div class="setting-row" id="applyRoleRow">
+            <span class="setting-label blue-link">Apply for a role</span>
+            <span class="material-symbols-rounded setting-chevron">chevron_right</span>
+        </div>
     </div>
 
-    <!-- What's New Sheet -->
     <div class="sheet-overlay" id="whatsNewOverlay">
         <div class="sheet" id="whatsNewSheet">
             <div class="sheet-handle"></div>
             <div class="sheet-header">
-                <p class="sheet-title" id="sheetTitle">What's New</p>
+                <p class="sheet-title" id="sheetTitle">Sheet Title</p>
                 <p class="sheet-subtitle" id="sheetSubtitle"></p>
                 <button class="sheet-close" id="sheetCloseBtn">
                     <span class="material-symbols-rounded" style="font-size:18px;">close</span>
@@ -310,8 +317,7 @@
                     <p class="md-loading">Loading…</p>
                 </div>
                 
-                <!-- Help Text Section -->
-                <div class="sheet-footer">
+                <div class="sheet-footer" id="sheetFooter">
                     <div class="help-trigger" id="helpTrigger">App not updated?</div>
                     <div class="help-box" id="helpBox">
                         Please first confirm if your app is up to date. To do this, go to settings and scroll to the bottom, if the app version included there doesn't match the version shown above, your app is not updated. If your app still doesn't have the latest updates, please wait patiently, updates arrive automatically within a few hours. If not, use the "Reset & Update App" button in the settings.
@@ -376,14 +382,16 @@
             return html;
         }
 
-        // --- WHAT'S NEW SHEET & HELP LOGIC ---
+        // --- SHEET LOGIC ---
         const overlay = document.getElementById('whatsNewOverlay');
         const mdContent = document.getElementById('mdContent');
         const sheetTitle = document.getElementById('sheetTitle');
         const helpTrigger = document.getElementById('helpTrigger');
         const helpBox = document.getElementById('helpBox');
+        const sheetFooter = document.getElementById('sheetFooter');
 
-        document.getElementById('whatsNewRow').addEventListener('click', openSheet);
+        document.getElementById('whatsNewRow').addEventListener('click', () => openSheet('whatsnew'));
+        document.getElementById('applyRoleRow').addEventListener('click', () => openSheet('roles'));
         document.getElementById('sheetCloseBtn').addEventListener('click', closeSheet);
         overlay.addEventListener('click', e => { if (e.target === overlay) closeSheet(); });
 
@@ -392,17 +400,55 @@
             helpBox.style.display = 'block';
         });
 
-        function openSheet() {
+        function openSheet(type) {
             overlay.classList.add('open');
             document.body.style.overflow = 'hidden';
-            sheetTitle.textContent = `What's New in ${appTitle}`;
-            mdContent.innerHTML = '<p class="md-loading">Loading…</p>';
             
-            // Reset help state
+            // Default reset
             helpTrigger.style.display = 'inline-block';
             helpBox.style.display = 'none';
-            
-            fetchWhatsNew();
+            sheetFooter.style.display = 'block';
+
+            if (type === 'whatsnew') {
+                sheetTitle.textContent = `What's New in ${appTitle}`;
+                mdContent.innerHTML = '<p class="md-loading">Loading…</p>';
+                fetchWhatsNew();
+            } else if (type === 'roles') {
+                sheetTitle.textContent = "Apply for a Role";
+                sheetFooter.style.display = 'none'; // No "App not updated" text for roles
+                mdContent.innerHTML = `
+                    <div class="md-body">
+                        <h3>What are roles?</h3>
+                        <p>Roles are custom badges verified with your account. These roles are used to create a unique visual identity for users. They serve as a special condition for your account.</p>
+                        
+                        <h3>What roles do:</h3>
+                        <ul>
+                            <li>Roles add a permanent badge to your account which appears besides your name.</li>
+                            <li>They also give you a unique title which can be found on your account tab.</li>
+                            <li>They also update the visuals of your account tab.</li>
+                            <li><strong>Note:</strong> They do not give you special feature perks, visual references only.</li>
+                        </ul>
+
+                        <h3>Conditions of applying for a role:</h3>
+                        <ul>
+                            <li>A verified Google account with eligible email address.</li>
+                            <li>An active LinkedIn account.</li>
+                        </ul>
+
+                        <h3>How to Apply for a role:</h3>
+                        <p>To apply for a custom role, you have to reach out by yourself to the creator, <strong>Mohtadi Azad Mahi</strong>, through the <a href="https://mahi902.github.io/DocuWritePro/contact.html" class="contact-link">Contact</a> screen.</p>
+
+                        <h3>What to expect:</h3>
+                        <ul>
+                            <li>Verification can take months.</li>
+                            <li>Your role may be revoked anytime without prior notice.</li>
+                        </ul>
+
+                        <h3>How to remove a role from my name:</h3>
+                        <p>You have to contact the owner through the Contact page with the same email which is binded with the role.</p>
+                    </div>
+                `;
+            }
         }
 
         function closeSheet() {

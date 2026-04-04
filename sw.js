@@ -1,14 +1,13 @@
-const CACHE_NAME = 'docuwritepro-v1';
+const CACHE_NAME = 'docuwritepro-v2';
 
-// The list of pages you provided
-const URLS_TO_CACHE = [
+const ASSETS_TO_CACHE = [
   './',
   './index.html',
+  './app.html',
   './1.html',
   './404.html',
   './Dashboard.html',
   './aboutapp.html',
-  './app.html',
   './atbedt.html',
   './button-designer.html',
   './chart-maker.html',
@@ -81,27 +80,61 @@ const URLS_TO_CACHE = [
   './word-description-finder.html',
   './whiteboard.html',
   './webgen.html',
-  './wb.html'
+  './wb.html',
+  './manifest.json'
 ];
 
-// Install Event: Caches all the pages listed above
-self.addEventListener('install', event => {
+// 1. Install: Pre-cache all pages
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(URLS_TO_CACHE);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('DocuWrite Pro: Pre-caching assets');
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
+  self.skipWaiting(); // Force active immediately
 });
 
-// Fetch Event: Serve from cache if offline
-self.addEventListener('fetch', event => {
+// 2. Activate: Clean up old caches
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('DocuWrite Pro: Clearing old cache');
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+  return self.clients.claim();
+});
+
+// 3. Fetch: Stale-While-Revalidate Strategy
+// Serves from cache immediately, updates cache in background
+self.addEventListener('fetch', (event) => {
+  // Only handle GET requests
+  if (event.request.method !== 'GET') return;
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response, otherwise try network
-        return response || fetch(event.request);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(event.request).then((cachedResponse) => {
+        const fetchedResponse = fetch(event.request).then((networkResponse) => {
+          // If valid response, update the cache
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        }).catch(() => {
+            // If network fails and no cache, you could return an offline page here
+            return cachedResponse; 
+        });
+
+        // Return cached version if exists, otherwise wait for network
+        return cachedResponse || fetchedResponse;
+      });
+    })
   );
 });

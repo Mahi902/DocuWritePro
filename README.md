@@ -42,7 +42,9 @@ DocuWrite Pro is a completely client side based online document editor. No need 
   - [Install Mobile App](#install-mobile-app)
 - [Pricing](#pricing)
 - [Development](#development)
-  - [Privacy and Authentication](#privacy-and-authentication-(web))
+  - [Privacy and Authentication](#privacy-and-authentication)
+    - [Web](#web-auth)
+    - [App](#app-auth)
   - [Use of Artificial Intelligence](#use-of-ai)
   - [Contributing](#contributing)
 - [License](#license)
@@ -394,10 +396,12 @@ DocuWrite Pro is fully designed, developed, and maintained by **Mohtadi Azad Mah
 This solo development approach allows rapid iteration, creative freedom, and tight integration between features, resulting in a focused and polished document editing experience.
 
 
-### Privacy and Authentication (Web)
+### Privacy and Authentication
 
 ![Banner8](https://i.ibb.co/wrQG6YdN/1000039764-Photoroom.png)
 
+
+#### Web Auth
 
 In DocuWrite Pro, we highly value your privacy. As a client side service, we don't connect or share your data with any external servers. In rare occasions we do let you know through your dashboard. 
 
@@ -415,7 +419,7 @@ In DocuWrite Pro, we highly value your privacy. As a client side service, we don
 </details>
 
 
-### Privacy and Authentication (App)
+#### App Auth
 
 The DocuWrite Pro mobile app functions separately for the web app. Here you can choose to either use the app without and account, or connect your Google account for extra perks.
 

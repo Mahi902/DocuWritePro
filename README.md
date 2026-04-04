@@ -42,7 +42,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
   - [Install Mobile App](#install-mobile-app)
 - [Pricing](#pricing)
 - [Development](#development)
-  - [Privacy and Authentication](#privacy-and-authentication)
+  - [Privacy and Authentication](#privacy-and-authentication-(web))
   - [Use of Artificial Intelligence](#use-of-ai)
   - [Contributing](#contributing)
 - [License](#license)
@@ -394,7 +394,7 @@ DocuWrite Pro is fully designed, developed, and maintained by **Mohtadi Azad Mah
 This solo development approach allows rapid iteration, creative freedom, and tight integration between features, resulting in a focused and polished document editing experience.
 
 
-### Privacy and Authentication 
+### Privacy and Authentication (Web)
 
 ![Banner8](https://i.ibb.co/wrQG6YdN/1000039764-Photoroom.png)
 
@@ -411,6 +411,24 @@ In DocuWrite Pro, we highly value your privacy. As a client side service, we don
 
 - **Human Verification:**  
   On the web version of DocuWrite Pro, you also verify that you are human using a simple test. This service is provided by **MCaptcha**, a sub-division of DocuWrite Pro. MCaptcha helps keep our platform free from invaders and automated bots.
+
+</details>
+
+
+### Privacy and Authentication (App)
+
+The DocuWrite Pro mobile app functions separately for the web app. Here you can choose to either use the app without and account, or connect your Google account for extra perks.
+
+<details>
+<summary><strong>Forms of Authentication</strong></summary>
+
+---
+
+- **Account Creation:**  
+ On the mobile version of DocuWrite Pro, you can sign up using your Google account. This uses Googles login system to log you in with DocuWrite Pro. This login also gives DocuWrite Pro special access of your Google account.
+
+- **OAuth Verification:**  
+  On the mobile version of DocuWrite Pro, when you sign up with Google, you may go through the OAuth service provided by Google for security reasons.
 
 </details>
 

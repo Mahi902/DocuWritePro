@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocuWrite Pro Web</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" />
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root {
+            --primary-color: #007AFF;
+            --primary-light: rgba(0, 122, 255, 0.1);
+            --bg-body: #F5F5F7;
+            --bg-sidebar: #FFFFFF;
+            --bg-card: #FFFFFF;
+            --text-primary: #1D1D1F;
+            --text-secondary: #86868B;
+            --separator: #E5E5EA;
+            --search-bg: rgba(142, 142, 147, 0.08);
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+            --shadow-card: 0 2px 10px rgba(0,0,0,0.04);
+            --sidebar-width: 240px;
+            --sidebar-collapsed-width: 72px;
+        }
+        
+        html[data-theme="dark"] {
+            --primary-color: #0A84FF;
+            --primary-light: rgba(10, 132, 255, 0.2);
+            --bg-body: #000000;
+            --bg-sidebar: #1C1C1E;
+            --bg-card: #1C1C1E;
+            --text-primary: #F5F5F7;
+            --text-secondary: #86868B;
+            --separator: #38383A;
+            --search-bg: rgba(118, 118, 128, 0.24);
+        }
+
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0; height: 100vh; width: 100vw;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body); color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        /* Layout */
+        #app-wrapper { display: flex; height: 100vh; width: 100vw; }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--separator);
+            display: flex; flex-direction: column;
+            padding: 16px; z-index: 100;
+            transition: width 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .sidebar.collapsed { width: var(--sidebar-collapsed-width); padding: 16px 8px; }
+        
+        .sidebar-header { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; padding: 0 8px; }
+        .menu-toggle { background: transparent; border: none; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; padding: 4px; border-radius: 6px; }
+        .menu-toggle:hover { background: var(--search-bg); color: var(--text-primary); }
+        .brand-text { font-size: 16px; font-weight: 700; color: var(--text-primary); transition: opacity 0.2s; }
+        .sidebar.collapsed .brand-text { opacity: 0; pointer-events: none; width: 0; }
+
+        .nav-menu { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+            border-radius: var(--radius-md); color: var(--text-secondary);
+            font-weight: 500; font-size: 14px; cursor: pointer; transition: 0.15s;
+            overflow: hidden;
+        }
+        .nav-item:hover { background-color: var(--search-bg); color: var(--text-primary); }
+        .nav-item.active { background-color: var(--primary-light); color: var(--primary-color); font-weight: 600; }
+        .nav-item .material-symbols-rounded { font-size: 20px; flex-shrink: 0; }
+        .nav-label { transition: opacity 0.2s; }
+        .sidebar.collapsed .nav-label { opacity: 0; width: 0; }
+        
+        /* Sidebar User Pill */
+        .user-pill {
+            display: flex; align-items: center; gap: 10px; padding: 8px;
+            background: var(--bg-body); border: 1px solid var(--separator);
+            border-radius: 10px; cursor: pointer; transition: all 0.2s;
+            overflow: hidden;
+        }
+        .user-pill:hover { border-color: var(--primary-color); }
+        .sidebar.collapsed .user-pill { padding: 8px; justify-content: center; border-color: transparent; background: transparent; }
+        .sidebar.collapsed .user-pill:hover { background: var(--search-bg); }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light); color: var(--primary-color);
+            display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;
+        }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-details { flex: 1; overflow: hidden; transition: opacity 0.2s; }
+        .sidebar.collapsed .user-details { opacity: 0; width: 0; display: none; }
+        .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary); }
+        .user-status { font-size: 11px; color: var(--text-secondary); }
+
+        /* Main Content */
+        .main-content { flex: 1; overflow-y: auto; position: relative; background-color: var(--bg-body); }
+        .tab-view { display: none; padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+        .tab-view.active { display: block; }
+
+        h2 { font-size: 24px; font-weight: 700; margin: 0 0 20px 0; letter-spacing: -0.3px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin: 30px 0 12px 0; }
+        .section-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Slim Promo Banner */
+        .promo-banner {
+            background: linear-gradient(90deg, #007AFF 0%, #0A59B3 100%);
+            border-radius: var(--radius-md); padding: 10px 16px; color: white;
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px; font-size: 13px; font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2); transition: opacity 0.3s;
+        }
+        .promo-banner button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600; }
+        .promo-banner button:hover { background: rgba(255,255,255,0.3); }
+
+        /* Horizontal Scroll Rows */
+        .scroll-row {
+            display: flex; overflow-x: auto; gap: 12px; padding-bottom: 12px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .scroll-row::-webkit-scrollbar { display: none; } /* Chrome */
+        
+        .action-card {
+            min-width: 150px; flex-shrink: 0; background: var(--bg-card); border-radius: var(--radius-lg);
+            padding: 16px; border: 1px solid var(--separator); cursor: pointer; transition: 0.15s;
+            display: flex; flex-direction: column; gap: 12px; box-shadow: var(--shadow-sm);
+        }
+        .action-card:hover { border-color: var(--primary-color); transform: translateY(-1px); box-shadow: var(--shadow-card); }
+        .action-icon { width: 36px; height: 36px; background: var(--search-bg); color: var(--primary-color); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        .action-label { font-size: 14px; font-weight: 600; }
+
+        .template-card {
+            min-width: 180px; flex-shrink: 0; background: var(--bg-card); border-radius: var(--radius-lg);
+            border: 1px solid var(--separator); cursor: pointer; transition: 0.15s; overflow: hidden;
+            display: flex; flex-direction: column; box-shadow: var(--shadow-sm);
+        }
+        .template-card:hover { border-color: var(--primary-color); box-shadow: var(--shadow-card); }
+        .template-card img { width: 100%; height: 90px; object-fit: cover; background: var(--search-bg); border-bottom: 1px solid var(--separator); }
+        .template-card .tpl-name { padding: 10px 12px; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* List View Tools & Recents */
+        .list-container { display: flex; flex-direction: column; gap: 8px; }
+        .list-card {
+            background: var(--bg-card); border-radius: var(--radius-md); padding: 12px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+            border: 1px solid var(--separator); cursor: pointer; transition: 0.15s; box-shadow: var(--shadow-sm);
+        }
+        .list-card:hover { background: var(--search-bg); }
+        .list-card-left { display: flex; align-items: center; gap: 14px; }
+        .list-card-icon { width: 32px; height: 32px; background: var(--search-bg); color: var(--primary-color); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+        .list-card-icon .material-symbols-rounded { font-size: 18px; }
+        .list-card-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+        .list-card-category { font-size: 12px; color: var(--text-secondary); margin-top: 2px;}
+        .list-card-chevron { color: var(--text-secondary); opacity: 0.5; font-size: 20px; }
+
+        /* Tools Search */
+        .search-box {
+            background: var(--bg-card); border-radius: var(--radius-md); padding: 10px 16px; 
+            display: flex; align-items: center; margin-bottom: 20px; border: 1px solid var(--separator);
+            box-shadow: var(--shadow-sm);
+        }
+        .search-box input { border: none; background: transparent; width: 100%; outline: none; margin-left: 10px; font-size: 14px; color: var(--text-primary); }
+
+        /* Settings */
+        .settings-group { background: var(--bg-card); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 24px; border: 1px solid var(--separator); box-shadow: var(--shadow-sm); }
+        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; cursor: pointer; transition: background 0.15s; }
+        .setting-row:not(:last-child) { border-bottom: 1px solid var(--separator); }
+        .setting-row:hover { background: var(--search-bg); }
+        .setting-label { font-size: 14px; font-weight: 500; }
+        .setting-value-container { display: flex; align-items: center; gap: 8px; }
+        .setting-value { font-size: 13px; color: var(--text-secondary); }
+        
+        .whats-new-box { background: var(--bg-card); border-radius: var(--radius-lg); padding: 20px; border: 1px solid var(--separator); box-shadow: var(--shadow-sm); font-size: 13px; line-height: 1.5; color: var(--text-secondary); max-height: 300px; overflow-y: auto; }
+        .whats-new-box h2 { font-size: 16px; color: var(--text-primary); margin: 0 0 10px 0; }
+        .whats-new-box h3 { font-size: 14px; color: var(--text-primary); margin: 15px 0 5px 0; }
+        .whats-new-box ul { margin: 5px 0; padding-left: 20px; }
+        .whats-new-box strong { color: var(--text-primary); }
+
+        /* Tool Iframe Window */
+        #tool-window {
+            position: fixed; top: 0; left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); height: 100%;
+            background: var(--bg-body); z-index: 2000; display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.3s ease-in-out, left 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        #tool-window.sidebar-collapsed { left: var(--sidebar-collapsed-width); width: calc(100% - var(--sidebar-collapsed-width)); }
+        #tool-window.visible { transform: translateY(0); }
+        .tool-header {
+            height: 50px; background: var(--bg-sidebar); border-bottom: 1px solid var(--separator);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0;
+        }
+        .close-tool-btn {
+            background: var(--search-bg); border: none; padding: 6px 12px; border-radius: 6px;
+            font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.15s; display: flex; align-items: center; gap: 4px;
+            color: var(--text-primary);
+        }
+        .close-tool-btn:hover { background: var(--separator); }
+        html[data-theme="dark"] .close-tool-btn { color: #ffffff; }
+
+        /* Modals */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 3000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        .overlay.active { display: flex; }
+        .modal { background: var(--bg-card); width: 320px; border-radius: var(--radius-lg); padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border: 1px solid var(--separator); }
+        .picker-options { max-height: 250px; overflow-y: auto; margin-top: 10px; margin-bottom: 15px;}
+        .picker-option { padding: 10px 12px; display: flex; justify-content: space-between; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .picker-option:hover { background: var(--search-bg); }
+        .picker-option.selected { color: var(--primary-color); font-weight: 600; background: var(--primary-light); }
+        .picker-check { display: none; font-size: 18px; }
+        .picker-option.selected .picker-check { display: block; }
+    </style>
+</head>
+<body>
+
+<div id="app-wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <button class="menu-toggle" onclick="toggleSidebar()"><span class="material-symbols-rounded">menu</span></button>
+            <span class="brand-text">DocuWrite Pro</span>
+        </div>
+        
+        <nav class="nav-menu">
+            <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+                <span class="material-symbols-rounded">home</span> <span class="nav-label">Dashboard</span>
+            </div>
+            <div class="nav-item" id="nav-recents" onclick="switchTab('recents')">
+                <span class="material-symbols-rounded">history</span> <span class="nav-label">Recents</span>
+            </div>
+            <div class="nav-item" id="nav-tools" onclick="switchTab('tools')">
+                <span class="material-symbols-rounded">grid_view</span> <span class="nav-label">All Tools</span>
+            </div>
+            <div class="nav-item" id="nav-scan" onclick="openTool('https://mahi902.github.io/DocuWritePro/scanner.html', 'Web Scanner')">
+                <span class="material-symbols-rounded">qr_code_scanner</span> <span class="nav-label">Scan</span>
+            </div>
+            <div class="nav-item" id="nav-settings" onclick="switchTab('settings')">
+                <span class="material-symbols-rounded">settings</span> <span class="nav-label">Settings</span>
+            </div>
+        </nav>
+
+        <div class="user-pill" onclick="appTriggerGoogleLogin()">
+            <div class="user-avatar" id="sidebar-avatar">
+                <span class="material-symbols-rounded" id="sidebar-avatar-icon">person</span>
+            </div>
+            <div class="user-details">
+                <div class="user-name" id="sidebar-name">Not Signed In</div>
+                <div class="user-status" id="sidebar-status">Click to Sign In</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- HOME TAB -->
+        <div id="tab-home" class="tab-view active">
+            
+            <div id="promo-banner" class="promo-banner">
+                <span>Want more features like AI and DyNotes? Download the DocuWrite Pro Mobile App.</span>
+                <button onclick="skipPromo()">Dismiss</button>
+            </div>
+
+            <h2 id="welcome-text">Welcome Back, <span id="welcome-name">User</span></h2>
+            
+            <div class="section-header"><span class="section-title">Quick Actions</span></div>
+            <div class="scroll-row">
+                <div class="action-card" onclick="openTool('https://mahi902.github.io/DocuWritePro/sceditor.html', 'New Document')">
+                    <div class="action-icon"><span class="material-symbols-rounded">note_add</span></div>
+                    <div class="action-label">New Document</div>
+                </div>
+                <div class="action-card" onclick="openTool('https://mahi902.github.io/DocuWritePro/draw.html', 'New Canvas')">
+                    <div class="action-icon"><span class="material-symbols-rounded">brush</span></div>
+                    <div class="action-label">New Canvas</div>
+                </div>
+                <div class="action-card" onclick="openTool('https://mahi902.github.io/DocuWritePro/frontend-ide.html', 'New Code')">
+                    <div class="action-icon"><span class="material-symbols-rounded">terminal</span></div>
+                    <div class="action-label">Write Code</div>
+                </div>
+                <div class="action-card" onclick="switchTab('tools')">
+                    <div class="action-icon"><span class="material-symbols-rounded">apps</span></div>
+                    <div class="action-label">Browse Tools</div>
+                </div>
+            </div>
+
+            <div class="section-header"><span class="section-title">Templates</span></div>
+            <div class="scroll-row" id="templates-row">
+                <p style="color:var(--text-secondary);font-size:13px;padding-left:4px;">Loading templates...</p>
+            </div>
+
+            <div class="section-header">
+                <span class="section-title">Recent Files</span>
+                <span onclick="clearRecents()" style="color:var(--primary-color); font-size:13px; font-weight:600; cursor:pointer;">Clear</span>
+            </div>
+            <div class="list-container" id="home-recents-list"></div>
+            
+        </div>
+
+        <!-- RECENTS TAB -->
+        <div id="tab-recents" class="tab-view" style="padding: 0; height: 100%;">
+            <iframe id="recents-frame" src="about:blank" style="border: none; width: 100%; height: 100%; display: block;"></iframe>
+        </div>
+
+        <!-- TOOLS TAB -->
+        <div id="tab-tools" class="tab-view">
+            <h2>All Tools</h2>
+            <div class="search-box">
+                <span class="material-symbols-rounded" style="color:var(--text-secondary); font-size:20px;">search</span>
+                <input type="text" id="tool-search" placeholder="Search tools...">
+            </div>
+            <div id="tools-list-container" class="list-container"></div>
+            <br><br>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div id="tab-settings" class="tab-view">
+            <h2>Settings</h2>
+<p>Features you are missing out on:</p>
+<ul>
+    <li>AI Powered features</li>
+    <li>DyNotes</li>
+    <li>Direct Scanning</li>
+    <li>Roles</li>
+    <li>Tools</li>
+    <li>Filtering</li>
+    <li>Customizable Defaults</li>
+    <li>More Customization!</li>
+</ul>
+<small> ⓘ The features listed above are only accessable through DocuWrite Pro's mobile app. Download for free today. </small>
+
+<p> ‎  </p>
+
+            <div class="section-header" style="margin-top: 0;"><span class="section-title">Preferences</span></div>
+            <div class="settings-group">
+                <div class="setting-row" onclick="openThemePicker()">
+                    <span class="setting-label">Theme</span>
+                    <div class="setting-value-container">
+                        <span class="setting-value" id="display-theme">System</span>
+                        <span class="material-symbols-rounded" style="font-size:20px;">chevron_right</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header"><span class="section-title">Account</span></div>
+            <div class="settings-group">
+                <div class="setting-row" id="logout-btn" onclick="appSignOut()" style="display:none; color: var(--danger);">
+                    <span class="setting-label" style="font-weight: 600;">Sign Out</span>
+                    <span class="material-symbols-rounded" style="font-size:20px;">logout</span>
+                </div>
+                <div class="setting-row" id="login-btn" onclick="appTriggerGoogleLogin()" style="color: var(--primary-color);">
+                    <span class="setting-label" style="font-weight: 600;">Sign In with Google</span>
+                    <span class="material-symbols-rounded" style="font-size:20px;">login</span>
+                </div>
+            </div>
+
+            <div class="section-header"><span class="section-title">What's New</span></div>
+            <div class="whats-new-box" id="whats-new-content">
+                Loading changelog...
+            </div>
+            <p style="font-size: 12px; color: var(--text-secondary); text-align: center; margin-top: 20px;">DocuWrite Pro Web • Version 5.0</p>
+        </div>
+    </main>
+
+    <!-- Tool Window Overlay -->
+    <div id="tool-window">
+        <div class="tool-header">
+            <span id="iframe-title-text" style="font-size: 15px; font-weight: 600;">Tool</span>
+            <button class="close-tool-btn" onclick="closeTool()">
+                <span class="material-symbols-rounded" style="font-size: 16px;">close</span> Close
+            </button>
+        </div>
+        <iframe id="app-frame" src="about:blank" style="flex:1; border:none; width:100%; height:100%;"></iframe>
+    </div>
+
+</div>
+
+<!-- Picker Modal -->
+<div class="overlay" id="picker-overlay" onclick="closePicker()">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3 id="picker-title" style="margin:0 0 10px 0; font-size:16px;">Select</h3>
+        <div class="picker-options" id="picker-options-container"></div>
+        <button style="width:100%; background:var(--search-bg); border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:600; color:var(--text-primary);" onclick="closePicker()">Cancel</button>
+    </div>
+</div>
+
+<script>
+    // Sidebar Toggle
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const toolWindow = document.getElementById('tool-window');
+        sidebar.classList.toggle('collapsed');
+        toolWindow.classList.toggle('sidebar-collapsed');
+    }
+
+    // Theme Management
+    function getThemeCookie() {
+        const match = document.cookie.split('; ').find(row => row.startsWith('toolsuite_theme='));
+        return match ? match.split('=')[1] : null;
+    }
+    function setThemeCookie(value) { document.cookie = 'toolsuite_theme=' + value + ';path=/;max-age=31536000;SameSite=Lax'; }
+    function applyTheme(theme) {
+        const displayTheme = document.getElementById('display-theme');
+        if(displayTheme) displayTheme.textContent = theme.charAt(0).toUpperCase() + theme.slice(1);
+        let resolved = theme;
+        if(theme === 'system') resolved = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        if(resolved === 'dark') document.documentElement.setAttribute('data-theme', 'dark'); 
+        else document.documentElement.removeAttribute('data-theme');
+        if(theme) setThemeCookie(theme);
+        
+        // Refresh recents iframe theme if open
+        if(document.getElementById('tab-recents').classList.contains('active')) loadRecentsTab();
+    }
+    applyTheme(getThemeCookie() || 'system');
+
+    // Tools Database
+    const toolsDB = [
+        { id: "doc_editor", name: "Editor", url: "https://mahi902.github.io/DocuWritePro/sceditor.html", cat: "Document Editing", icon: "edit" },
+        { id: "doc_viewer", name: "Viewer", url: "viewer.html", cat: "Document Editing", icon: "visibility" },
+        { id: "markup", name: "Markup", url: "markup.html", cat: "Document Editing", icon: "ink_highlighter" },
+        { id: "word_finder", name: "Word Finder", url: "word-description-finder.html", cat: "Document Editing", icon: "menu_book" },
+        { id: "translator", name: "Translator", url: "translator.html", cat: "Document Editing", icon: "language" },
+        { id: "signer", name: "Signer", url: "document-signer.html", cat: "Document Editing", icon: "draw" },
+        { id: "find_replace", name: "Find & Replace", url: "findandreplacer.html", cat: "Document Editing", icon: "find_replace" },
+        { id: "page_nums", name: "Page Numbers", url: "page-number-adder.html", cat: "Document Editing", icon: "format_list_numbered" },
+        { id: "spreadsheet", name: "Spreadsheet", url: "spreadsheet.html", cat: "Document Editing", icon: "grid_view" },
+        { id: "merge", name: "Reorder & Merge", url: "rm.html", cat: "Document Editing", icon: "layers" },
+        { id: "encrypt", name: "Encryptor", url: "fe.html", cat: "Document Editing", icon: "shield" },
+        { id: "chart", name: "Chart Maker", url: "chart-maker.html", cat: "Document Editing", icon: "bar_chart" },
+        { id: "graph", name: "Graph Maker", url: "graphmaker.html", cat: "Document Editing", icon: "query_stats" },
+        { id: "whiteboard", name: "Whiteboard", url: "whiteboard.html", cat: "Document Editing", icon: "ad" },
+        { id: "table", name: "Table Maker", url: "table-maker.html", cat: "Document Editing", icon: "table_chart" },
+        { id: "watermark", name: "Watermarker", url: "watermarker.html", cat: "Document Editing", icon: "filter_alt" },
+        { id: "extractor", name: "Extractor", url: "file-extractor.html", cat: "Document Editing", icon: "unarchive" },
+        { id: "pdf_conv", name: "Format Converter", url: "converters.html", cat: "Document Editing", icon: "multiple_stop" },
+        { id: "compress", name: "Compressor", url: "pdfcompressor.html", cat: "Document Editing", icon: "compress" },
+        { id: "ide", name: "Frontend IDE", url: "frontend-ide.html", cat: "Code Editing", icon: "developer_mode" },
+        { id: "html_edit", name: "Code Playground", url: "code-playground.html", cat: "Code Editing", icon: "code" },
+        { id: "md", name: "Markdown", url: "mdeditor.html", cat: "Code Editing", icon: "markdown" },
+        { id: "split", name: "Splitter", url: "html-splitter.html", cat: "Code Editing", icon: "integration_instructions" },
+        { id: "img_edit", name: "Img Editor", url: "image-editor.html", cat: "Image Editing", icon: "collections" },
+        { id: "draw", name: "Draw", url: "draw.html", cat: "Image Editing", icon: "brush" },
+        { id: "collab", name: "Collab Editor", url: "collab-document-editor.html", cat: "Collaboration", icon: "group" },
+        { id: "text", name: "Chat", url: "connect1.html", cat: "Collaboration", icon: "chat" }
+    ];
+
+    // Navigation
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        document.getElementById(`nav-${tabId}`).classList.add('active');
+
+        if(tabId === 'home') renderRecents();
+        if(tabId === 'tools') renderTools();
+        if(tabId === 'recents') loadRecentsTab();
+        if(tabId === 'settings') fetchWhatsNew();
+    }
+
+    function loadRecentsTab() {
+        const theme = document.documentElement.getAttribute('data-theme') || 'light';
+        const hash = theme === 'dark' ? '#recentsdl' : '#recentsll';
+        const frame = document.getElementById('recents-frame');
+        frame.src = 'https://mahi902.github.io/DocuWritePro/sceditor.html' + hash;
+    }
+
+    // Tools & Recents Rendering
+    function renderTools() {
+        const container = document.getElementById('tools-list-container');
+        const searchTerm = document.getElementById('tool-search').value.toLowerCase().trim();
+        container.innerHTML = '';
+
+        const categories = {};
+        toolsDB.forEach(tool => {
+            if (searchTerm && !tool.name.toLowerCase().includes(searchTerm) && !tool.cat.toLowerCase().includes(searchTerm)) return;
+            if (!categories[tool.cat]) categories[tool.cat] = [];
+            categories[tool.cat].push(tool);
+        });
+
+        for (const [cat, tools] of Object.entries(categories)) {
+            const catHeader = document.createElement('div');
+            catHeader.textContent = cat;
+            catHeader.style.color = "var(--text-secondary)";
+            catHeader.style.fontSize = "12px";
+            catHeader.style.fontWeight = "600";
+            catHeader.style.textTransform = "uppercase";
+            catHeader.style.marginTop = "20px";
+            catHeader.style.marginBottom = "8px";
+            catHeader.style.paddingLeft = "4px";
+            container.appendChild(catHeader);
+
+            tools.forEach(tool => {
+                const card = document.createElement('div');
+                card.className = 'list-card';
+                card.innerHTML = `
+                    <div class="list-card-left">
+                        <div class="list-card-icon"><span class="material-symbols-rounded">${tool.icon}</span></div>
+                        <div>
+                            <div class="list-card-name">${tool.name}</div>
+                            <div class="list-card-category">${tool.cat}</div>
+                        </div>
+                    </div>
+                    <span class="material-symbols-rounded list-card-chevron">chevron_right</span>
+                `;
+                card.onclick = () => openTool(tool.url, tool.name);
+                container.appendChild(card);
+            });
+        }
+    }
+
+    document.getElementById('tool-search').addEventListener('input', renderTools);
+
+    function addToRecents(toolObj) {
+        let recents = JSON.parse(localStorage.getItem('web_recentTools') || '[]');
+        recents = recents.filter(t => t.url !== toolObj.url);
+        recents.unshift(toolObj);
+        if (recents.length > 6) recents.length = 6;
+        localStorage.setItem('web_recentTools', JSON.stringify(recents));
+    }
+
+    function renderRecents() {
+        const list = document.getElementById('home-recents-list');
+        const recents = JSON.parse(localStorage.getItem('web_recentTools') || '[]');
+        list.innerHTML = '';
+        
+        if (recents.length === 0) {
+            list.innerHTML = `<div style="padding: 20px; font-size:14px; text-align: center; color: var(--text-secondary); background: var(--bg-card); border: 1px solid var(--separator); border-radius: var(--radius-md);">No recent tools. Open one to see it here!</div>`;
+            return;
+        }
+
+        recents.forEach(tool => {
+            const card = document.createElement('div');
+            card.className = 'list-card';
+            card.innerHTML = `
+                <div class="list-card-left">
+                    <div class="list-card-icon"><span class="material-symbols-rounded">${tool.icon || 'extension'}</span></div>
+                    <div class="list-card-name">${tool.name}</div>
+                </div>
+                <span class="material-symbols-rounded list-card-chevron">chevron_right</span>
+            `;
+            card.onclick = () => openTool(tool.url, tool.name);
+            list.appendChild(card);
+        });
+    }
+
+    function clearRecents() {
+        localStorage.removeItem('web_recentTools');
+        renderRecents();
+    }
+
+    // Tool Opening
+    function openTool(url, name) {
+        addToRecents({ name, url, icon: toolsDB.find(t=>t.url===url)?.icon || (url.includes('scanner') ? 'qr_code_scanner' : 'extension') });
+        const frame = document.getElementById('app-frame');
+        const win = document.getElementById('tool-window');
+        document.getElementById('iframe-title-text').textContent = name || 'Tool';
+        
+        if(!url.startsWith('http')) url = 'https://mahi902.github.io/DocuWritePro/' + url;
+        frame.src = url;
+        win.classList.add('visible');
+    }
+
+    function closeTool() {
+        const win = document.getElementById('tool-window');
+        const frame = document.getElementById('app-frame');
+        win.classList.remove('visible');
+        setTimeout(() => { frame.src = 'about:blank'; renderRecents(); }, 300);
+    }
+
+    // Templates Fetcher
+    async function loadTemplates() {
+        try {
+            const res = await fetch('https://mahi902.github.io/DocuWritePro/temp.json');
+            const data = await res.json();
+            const container = document.getElementById('templates-row');
+            container.innerHTML = '';
+            data.templates.forEach(t => {
+                const imgUrl = t.Image.startsWith('http') ? t.Image : 'https://mahi902.github.io/DocuWritePro/' + t.Image;
+                const linkUrl = t.Link.startsWith('http') ? t.Link : 'https://mahi902.github.io/DocuWritePro/' + t.Link;
+                const card = document.createElement('div');
+                card.className = 'template-card';
+                card.innerHTML = `<img src="${imgUrl}" onerror="this.src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='"><div class="tpl-name">${t.Name}</div>`;
+                card.onclick = () => openTool(linkUrl, t.Name);
+                container.appendChild(card);
+            });
+        } catch(e) {
+            document.getElementById('templates-row').innerHTML = '<p style="color:var(--text-secondary);font-size:13px;padding-left:4px;">Could not load templates.</p>';
+        }
+    }
+
+    // What's New Fetcher
+    async function fetchWhatsNew() {
+        const box = document.getElementById('whats-new-content');
+        if(box.innerHTML.includes('Loading')) {
+            try {
+                const res = await fetch('https://mahi902.github.io/DocuWritePro/whatsnew.md');
+                if(!res.ok) throw new Error();
+                let text = await res.text();
+                // Basic Markdown parser
+                text = text.replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                           .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                           .replace(/^# (.*$)/gim, '<h2>$1</h2>')
+                           .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+                           .replace(/^\* (.*$)/gim, '<ul><li>$1</li></ul>')
+                           .replace(/<\/ul>\n<ul>/gim, ''); // Merge adjacent lists
+                box.innerHTML = text;
+            } catch(e) {
+                box.innerHTML = '<p>Could not load changelog. Check your connection.</p>';
+            }
+        }
+    }
+
+    // Promo Banner
+    function checkPromo() {
+        const skipUntil = localStorage.getItem('skip_promo_until');
+        if (skipUntil && Date.now() < parseInt(skipUntil)) {
+            document.getElementById('promo-banner').style.display = 'none';
+        }
+    }
+    function skipPromo() {
+        localStorage.setItem('skip_promo_until', Date.now() + 86400000);
+        const banner = document.getElementById('promo-banner');
+        banner.style.opacity = '0';
+        setTimeout(() => banner.style.display = 'none', 300);
+    }
+
+    // Pickers
+    function openPicker(title, options, selectedValue, onSelect) {
+        const overlay = document.getElementById('picker-overlay');
+        const container = document.getElementById('picker-options-container');
+        document.getElementById('picker-title').textContent = title;
+        container.innerHTML = '';
+        
+        options.forEach(opt => {
+            const el = document.createElement('div');
+            el.className = `picker-option ${opt.value === selectedValue ? 'selected' : ''}`;
+            el.innerHTML = `<span>${opt.label}</span><span class="material-symbols-rounded picker-check">check</span>`;
+            el.onclick = () => { closePicker(); onSelect(opt.value, opt.label); };
+            container.appendChild(el);
+        });
+        overlay.classList.add('active');
+    }
+    function closePicker() { document.getElementById('picker-overlay').classList.remove('active'); }
+
+    function openThemePicker() {
+        const current = getThemeCookie() || 'system';
+        openPicker('Theme', [
+            {label: 'System Default', value: 'system'},
+            {label: 'Light Mode', value: 'light'},
+            {label: 'Dark Mode', value: 'dark'}
+        ], current, (val) => applyTheme(val));
+    }
+
+    // Auth Simulation
+    function appReadUserCookie(){
+        try{const c=document.cookie.split('; ').find(r=>r.startsWith('sc_user='));if(!c)return null;return JSON.parse(decodeURIComponent(c.split('=').slice(1).join('=')));}
+        catch(e){return null;}
+    }
+
+    function appUpdateUI() {
+        const user = appReadUserCookie();
+        const sName = document.getElementById('sidebar-name');
+        const sStatus = document.getElementById('sidebar-status');
+        const sAvatar = document.getElementById('sidebar-avatar');
+        const sIcon = document.getElementById('sidebar-avatar-icon');
+        const wName = document.getElementById('welcome-name');
+        
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginBtn = document.getElementById('login-btn');
+
+        if(user) {
+            const firstName = user.name ? user.name.split(' ')[0] : 'User';
+            sName.textContent = user.name || 'User';
+            wName.textContent = firstName;
+            sStatus.textContent = user.email || 'Connected';
+            if(user.picture) {
+                sIcon.style.display = 'none';
+                let img = sAvatar.querySelector('img');
+                if(!img) { img = document.createElement('img'); img.referrerPolicy = 'no-referrer'; sAvatar.appendChild(img); }
+                img.src = user.picture; img.style.display = 'block';
+            }
+            if(logoutBtn) logoutBtn.style.display = 'flex';
+            if(loginBtn) loginBtn.style.display = 'none';
+        } else {
+            sName.textContent = 'Not Signed In';
+            wName.textContent = 'Guest';
+            sStatus.textContent = 'Click to Sign In';
+            sIcon.style.display = 'block';
+            const img = sAvatar.querySelector('img');
+            if(img) img.style.display = 'none';
+            if(logoutBtn) logoutBtn.style.display = 'none';
+            if(loginBtn) loginBtn.style.display = 'flex';
+        }
+    }
+
+    function appTriggerGoogleLogin() {
+        if(appReadUserCookie()) return;
+        if(!window.google || !window.google.accounts) { alert('Google Auth loading...'); return; }
+        
+        google.accounts.oauth2.initTokenClient({
+            client_id: '581663240018-uc0mt0ghf17284ckollia98ss2hudob8.apps.googleusercontent.com',
+            scope: 'openid profile email',
+            callback: async(tr) => {
+                if(tr.error) { alert('Sign in failed.'); return; }
+                try {
+                    const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {headers: {Authorization: 'Bearer '+tr.access_token}});
+                    const info = await r.json();
+                    const safe = {name: info.name, email: info.email, picture: info.picture};
+                    document.cookie = 'sc_user=' + encodeURIComponent(JSON.stringify(safe)) + ';path=/;max-age=2592000;SameSite=Lax';
+                    appUpdateUI();
+                } catch(e) { alert('Fetch profile failed.'); }
+            }
+        }).requestAccessToken();
+    }
+
+    function appSignOut() {
+        document.cookie = 'sc_user=;expires=Thu,01 Jan 1970 00:00:00 UTC;path=/';
+        appUpdateUI();
+    }
+
+    // Init
+    checkPromo();
+    renderRecents();
+    appUpdateUI();
+    loadTemplates();
+</script>
+</body>
+</html>

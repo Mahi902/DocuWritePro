@@ -1,0 +1,1035 @@
+{
+  "version": "1.0",
+  "description": "SpreadSheet formula definitions — each formula is isolated so one failure cannot affect others.",
+  "formulas": [
+    {
+      "name": "SUM",
+      "category": "Math",
+      "description": "Returns the sum of all numbers in a range or list.",
+      "syntax": "SUM(number1, [number2], ...)",
+      "action": "args => args.reduce((a,b)=>a+(isNaN(Number(b))?0:Number(b)),0)"
+    },
+    {
+      "name": "AVERAGE",
+      "category": "Math",
+      "description": "Returns the arithmetic mean of the arguments.",
+      "syntax": "AVERAGE(number1, [number2], ...)",
+      "action": "args => { const nums=args.map(Number).filter(v=>!isNaN(v)); return nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:0; }"
+    },
+    {
+      "name": "MIN",
+      "category": "Math",
+      "description": "Returns the smallest value in a set of values.",
+      "syntax": "MIN(number1, [number2], ...)",
+      "action": "args => Math.min(...args.map(Number).filter(v=>!isNaN(v)))"
+    },
+    {
+      "name": "MAX",
+      "category": "Math",
+      "description": "Returns the largest value in a set of values.",
+      "syntax": "MAX(number1, [number2], ...)",
+      "action": "args => Math.max(...args.map(Number).filter(v=>!isNaN(v)))"
+    },
+    {
+      "name": "COUNT",
+      "category": "Math",
+      "description": "Counts how many numbers are in the list of arguments.",
+      "syntax": "COUNT(value1, [value2], ...)",
+      "action": "args => args.filter(v=>!isNaN(Number(v))&&v!=='').length"
+    },
+    {
+      "name": "COUNTA",
+      "category": "Math",
+      "description": "Counts how many values are in the list (non-empty).",
+      "syntax": "COUNTA(value1, [value2], ...)",
+      "action": "args => args.filter(v=>v!==''&&v!==null&&v!==undefined).length"
+    },
+    {
+      "name": "COUNTBLANK",
+      "category": "Math",
+      "description": "Counts the number of empty cells in a range.",
+      "syntax": "COUNTBLANK(range)",
+      "action": "args => args.filter(v=>v===''||v===null||v===undefined).length"
+    },
+    {
+      "name": "PRODUCT",
+      "category": "Math",
+      "description": "Multiplies all the numbers given as arguments.",
+      "syntax": "PRODUCT(number1, [number2], ...)",
+      "action": "args => args.map(Number).filter(v=>!isNaN(v)).reduce((a,b)=>a*b,1)"
+    },
+    {
+      "name": "POWER",
+      "category": "Math",
+      "description": "Returns the result of a number raised to a power.",
+      "syntax": "POWER(number, power)",
+      "action": "args => Math.pow(Number(args[0]),Number(args[1]))"
+    },
+    {
+      "name": "SQRT",
+      "category": "Math",
+      "description": "Returns the positive square root of a number.",
+      "syntax": "SQRT(number)",
+      "action": "args => Math.sqrt(Number(args[0]))"
+    },
+    {
+      "name": "ABS",
+      "category": "Math",
+      "description": "Returns the absolute value of a number.",
+      "syntax": "ABS(number)",
+      "action": "args => Math.abs(Number(args[0]))"
+    },
+    {
+      "name": "ROUND",
+      "category": "Math",
+      "description": "Rounds a number to a specified number of digits.",
+      "syntax": "ROUND(number, num_digits)",
+      "action": "args => { const f=Math.pow(10,Number(args[1])||0); return Math.round(Number(args[0])*f)/f; }"
+    },
+    {
+      "name": "ROUNDUP",
+      "category": "Math",
+      "description": "Rounds a number up, away from zero.",
+      "syntax": "ROUNDUP(number, num_digits)",
+      "action": "args => { const f=Math.pow(10,Number(args[1])||0); return Math.ceil(Number(args[0])*f)/f; }"
+    },
+    {
+      "name": "ROUNDDOWN",
+      "category": "Math",
+      "description": "Rounds a number down, toward zero.",
+      "syntax": "ROUNDDOWN(number, num_digits)",
+      "action": "args => { const f=Math.pow(10,Number(args[1])||0); return Math.floor(Number(args[0])*f)/f; }"
+    },
+    {
+      "name": "FLOOR",
+      "category": "Math",
+      "description": "Rounds a number down to the nearest multiple of significance.",
+      "syntax": "FLOOR(number, significance)",
+      "action": "args => { const s=Number(args[1])||1; return Math.floor(Number(args[0])/s)*s; }"
+    },
+    {
+      "name": "CEILING",
+      "category": "Math",
+      "description": "Rounds a number up to the nearest multiple of significance.",
+      "syntax": "CEILING(number, significance)",
+      "action": "args => { const s=Number(args[1])||1; return Math.ceil(Number(args[0])/s)*s; }"
+    },
+    {
+      "name": "INT",
+      "category": "Math",
+      "description": "Rounds a number down to the nearest integer.",
+      "syntax": "INT(number)",
+      "action": "args => Math.floor(Number(args[0]))"
+    },
+    {
+      "name": "MOD",
+      "category": "Math",
+      "description": "Returns the remainder after number is divided by divisor.",
+      "syntax": "MOD(number, divisor)",
+      "action": "args => Number(args[0]) % Number(args[1])"
+    },
+    {
+      "name": "TRUNC",
+      "category": "Math",
+      "description": "Truncates a number to an integer by removing the decimal part.",
+      "syntax": "TRUNC(number, [num_digits])",
+      "action": "args => { const d=Number(args[1])||0; const f=Math.pow(10,d); return Math.trunc(Number(args[0])*f)/f; }"
+    },
+    {
+      "name": "SIGN",
+      "category": "Math",
+      "description": "Returns the sign of a number: 1, -1, or 0.",
+      "syntax": "SIGN(number)",
+      "action": "args => Math.sign(Number(args[0]))"
+    },
+    {
+      "name": "LOG",
+      "category": "Math",
+      "description": "Returns the logarithm of a number to a specified base.",
+      "syntax": "LOG(number, [base])",
+      "action": "args => { const base=args[1]?Number(args[1]):10; return Math.log(Number(args[0]))/Math.log(base); }"
+    },
+    {
+      "name": "LOG10",
+      "category": "Math",
+      "description": "Returns the base-10 logarithm of a number.",
+      "syntax": "LOG10(number)",
+      "action": "args => Math.log10(Number(args[0]))"
+    },
+    {
+      "name": "LN",
+      "category": "Math",
+      "description": "Returns the natural logarithm of a number.",
+      "syntax": "LN(number)",
+      "action": "args => Math.log(Number(args[0]))"
+    },
+    {
+      "name": "EXP",
+      "category": "Math",
+      "description": "Returns e raised to the power of a given number.",
+      "syntax": "EXP(number)",
+      "action": "args => Math.exp(Number(args[0]))"
+    },
+    {
+      "name": "FACT",
+      "category": "Math",
+      "description": "Returns the factorial of a number.",
+      "syntax": "FACT(number)",
+      "action": "args => { let n=Math.abs(Math.floor(Number(args[0]))); if(n>170) return Infinity; let r=1; for(let i=2;i<=n;i++) r*=i; return r; }"
+    },
+    {
+      "name": "COMBIN",
+      "category": "Math",
+      "description": "Returns the number of combinations for a given number of items.",
+      "syntax": "COMBIN(n, k)",
+      "action": "args => { let n=Math.floor(Number(args[0])),k=Math.floor(Number(args[1])); if(k>n) return 0; let r=1; for(let i=0;i<k;i++) r=r*(n-i)/(i+1); return Math.round(r); }"
+    },
+    {
+      "name": "GCD",
+      "category": "Math",
+      "description": "Returns the greatest common divisor.",
+      "syntax": "GCD(number1, number2)",
+      "action": "args => { let a=Math.abs(Math.floor(Number(args[0]))),b=Math.abs(Math.floor(Number(args[1]))); while(b){let t=b;b=a%b;a=t;} return a; }"
+    },
+    {
+      "name": "LCM",
+      "category": "Math",
+      "description": "Returns the least common multiple.",
+      "syntax": "LCM(number1, number2)",
+      "action": "args => { let a=Math.abs(Math.floor(Number(args[0]))),b=Math.abs(Math.floor(Number(args[1]))); let aa=a,bb=b; while(bb){let t=bb;bb=aa%bb;aa=t;} return a*b/aa; }"
+    },
+    {
+      "name": "RAND",
+      "category": "Math",
+      "description": "Returns a random number between 0 and 1.",
+      "syntax": "RAND()",
+      "action": "args => Math.random()"
+    },
+    {
+      "name": "RANDBETWEEN",
+      "category": "Math",
+      "description": "Returns a random integer between bottom and top.",
+      "syntax": "RANDBETWEEN(bottom, top)",
+      "action": "args => Math.floor(Math.random()*(Number(args[1])-Number(args[0])+1))+Number(args[0])"
+    },
+    {
+      "name": "PI",
+      "category": "Math",
+      "description": "Returns the value of PI.",
+      "syntax": "PI()",
+      "action": "args => Math.PI"
+    },
+    {
+      "name": "SIN",
+      "category": "Math",
+      "description": "Returns the sine of an angle in radians.",
+      "syntax": "SIN(number)",
+      "action": "args => Math.sin(Number(args[0]))"
+    },
+    {
+      "name": "COS",
+      "category": "Math",
+      "description": "Returns the cosine of an angle in radians.",
+      "syntax": "COS(number)",
+      "action": "args => Math.cos(Number(args[0]))"
+    },
+    {
+      "name": "TAN",
+      "category": "Math",
+      "description": "Returns the tangent of an angle in radians.",
+      "syntax": "TAN(number)",
+      "action": "args => Math.tan(Number(args[0]))"
+    },
+    {
+      "name": "ASIN",
+      "category": "Math",
+      "description": "Returns the arcsine of a number (in radians).",
+      "syntax": "ASIN(number)",
+      "action": "args => Math.asin(Number(args[0]))"
+    },
+    {
+      "name": "ACOS",
+      "category": "Math",
+      "description": "Returns the arccosine of a number (in radians).",
+      "syntax": "ACOS(number)",
+      "action": "args => Math.acos(Number(args[0]))"
+    },
+    {
+      "name": "ATAN",
+      "category": "Math",
+      "description": "Returns the arctangent of a number.",
+      "syntax": "ATAN(number)",
+      "action": "args => Math.atan(Number(args[0]))"
+    },
+    {
+      "name": "ATAN2",
+      "category": "Math",
+      "description": "Returns the arctangent from x and y coordinates.",
+      "syntax": "ATAN2(x_num, y_num)",
+      "action": "args => Math.atan2(Number(args[0]),Number(args[1]))"
+    },
+    {
+      "name": "DEGREES",
+      "category": "Math",
+      "description": "Converts radians to degrees.",
+      "syntax": "DEGREES(angle)",
+      "action": "args => Number(args[0])*180/Math.PI"
+    },
+    {
+      "name": "RADIANS",
+      "category": "Math",
+      "description": "Converts degrees to radians.",
+      "syntax": "RADIANS(angle)",
+      "action": "args => Number(args[0])*Math.PI/180"
+    },
+    {
+      "name": "SUMPRODUCT",
+      "category": "Math",
+      "description": "Returns the sum of the products of corresponding ranges or arrays.",
+      "syntax": "SUMPRODUCT(array1, array2, ...)",
+      "action": "args => { const half=Math.floor(args.length/2); let s=0; for(let i=0;i<half;i++) s+=Number(args[i])*Number(args[i+half]); return s; }"
+    },
+    {
+      "name": "IF",
+      "category": "Logic",
+      "description": "Returns one value if a condition is true, another if false.",
+      "syntax": "IF(logical_test, value_if_true, value_if_false)",
+      "action": "args => { const test=args[0]; const t=String(test).trim(); if(t==='TRUE'||t==='true'||t==='1'||Number(t)!==0&&t!=='') return args[1]; return args[2]!==undefined?args[2]:''; }"
+    },
+    {
+      "name": "AND",
+      "category": "Logic",
+      "description": "Returns TRUE if all arguments are true.",
+      "syntax": "AND(logical1, [logical2], ...)",
+      "action": "args => args.every(v=>String(v).trim().toUpperCase()==='TRUE'||Number(v)!==0&&v!=='')?'TRUE':'FALSE'"
+    },
+    {
+      "name": "OR",
+      "category": "Logic",
+      "description": "Returns TRUE if any argument is true.",
+      "syntax": "OR(logical1, [logical2], ...)",
+      "action": "args => args.some(v=>String(v).trim().toUpperCase()==='TRUE'||Number(v)!==0&&v!=='')?'TRUE':'FALSE'"
+    },
+    {
+      "name": "NOT",
+      "category": "Logic",
+      "description": "Reverses the logic of its argument.",
+      "syntax": "NOT(logical)",
+      "action": "args => { const v=String(args[0]).trim(); return (v==='TRUE'||v==='true'||Number(v)!==0&&v!=='')?'FALSE':'TRUE'; }"
+    },
+    {
+      "name": "IFERROR",
+      "category": "Logic",
+      "description": "Returns a value if no error; otherwise returns a specified value.",
+      "syntax": "IFERROR(value, value_if_error)",
+      "action": "args => (args[0]==='#ERROR!'||args[0]==='#DIV/0!'||args[0]==='#VALUE!'||args[0]==='#REF!'||args[0]==='#NAME?')?args[1]:args[0]"
+    },
+    {
+      "name": "IFNA",
+      "category": "Logic",
+      "description": "Returns a value if the result is #N/A; otherwise returns the result.",
+      "syntax": "IFNA(value, value_if_na)",
+      "action": "args => args[0]==='#N/A'?args[1]:args[0]"
+    },
+    {
+      "name": "IFS",
+      "category": "Logic",
+      "description": "Checks multiple conditions and returns a value corresponding to the first TRUE condition.",
+      "syntax": "IFS(condition1, value1, [condition2, value2], ...)",
+      "action": "args => { for(let i=0;i<args.length-1;i+=2){ const t=String(args[i]).trim(); if(t==='TRUE'||t==='true'||Number(t)!==0&&t!=='') return args[i+1]; } return '#N/A'; }"
+    },
+    {
+      "name": "SWITCH",
+      "category": "Logic",
+      "description": "Evaluates an expression against a list of values and returns a result for the first match.",
+      "syntax": "SWITCH(expression, value1, result1, [value2, result2, ..., default])",
+      "action": "args => { const expr=String(args[0]); for(let i=1;i<args.length-1;i+=2){ if(String(args[i])===expr) return args[i+1]; } return args.length%2===0?args[args.length-1]:'#N/A'; }"
+    },
+    {
+      "name": "TRUE",
+      "category": "Logic",
+      "description": "Returns the logical value TRUE.",
+      "syntax": "TRUE()",
+      "action": "args => 'TRUE'"
+    },
+    {
+      "name": "FALSE",
+      "category": "Logic",
+      "description": "Returns the logical value FALSE.",
+      "syntax": "FALSE()",
+      "action": "args => 'FALSE'"
+    },
+    {
+      "name": "LEN",
+      "category": "Text",
+      "description": "Returns the number of characters in a text string.",
+      "syntax": "LEN(text)",
+      "action": "args => String(args[0]).length"
+    },
+    {
+      "name": "LEFT",
+      "category": "Text",
+      "description": "Returns the leftmost characters from a text value.",
+      "syntax": "LEFT(text, [num_chars])",
+      "action": "args => String(args[0]).substring(0,Number(args[1])||1)"
+    },
+    {
+      "name": "RIGHT",
+      "category": "Text",
+      "description": "Returns the rightmost characters from a text value.",
+      "syntax": "RIGHT(text, [num_chars])",
+      "action": "args => { const s=String(args[0]); const n=Number(args[1])||1; return s.substring(s.length-n); }"
+    },
+    {
+      "name": "MID",
+      "category": "Text",
+      "description": "Returns a specific number of characters from a text string.",
+      "syntax": "MID(text, start_num, num_chars)",
+      "action": "args => String(args[0]).substring(Number(args[1])-1, Number(args[1])-1+Number(args[2]))"
+    },
+    {
+      "name": "UPPER",
+      "category": "Text",
+      "description": "Converts text to uppercase.",
+      "syntax": "UPPER(text)",
+      "action": "args => String(args[0]).toUpperCase()"
+    },
+    {
+      "name": "LOWER",
+      "category": "Text",
+      "description": "Converts text to lowercase.",
+      "syntax": "LOWER(text)",
+      "action": "args => String(args[0]).toLowerCase()"
+    },
+    {
+      "name": "PROPER",
+      "category": "Text",
+      "description": "Capitalizes the first letter in each word of a text value.",
+      "syntax": "PROPER(text)",
+      "action": "args => String(args[0]).replace(/\\w\\S*/g,t=>t.charAt(0).toUpperCase()+t.substr(1).toLowerCase())"
+    },
+    {
+      "name": "TRIM",
+      "category": "Text",
+      "description": "Removes all spaces from text except for single spaces between words.",
+      "syntax": "TRIM(text)",
+      "action": "args => String(args[0]).trim().replace(/\\s+/g,' ')"
+    },
+    {
+      "name": "CLEAN",
+      "category": "Text",
+      "description": "Removes all nonprintable characters from text.",
+      "syntax": "CLEAN(text)",
+      "action": "args => String(args[0]).replace(/[\\x00-\\x1F\\x7F]/g,'')"
+    },
+    {
+      "name": "CONCATENATE",
+      "category": "Text",
+      "description": "Joins several text items into one text item.",
+      "syntax": "CONCATENATE(text1, [text2], ...)",
+      "action": "args => args.join('')"
+    },
+    {
+      "name": "CONCAT",
+      "category": "Text",
+      "description": "Concatenates text from multiple ranges or strings.",
+      "syntax": "CONCAT(text1, [text2], ...)",
+      "action": "args => args.join('')"
+    },
+    {
+      "name": "TEXTJOIN",
+      "category": "Text",
+      "description": "Combines text from multiple ranges with a delimiter.",
+      "syntax": "TEXTJOIN(delimiter, ignore_empty, text1, ...)",
+      "action": "args => { const delim=String(args[0]); const ignore=String(args[1]).toLowerCase()==='true'||args[1]==='1'; const parts=args.slice(2); return (ignore?parts.filter(v=>v!==''):parts).join(delim); }"
+    },
+    {
+      "name": "SUBSTITUTE",
+      "category": "Text",
+      "description": "Substitutes new_text for old_text in a text string.",
+      "syntax": "SUBSTITUTE(text, old_text, new_text, [instance_num])",
+      "action": "args => { let s=String(args[0]),old=String(args[1]),nw=String(args[2]); if(!args[3]) return s.split(old).join(nw); let n=Number(args[3]),c=0; return s.replace(new RegExp(old.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&'),'g'),m=>(++c===n?nw:m)); }"
+    },
+    {
+      "name": "REPLACE",
+      "category": "Text",
+      "description": "Replaces characters within text.",
+      "syntax": "REPLACE(old_text, start_num, num_chars, new_text)",
+      "action": "args => String(args[0]).substring(0,Number(args[1])-1)+String(args[3])+String(args[0]).substring(Number(args[1])-1+Number(args[2]))"
+    },
+    {
+      "name": "FIND",
+      "category": "Text",
+      "description": "Finds one text value within another (case-sensitive).",
+      "syntax": "FIND(find_text, within_text, [start_num])",
+      "action": "args => { const i=String(args[1]).indexOf(String(args[0]),Number(args[2]||1)-1); return i===-1?'#VALUE!':i+1; }"
+    },
+    {
+      "name": "SEARCH",
+      "category": "Text",
+      "description": "Finds one text value within another (case-insensitive).",
+      "syntax": "SEARCH(find_text, within_text, [start_num])",
+      "action": "args => { const i=String(args[1]).toLowerCase().indexOf(String(args[0]).toLowerCase(),Number(args[2]||1)-1); return i===-1?'#VALUE!':i+1; }"
+    },
+    {
+      "name": "TEXT",
+      "category": "Text",
+      "description": "Formats a number and converts it to text.",
+      "syntax": "TEXT(value, format_text)",
+      "action": "args => { const v=Number(args[0]); const fmt=String(args[1]); if(fmt.includes('%')) return (v*100).toFixed(fmt.replace(/[^0]/g,'').length-1)+'%'; const dp=(fmt.split('.')[1]||'').length; return v.toFixed(dp); }"
+    },
+    {
+      "name": "VALUE",
+      "category": "Text",
+      "description": "Converts a text argument to a number.",
+      "syntax": "VALUE(text)",
+      "action": "args => { const n=Number(String(args[0]).replace(/,/g,'')); return isNaN(n)?'#VALUE!':n; }"
+    },
+    {
+      "name": "REPT",
+      "category": "Text",
+      "description": "Repeats text a given number of times.",
+      "syntax": "REPT(text, number_times)",
+      "action": "args => String(args[0]).repeat(Math.max(0,Math.floor(Number(args[1]))))"
+    },
+    {
+      "name": "CHAR",
+      "category": "Text",
+      "description": "Returns the character specified by a code number.",
+      "syntax": "CHAR(number)",
+      "action": "args => String.fromCharCode(Number(args[0]))"
+    },
+    {
+      "name": "CODE",
+      "category": "Text",
+      "description": "Returns a numeric code for the first character in a text string.",
+      "syntax": "CODE(text)",
+      "action": "args => String(args[0]).charCodeAt(0)"
+    },
+    {
+      "name": "EXACT",
+      "category": "Text",
+      "description": "Checks whether two text values are identical (case-sensitive).",
+      "syntax": "EXACT(text1, text2)",
+      "action": "args => String(args[0])===String(args[1])?'TRUE':'FALSE'"
+    },
+    {
+      "name": "NUMBERVALUE",
+      "category": "Text",
+      "description": "Converts text to a number in a locale-independent manner.",
+      "syntax": "NUMBERVALUE(text)",
+      "action": "args => { const n=parseFloat(String(args[0]).replace(/,/g,'')); return isNaN(n)?'#VALUE!':n; }"
+    },
+    {
+      "name": "TODAY",
+      "category": "Date",
+      "description": "Returns today's date as a text string.",
+      "syntax": "TODAY()",
+      "action": "args => { const d=new Date(); return d.toISOString().split('T')[0]; }"
+    },
+    {
+      "name": "NOW",
+      "category": "Date",
+      "description": "Returns the current date and time.",
+      "syntax": "NOW()",
+      "action": "args => new Date().toLocaleString()"
+    },
+    {
+      "name": "YEAR",
+      "category": "Date",
+      "description": "Returns the year portion of a date.",
+      "syntax": "YEAR(date)",
+      "action": "args => { const d=new Date(args[0]); return isNaN(d)?'#VALUE!':d.getFullYear(); }"
+    },
+    {
+      "name": "MONTH",
+      "category": "Date",
+      "description": "Returns the month of a date (1–12).",
+      "syntax": "MONTH(date)",
+      "action": "args => { const d=new Date(args[0]); return isNaN(d)?'#VALUE!':d.getMonth()+1; }"
+    },
+    {
+      "name": "DAY",
+      "category": "Date",
+      "description": "Returns the day of the month for a date (1–31).",
+      "syntax": "DAY(date)",
+      "action": "args => { const d=new Date(args[0]); return isNaN(d)?'#VALUE!':d.getDate(); }"
+    },
+    {
+      "name": "HOUR",
+      "category": "Date",
+      "description": "Returns the hour of a time value (0–23).",
+      "syntax": "HOUR(time)",
+      "action": "args => new Date(args[0]).getHours()"
+    },
+    {
+      "name": "MINUTE",
+      "category": "Date",
+      "description": "Returns the minute component of a time value.",
+      "syntax": "MINUTE(time)",
+      "action": "args => new Date(args[0]).getMinutes()"
+    },
+    {
+      "name": "SECOND",
+      "category": "Date",
+      "description": "Returns the second component of a time value.",
+      "syntax": "SECOND(time)",
+      "action": "args => new Date(args[0]).getSeconds()"
+    },
+    {
+      "name": "WEEKDAY",
+      "category": "Date",
+      "description": "Returns the day of the week for a date (1=Sunday).",
+      "syntax": "WEEKDAY(date)",
+      "action": "args => { const d=new Date(args[0]); return isNaN(d)?'#VALUE!':d.getDay()+1; }"
+    },
+    {
+      "name": "WEEKNUM",
+      "category": "Date",
+      "description": "Returns the week number of a date in the year.",
+      "syntax": "WEEKNUM(date)",
+      "action": "args => { const d=new Date(args[0]); if(isNaN(d)) return '#VALUE!'; const start=new Date(d.getFullYear(),0,1); return Math.ceil(((d-start)/86400000+start.getDay()+1)/7); }"
+    },
+    {
+      "name": "DATE",
+      "category": "Date",
+      "description": "Returns the date corresponding to the given year, month, and day.",
+      "syntax": "DATE(year, month, day)",
+      "action": "args => { const d=new Date(Number(args[0]),Number(args[1])-1,Number(args[2])); return d.toISOString().split('T')[0]; }"
+    },
+    {
+      "name": "DATEVALUE",
+      "category": "Date",
+      "description": "Converts a date text string to a serial number (days since 1900-01-01).",
+      "syntax": "DATEVALUE(date_text)",
+      "action": "args => { const d=new Date(args[0]); const base=new Date(1900,0,1); return isNaN(d)?'#VALUE!':Math.floor((d-base)/86400000)+1; }"
+    },
+    {
+      "name": "DAYS",
+      "category": "Date",
+      "description": "Returns the number of days between two dates.",
+      "syntax": "DAYS(end_date, start_date)",
+      "action": "args => { const e=new Date(args[0]),s=new Date(args[1]); return isNaN(e)||isNaN(s)?'#VALUE!':Math.round((e-s)/86400000); }"
+    },
+    {
+      "name": "NETWORKDAYS",
+      "category": "Date",
+      "description": "Returns the number of working days between two dates (excl. weekends).",
+      "syntax": "NETWORKDAYS(start_date, end_date)",
+      "action": "args => { let s=new Date(args[0]),e=new Date(args[1]); if(isNaN(s)||isNaN(e)) return '#VALUE!'; let count=0; let d=new Date(s); while(d<=e){const w=d.getDay();if(w!==0&&w!==6)count++;d.setDate(d.getDate()+1);} return count; }"
+    },
+    {
+      "name": "EDATE",
+      "category": "Date",
+      "description": "Returns the date that is a specified number of months before or after a date.",
+      "syntax": "EDATE(start_date, months)",
+      "action": "args => { const d=new Date(args[0]); d.setMonth(d.getMonth()+Number(args[1])); return d.toISOString().split('T')[0]; }"
+    },
+    {
+      "name": "EOMONTH",
+      "category": "Date",
+      "description": "Returns the last day of the month a specified number of months away.",
+      "syntax": "EOMONTH(start_date, months)",
+      "action": "args => { const d=new Date(args[0]); d.setMonth(d.getMonth()+Number(args[1])+1,0); return d.toISOString().split('T')[0]; }"
+    },
+    {
+      "name": "VLOOKUP",
+      "category": "Lookup",
+      "description": "Looks for a value in the leftmost column and returns a value in the same row from a specified column. (Operates on named range data passed as args)",
+      "syntax": "VLOOKUP(lookup_value, col_index)",
+      "action": "args => args[0]"
+    },
+    {
+      "name": "HLOOKUP",
+      "category": "Lookup",
+      "description": "Looks for a value in the top row and returns a value in the same column from a specified row.",
+      "syntax": "HLOOKUP(lookup_value, row_index)",
+      "action": "args => args[0]"
+    },
+    {
+      "name": "INDEX",
+      "category": "Lookup",
+      "description": "Returns the value of an element in a table, selected by row and column index.",
+      "syntax": "INDEX(array, row_num, [col_num])",
+      "action": "args => args[0]"
+    },
+    {
+      "name": "MATCH",
+      "category": "Lookup",
+      "description": "Returns the relative position of an item in an array.",
+      "syntax": "MATCH(lookup_value, lookup_array, [match_type])",
+      "action": "args => { const val=String(args[0]); const arr=args.slice(1,args.length-1); const i=arr.findIndex(v=>String(v)===val); return i===-1?'#N/A':i+1; }"
+    },
+    {
+      "name": "CHOOSE",
+      "category": "Lookup",
+      "description": "Chooses a value from a list of values based on an index number.",
+      "syntax": "CHOOSE(index_num, value1, [value2], ...)",
+      "action": "args => { const idx=Number(args[0]); return args[idx]!==undefined?args[idx]:'#VALUE!'; }"
+    },
+    {
+      "name": "TRANSPOSE",
+      "category": "Lookup",
+      "description": "Returns the transpose of an array. Passes through args as-is in this engine.",
+      "syntax": "TRANSPOSE(array)",
+      "action": "args => args.join(',')"
+    },
+    {
+      "name": "ISBLANK",
+      "category": "Info",
+      "description": "Returns TRUE if the value is empty.",
+      "syntax": "ISBLANK(value)",
+      "action": "args => (args[0]===''||args[0]===null||args[0]===undefined)?'TRUE':'FALSE'"
+    },
+    {
+      "name": "ISNUMBER",
+      "category": "Info",
+      "description": "Returns TRUE if the value is a number.",
+      "syntax": "ISNUMBER(value)",
+      "action": "args => !isNaN(Number(args[0]))&&args[0]!==''?'TRUE':'FALSE'"
+    },
+    {
+      "name": "ISTEXT",
+      "category": "Info",
+      "description": "Returns TRUE if the value is text.",
+      "syntax": "ISTEXT(value)",
+      "action": "args => isNaN(Number(args[0]))||args[0]===''?'TRUE':'FALSE'"
+    },
+    {
+      "name": "ISERROR",
+      "category": "Info",
+      "description": "Returns TRUE if the value is any error.",
+      "syntax": "ISERROR(value)",
+      "action": "args => String(args[0]).startsWith('#')?'TRUE':'FALSE'"
+    },
+    {
+      "name": "ISNA",
+      "category": "Info",
+      "description": "Returns TRUE if the value is the #N/A error.",
+      "syntax": "ISNA(value)",
+      "action": "args => args[0]==='#N/A'?'TRUE':'FALSE'"
+    },
+    {
+      "name": "ISEVEN",
+      "category": "Info",
+      "description": "Returns TRUE if the number is even.",
+      "syntax": "ISEVEN(number)",
+      "action": "args => Number(args[0])%2===0?'TRUE':'FALSE'"
+    },
+    {
+      "name": "ISODD",
+      "category": "Info",
+      "description": "Returns TRUE if the number is odd.",
+      "syntax": "ISODD(number)",
+      "action": "args => Math.abs(Number(args[0]))%2===1?'TRUE':'FALSE'"
+    },
+    {
+      "name": "NA",
+      "category": "Info",
+      "description": "Returns the error value #N/A.",
+      "syntax": "NA()",
+      "action": "args => '#N/A'"
+    },
+    {
+      "name": "TYPE",
+      "category": "Info",
+      "description": "Returns a number indicating the data type of a value.",
+      "syntax": "TYPE(value)",
+      "action": "args => { const v=args[0]; if(v===''||v===null||v===undefined) return 1; if(!isNaN(Number(v))) return 1; if(typeof v==='boolean'||v==='TRUE'||v==='FALSE') return 4; if(String(v).startsWith('#')) return 16; return 2; }"
+    },
+    {
+      "name": "STDEV",
+      "category": "Statistical",
+      "description": "Estimates standard deviation based on a sample.",
+      "syntax": "STDEV(number1, [number2], ...)",
+      "action": "args => { const nums=args.map(Number).filter(v=>!isNaN(v)); const n=nums.length; if(n<2) return 0; const m=nums.reduce((a,b)=>a+b,0)/n; return Math.sqrt(nums.reduce((a,b)=>a+Math.pow(b-m,2),0)/(n-1)); }"
+    },
+    {
+      "name": "STDEVP",
+      "category": "Statistical",
+      "description": "Calculates standard deviation based on the entire population.",
+      "syntax": "STDEVP(number1, [number2], ...)",
+      "action": "args => { const nums=args.map(Number).filter(v=>!isNaN(v)); const n=nums.length; if(!n) return 0; const m=nums.reduce((a,b)=>a+b,0)/n; return Math.sqrt(nums.reduce((a,b)=>a+Math.pow(b-m,2),0)/n); }"
+    },
+    {
+      "name": "VAR",
+      "category": "Statistical",
+      "description": "Estimates variance based on a sample.",
+      "syntax": "VAR(number1, [number2], ...)",
+      "action": "args => { const nums=args.map(Number).filter(v=>!isNaN(v)); const n=nums.length; if(n<2) return 0; const m=nums.reduce((a,b)=>a+b,0)/n; return nums.reduce((a,b)=>a+Math.pow(b-m,2),0)/(n-1); }"
+    },
+    {
+      "name": "MEDIAN",
+      "category": "Statistical",
+      "description": "Returns the median of the given numbers.",
+      "syntax": "MEDIAN(number1, [number2], ...)",
+      "action": "args => { const s=args.map(Number).filter(v=>!isNaN(v)).sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; }"
+    },
+    {
+      "name": "MODE",
+      "category": "Statistical",
+      "description": "Returns the most frequently occurring value in an array.",
+      "syntax": "MODE(number1, [number2], ...)",
+      "action": "args => { const m={}; let best=null,bv=-1; args.forEach(v=>{const n=Number(v); if(!isNaN(n)){m[n]=(m[n]||0)+1; if(m[n]>bv){bv=m[n];best=n;}}}); return best===null?'#N/A':best; }"
+    },
+    {
+      "name": "LARGE",
+      "category": "Statistical",
+      "description": "Returns the k-th largest value in a data set.",
+      "syntax": "LARGE(array, k)",
+      "action": "args => { const k=Number(args[args.length-1]); const s=args.slice(0,args.length-1).map(Number).filter(v=>!isNaN(v)).sort((a,b)=>b-a); return s[k-1]!==undefined?s[k-1]:'#NUM!'; }"
+    },
+    {
+      "name": "SMALL",
+      "category": "Statistical",
+      "description": "Returns the k-th smallest value in a data set.",
+      "syntax": "SMALL(array, k)",
+      "action": "args => { const k=Number(args[args.length-1]); const s=args.slice(0,args.length-1).map(Number).filter(v=>!isNaN(v)).sort((a,b)=>a-b); return s[k-1]!==undefined?s[k-1]:'#NUM!'; }"
+    },
+    {
+      "name": "RANK",
+      "category": "Statistical",
+      "description": "Returns the rank of a number in a list (1 = largest by default).",
+      "syntax": "RANK(number, ref, [order])",
+      "action": "args => { const n=Number(args[0]); const rest=args.slice(1,args.length-1).map(Number).filter(v=>!isNaN(v)); const order=Number(args[args.length-1])||0; const sorted=rest.slice().sort((a,b)=>order?a-b:b-a); return sorted.indexOf(n)+1; }"
+    },
+    {
+      "name": "PERCENTILE",
+      "category": "Statistical",
+      "description": "Returns the k-th percentile of values in a range.",
+      "syntax": "PERCENTILE(array, k)",
+      "action": "args => { const k=Number(args[args.length-1]); const s=args.slice(0,args.length-1).map(Number).filter(v=>!isNaN(v)).sort((a,b)=>a-b); const idx=k*(s.length-1); const lo=Math.floor(idx); return s[lo]+(s[lo+1]!==undefined?(s[lo+1]-s[lo])*(idx-lo):0); }"
+    },
+    {
+      "name": "CORREL",
+      "category": "Statistical",
+      "description": "Returns the correlation coefficient between two data sets.",
+      "syntax": "CORREL(array1, array2)",
+      "action": "args => { const half=Math.floor(args.length/2); const x=args.slice(0,half).map(Number); const y=args.slice(half).map(Number); const n=x.length; const mx=x.reduce((a,b)=>a+b,0)/n; const my=y.reduce((a,b)=>a+b,0)/n; const num=x.reduce((s,xi,i)=>s+(xi-mx)*(y[i]-my),0); const dx=Math.sqrt(x.reduce((s,xi)=>s+Math.pow(xi-mx,2),0)); const dy=Math.sqrt(y.reduce((s,yi)=>s+Math.pow(yi-my,2),0)); return dx&&dy?num/(dx*dy):0; }"
+    },
+    {
+      "name": "FORECAST",
+      "category": "Statistical",
+      "description": "Calculates or predicts a future value by using existing values (linear regression).",
+      "syntax": "FORECAST(x, known_ys, known_xs)",
+      "action": "args => { const x=Number(args[0]); const n=Math.floor((args.length-1)/2); const ys=args.slice(1,n+1).map(Number); const xs=args.slice(n+1).map(Number); const my=ys.reduce((a,b)=>a+b,0)/n; const mx=xs.reduce((a,b)=>a+b,0)/n; const b=xs.reduce((s,xi,i)=>s+(xi-mx)*(ys[i]-my),0)/xs.reduce((s,xi)=>s+Math.pow(xi-mx,2),0); return my+b*(x-mx); }"
+    },
+    {
+      "name": "SLOPE",
+      "category": "Statistical",
+      "description": "Returns the slope of the linear regression line.",
+      "syntax": "SLOPE(known_ys, known_xs)",
+      "action": "args => { const half=Math.floor(args.length/2); const ys=args.slice(0,half).map(Number); const xs=args.slice(half).map(Number); const my=ys.reduce((a,b)=>a+b,0)/half; const mx=xs.reduce((a,b)=>a+b,0)/half; return xs.reduce((s,xi,i)=>s+(xi-mx)*(ys[i]-my),0)/xs.reduce((s,xi)=>s+Math.pow(xi-mx,2),0); }"
+    },
+    {
+      "name": "INTERCEPT",
+      "category": "Statistical",
+      "description": "Returns the y-intercept of the linear regression line.",
+      "syntax": "INTERCEPT(known_ys, known_xs)",
+      "action": "args => { const half=Math.floor(args.length/2); const ys=args.slice(0,half).map(Number); const xs=args.slice(half).map(Number); const my=ys.reduce((a,b)=>a+b,0)/half; const mx=xs.reduce((a,b)=>a+b,0)/half; const b=xs.reduce((s,xi,i)=>s+(xi-mx)*(ys[i]-my),0)/xs.reduce((s,xi)=>s+Math.pow(xi-mx,2),0); return my-b*mx; }"
+    },
+    {
+      "name": "NORMDIST",
+      "category": "Statistical",
+      "description": "Returns the normal distribution for the specified mean and standard deviation.",
+      "syntax": "NORMDIST(x, mean, standard_dev, cumulative)",
+      "action": "args => { const x=Number(args[0]),m=Number(args[1]),s=Number(args[2]),c=String(args[3]).toUpperCase()==='TRUE'; if(!c) return Math.exp(-0.5*Math.pow((x-m)/s,2))/(s*Math.sqrt(2*Math.PI)); const z=(x-m)/s; return 0.5*(1+Math.tanh(z/Math.sqrt(2)*0.8854)); }"
+    },
+    {
+      "name": "NORMSDIST",
+      "category": "Statistical",
+      "description": "Returns the standard normal cumulative distribution.",
+      "syntax": "NORMSDIST(z)",
+      "action": "args => { const z=Number(args[0]); return 0.5*(1+Math.tanh(z/Math.sqrt(2)*0.8854)); }"
+    },
+    {
+      "name": "SUMSQ",
+      "category": "Statistical",
+      "description": "Returns the sum of the squares of the arguments.",
+      "syntax": "SUMSQ(number1, [number2], ...)",
+      "action": "args => args.map(Number).filter(v=>!isNaN(v)).reduce((a,b)=>a+b*b,0)"
+    },
+    {
+      "name": "SUMIF",
+      "category": "Statistical",
+      "description": "Sums the values in a range that meet a condition. (args: values..., criteria)",
+      "syntax": "SUMIF(range_values..., criteria)",
+      "action": "args => { const crit=String(args[args.length-1]); const vals=args.slice(0,args.length-1).map(Number); const n=Number(crit); return vals.filter(v=>v===n).reduce((a,b)=>a+b,0); }"
+    },
+    {
+      "name": "COUNTIF",
+      "category": "Statistical",
+      "description": "Counts the number of cells that meet a condition.",
+      "syntax": "COUNTIF(range_values..., criteria)",
+      "action": "args => { const crit=String(args[args.length-1]); const vals=args.slice(0,args.length-1); return vals.filter(v=>String(v)===crit).length; }"
+    },
+    {
+      "name": "AVERAGEIF",
+      "category": "Statistical",
+      "description": "Returns the average of all cells that meet a given criteria.",
+      "syntax": "AVERAGEIF(range_values..., criteria)",
+      "action": "args => { const crit=String(args[args.length-1]); const n=Number(crit); const nums=args.slice(0,args.length-1).map(Number).filter(v=>v===n); return nums.length?nums.reduce((a,b)=>a+b,0)/nums.length:'#DIV/0!'; }"
+    },
+    {
+      "name": "NPV",
+      "category": "Finance",
+      "description": "Returns the net present value of an investment based on a discount rate and cashflows.",
+      "syntax": "NPV(rate, value1, [value2], ...)",
+      "action": "args => { const r=Number(args[0]); return args.slice(1).reduce((s,v,i)=>s+Number(v)/Math.pow(1+r,i+1),0); }"
+    },
+    {
+      "name": "FV",
+      "category": "Finance",
+      "description": "Returns the future value of an investment.",
+      "syntax": "FV(rate, nper, pmt, [pv], [type])",
+      "action": "args => { const r=Number(args[0]),n=Number(args[1]),p=Number(args[2]),pv=Number(args[3]||0); if(r===0) return -(pv+p*n); return -(pv*Math.pow(1+r,n)+p*(Math.pow(1+r,n)-1)/r); }"
+    },
+    {
+      "name": "PV",
+      "category": "Finance",
+      "description": "Returns the present value of an investment.",
+      "syntax": "PV(rate, nper, pmt, [fv], [type])",
+      "action": "args => { const r=Number(args[0]),n=Number(args[1]),p=Number(args[2]),fv=Number(args[3]||0); if(r===0) return -(fv+p*n); return -(p*(1-Math.pow(1+r,-n))/r+fv*Math.pow(1+r,-n)); }"
+    },
+    {
+      "name": "PMT",
+      "category": "Finance",
+      "description": "Calculates the payment for a loan based on constant payments and a constant interest rate.",
+      "syntax": "PMT(rate, nper, pv, [fv], [type])",
+      "action": "args => { const r=Number(args[0]),n=Number(args[1]),pv=Number(args[2]),fv=Number(args[3]||0); if(r===0) return -(pv+fv)/n; return -(pv*r*Math.pow(1+r,n)+fv*r)/(Math.pow(1+r,n)-1); }"
+    },
+    {
+      "name": "RATE",
+      "category": "Finance",
+      "description": "Returns the interest rate per period of an annuity (approximation).",
+      "syntax": "RATE(nper, pmt, pv, [fv])",
+      "action": "args => { const n=Number(args[0]),p=Number(args[1]),pv=Number(args[2]); let r=0.1; for(let i=0;i<100;i++){const f=pv*Math.pow(1+r,n)+p*(Math.pow(1+r,n)-1)/r; const fp=n*pv*Math.pow(1+r,n-1)+p*(n*Math.pow(1+r,n-1)*r-(Math.pow(1+r,n)-1))/(r*r); r-=f/fp; if(Math.abs(f)<1e-6) break;} return r; }"
+    },
+    {
+      "name": "IRR",
+      "category": "Finance",
+      "description": "Returns the internal rate of return for a series of cash flows.",
+      "syntax": "IRR(values...)",
+      "action": "args => { const cf=args.map(Number); let r=0.1; for(let i=0;i<100;i++){const npv=cf.reduce((s,v,t)=>s+v/Math.pow(1+r,t),0); const d=cf.reduce((s,v,t)=>s-t*v/Math.pow(1+r,t+1),0); const nr=r-npv/d; if(Math.abs(nr-r)<1e-6){r=nr;break;} r=nr;} return r; }"
+    },
+    {
+      "name": "SLN",
+      "category": "Finance",
+      "description": "Returns the straight-line depreciation of an asset for one period.",
+      "syntax": "SLN(cost, salvage, life)",
+      "action": "args => (Number(args[0])-Number(args[1]))/Number(args[2])"
+    },
+    {
+      "name": "EFFECT",
+      "category": "Finance",
+      "description": "Returns the effective annual interest rate given the nominal rate and periods per year.",
+      "syntax": "EFFECT(nominal_rate, npery)",
+      "action": "args => Math.pow(1+Number(args[0])/Number(args[1]),Number(args[1]))-1"
+    },
+    {
+      "name": "NOMINAL",
+      "category": "Finance",
+      "description": "Returns the nominal annual interest rate given the effective rate and periods per year.",
+      "syntax": "NOMINAL(effect_rate, npery)",
+      "action": "args => Number(args[1])*(Math.pow(1+Number(args[0]),1/Number(args[1]))-1)"
+    },
+    {
+      "name": "ARABIC",
+      "category": "Conversion",
+      "description": "Converts a Roman numeral to Arabic.",
+      "syntax": "ARABIC(text)",
+      "action": "args => { const map={M:1000,D:500,C:100,L:50,X:10,V:5,I:1}; let s=0,prev=0; String(args[0]).toUpperCase().split('').reverse().forEach(c=>{const v=map[c]||0; s+=v<prev?-v:v; prev=v;}); return s; }"
+    },
+    {
+      "name": "ROMAN",
+      "category": "Conversion",
+      "description": "Converts an Arabic numeral to Roman.",
+      "syntax": "ROMAN(number)",
+      "action": "args => { let n=Math.floor(Number(args[0])); const vals=[1000,900,500,400,100,90,50,40,10,9,5,4,1]; const syms=['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I']; let r=''; vals.forEach((v,i)=>{while(n>=v){r+=syms[i];n-=v;}}); return r; }"
+    },
+    {
+      "name": "BASE",
+      "category": "Conversion",
+      "description": "Converts a number into a text representation with a given radix.",
+      "syntax": "BASE(number, radix, [min_length])",
+      "action": "args => { const s=Number(args[0]).toString(Number(args[1])).toUpperCase(); return s.padStart(Number(args[2])||0,'0'); }"
+    },
+    {
+      "name": "DECIMAL",
+      "category": "Conversion",
+      "description": "Converts a text representation of a number in a given base into decimal.",
+      "syntax": "DECIMAL(text, radix)",
+      "action": "args => parseInt(String(args[0]),Number(args[1]))"
+    },
+    {
+      "name": "BIN2DEC",
+      "category": "Conversion",
+      "description": "Converts a binary number to decimal.",
+      "syntax": "BIN2DEC(number)",
+      "action": "args => parseInt(String(args[0]),2)"
+    },
+    {
+      "name": "DEC2BIN",
+      "category": "Conversion",
+      "description": "Converts a decimal number to binary.",
+      "syntax": "DEC2BIN(number, [places])",
+      "action": "args => Number(args[0]).toString(2).padStart(Number(args[1])||0,'0')"
+    },
+    {
+      "name": "DEC2HEX",
+      "category": "Conversion",
+      "description": "Converts a decimal number to hexadecimal.",
+      "syntax": "DEC2HEX(number, [places])",
+      "action": "args => Number(args[0]).toString(16).toUpperCase().padStart(Number(args[1])||0,'0')"
+    },
+    {
+      "name": "HEX2DEC",
+      "category": "Conversion",
+      "description": "Converts a hexadecimal number to decimal.",
+      "syntax": "HEX2DEC(number)",
+      "action": "args => parseInt(String(args[0]),16)"
+    },
+    {
+      "name": "CONVERT",
+      "category": "Conversion",
+      "description": "Converts a number from one measurement system to another.",
+      "syntax": "CONVERT(number, from_unit, to_unit)",
+      "action": "args => { const v=Number(args[0]),f=String(args[1]).toLowerCase(),t=String(args[2]).toLowerCase(); const kg={kg:1,g:0.001,lb:0.453592,oz:0.0283495,ton:907.185}; const m={m:1,km:1000,cm:0.01,mm:0.001,mi:1609.34,ft:0.3048,'in':0.0254,yd:0.9144}; const lut=Object.assign({},kg,m); return lut[f]&&lut[t]?v*lut[f]/lut[t]:'#N/A'; }"
+    },
+    {
+      "name": "UNIQUE",
+      "category": "Array",
+      "description": "Returns unique values from a list.",
+      "syntax": "UNIQUE(value1, [value2], ...)",
+      "action": "args => [...new Set(args)].join(', ')"
+    },
+    {
+      "name": "SORT",
+      "category": "Array",
+      "description": "Sorts the values in a range or array.",
+      "syntax": "SORT(value1, [value2], ...)",
+      "action": "args => args.slice().sort((a,b)=>{const na=Number(a),nb=Number(b); return !isNaN(na)&&!isNaN(nb)?na-nb:String(a).localeCompare(String(b));}).join(', ')"
+    },
+    {
+      "name": "FILTER",
+      "category": "Array",
+      "description": "Filters values where corresponding flag values are non-empty/true.",
+      "syntax": "FILTER(values..., flags...)",
+      "action": "args => { const half=Math.floor(args.length/2); const vals=args.slice(0,half); const flags=args.slice(half); return vals.filter((_,i)=>flags[i]&&flags[i]!=='0'&&flags[i]!=='FALSE').join(', '); }"
+    },
+    {
+      "name": "SEQUENCE",
+      "category": "Array",
+      "description": "Generates a sequence of numbers.",
+      "syntax": "SEQUENCE(count, [start], [step])",
+      "action": "args => { const n=Number(args[0]),s=Number(args[1]||1),st=Number(args[2]||1); return Array.from({length:n},(_,i)=>s+i*st).join(', '); }"
+    },
+    {
+      "name": "FLATTEN",
+      "category": "Array",
+      "description": "Returns all values flattened into a single list.",
+      "syntax": "FLATTEN(value1, ...)",
+      "action": "args => args.flat(Infinity).join(', ')"
+    }
+  ]
+}

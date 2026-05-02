@@ -1082,35 +1082,8 @@ body.dark .rec-card-btn.danger:hover{background:rgba(255,59,48,.15);color:#FF453
   grid-template-columns:repeat(auto-fill,minmax(120px,1fr));
   gap:15px;padding-bottom:20px;
 }
-.rec-grid-card{
-  background:#FFFFFF;border-radius:20px;
-  display:flex;flex-direction:column;align-items:center;
-  box-shadow:0 4px 12px rgba(0,0,0,0.04),0 1px 2px rgba(0,0,0,0.04);
-  cursor:pointer;transition:all .2s cubic-bezier(.25,.8,.25,1);position:relative;
-  overflow:hidden;padding:18px 10px 0;
-}
-body.dark .rec-grid-card{background:#1C1C1E;box-shadow:none;}
-.rec-grid-card:active{transform:scale(0.96);opacity:.85;}
-.rec-grid-card-icon{
-  font-size:34px;color:#007AFF;margin-bottom:8px;
-  background:rgba(0,122,255,.08);padding:12px;border-radius:16px;display:flex;
-}
-body.dark .rec-grid-card-icon{color:#0A84FF;background:rgba(10,132,255,.15);}
-/* Footer strip at bottom of grid card */
-.rec-grid-card-footer{
-  width:100%;background:rgba(0,0,0,.04);
-  padding:7px 10px 8px;margin-top:10px;
-  border-radius:0 0 20px 20px;
-  min-height:52px;
-}
-body.dark .rec-grid-card-footer{background:rgba(255,255,255,.05);}
-.rec-grid-card-name{
-  font-size:12px;line-height:1.3;font-weight:600;color:#000000;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;
-  display:block;
-}
-body.dark .rec-grid-card-name{color:#FFFFFF;}
-.rec-grid-card-meta{font-size:10px;color:#8E8E93;margin-top:2px;}
+
+
 /* Live cloud badge on grid cards */
 .rec-grid-live-cloud {
   position:absolute;top:8px;right:8px;
@@ -1180,22 +1153,7 @@ body.dark .rec-opt-action-btn span{color:#0A84FF;}
 }
 body.dark .rec-pin-badge{color:#FF9F0A;}
 
-/* Grid card overlay buttons (3-second hold) */
-.rec-grid-card-overlay {
-  position:absolute;inset:0;border-radius:24px;
-  background:rgba(255,255,255,0.92);align-items:center;justify-content:center;gap:14px;
-  z-index:4;
-}
-body.dark .rec-grid-card-overlay{background:rgba(28,28,30,0.94);}
-.rec-grid-overlay-btn {
-  width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;transition:background .15s;
-}
-.rec-grid-overlay-btn.edit{background:#e3f2fd;color:#1976d2;}
-.rec-grid-overlay-btn.edit:hover{background:#bbdefb;}
-.rec-grid-overlay-btn.del{background:#fce4ec;color:#d32f2f;}
-.rec-grid-overlay-btn.del:hover{background:#ef9a9a;}
+
 
 /* Multi-select checkbox on cards */
 .rec-card-checkbox {
@@ -1450,7 +1408,7 @@ body.dark .drive-doc-name { color:#fff; }
 }
 .rec-live-badge::before { content:'';width:6px;height:6px;border-radius:50%;background:#007AFF;display:inline-block; }
 
-/* 3-dot button on cards */
+/* 3-dot dropdown on cards */
 .rec-card-dots-btn {
   background:none;border:none;cursor:pointer;width:32px;height:32px;
   border-radius:8px;display:flex;align-items:center;justify-content:center;
@@ -1458,230 +1416,96 @@ body.dark .drive-doc-name { color:#fff; }
 }
 .rec-card-dots-btn:hover { background:rgba(0,122,255,.1);color:#007AFF; }
 body.dark .rec-card-dots-btn:hover { background:rgba(10,132,255,.2);color:#0A84FF; }
-
-/* ── Doc Options Bottom Sheet (iOS drag-sheet) ──────────────────────── */
-#recDocSheet {
-  position:fixed;inset:0;z-index:50000;
-  display:flex;flex-direction:column;justify-content:flex-end;
-  background:rgba(0,0,0,0);pointer-events:none;
-  transition:background .28s ease;
+/* ── iOS-style Bottom Sheet (recents 3-dot) ─────────────────────── */
+.rbs-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:39999;transition:background .3s;pointer-events:none;}
+.rbs-backdrop.open{background:rgba(0,0,0,.35);pointer-events:auto;}
+.rbs-sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:40000;
+  background:#fff;border-radius:20px 20px 0 0;
+  box-shadow:0 -4px 32px rgba(0,0,0,.18);
+  transform:translateY(100%);transition:transform .38s cubic-bezier(.32,1,.5,1);
+  display:flex;flex-direction:column;max-height:92dvh;
+  touch-action:none;user-select:none;
 }
-#recDocSheet.open { background:rgba(0,0,0,0.42);pointer-events:auto; }
-body.dark #recDocSheet.open { background:rgba(0,0,0,0.62); }
-
-.rds-sheet {
-  background:#F2F2F7;
-  border-radius:20px 20px 0 0;
-  max-height:82vh;
-  display:flex;flex-direction:column;
-  transform:translateY(100%);
-  transition:transform .32s cubic-bezier(.2,.8,.2,1);
-  touch-action:none;
-  will-change:transform;
-  overflow:hidden;
-}
-body.dark .rds-sheet { background:#1C1C1E; }
-#recDocSheet.open .rds-sheet { transform:translateY(0); }
-
-/* Drag handle */
-.rds-handle {
-  width:36px;height:5px;border-radius:3px;
-  background:rgba(120,120,128,0.3);
-  margin:10px auto 0;flex-shrink:0;
-  cursor:grab;
-}
-body.dark .rds-handle { background:rgba(255,255,255,0.2); }
-
-/* Sheet header with back button */
-.rds-header {
-  display:flex;align-items:center;gap:8px;
-  padding:10px 16px 8px;flex-shrink:0;
-}
-.rds-back-btn {
-  background:none;border:none;cursor:pointer;
-  width:32px;height:32px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  color:#007AFF;flex-shrink:0;transition:background .13s;
-}
-body.dark .rds-back-btn { color:#0A84FF; }
-.rds-back-btn:active { background:rgba(0,122,255,.12); }
-.rds-doc-name {
-  font-size:16px;font-weight:700;color:#000;
-  flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-body.dark .rds-doc-name { color:#fff; }
-.rds-close-btn {
-  background:rgba(120,120,128,0.14);border:none;cursor:pointer;
-  width:30px;height:30px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  color:#8E8E93;flex-shrink:0;
-}
-body.dark .rds-close-btn { background:rgba(255,255,255,0.1); }
-.rds-close-btn:active { background:rgba(120,120,128,0.28); }
-
-/* Sub-page title (Share, Download, Details, Copy Link) */
-.rds-sub-title {
-  font-size:14px;font-weight:700;color:#8E8E93;
-  padding:0 16px 8px;flex-shrink:0;
-  text-transform:uppercase;letter-spacing:.4px;
-}
-body.dark .rds-sub-title { color:#636366; }
-
-/* Scrollable body */
-.rds-body {
-  flex:1;overflow-y:auto;padding:0 12px 32px;
-}
-
-/* Grouped option rows */
-.rds-group {
-  background:#fff;border-radius:14px;margin-bottom:10px;overflow:hidden;
-}
-body.dark .rds-group { background:#2C2C2E; }
-.rds-item {
-  display:flex;align-items:center;gap:14px;
-  padding:14px 16px;cursor:pointer;
-  font-size:16px;color:#000;
-  border-bottom:1px solid rgba(120,120,128,.12);
+body.dark .rbs-sheet{background:#1C1C1E;}
+.rbs-sheet.open{transform:translateY(0);}
+.rbs-handle{width:36px;height:4px;border-radius:2px;background:#C7C7CC;margin:10px auto 0;flex-shrink:0;}
+body.dark .rbs-handle{background:#48484A;}
+.rbs-header{display:flex;align-items:center;gap:10px;padding:14px 18px 10px;flex-shrink:0;}
+.rbs-back-btn{width:32px;height:32px;border:none;background:rgba(0,0,0,.06);border-radius:50%;cursor:pointer;display:none;align-items:center;justify-content:center;color:#000;flex-shrink:0;transition:background .15s;}
+body.dark .rbs-back-btn{background:rgba(255,255,255,.1);color:#fff;}
+.rbs-back-btn:hover{background:rgba(0,0,0,.1);}
+body.dark .rbs-back-btn:hover{background:rgba(255,255,255,.18);}
+.rbs-back-btn.visible{display:flex;}
+.rbs-title{font-size:15px;font-weight:700;color:#000;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body.dark .rbs-title{color:#fff;}
+.rbs-body{overflow-y:auto;padding:6px 14px 32px;flex:1;overscroll-behavior:contain;}
+.rbs-section{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.rbs-row{
+  display:flex;align-items:center;gap:14px;width:100%;
+  padding:13px 15px;border:none;border-radius:13px;cursor:pointer;
+  background:#F2F2F7;font-size:16px;font-weight:500;color:#000;text-align:left;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   transition:background .12s;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
 }
-body.dark .rds-item { color:#fff;border-bottom-color:rgba(255,255,255,.07); }
-.rds-item:last-child { border-bottom:none; }
-.rds-item:active { background:#E5E5EA; }
-body.dark .rds-item:active { background:#3A3A3C; }
-.rds-item .rds-icon {
-  width:32px;height:32px;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;font-size:16px;
+body.dark .rbs-row{background:#2C2C2E;color:#fff;}
+.rbs-row:hover,.rbs-row:active{background:#E5E5EA;}
+body.dark .rbs-row:hover,body.dark .rbs-row:active{background:#3A3A3C;}
+.rbs-row.danger{color:#FF3B30;}
+body.dark .rbs-row.danger{color:#FF453A;}
+.rbs-row .rbs-icon{font-size:19px;color:#8E8E93;width:22px;text-align:center;flex-shrink:0;}
+.rbs-row.danger .rbs-icon{color:#FF3B30;}
+body.dark .rbs-row.danger .rbs-icon{color:#FF453A;}
+.rbs-row .rbs-chev{margin-left:auto;font-size:17px;color:#C7C7CC;flex-shrink:0;}
+.rbs-sep{height:1px;background:#E5E5EA;margin:6px 0;}
+body.dark .rbs-sep{background:#3A3A3C;}
+/* preview card */
+.rbs-preview-card{background:#F9F9FB;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+body.dark .rbs-preview-card{background:#2C2C2E;}
+.rbs-preview-icon{font-size:44px;color:#007AFF;display:flex;align-items:center;justify-content:center;margin-bottom:4px;}
+body.dark .rbs-preview-icon{color:#0A84FF;}
+.rbs-preview-title{font-size:16px;font-weight:700;color:#000;text-align:center;margin-bottom:8px;}
+body.dark .rbs-preview-title{color:#fff;}
+.rbs-detail-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #EBEBEF;}
+body.dark .rbs-detail-row{border-bottom-color:#3A3A3C;}
+.rbs-detail-row:last-child{border-bottom:none;}
+.rbs-detail-label{font-size:13px;color:#8E8E93;}
+.rbs-detail-val{font-size:13px;font-weight:500;color:#000;text-align:right;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body.dark .rbs-detail-val{color:#fff;}
+/* share link field */
+.rbs-link-box{background:#F2F2F7;border-radius:12px;padding:11px 13px;font-size:13px;color:#000;word-break:break-all;margin-bottom:10px;line-height:1.5;}
+body.dark .rbs-link-box{background:#2C2C2E;color:#fff;}
+/* grid card new design */
+.rec-grid-card{
+  background:#FFFFFF;border-radius:16px;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);
+  cursor:pointer;transition:all .2s cubic-bezier(.25,.8,.25,1);
+  position:relative;overflow:hidden;aspect-ratio:3/4;display:flex;flex-direction:column;
 }
-.rds-item.danger { color:#FF3B30; }
-body.dark .rds-item.danger { color:#FF453A; }
-.rds-item.danger .rds-icon { background:rgba(255,59,48,.12); color:#FF3B30; }
-body.dark .rds-item.danger .rds-icon { background:rgba(255,69,58,.15); color:#FF453A; }
-.rds-item-label { flex:1; }
-.rds-item-chevron { color:#C7C7CC;font-size:14px; }
-body.dark .rds-item-chevron { color:#48484A; }
-
-/* Icon color variants */
-.rds-icon.blue   { background:rgba(0,122,255,.12);color:#007AFF; }
-.rds-icon.green  { background:rgba(52,199,89,.12);color:#34C759; }
-.rds-icon.orange { background:rgba(255,149,0,.12);color:#FF9500; }
-.rds-icon.purple { background:rgba(175,82,222,.12);color:#AF52DE; }
-.rds-icon.teal   { background:rgba(90,200,250,.12);color:#5AC8FA; }
-.rds-icon.gray   { background:rgba(120,120,128,.12);color:#8E8E93; }
-body.dark .rds-icon.blue   { background:rgba(10,132,255,.18);color:#0A84FF; }
-body.dark .rds-icon.green  { background:rgba(48,209,88,.15);color:#30D158; }
-body.dark .rds-icon.orange { background:rgba(255,159,10,.15);color:#FF9F0A; }
-body.dark .rds-icon.purple { background:rgba(191,90,242,.15);color:#BF5AF2; }
-body.dark .rds-icon.teal   { background:rgba(100,210,255,.12);color:#64D2FF; }
-body.dark .rds-icon.gray   { background:rgba(255,255,255,.08);color:#98989D; }
-
-/* Scroll hint divider */
-.rds-scroll-hint {
-  text-align:center;color:#C7C7CC;font-size:11px;padding:6px 0 4px;
-  letter-spacing:.3px;
-}
-body.dark .rds-scroll-hint { color:#3A3A3C; }
-
-/* Share page */
-.rds-link-box {
-  background:#fff;border-radius:14px;padding:14px 16px;margin-bottom:10px;
-}
-body.dark .rds-link-box { background:#2C2C2E; }
-.rds-link-label { font-size:11px;font-weight:600;color:#8E8E93;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px; }
-.rds-link-row {
-  display:flex;align-items:center;gap:8px;
-  background:rgba(120,120,128,.1);border-radius:10px;padding:10px 12px;
-}
-body.dark .rds-link-row { background:rgba(255,255,255,.06); }
-.rds-link-url {
-  flex:1;font-size:13px;color:#007AFF;word-break:break-all;
-  overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
-}
-body.dark .rds-link-url { color:#0A84FF; }
-.rds-copy-mini {
-  background:none;border:none;cursor:pointer;color:#007AFF;
-  font-size:13px;font-weight:600;padding:4px 8px;border-radius:8px;
-  transition:background .12s;flex-shrink:0;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-}
-.rds-copy-mini:active { background:rgba(0,122,255,.1); }
-body.dark .rds-copy-mini { color:#0A84FF; }
-.rds-action-btn {
-  width:100%;padding:15px;border:none;border-radius:14px;
-  background:#007AFF;color:#fff;font-size:16px;font-weight:600;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
-  margin-bottom:10px;transition:opacity .15s;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-}
-.rds-action-btn:active { opacity:.8; }
-.rds-action-btn.secondary { background:rgba(0,122,255,.12);color:#007AFF; }
-body.dark .rds-action-btn.secondary { background:rgba(10,132,255,.18);color:#0A84FF; }
-
-/* Details page */
-.rds-preview-card {
-  background:#fff;border-radius:18px;padding:28px;
-  display:flex;flex-direction:column;align-items:center;
-  gap:12px;margin-bottom:10px;
-  box-shadow:0 2px 12px rgba(0,0,0,.06);
-}
-body.dark .rds-preview-card { background:#2C2C2E;box-shadow:none; }
-.rds-preview-icon {
-  width:72px;height:72px;background:rgba(0,122,255,.1);
-  border-radius:20px;display:flex;align-items:center;justify-content:center;
-  color:#007AFF;font-size:36px;
-}
-body.dark .rds-preview-icon { background:rgba(10,132,255,.2);color:#0A84FF; }
-.rds-preview-name {
-  font-size:18px;font-weight:700;color:#000;text-align:center;
-  word-break:break-word;
-}
-body.dark .rds-preview-name { color:#fff; }
-.rds-detail-row {
-  display:flex;align-items:center;justify-content:space-between;
-  padding:13px 16px;font-size:15px;
-  border-bottom:1px solid rgba(120,120,128,.12);
-}
-body.dark .rds-detail-row { border-bottom-color:rgba(255,255,255,.07); }
-.rds-detail-row:last-child { border-bottom:none; }
-.rds-detail-key { color:#8E8E93; }
-body.dark .rds-detail-key { color:#98989D; }
-.rds-detail-val { color:#000;font-weight:500;text-align:right; }
-body.dark .rds-detail-val { color:#fff; }
-
-/* Download format grid */
-.rds-fmt-grid {
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;
-  padding:0 0 8px;
-}
-.rds-fmt-chip {
-  background:#fff;border-radius:12px;padding:12px 8px;
-  display:flex;flex-direction:column;align-items:center;gap:5px;
-  cursor:pointer;border:2px solid transparent;transition:all .13s;
-  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-}
-body.dark .rds-fmt-chip { background:#2C2C2E; }
-.rds-fmt-chip:active { transform:scale(.95); }
-.rds-fmt-chip.selected { border-color:#007AFF;background:#E8F3FF; }
-body.dark .rds-fmt-chip.selected { border-color:#0A84FF;background:rgba(10,132,255,.18); }
-.rds-fmt-ext {
-  font-size:13px;font-weight:700;color:#000;
-  background:rgba(120,120,128,.1);border-radius:6px;padding:3px 8px;
-}
-body.dark .rds-fmt-ext { color:#fff;background:rgba(255,255,255,.1); }
-.rds-fmt-name { font-size:10px;color:#8E8E93;text-align:center;line-height:1.3; }
-
-/* Grid card three-dot overlay button */
-.rec-grid-dots-btn {
-  position:absolute;bottom:8px;right:8px;
-  width:28px;height:28px;border-radius:8px;
-  background:rgba(0,0,0,.06);border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  color:#8E8E93;z-index:3;transition:background .12s;
-}
-body.dark .rec-grid-dots-btn { background:rgba(255,255,255,.1);color:#98989D; }
-.rec-grid-dots-btn:active { background:rgba(0,122,255,.15);color:#007AFF; }
-body.dark .rec-grid-dots-btn:active { background:rgba(10,132,255,.25);color:#0A84FF; }
+body.dark .rec-grid-card{background:#1C1C1E;box-shadow:none;}
+.rec-grid-card:active{transform:scale(0.97);opacity:.85;}
+.rec-grid-cover{flex:1;background:linear-gradient(145deg,#f0f4ff 0%,#e8ecff 100%);display:flex;align-items:center;justify-content:center;position:relative;}
+body.dark .rec-grid-cover{background:linear-gradient(145deg,#1a2040 0%,#141830 100%);}
+.rec-grid-cover-icon{font-size:40px;color:#007AFF;opacity:.7;}
+body.dark .rec-grid-cover-icon{color:#0A84FF;}
+.rec-grid-footer{padding:9px 10px 8px;display:flex;align-items:center;gap:6px;border-top:1px solid rgba(0,0,0,.05);background:#fff;}
+body.dark .rec-grid-footer{background:#1C1C1E;border-top-color:rgba(255,255,255,.05);}
+.rec-grid-card-name{font-size:12px;line-height:1.3;font-weight:600;color:#000;flex:1;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+body.dark .rec-grid-card-name{color:#fff;}
+.rec-grid-card-dots{width:26px;height:26px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:6px;color:#8E8E93;flex-shrink:0;transition:background .12s;}
+.rec-grid-card-dots:hover{background:rgba(0,0,0,.06);color:#000;}
+body.dark .rec-grid-card-dots:hover{background:rgba(255,255,255,.1);color:#fff;}
+.rec-grid-live-cloud{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:#007AFF;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,122,255,.35);}
+.rec-grid-live-cloud .material-symbols-outlined{font-size:13px;color:#fff;}
+body.dark .rec-grid-live-cloud{background:#0A84FF;}
+/* download popup inside sheet */
+.rbs-dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+.rbs-dl-btn{background:#F2F2F7;border:none;border-radius:13px;padding:14px 10px;cursor:pointer;font-size:14px;font-weight:600;color:#007AFF;display:flex;flex-direction:column;align-items:center;gap:6px;transition:background .12s;font-family:inherit;}
+body.dark .rbs-dl-btn{background:#2C2C2E;color:#0A84FF;}
+.rbs-dl-btn:hover{background:#E5E5EA;}
+body.dark .rbs-dl-btn:hover{background:#3A3A3C;}
+.rbs-dl-btn .material-symbols-outlined{font-size:26px;}
+.rbs-dl-btn span:last-child{font-size:12px;color:#8E8E93;font-weight:500;}
 
 /* ── Grammar Checker ───────────────────────────────────────────── */
 .grammar-error { 
@@ -2011,22 +1835,17 @@ body.dark .gs-item:hover { background:#1a2a3a; color:#29b6f6; }
   </div>
 </div>
 
-<!-- Doc Options Bottom Sheet (iOS-style, replaces dropdown) -->
-<div id="recDocSheet" onclick="if(event.target===this)recDocSheetClose()">
-  <div class="rds-sheet" id="rdsSheetEl">
-    <div class="rds-handle" id="rdsHandle"></div>
-    <div class="rds-header" id="rdsHeader">
-      <button class="rds-back-btn" id="rdsBackBtn" style="display:none" onclick="rdsGoBack()">
-        <span class="material-symbols-outlined" style="font-size:20px">arrow_back_ios</span>
-      </button>
-      <span class="rds-doc-name" id="rdsDocName"></span>
-      <button class="rds-close-btn" onclick="recDocSheetClose()">
-        <span class="material-symbols-outlined" style="font-size:16px">close</span>
-      </button>
-    </div>
-    <div class="rds-sub-title" id="rdsSubTitle" style="display:none"></div>
-    <div class="rds-body" id="rdsBody"></div>
+<!-- Recents Bottom Sheet -->
+<div class="rbs-backdrop" id="rbsBackdrop" onclick="rbsClose()"></div>
+<div class="rbs-sheet" id="rbsSheet" ontouchstart="rbsDragStart(event)" ontouchmove="rbsDragMove(event)" ontouchend="rbsDragEnd(event)">
+  <div class="rbs-handle"></div>
+  <div class="rbs-header">
+    <button class="rbs-back-btn" id="rbsBackBtn" onclick="rbsBack()">
+      <span class="material-symbols-outlined" style="font-size:18px">arrow_back_ios_new</span>
+    </button>
+    <div class="rbs-title" id="rbsTitle">Options</div>
   </div>
+  <div class="rbs-body" id="rbsBody"></div>
 </div>
 
 
@@ -3954,47 +3773,7 @@ let _dontSaveEmpty = localStorage.getItem('sc_dont_save_empty') === '1'; // only
 /* ── Grid card 3-second hold ─────────────────────────── */
 const _recGridHoldTimers = {};
 
-function recGridHoldStart(e, id) {
-  // Don't trigger hold if clicking overlay buttons or del-confirm
-  if (e.target.closest('.rec-grid-card-overlay') || e.target.closest('.rec-del-confirm')) return;
-  _recGridHoldTimers[id] = setTimeout(() => {
-    recGridShowOverlay(id);
-  }, 3000);
-}
 
-function recGridHoldEnd(id) {
-  clearTimeout(_recGridHoldTimers[id]);
-  delete _recGridHoldTimers[id];
-}
-
-function recGridShowOverlay(id) {
-  // Hide all other overlays first
-  document.querySelectorAll('.rec-grid-card-overlay').forEach(el => { el.style.display = 'none'; });
-  const overlay = document.getElementById('recGridOverlay-' + id);
-  if (overlay) overlay.style.display = 'flex';
-}
-
-function recGridHideOverlay(id) {
-  const overlay = document.getElementById('recGridOverlay-' + id);
-  if (overlay) overlay.style.display = 'none';
-}
-
-function recGridCardClick(e, id) {
-  // If overlay is visible, suppress the open-doc click
-  const overlay = document.getElementById('recGridOverlay-' + id);
-  if (overlay && overlay.style.display === 'flex') {
-    e.stopPropagation();
-    return;
-  }
-  recOpenDoc(id);
-}
-
-// Clicking outside any grid card hides all overlays
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.rec-grid-card')) {
-    document.querySelectorAll('.rec-grid-card-overlay').forEach(el => { el.style.display = 'none'; });
-  }
-}, true);
 
 /* Open / init DB */
 function openDB() {
@@ -4511,76 +4290,7 @@ async function _orig_recRender() {
   }
 }
 
-function _orig_recCardHTML(doc) {
-  const isOpen = doc.id === _currentDocId;
-  const pinned = _recPinned.has(doc.id);
-  return `<div class="rec-card" id="recCard-${doc.id}" onclick="recOpenDoc('${doc.id}')">
-    <div class="rec-card-icon"><i class="bi bi-file-earmark-richtext"></i></div>
-    <div class="rec-card-info">
-      <div class="rec-card-name" id="recName-${doc.id}">${escHtml(doc.title)}${isOpen ? ' <span style="font-size:11px;font-weight:600;color:#007AFF;background:rgba(0,122,255,.1);padding:2px 8px;border-radius:20px;margin-left:6px;">Open</span>' : ''}</div>
-      <div class="rec-card-meta">
-        <span class="rec-card-date"><i class="bi bi-pencil" style="margin-right:3px;font-size:10px"></i>${formatDate(doc.modified)}</span>
-        <span class="rec-card-modified"><i class="bi bi-eye" style="margin-right:3px;font-size:10px"></i>${formatDate(doc.lastOpened)}</span>
-        <span class="rec-card-size">${formatSize(doc.size)}</span>
-      </div>
-    </div>
-    ${pinned ? '<div class="rec-pin-badge" title="Pinned"><span class="material-symbols-outlined" style="font-size:13px">push_pin</span></div>' : ''}
-    <div class="rec-card-actions">
-      <button class="rec-card-btn" title="${pinned?'Unpin':'Pin'}" onclick="event.stopPropagation();recTogglePin('${doc.id}','${escHtml(doc.title).replace(/'/g,"\\'")}')" style="font-size:16px"><span class="material-symbols-outlined" style="font-size:16px">${pinned?'push_pin':'keep'}</span></button>
-      <button class="rec-card-btn" title="Rename" onclick="event.stopPropagation();recStartRename('${doc.id}')"><i class="bi bi-pencil"></i></button>
-      <button class="rec-card-btn danger" title="Delete" onclick="event.stopPropagation();recConfirmDelete('${doc.id}')"><i class="bi bi-trash"></i></button>
-    </div>
-    <div class="rec-del-confirm" id="recDel-${doc.id}">
-      <span class="rec-del-msg">Move to Recycle Bin?</span>
-      <button class="rec-del-yes" onclick="event.stopPropagation();recDoDelete('${doc.id}')">Delete</button>
-      <button class="rec-del-no" onclick="event.stopPropagation();recCancelDelete('${doc.id}')">Cancel</button>
-    </div>
-  </div>`;
-}
 
-function recGridCardHTML(doc) {
-  const isOpen = doc.id === _currentDocId;
-  const pinned = _recPinned.has(doc.id);
-  const live = isDocLive(doc.id);
-  const id = doc.id;
-  const tEsc = escHtml(doc.title).replace(/'/g,"\\'");
-  const sz   = doc.size || 0;
-  const mod  = doc.modified || 0;
-  const cre  = doc.created  || 0;
-  return `<div class="rec-grid-card" id="recCard-${id}"
-      onclick="recGridCardClick(event,'${id}')"
-      onmousedown="recGridHoldStart(event,'${id}')"
-      onmouseup="recGridHoldEnd('${id}')"
-      onmouseleave="recGridHoldEnd('${id}')"
-      ontouchstart="recGridHoldStart(event,'${id}')"
-      ontouchend="recGridHoldEnd('${id}')"
-      title="${escHtml(doc.title)}">
-    ${pinned ? '<div style="position:absolute;top:8px;left:8px;z-index:3" title="Pinned"><span class="material-symbols-outlined" style="font-size:14px;color:#FF9500">push_pin</span></div>' : ''}
-    ${live ? '<div class="rec-grid-live-cloud" title="Live on Drive"><span class="material-symbols-outlined">cloud</span></div>' : ''}
-    <i class="bi bi-file-earmark-richtext rec-grid-card-icon"></i>
-    <div class="rec-grid-card-footer">
-      <div class="rec-grid-card-name" id="recName-${id}">${escHtml(doc.title)}</div>
-      <div class="rec-grid-card-meta">${isOpen ? '<span style="color:#007AFF;font-weight:600;">Open</span>' : formatDate(mod)}</div>
-    </div>
-    <button class="rec-grid-dots-btn" title="Options"
-      onclick="event.stopPropagation();recShowDocSheet('${id}','${tEsc}',${pinned},${live},${sz},${mod},${cre})">
-      <span class="material-symbols-outlined" style="font-size:15px">more_vert</span>
-    </button>
-    <!-- Hold overlay: shown after 3-second hold -->
-    <div class="rec-grid-card-overlay" id="recGridOverlay-${id}" style="display:none">
-      <button class="rec-grid-overlay-btn edit" onclick="event.stopPropagation();recGridHideOverlay('${id}');recStartRename('${id}')" title="Rename">
-        <span class="material-symbols-outlined" style="font-size:18px">edit</span>
-      </button>
-      <button class="rec-grid-overlay-btn del" onclick="event.stopPropagation();recGridHideOverlay('${id}');recConfirmDelete('${id}')" title="Delete">
-        <span class="material-symbols-outlined" style="font-size:18px">delete</span>
-      </button>
-    </div>
-    <div class="rec-del-confirm" id="recDel-${id}">
-      <button class="rec-del-yes" onclick="event.stopPropagation();recDoDelete('${id}')">Delete</button>
-      <button class="rec-del-no" onclick="event.stopPropagation();recCancelDelete('${id}')">Cancel</button>
-    </div>
-  </div>`;
-}
 
 function escHtml(str) {
   return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -8321,11 +8031,14 @@ function closeUiThemeMdl() {
 
 function renderUtmPresets() {
   const grid = document.getElementById('utmPresetGrid');
-  grid.innerHTML = UTM_PRESETS.map((p, i) => `
-    <button class="utm-preset${i === _utmActivePreset ? ' active' : ''}" onclick="selectUtmPreset(${i})">
-      <div class="utm-preset-swatch">${p.colors.map(c => `<span style="background:${c}"></span>`).join('')}</div>
-      <span class="utm-preset-name">${p.name}</span>
-    </button>`).join('');
+  grid.innerHTML = UTM_PRESETS.map((p, i) => {
+    const swatches = p.colors.map(c => '<span style="background:' + c + '"></span>').join('');
+    const active = i === _utmActivePreset ? ' active' : '';
+    return '<button class="utm-preset' + active + '" onclick="selectUtmPreset(' + i + ')">' +
+      '<div class="utm-preset-swatch">' + swatches + '</div>' +
+      '<span class="utm-preset-name">' + p.name + '</span>' +
+      '</button>';
+  }).join('');
 }
 
 function selectUtmPreset(i) {
@@ -11250,401 +10963,230 @@ function recOpenCombinedPicker() {
 }
 
 /* ═══════════════════════════════════════════════════════
-   DOC OPTIONS BOTTOM SHEET  (iOS drag-sheet, multi-page)
+   3-DOT CARD DROPDOWN
 ═══════════════════════════════════════════════════════ */
-let _rdsDocId   = null;
-let _rdsIsLive  = false;
-let _rdsIsPinned = false;
-let _rdsDocTitle = '';
-let _rdsSizeBytes = 0;
-let _rdsModified = 0;
-let _rdsCreated  = 0;
-let _rdsDlFmt    = 'pdf'; // selected download format
-let _rdsPageStack = []; // navigation stack: ['main','share','details','download','copylink']
+let _dropDocId = null;
+let _dropDocIsLive = false;
 
-/* ── Drag-to-dismiss ── */
-(function(){
-  let startY=0, curY=0, dragging=false;
-  const getSheet=()=>document.getElementById('rdsSheetEl');
-  const getHandle=()=>document.getElementById('rdsHandle');
-  function onDown(e){
-    const touch=e.touches?e.touches[0]:e;
-    startY=touch.clientY; curY=startY; dragging=true;
-  }
-  function onMove(e){
-    if(!dragging)return;
-    const touch=e.touches?e.touches[0]:e;
-    curY=touch.clientY;
-    const dy=Math.max(0,curY-startY);
-    getSheet().style.transform=`translateY(${dy}px)`;
-    e.preventDefault();
-  }
-  function onUp(){
-    if(!dragging)return; dragging=false;
-    const dy=curY-startY;
-    const sheet=getSheet();
-    sheet.style.transform='';
-    sheet.style.transition='transform .32s cubic-bezier(.2,.8,.2,1)';
-    setTimeout(()=>sheet.style.transition='',350);
-    if(dy>90) recDocSheetClose();
-  }
-  document.addEventListener('DOMContentLoaded',()=>{
-    const h=document.getElementById('rdsHandle');
-    if(!h)return;
-    h.addEventListener('mousedown',onDown);
-    h.addEventListener('touchstart',onDown,{passive:false});
-    document.addEventListener('mousemove',onMove);
-    document.addEventListener('touchmove',onMove,{passive:false});
-    document.addEventListener('mouseup',onUp);
-    document.addEventListener('touchend',onUp);
-  });
-})();
+/* ════════════════════════════════════════════════════════
+   RECENTS BOTTOM SHEET ENGINE
+════════════════════════════════════════════════════════ */
+let _rbs = { docId:null, docTitle:'', isPinned:false, isLive:false, stack:[] };
 
-function recDocSheetClose() {
-  const overlay = document.getElementById('recDocSheet');
-  overlay.classList.remove('open');
-  _rdsPageStack = [];
+/* drag state */
+let _rbsDragY0 = 0, _rbsDragDY = 0, _rbsDragging = false;
+function rbsDragStart(e) {
+  _rbsDragY0 = e.touches[0].clientY; _rbsDragDY = 0; _rbsDragging = true;
+  document.getElementById('rbsSheet').style.transition = 'none';
+}
+function rbsDragMove(e) {
+  if (!_rbsDragging) return;
+  _rbsDragDY = Math.max(0, e.touches[0].clientY - _rbsDragY0);
+  document.getElementById('rbsSheet').style.transform = `translateY(${_rbsDragDY}px)`;
+}
+function rbsDragEnd(e) {
+  if (!_rbsDragging) return; _rbsDragging = false;
+  const sheet = document.getElementById('rbsSheet');
+  sheet.style.transition = '';
+  if (_rbsDragDY > 120) { rbsClose(); } else { sheet.style.transform = ''; }
 }
 
-function rdsGoBack() {
-  _rdsPageStack.pop();
-  const prev = _rdsPageStack[_rdsPageStack.length - 1] || 'main';
-  _rdsPageStack = _rdsPageStack.slice(0, -1); // pop again since rdsNavigate pushes
-  rdsNavigate(prev);
+function rbsOpen(docId, title, isPinned, isLive) {
+  _rbs.docId = docId; _rbs.docTitle = title; _rbs.isPinned = isPinned; _rbs.isLive = isLive;
+  _rbs.stack = [];
+  rbsRenderMain();
+  document.getElementById('rbsBackBtn').classList.remove('visible');
+  document.getElementById('rbsTitle').textContent = title || 'Options';
+  document.getElementById('rbsBackdrop').classList.add('open');
+  document.getElementById('rbsSheet').classList.add('open');
 }
-
-function rdsNavigate(page) {
-  _rdsPageStack.push(page);
-  const backBtn   = document.getElementById('rdsBackBtn');
-  const subTitle  = document.getElementById('rdsSubTitle');
-  const docName   = document.getElementById('rdsDocName');
-  backBtn.style.display = (_rdsPageStack.length > 1) ? 'flex' : 'none';
-  if (page === 'main') {
-    docName.textContent = _rdsDocTitle;
-    subTitle.style.display = 'none';
-    _rdsRenderMain();
-  } else if (page === 'share') {
-    docName.textContent = _rdsDocTitle;
-    subTitle.style.display = 'block';
-    subTitle.textContent = 'Share';
-    _rdsRenderShare();
-  } else if (page === 'details') {
-    docName.textContent = _rdsDocTitle;
-    subTitle.style.display = 'block';
-    subTitle.textContent = 'Details';
-    _rdsRenderDetails();
-  } else if (page === 'download') {
-    docName.textContent = _rdsDocTitle;
-    subTitle.style.display = 'block';
-    subTitle.textContent = 'Export';
-    _rdsRenderDownload();
-  } else if (page === 'copylink') {
-    docName.textContent = _rdsDocTitle;
-    subTitle.style.display = 'block';
-    subTitle.textContent = 'Copy Link';
-    _rdsRenderCopyLink();
+function rbsClose() {
+  document.getElementById('rbsSheet').classList.remove('open');
+  document.getElementById('rbsBackdrop').classList.remove('open');
+  document.getElementById('rbsSheet').style.transform = '';
+}
+function rbsBack() {
+  _rbs.stack.pop();
+  if (_rbs.stack.length === 0) {
+    rbsRenderMain();
+    document.getElementById('rbsBackBtn').classList.remove('visible');
+    document.getElementById('rbsTitle').textContent = _rbs.docTitle || 'Options';
+  } else {
+    const prev = _rbs.stack[_rbs.stack.length-1];
+    document.getElementById('rbsTitle').textContent = prev.title;
+    prev.render();
   }
 }
-
-async function recShowDocSheet(docId, title, isPinned, isLive, sizeBytes, modified, created) {
-  _rdsDocId    = docId;
-  _rdsIsLive   = !!isLive;
-  _rdsIsPinned = !!isPinned;
-  _rdsDocTitle = title || 'Untitled';
-  _rdsSizeBytes = sizeBytes || 0;
-  _rdsModified  = modified  || 0;
-  _rdsCreated   = created   || 0;
-  _rdsPageStack = [];
-  const overlay = document.getElementById('recDocSheet');
-  overlay.classList.add('open');
-  rdsNavigate('main');
+function rbsPush(titleText, renderFnName) {
+  const renderFn = window[renderFnName];
+  if (!renderFn) return;
+  _rbs.stack.push({ title: titleText, render: renderFn });
+  document.getElementById('rbsTitle').textContent = titleText;
+  document.getElementById('rbsBackBtn').classList.add('visible');
+  renderFn();
 }
 
-function _rdsRenderMain() {
-  const body = document.getElementById('rdsBody');
-  const pinLabel = _rdsIsPinned ? 'Unpin' : 'Pin';
-  const liveHTML = _rdsIsLive
-    ? `<div class="rds-item" onclick="rdsAction('movetolocal')">
-        <div class="rds-icon teal"><span class="material-symbols-outlined" style="font-size:18px">drive_file_move</span></div>
-        <span class="rds-item-label">Move to Device</span>
-        <span class="rds-item-chevron material-symbols-outlined" style="font-size:16px">chevron_right</span>
-       </div>`
-    : (_googleUser ? `<div class="rds-item" onclick="rdsAction('movetocloud')">
-        <div class="rds-icon blue"><span class="material-symbols-outlined" style="font-size:18px">cloud_upload</span></div>
-        <span class="rds-item-label">Move to Cloud</span>
-        <span class="rds-item-chevron material-symbols-outlined" style="font-size:16px">chevron_right</span>
-       </div>` : '');
+function rbsRow(icon, label, onclick, opts={}) {
+  const danger = opts.danger ? 'danger' : '';
+  const chev   = opts.chev  ? `<span class="material-symbols-outlined rbs-chev">chevron_right</span>` : '';
+  return `<button class="rbs-row ${danger}" onclick="${onclick}"><span class="material-symbols-outlined rbs-icon">${icon}</span>${label}${chev}</button>`;
+}
 
-  body.innerHTML = `
-    <div class="rds-group">
-      ${!_rdsIsLive ? `<div class="rds-item" onclick="rdsAction('pin')">
-        <div class="rds-icon orange"><span class="material-symbols-outlined" style="font-size:18px">${_rdsIsPinned ? 'push_pin' : 'push_pin'}</span></div>
-        <span class="rds-item-label">${pinLabel}</span>
-        <span class="rds-item-chevron material-symbols-outlined" style="font-size:16px">chevron_right</span>
-      </div>` : ''}
-      <div class="rds-item" onclick="rdsNavigate('share')">
-        <div class="rds-icon blue"><span class="material-symbols-outlined" style="font-size:18px">share</span></div>
-        <span class="rds-item-label">Share</span>
-        <span class="rds-item-chevron material-symbols-outlined" style="font-size:16px">chevron_right</span>
-      </div>
-      ${liveHTML}
-      <div class="rds-item" onclick="rdsNavigate('details')">
-        <div class="rds-icon gray"><span class="material-symbols-outlined" style="font-size:18px">info</span></div>
-        <span class="rds-item-label">Details</span>
-        <span class="rds-item-chevron material-symbols-outlined" style="font-size:16px">chevron_right</span>
-      </div>
+/* ── Main menu ── */
+function rbsRenderMain() {
+  const p = _rbs.isPinned; const live = _rbs.isLive;
+  document.getElementById('rbsBody').innerHTML = `
+    <div class="rbs-section">
+      ${!live ? rbsRow('push_pin', p?'Unpin':'Pin', 'rbsDoPin()') : ''}
+      ${rbsRow('share', 'Share', "rbsPush('Share','rbsRenderShare')", {chev:true})}
+      ${!live ? rbsRow('cloud_upload', 'Move to Cloud', 'rbsDoMoveCloud()') : ''}
     </div>
-    <div class="rds-scroll-hint">↓ scroll for more</div>
-    <div class="rds-group">
-      <div class="rds-item" onclick="rdsNavigate('copylink')">
-        <div class="rds-icon purple"><span class="material-symbols-outlined" style="font-size:18px">link</span></div>
-        <span class="rds-item-label">Copy Link</span>
-        <span class="rds-item-chevron material-symbols-outlined" style="font-size:16px">chevron_right</span>
-      </div>
-      <div class="rds-item" onclick="rdsAction('makecopy')">
-        <div class="rds-icon green"><span class="material-symbols-outlined" style="font-size:18px">file_copy</span></div>
-        <span class="rds-item-label">Make a Copy</span>
-      </div>
-      <div class="rds-item" onclick="rdsNavigate('download')">
-        <div class="rds-icon teal"><span class="material-symbols-outlined" style="font-size:18px">download</span></div>
-        <span class="rds-item-label">Download</span>
-        <span class="rds-item-chevron material-symbols-outlined" style="font-size:16px">chevron_right</span>
-      </div>
+    <div class="rbs-sep"></div>
+    <div class="rbs-section">
+      ${rbsRow('info', 'Details', "rbsPush('Details','rbsRenderDetails')", {chev:true})}
+      ${rbsRow('link', 'Copy Link', "rbsPush('Copy+Link','rbsRenderCopyLink')", {chev:true})}
+      ${rbsRow('content_copy', 'Make a Copy', 'rbsDoMakeCopy()')}
+      ${rbsRow('download', 'Download', "rbsPush('Download','rbsRenderDownload')", {chev:true})}
     </div>
-    <div class="rds-group">
-      <div class="rds-item" onclick="rdsAction('rename')">
-        <div class="rds-icon gray"><span class="material-symbols-outlined" style="font-size:18px">edit</span></div>
-        <span class="rds-item-label">Rename</span>
-      </div>
-      <div class="rds-item" onclick="rdsAction('print')">
-        <div class="rds-icon gray"><span class="material-symbols-outlined" style="font-size:18px">print</span></div>
-        <span class="rds-item-label">Print</span>
-      </div>
+    <div class="rbs-sep"></div>
+    <div class="rbs-section">
+      ${rbsRow('edit', 'Rename', 'rbsDoRename()')}
+      ${rbsRow('print', 'Print', 'rbsDoPrint()')}
     </div>
-    <div class="rds-group" style="margin-top:6px">
-      <div class="rds-item danger" onclick="rdsAction('delete')">
-        <div class="rds-icon"><span class="material-symbols-outlined" style="font-size:18px">delete</span></div>
-        <span class="rds-item-label">Move to Bin</span>
-      </div>
+    <div class="rbs-sep"></div>
+    <div class="rbs-section">
+      ${rbsRow('delete', 'Move to Bin', 'rbsDoDelete()', {danger:true})}
     </div>`;
 }
 
-function _rdsRenderShare() {
-  const tempLink = `https://docuwritepro.app/s/${_rdsDocId}`;
-  const body = document.getElementById('rdsBody');
-  body.innerHTML = `
-    <div class="rds-link-box">
-      <div class="rds-link-label">Shareable Link</div>
-      <div class="rds-link-row">
-        <span class="rds-link-url">${tempLink}</span>
-        <button class="rds-copy-mini" onclick="rdsAction('copyShareLink')">Copy</button>
-      </div>
-    </div>
-    <button class="rds-action-btn" onclick="rdsAction('shareLink')">
-      <span class="material-symbols-outlined" style="font-size:20px">share</span>Share Link
-    </button>
-    <button class="rds-action-btn secondary" onclick="rdsAction('shareAsSCD')">
-      <span class="material-symbols-outlined" style="font-size:20px">description</span>Share as SCD
-    </button>`;
+/* ── Share pane ── */
+function rbsRenderShare() {
+  const tempLink = window.location.href.split('?')[0] + '?docid=' + encodeURIComponent(_rbs.docId);
+  const safeLink = tempLink.replace(/'/g, '%27');
+  document.getElementById('rbsBody').innerHTML =
+    '<div class="rbs-link-box">' + tempLink + '</div>' +
+    '<div class="rbs-section">' +
+      rbsRow('share',      'Share Link',    "rbsDoShareLink('" + safeLink + "'); rbsClose()") +
+      rbsRow('folder_zip', 'Share as SCD',  'rbsDoShareSCD()') +
+    '</div>';
 }
 
-function _rdsRenderDetails() {
-  const body = document.getElementById('rdsBody');
-  const loc  = _rdsIsLive ? 'Cloud (Google Drive)' : 'Local (This Device)';
-  const modStr = _rdsModified ? new Date(_rdsModified).toLocaleString() : '—';
-  const creStr = _rdsCreated  ? new Date(_rdsCreated).toLocaleString()  : '—';
-  const sz  = _rdsSizeBytes ? formatSize(_rdsSizeBytes) : '—';
-  body.innerHTML = `
-    <div class="rds-preview-card">
-      <div class="rds-preview-icon"><i class="bi bi-file-earmark-richtext"></i></div>
-      <div class="rds-preview-name">${escHtml(_rdsDocTitle)}</div>
-    </div>
-    <div class="rds-group">
-      <div class="rds-detail-row"><span class="rds-detail-key">Last Modified</span><span class="rds-detail-val">${modStr}</span></div>
-      <div class="rds-detail-row"><span class="rds-detail-key">Location</span><span class="rds-detail-val">${loc}</span></div>
-      <div class="rds-detail-row"><span class="rds-detail-key">Size</span><span class="rds-detail-val">${sz}</span></div>
-      <div class="rds-detail-row"><span class="rds-detail-key">Date Created</span><span class="rds-detail-val">${creStr}</span></div>
+/* ── Details pane ── */
+async function rbsRenderDetails() {
+  const id = _rbs.docId; const live = _rbs.isLive;
+  let doc = null;
+  if (!live) { const all = await dbGetAll(); doc = all.find(d=>d.id===id); }
+  else { doc = (_liveDocsList||[]).find(d=>d.driveFileId===id||d.id===id); }
+  const name = (doc&&doc.title)||_rbs.docTitle||'—';
+  const mod  = doc&&doc.modified ? formatDate(doc.modified) : '—';
+  const cre  = doc&&doc.created  ? formatDate(doc.created)  : '—';
+  const size = doc&&doc.size     ? formatSize(doc.size)      : '—';
+  const loc  = live ? 'Cloud (Drive)' : 'Local';
+  document.getElementById('rbsBody').innerHTML =
+    '<div class="rbs-preview-card">' +
+      '<div class="rbs-preview-icon"><i class="bi bi-file-earmark-richtext"></i></div>' +
+      '<div class="rbs-preview-title">' + escHtml(name) + '</div>' +
+      '<div class="rbs-detail-row"><span class="rbs-detail-label">Last Modified</span><span class="rbs-detail-val">' + mod  + '</span></div>' +
+      '<div class="rbs-detail-row"><span class="rbs-detail-label">Location</span><span class="rbs-detail-val">'      + loc  + '</span></div>' +
+      '<div class="rbs-detail-row"><span class="rbs-detail-label">Size</span><span class="rbs-detail-val">'          + size + '</span></div>' +
+      '<div class="rbs-detail-row"><span class="rbs-detail-label">Date Created</span><span class="rbs-detail-val">'  + cre  + '</span></div>' +
+    '</div>';
+}
+
+/* ── Copy Link pane ── */
+function rbsRenderCopyLink() {
+  const tempLink = window.location.href.split('?')[0] + '?docid=' + encodeURIComponent(_rbs.docId);
+  const safeLink = tempLink.replace(/'/g, '%27');
+  document.getElementById('rbsBody').innerHTML =
+    '<div class="rbs-link-box">' + tempLink + '</div>' +
+    '<div class="rbs-section">' +
+      rbsRow('content_copy', 'Copy to Clipboard', "rbsCopyText('" + safeLink + "')") +
+    '</div>';
+}
+
+/* ── Download pane ── */
+function rbsRenderDownload() {
+  document.getElementById('rbsBody').innerHTML = `
+    <div class="rbs-dl-grid">
+      <button class="rbs-dl-btn" onclick="rbsClose();setTimeout(()=>doExport('pdf'),150)">
+        <span class="material-symbols-outlined">picture_as_pdf</span>PDF<span>Export as PDF</span>
+      </button>
+      <button class="rbs-dl-btn" onclick="rbsClose();setTimeout(()=>doExportSCD(),150)">
+        <span class="material-symbols-outlined">folder_zip</span>SCD<span>DocuWrite format</span>
+      </button>
+      <button class="rbs-dl-btn" onclick="rbsClose();setTimeout(()=>doExportWithOpts('docx'),150)">
+        <span class="material-symbols-outlined">description</span>DOCX<span>Word document</span>
+      </button>
+      <button class="rbs-dl-btn" onclick="rbsClose();setTimeout(()=>doExportWithOpts('txt'),150)">
+        <span class="material-symbols-outlined">text_snippet</span>TXT<span>Plain text</span>
+      </button>
+      <button class="rbs-dl-btn" onclick="rbsClose();setTimeout(()=>doExportWithOpts('jpg'),150)">
+        <span class="material-symbols-outlined">image</span>JPG<span>Image per page</span>
+      </button>
+      <button class="rbs-dl-btn" onclick="rbsClose();setTimeout(()=>exportMarkdown(),150)">
+        <span class="material-symbols-outlined">code</span>MD<span>Markdown</span>
+      </button>
     </div>`;
 }
 
-function _rdsRenderCopyLink() {
-  const link = `https://docuwritepro.app/s/${_rdsDocId}`;
-  const body = document.getElementById('rdsBody');
-  body.innerHTML = `
-    <div class="rds-link-box">
-      <div class="rds-link-label">Document Link</div>
-      <div class="rds-link-row">
-        <span class="rds-link-url">${link}</span>
-        <button class="rds-copy-mini" onclick="rdsAction('doCopyLink')">Copy</button>
-      </div>
-    </div>
-    <button class="rds-action-btn" onclick="rdsAction('doCopyLink')">
-      <span class="material-symbols-outlined" style="font-size:20px">content_copy</span>Copy Link
-    </button>`;
+/* ── Actions ── */
+async function rbsDoPin() {
+  rbsClose();
+  const all = await dbGetAll();
+  const t = (all.find(d=>d.id===_rbs.docId)||{}).title||'';
+  recTogglePin(_rbs.docId, t);
 }
-
-function _rdsRenderDownload() {
-  const fmts = [
-    {ext:'PDF',name:'PDF Document'},
-    {ext:'DOCX',name:'Word Document'},
-    {ext:'TXT',name:'Plain Text'},
-    {ext:'HTML',name:'Web Page'},
-    {ext:'SCD',name:'SCD Format'},
-    {ext:'MD',name:'Markdown'},
-  ];
-  const body = document.getElementById('rdsBody');
-  body.innerHTML = `
-    <div class="rds-fmt-grid" style="margin-bottom:12px">
-      ${fmts.map(f=>`<div class="rds-fmt-chip${_rdsDlFmt===f.ext.toLowerCase()?' selected':''}"
-          onclick="rdsSelectFmt('${f.ext.toLowerCase()}')">
-        <span class="rds-fmt-ext">${f.ext}</span>
-        <span class="rds-fmt-name">${f.name}</span>
-      </div>`).join('')}
-    </div>
-    <button class="rds-action-btn" onclick="rdsAction('doDownload')">
-      <span class="material-symbols-outlined" style="font-size:20px">download</span>Export as ${_rdsDlFmt.toUpperCase()}
-    </button>`;
+async function rbsDoMakeCopy() {
+  rbsClose();
+  if (_rbs.isLive) { showToast('Cannot duplicate Drive docs locally', 'info'); return; }
+  const all = await dbGetAll();
+  const doc = all.find(d=>d.id===_rbs.docId);
+  if (!doc) return;
+  const newDoc = JSON.parse(JSON.stringify(doc));
+  newDoc.id = 'doc_' + Date.now();
+  newDoc.title = (doc.title||'Untitled') + ' (copy)';
+  newDoc.created = newDoc.modified = Date.now();
+  await dbSave(newDoc);
+  showToast('Copy created', 'success');
+  recRender();
 }
-
-function rdsSelectFmt(fmt) {
-  _rdsDlFmt = fmt;
-  _rdsRenderDownload();
+function rbsDoMoveCloud() {
+  rbsClose();
+  if (!_googleUser) { showToast('Sign in with Google to use Drive', 'info'); return; }
+  makeDocLive(_rbs.docId);
 }
-
-async function rdsAction(action) {
-  const id = _rdsDocId;
-  const isLive = _rdsIsLive;
-  if (action === 'pin') {
-    recDocSheetClose();
-    const all = await dbGetAll();
-    const t = (all.find(d=>d.id===id)||{}).title||_rdsDocTitle;
-    recTogglePin(id, t);
-  } else if (action === 'rename') {
-    recDocSheetClose();
-    recStartRename(id);
-  } else if (action === 'print') {
-    recDocSheetClose();
-    if (isLive) await recOpenLiveDoc(id);
-    else await recOpenDoc(id);
-    setTimeout(() => window.print(), 800);
-  } else if (action === 'shareLink') {
-    const link = `https://docuwritepro.app/s/${id}`;
-    if (navigator.share) { navigator.share({ title: _rdsDocTitle, url: link }).catch(()=>{}); }
-    else { navigator.clipboard.writeText(link).then(()=>showToast('Link copied','success')); }
-  } else if (action === 'copyShareLink' || action === 'doCopyLink') {
-    const link = `https://docuwritepro.app/s/${id}`;
-    navigator.clipboard.writeText(link).then(()=>showToast('Link copied','success')).catch(()=>showToast('Copy failed','error'));
-  } else if (action === 'shareAsSCD') {
-    recDocSheetClose();
-    // Export as SCD then open share modal
-    try {
-      let data;
-      if (isLive) {
-        const text = await driveGetContent(id);
-        data = JSON.parse(text);
-      } else {
-        data = await dbGet(id);
-      }
-      if (!data) { showToast('Document not found','error'); return; }
-      const blob = new Blob([JSON.stringify(data)],{type:'application/json'});
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href = url; a.download = (_rdsDocTitle||'document') + '.scd';
-      document.body.appendChild(a); a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast('Exported as SCD','success');
-    } catch(e) { showToast('Export failed: '+e.message,'error'); }
-  } else if (action === 'movetocloud') {
-    recDocSheetClose();
-    await makeDocLive(id);
-  } else if (action === 'movetolocal') {
-    recDocSheetClose();
-    const doc = _liveDocsList.find(d => d.driveFileId === id);
-    const docTitle = doc ? doc.title : _rdsDocTitle;
-    if (confirm('Move "' + docTitle + '" to local storage? It will be removed from Drive.')) {
-      await moveDocToLocal(id);
+function rbsDoRename() {
+  rbsClose();
+  setTimeout(() => recStartRename(_rbs.docId), 200);
+}
+function rbsDoPrint() {
+  rbsClose();
+  setTimeout(() => window.print(), 200);
+}
+function rbsDoDelete() {
+  rbsClose();
+  if (_rbs.isLive) {
+    if (confirm('Delete this Drive document permanently?')) {
+      driveUnliveDoc(_rbs.docId, true).then(()=>{ showToast('Deleted from Drive','info'); recRender(); });
     }
-  } else if (action === 'makecopy') {
-    recDocSheetClose();
-    try {
-      let data;
-      if (isLive) { const t=await driveGetContent(id); data=JSON.parse(t); }
-      else data = await dbGet(id);
-      if (!data) { showToast('Could not duplicate','error'); return; }
-      const newDoc = Object.assign({}, data, {
-        id: 'doc_' + Date.now() + '_copy',
-        title: (data.title||'Untitled') + ' (Copy)',
-        modified: Date.now(), created: Date.now(), lastOpened: Date.now()
-      });
-      await dbPut(newDoc);
-      showToast('Document duplicated','success');
-      recRender();
-    } catch(e) { showToast('Duplicate failed','error'); }
-  } else if (action === 'doDownload') {
-    recDocSheetClose();
-    // Trigger export via existing export system
-    try {
-      let data;
-      if (isLive) { const t=await driveGetContent(id); data=JSON.parse(t); }
-      else data = await dbGet(id);
-      if (!data) { showToast('Document not found','error'); return; }
-      if (_rdsDlFmt === 'scd') {
-        const blob = new Blob([JSON.stringify(data)],{type:'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href=url; a.download=(data.title||'document')+'.scd';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Exported as SCD','success');
-      } else if (_rdsDlFmt === 'txt') {
-        const tmp = document.createElement('div'); tmp.innerHTML = data.content||'';
-        const blob = new Blob([tmp.textContent||''],{type:'text/plain'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href=url; a.download=(data.title||'document')+'.txt';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Exported as TXT','success');
-      } else if (_rdsDlFmt === 'html') {
-        const blob = new Blob([`<!DOCTYPE html><html><head><title>${data.title||''}</title></head><body>${data.content||''}</body></html>`],{type:'text/html'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href=url; a.download=(data.title||'document')+'.html';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Exported as HTML','success');
-      } else if (_rdsDlFmt === 'md') {
-        const tmp = document.createElement('div'); tmp.innerHTML = data.content||'';
-        const blob = new Blob([tmp.textContent||''],{type:'text/plain'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href=url; a.download=(data.title||'document')+'.md';
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Exported as Markdown','success');
-      } else {
-        // PDF or DOCX — open doc then trigger export
-        if (isLive) await recOpenLiveDoc(id);
-        else await recOpenDoc(id);
-        setTimeout(()=>{
-          if (_rdsDlFmt==='pdf') document.getElementById('exportPdfBtn')?.click();
-          else if (_rdsDlFmt==='docx') document.getElementById('exportDocxBtn')?.click();
-        }, 900);
-      }
-    } catch(e) { showToast('Export failed: '+e.message,'error'); }
-  } else if (action === 'delete') {
-    recDocSheetClose();
-    if (isLive) {
-      if (confirm('Delete this Drive document permanently?')) {
-        await driveUnliveDoc(id, true);
-        showToast('Deleted from Drive','info');
-        recRender();
-      }
-    } else recConfirmDelete(id);
-  }
+  } else { recConfirmDelete(_rbs.docId); }
+}
+function rbsDoShareLink(link) {
+  if (navigator.share) {
+    navigator.share({ title: _rbs.docTitle, url: link }).catch(()=>{});
+  } else { rbsCopyText(link); }
+}
+function rbsDoShareSCD() {
+  rbsClose();
+  setTimeout(() => { if(typeof doExportSCD==='function') doExportSCD(); }, 200);
+}
+function rbsCopyText(text) {
+  navigator.clipboard.writeText(text).then(()=>{ showToast('Copied to clipboard','success'); rbsClose(); }).catch(()=>{ showToast('Copy failed','error'); });
 }
 
-/* kept for backward compat (called from old recDropAction paths) */
-async function recDropAction(action) { await rdsAction(action); }
-let _dropDocId = _rdsDocId;
-let _dropDocIsLive = _rdsIsLive;
+/* Legacy compat — recDropAction no-op (keep in case called from old HTML) */
+async function recDropAction(action) {}
+function recShowDropdown() {}
 /* Sync a specific live doc (re-fetch from Drive) */
 async function driveSyncLiveDoc(driveFileId) {
   showToast('Fetching latest from Drive…', 'info');
@@ -11765,71 +11307,63 @@ function recCardHTML(doc, isLive) {
   const id = doc.id;
   const isOpen = isLive ? (_currentDocIsLive && _currentDocDriveId === id) : (id === _currentDocId);
   const pinned = !isLive && _recPinned.has(id);
-  const openBadge = isOpen ? ` <span style="font-size:11px;font-weight:600;color:#007AFF;background:rgba(0,122,255,.1);padding:2px 8px;border-radius:20px;margin-left:6px;">Open</span>` : '';
-  const liveBadge = isLive ? `<span class="rec-live-badge">Live</span>` : '';
+  const openBadge = isOpen ? ' <span style="font-size:11px;font-weight:600;color:#007AFF;background:rgba(0,122,255,.1);padding:2px 8px;border-radius:20px;margin-left:6px;">Open</span>' : '';
+  const liveBadge = isLive ? '<span class="rec-live-badge">Live</span>' : '';
   const tEsc = escHtml(doc.title).replace(/'/g,"\\'");
-  const sz   = doc.size || 0;
-  const mod  = doc.modified || 0;
-  const cre  = doc.created  || 0;
-  return `<div class="rec-card" id="recCard-${id}" onclick="${isLive ? `recOpenLiveDoc('${id}')` : `recOpenDoc('${id}')`}">
-    <div class="rec-card-icon"><i class="bi bi-file-earmark-richtext"></i></div>
-    <div class="rec-card-info">
-      <div class="rec-card-name" id="recName-${id}">${escHtml(doc.title)}${openBadge}${liveBadge}</div>
-      <div class="rec-card-meta">
-        <span class="rec-card-date"><i class="bi bi-pencil" style="margin-right:3px;font-size:10px"></i>${formatDate(mod)}</span>
-        ${!isLive ? `<span class="rec-card-modified"><i class="bi bi-eye" style="margin-right:3px;font-size:10px"></i>${formatDate(doc.lastOpened)}</span>` : ''}
-        <span class="rec-card-size">${formatSize(sz)}</span>
-      </div>
-    </div>
-    ${pinned ? '<div class="rec-pin-badge" title="Pinned"><span class="material-symbols-outlined" style="font-size:13px">push_pin</span></div>' : ''}
-    <div class="rec-card-actions" style="opacity:1">
-      <button class="rec-card-dots-btn" title="Options"
-        onclick="event.stopPropagation();recShowDocSheet('${id}','${tEsc}',${pinned},${isLive},${sz},${mod},${cre})">
-        <span class="material-symbols-outlined" style="font-size:18px">more_vert</span>
-      </button>
-    </div>
-    <div class="rec-del-confirm" id="recDel-${id}">
-      <span class="rec-del-msg">${isLive ? 'Delete from Drive permanently?' : 'Move to Recycle Bin?'}</span>
-      <button class="rec-del-yes" onclick="event.stopPropagation();${isLive ? `driveUnliveDoc('${id}',true).then(()=>{showToast('Deleted from Drive','info');recRender()})` : `recDoDelete('${id}')`}">Delete</button>
-      <button class="rec-del-no" onclick="event.stopPropagation();recCancelDelete('${id}')">Cancel</button>
-    </div>
-  </div>`;
+  const openFn  = isLive ? "recOpenLiveDoc('" + id + "')" : "recOpenDoc('" + id + "')";
+  const modSpan = !isLive ? '<span class="rec-card-modified"><i class="bi bi-eye" style="margin-right:3px;font-size:10px"></i>' + formatDate(doc.lastOpened) + '</span>' : '';
+  const delFn   = isLive ? "driveUnliveDoc('" + id + "',true).then(()=>{showToast('Deleted from Drive','info');recRender()})" : "recDoDelete('" + id + "')";
+  const delMsg  = isLive ? 'Delete from Drive permanently?' : 'Move to Recycle Bin?';
+  return '<div class="rec-card" id="recCard-' + id + '" onclick="' + openFn + '">' +
+    '<div class="rec-card-icon"><i class="bi bi-file-earmark-richtext"></i></div>' +
+    '<div class="rec-card-info">' +
+      '<div class="rec-card-name" id="recName-' + id + '">' + escHtml(doc.title) + openBadge + liveBadge + '</div>' +
+      '<div class="rec-card-meta">' +
+        '<span class="rec-card-date"><i class="bi bi-pencil" style="margin-right:3px;font-size:10px"></i>' + formatDate(doc.modified) + '</span>' +
+        modSpan +
+        '<span class="rec-card-size">' + formatSize(doc.size) + '</span>' +
+      '</div>' +
+    '</div>' +
+    (pinned ? '<div class="rec-pin-badge" title="Pinned"><span class="material-symbols-outlined" style="font-size:13px">push_pin</span></div>' : '') +
+    '<div class="rec-card-actions" style="opacity:1">' +
+      '<button class="rec-card-dots-btn" title="Options" onclick="event.stopPropagation();rbsOpen(\'' + id + '\',\'' + tEsc + '\',' + pinned + ',' + (!!isLive) + ')">' +
+        '<span class="material-symbols-outlined" style="font-size:18px">more_vert</span>' +
+      '</button>' +
+    '</div>' +
+    '<div class="rec-del-confirm" id="recDel-' + id + '">' +
+      '<span class="rec-del-msg">' + delMsg + '</span>' +
+      '<button class="rec-del-yes" onclick="event.stopPropagation();' + delFn + '">Delete</button>' +
+      '<button class="rec-del-no" onclick="event.stopPropagation();recCancelDelete(\'' + id + '\')">Cancel</button>' +
+    '</div>' +
+  '</div>';
 }
 
 function recGridCardHTML(doc, isLive) {
   const id = doc.id;
   const isOpen = isLive ? (_currentDocIsLive && _currentDocDriveId === id) : (id === _currentDocId);
   const pinned = !isLive && _recPinned.has(id);
-  const tEsc = escHtml(doc.title).replace(/'/g,"\\'");
-  const sz   = doc.size || 0;
-  const mod  = doc.modified || 0;
-  const cre  = doc.created  || 0;
-  return `<div class="rec-grid-card" id="recCard-${id}"
-      onclick="${isLive ? `recOpenLiveDoc('${id}')` : `recGridCardClick(event,'${id}')`}"
-      onmousedown="${!isLive ? `recGridHoldStart(event,'${id}')` : ''}"
-      onmouseup="${!isLive ? `recGridHoldEnd('${id}')` : ''}"
-      onmouseleave="${!isLive ? `recGridHoldEnd('${id}')` : ''}"
-      title="${escHtml(doc.title)}">
-    ${pinned ? '<div style="position:absolute;top:8px;left:8px;z-index:3" title="Pinned"><span class="material-symbols-outlined" style="font-size:14px;color:#FF9500">push_pin</span></div>' : ''}
-    ${isLive ? '<div class="rec-grid-live-cloud" title="Live on Drive"><span class="material-symbols-outlined">cloud</span></div>' : ''}
-    <i class="bi bi-file-earmark-richtext rec-grid-card-icon"></i>
-    <div class="rec-grid-card-footer">
-      <div class="rec-grid-card-name" id="recName-${id}">${escHtml(doc.title)}</div>
-      <div class="rec-grid-card-meta">${isOpen ? '<span style="color:#007AFF;font-weight:600;">Open</span>' : formatDate(mod)}</div>
-    </div>
-    <button class="rec-grid-dots-btn" title="Options"
-      onclick="event.stopPropagation();recShowDocSheet('${id}','${tEsc}',${pinned},${isLive},${sz},${mod},${cre})">
-      <span class="material-symbols-outlined" style="font-size:15px">more_vert</span>
-    </button>
-    ${!isLive ? `<div class="rec-grid-card-overlay" id="recGridOverlay-${id}" style="display:none">
-      <button class="rec-grid-overlay-btn edit" onclick="event.stopPropagation();recGridHideOverlay('${id}');recStartRename('${id}')"><span class="material-symbols-outlined" style="font-size:18px">edit</span></button>
-      <button class="rec-grid-overlay-btn del" onclick="event.stopPropagation();recGridHideOverlay('${id}');recConfirmDelete('${id}')"><span class="material-symbols-outlined" style="font-size:18px">delete</span></button>
-    </div>` : ''}
-    <div class="rec-del-confirm" id="recDel-${id}">
-      <button class="rec-del-yes" onclick="event.stopPropagation();${isLive ? `driveUnliveDoc('${id}',true).then(()=>{showToast('Deleted from Drive','info');recRender()})` : `recDoDelete('${id}')`}">Delete</button>
-      <button class="rec-del-no" onclick="event.stopPropagation();recCancelDelete('${id}')">Cancel</button>
-    </div>
-  </div>`;
+  const tEsc  = escHtml(doc.title).replace(/'/g,"\\'");
+  const openFn = isLive ? "recOpenLiveDoc('" + id + "')" : "recOpenDoc('" + id + "')";
+  const delFn  = isLive ? "driveUnliveDoc('" + id + "',true).then(()=>{showToast('Deleted from Drive','info');recRender()})" : "recDoDelete('" + id + "')";
+  const pinBadge  = pinned ? '<span class="material-symbols-outlined" style="position:absolute;top:8px;left:8px;font-size:15px;color:#FF9500">push_pin</span>' : '';
+  const liveBadge = isLive ? '<div class="rec-grid-live-cloud" title="Live on Drive"><span class="material-symbols-outlined">cloud</span></div>' : '';
+  const openBadge = isOpen ? '<span style="position:absolute;top:8px;left:8px;font-size:11px;font-weight:700;color:#007AFF;background:rgba(0,122,255,.1);padding:2px 8px;border-radius:20px">Open</span>' : '';
+  return '<div class="rec-grid-card" id="recCard-' + id + '" onclick="' + openFn + '" title="' + escHtml(doc.title) + '">' +
+    '<div class="rec-grid-cover">' +
+      pinBadge + liveBadge + openBadge +
+      '<i class="bi bi-file-earmark-richtext rec-grid-cover-icon"></i>' +
+    '</div>' +
+    '<div class="rec-grid-footer">' +
+      '<div class="rec-grid-card-name" id="recName-' + id + '">' + escHtml(doc.title) + '</div>' +
+      '<button class="rec-grid-card-dots" title="Options" onclick="event.stopPropagation();rbsOpen(\'' + id + '\',\'' + tEsc + '\',' + pinned + ',' + (!!isLive) + ')">' +
+        '<span class="material-symbols-outlined" style="font-size:18px">more_vert</span>' +
+      '</button>' +
+    '</div>' +
+    '<div class="rec-del-confirm" id="recDel-' + id + '">' +
+      '<button class="rec-del-yes" onclick="event.stopPropagation();' + delFn + '">Delete</button>' +
+      '<button class="rec-del-no" onclick="event.stopPropagation();recCancelDelete(\'' + id + '\')">Cancel</button>' +
+    '</div>' +
+  '</div>';
 }
 
 /* ── Add pin item id to dropdown HTML so we can hide it for live docs ── */

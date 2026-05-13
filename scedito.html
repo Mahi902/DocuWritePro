@@ -6203,7 +6203,7 @@ function openHeaderModal(applyAll) {
   _hfTarget = 'header';
   const pageNum = getCurrentPageNum();
   _hfPageNum = pageNum;
-  const el = document.getElementById('pageHeader' + pageNum);
+  const el = getPageHeaderByIndex(pageNum);
   document.getElementById('headerEditable').innerHTML = el ? el.innerHTML : '';
   openMdl('headerMdl');
 }
@@ -6212,14 +6212,14 @@ function openFooterModal(applyAll) {
   _hfTarget = 'footer';
   const pageNum = getCurrentPageNum();
   _hfPageNum = pageNum;
-  const el = document.getElementById('pageFooter' + pageNum);
+  const el = getPageFooterByIndex(pageNum);
   document.getElementById('footerEditable').innerHTML = el ? el.innerHTML : '';
   openMdl('footerMdl');
 }
 
 function applyHF(type) {
   const html = document.getElementById(type === 'header' ? 'headerEditable' : 'footerEditable').innerHTML;
-  const el = document.getElementById(`page${type === 'header' ? 'Header' : 'Footer'}${_hfPageNum}`);
+  const el = type === 'header' ? getPageHeaderByIndex(_hfPageNum) : getPageFooterByIndex(_hfPageNum);
   if (el) el.innerHTML = html;
   closeMdl(type + 'Mdl');
   showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} updated`, 'success');
@@ -6227,10 +6227,9 @@ function applyHF(type) {
 
 function applyHFAll(type) {
   const html = document.getElementById(type === 'header' ? 'headerEditable' : 'footerEditable').innerHTML;
-  for (let i = 1; i <= S.pageCount; i++) {
-    const el = document.getElementById(`page${type === 'header' ? 'Header' : 'Footer'}${i}`);
-    if (el) el.innerHTML = html;
-  }
+  document.querySelectorAll(type === 'header' ? '.page-header-area' : '.page-footer-area').forEach(el => {
+    el.innerHTML = html;
+  });
   closeMdl(type + 'Mdl');
   showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} applied to all pages`, 'success');
 }
@@ -6262,6 +6261,29 @@ function getCurrentPageNum() {
   return idx >= 0 ? idx + 1 : 1;
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   DOM-order page element accessors
+   All page IDs may now be uid-based (timestamp_rand) rather than
+   sequential integers, so these helpers always look up by DOM
+   position (1-based) rather than by numeric ID suffix.
+───────────────────────────────────────────────────────────────── */
+function getPageElByIndex(n) {
+  // Returns the nth .page element in DOM order (1-based), or null
+  return document.querySelectorAll('#editorArea .page')[n - 1] || null;
+}
+function getPageContentByIndex(n) {
+  const p = getPageElByIndex(n);
+  return p ? p.querySelector('.page-content') : null;
+}
+function getPageHeaderByIndex(n) {
+  const p = getPageElByIndex(n);
+  return p ? p.querySelector('.page-header-area') : null;
+}
+function getPageFooterByIndex(n) {
+  const p = getPageElByIndex(n);
+  return p ? p.querySelector('.page-footer-area') : null;
+}
+
 function addNewPage() {
   S.pageCount++;
   const n = S.pageCount, area = document.getElementById('editorArea'), btn = area.querySelector('.add-page-btn');
@@ -6283,57 +6305,118 @@ function addNewPage() {
   if (!_isLoadingData) scheduleAutoSave();
 }
 
-function addPageAfter() {
-  const refPage = getCurrentPageEl();
+/* ─────────────────────────────────────────────────────────────────
+   _buildPageOuter(uid)
+   Creates a complete page-outer DOM node with a unique UID suffix.
+   collectData() reads pages by DOM order (.querySelectorAll), so
+   IDs never need to be sequential — they just need to be unique.
+   S.pageCount is incremented here to keep the total accurate.
+───────────────────────────────────────────────────────────────── */
+function _buildPageOuter(uid) {
   S.pageCount++;
-  const n = S.pageCount;
   const outer = document.createElement('div');
-  outer.className = 'page-outer'; outer.id = 'pageOuter' + n;
+  outer.className = 'page-outer';
+  outer.id = 'pageOuter' + uid;
+
   const page = document.createElement('div');
-  page.className = 'page'; page.id = 'page' + n;
-  page.innerHTML = `<div class="watermark" id="watermark${n}"></div>
-    <div class="page-header-area" id="pageHeader${n}" data-placeholder="Header…"></div>
-    <div class="page-content" contenteditable="true" id="pageContent${n}"></div>
-    <div class="page-footer-area" id="pageFooter${n}" data-placeholder="Footer…"></div>`;
+  page.className = 'page';
+  page.id = 'page' + uid;
+
+  // Watermark, header, content, footer — IDs keyed to uid, not position
+  page.innerHTML =
+    `<div class="watermark" id="watermark${uid}"></div>` +
+    `<div class="page-header-area" id="pageHeader${uid}" data-placeholder="Header\u2026"></div>` +
+    `<div class="page-content" contenteditable="true" id="pageContent${uid}"></div>` +
+    `<div class="page-footer-area" id="pageFooter${uid}" data-placeholder="Footer\u2026"></div>`;
+
   outer.appendChild(page);
-  if (refPage) {
-    const refOuter = refPage.closest('.page-outer') || refPage;
-    refOuter.after(outer);
-  } else {
-    document.getElementById('editorArea').insertBefore(outer, document.querySelector('.add-page-btn'));
-  }
-  bindPages(); updatePageIndicator(); updateWatermark(); updateBackground();
+  return outer;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   _refreshPageState()
+   Runs all post-insert updates in the correct order so nothing
+   is skipped whether a page is added, inserted, or removed.
+───────────────────────────────────────────────────────────────── */
+function _refreshPageState() {
+  bindPages();
+  updatePageIndicator();
+  updateWatermark();
+  updateBackground();
   updateMargins(document.getElementById('pageMargin').value);
   updateLineSpacing(document.getElementById('lineSpacing').value);
-  renderPageNumbers(); applyPageMarginDesigns();
-  scheduleAutoSave();
+  updateWordCount();
+  renderPageNumbers();
+  applyPageMarginDesigns();
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   addPageAfter()
+   Inserts a blank page immediately after the page the cursor is on
+   (or after the last page if no page is active). Scrolls the new
+   page into view and places the cursor in its content area.
+───────────────────────────────────────────────────────────────── */
+function addPageAfter() {
+  const refPage = getCurrentPageEl();
+  // Generate a unique suffix: timestamp + small random, avoids any ID clash
+  const uid = Date.now() + '_' + Math.floor(Math.random() * 9999);
+  const outer = _buildPageOuter(uid);
+
+  if (refPage) {
+    // Insert right after the outer wrapper of the current page
+    const refOuter = refPage.closest('.page-outer') || refPage.parentElement;
+    refOuter.after(outer);
+  } else {
+    // Fallback: insert before the "add page" button at the bottom
+    const area = document.getElementById('editorArea');
+    const btn  = area.querySelector('.add-page-btn');
+    btn ? area.insertBefore(outer, btn) : area.appendChild(outer);
+  }
+
+  _refreshPageState();
+
+  // Focus the new page's content area
+  const newContent = outer.querySelector('.page-content');
+  if (newContent) {
+    newContent.focus();
+    // Scroll into view smoothly
+    outer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  DOC.schedule();
   showToast('Page added after current', 'success');
 }
 
+/* ─────────────────────────────────────────────────────────────────
+   addPageBefore()
+   Inserts a blank page immediately before the page the cursor is on
+   (or before the first page if no page is active). Scrolls the new
+   page into view and places the cursor in its content area.
+───────────────────────────────────────────────────────────────── */
 function addPageBefore() {
   const refPage = getCurrentPageEl();
-  S.pageCount++;
-  const n = S.pageCount;
-  const outer = document.createElement('div');
-  outer.className = 'page-outer'; outer.id = 'pageOuter' + n;
-  const page = document.createElement('div');
-  page.className = 'page'; page.id = 'page' + n;
-  page.innerHTML = `<div class="watermark" id="watermark${n}"></div>
-    <div class="page-header-area" id="pageHeader${n}" data-placeholder="Header…"></div>
-    <div class="page-content" contenteditable="true" id="pageContent${n}"></div>
-    <div class="page-footer-area" id="pageFooter${n}" data-placeholder="Footer…"></div>`;
-  outer.appendChild(page);
+  const uid = Date.now() + '_' + Math.floor(Math.random() * 9999);
+  const outer = _buildPageOuter(uid);
+
   if (refPage) {
-    const refOuter = refPage.closest('.page-outer') || refPage;
+    const refOuter = refPage.closest('.page-outer') || refPage.parentElement;
     refOuter.before(outer);
   } else {
-    document.getElementById('editorArea').insertBefore(outer, document.querySelector('.add-page-btn'));
+    // Fallback: insert before the first existing page-outer
+    const area     = document.getElementById('editorArea');
+    const firstOut = area.querySelector('.page-outer');
+    firstOut ? area.insertBefore(outer, firstOut) : area.prepend(outer);
   }
-  bindPages(); updatePageIndicator(); updateWatermark(); updateBackground();
-  updateMargins(document.getElementById('pageMargin').value);
-  updateLineSpacing(document.getElementById('lineSpacing').value);
-  renderPageNumbers(); applyPageMarginDesigns();
-  scheduleAutoSave();
+
+  _refreshPageState();
+
+  const newContent = outer.querySelector('.page-content');
+  if (newContent) {
+    newContent.focus();
+    outer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  DOC.schedule();
   showToast('Page added before current', 'success');
 }
 
@@ -6346,13 +6429,12 @@ function deleteCurrentPage() {
   if (S.pageCount <= 1) { showToast('Cannot delete the only page', 'error'); return; }
   const page = getCurrentPageEl();
   if (page) {
-    const outer = page.closest('.page-outer') || page;
+    const outer = page.closest('.page-outer') || page.parentElement;
     outer.remove();
     S.pageCount--;
   }
-  updatePageIndicator(); updateWordCount(); checkContent();
-  renderPageNumbers(); applyPageMarginDesigns();
-  scheduleAutoSave();
+  _refreshPageState();
+  DOC.schedule();
   showToast('Page deleted', 'info');
 }
 
@@ -6396,7 +6478,7 @@ function doFind() {
   const pageNums = getPagesForSearch(pagesStr);
   let total = 0;
   pageNums.forEach(n => {
-    const pc = document.getElementById('pageContent' + n);
+    const pc = getPageContentByIndex(n);
     if (pc) {
       const text = pc.textContent;
       let idx = 0, count = 0;
@@ -6417,14 +6499,13 @@ function doFindReplace(doReplace) {
   const pageNums = getPagesForSearch(pagesStr);
   let total = 0;
   pageNums.forEach(n => {
-    const pc = document.getElementById('pageContent' + n);
+    const pc = getPageContentByIndex(n);
     if (!pc) return;
     const text = pc.textContent;
     let idx = 0, count = 0;
     while ((idx = text.indexOf(find, idx)) !== -1) { count++; idx += find.length; }
     total += count;
     if (doReplace && count > 0) {
-      // Replace in innerHTML safely
       pc.innerHTML = pc.innerHTML.split(esc(find)).join(esc(replace));
     }
   });
@@ -7771,8 +7852,8 @@ async function exportDOCX() {
     }));
 
     const body = processedPages.map((html, i) => {
-      const header = document.getElementById('pageHeader' + (i+1));
-      const footer = document.getElementById('pageFooter' + (i+1));
+      const header = getPageHeaderByIndex(i + 1);
+      const footer = getPageFooterByIndex(i + 1);
       const headerHtml = header ? `<div style="border-bottom:1px solid #eee;padding-bottom:6px;margin-bottom:12px;font-size:11pt;color:#555">${header.innerHTML}</div>` : '';
       const footerHtml = footer ? `<div style="border-top:1px solid #eee;padding-top:6px;margin-top:12px;font-size:11pt;color:#555">${footer.innerHTML}</div>` : '';
       const pageBreak = i < processedPages.length - 1 ? '<div style="page-break-after:always"></div>' : '';
@@ -8417,15 +8498,22 @@ function loadData(data) {
   if (data.pages && Array.isArray(data.pages)) {
     data.pages.forEach((html, i) => {
       if (i === 0) {
-        document.getElementById('pageContent1').innerHTML = html;
-        if (data.headers && data.headers[0]) document.getElementById('pageHeader1').innerHTML = data.headers[0];
-        if (data.footers && data.footers[0]) document.getElementById('pageFooter1').innerHTML = data.footers[0];
+        // page 1 always exists after resetPages
+        const pc = getPageContentByIndex(1);
+        const ph = getPageHeaderByIndex(1);
+        const pf = getPageFooterByIndex(1);
+        if (pc) pc.innerHTML = html;
+        if (ph && data.headers && data.headers[0]) ph.innerHTML = data.headers[0];
+        if (pf && data.footers && data.footers[0]) pf.innerHTML = data.footers[0];
       } else {
         addNewPage();
-        const pc = document.getElementById(`pageContent${i+1}`);
+        // addNewPage appended the page — read it back by DOM order
+        const pc = getPageContentByIndex(i + 1);
+        const ph = getPageHeaderByIndex(i + 1);
+        const pf = getPageFooterByIndex(i + 1);
         if (pc) pc.innerHTML = html;
-        if (data.headers && data.headers[i]) { const h = document.getElementById(`pageHeader${i+1}`); if(h) h.innerHTML = data.headers[i]; }
-        if (data.footers && data.footers[i]) { const f = document.getElementById(`pageFooter${i+1}`); if(f) f.innerHTML = data.footers[i]; }
+        if (ph && data.headers && data.headers[i]) ph.innerHTML = data.headers[i];
+        if (pf && data.footers && data.footers[i]) pf.innerHTML = data.footers[i];
       }
     });
   }
@@ -9250,7 +9338,7 @@ function insertSelectedIcon() {
   //    The modal close/backdrop steals focus, so we must lock these in now.
   const target = S.currentContextPage
     ? S.currentContextPage.querySelector('.page-content')
-    : (document.querySelector('.page-content:focus') || document.getElementById('pageContent1'));
+    : (document.querySelector('.page-content:focus') || document.querySelector('#editorArea .page-content'));
 
   const sel = window.getSelection();
   let savedRange = null;
@@ -9278,7 +9366,7 @@ function insertSelectedIcon() {
   closeMdl('iconMdl');
 
   requestAnimationFrame(() => {
-    const dest = target || document.getElementById('pageContent1');
+    const dest = target || document.querySelector('#editorArea .page-content');
 
     if (savedRange) {
       dest.focus();
@@ -9305,7 +9393,7 @@ function insertSelectedIcon() {
 function focusActivePageContent() {
   const target = S.currentContextPage
     ? S.currentContextPage.querySelector('.page-content')
-    : (document.querySelector('.page-content:focus') || document.getElementById('pageContent1'));
+    : (document.querySelector('.page-content:focus') || document.querySelector('#editorArea .page-content'));
   if (target) target.focus();
 }
 
@@ -9323,7 +9411,7 @@ if (hrSubItem) {
         e.stopPropagation();
         closeWinMenu();
         // Ensure the editor has focus before inserting
-        const activePage = S.currentContextPage ? S.currentContextPage.querySelector('.page-content') : document.getElementById('pageContent1');
+        const activePage = S.currentContextPage ? S.currentContextPage.querySelector('.page-content') : document.querySelector('#editorArea .page-content');
         if (activePage) activePage.focus();
         insertHR();
     };
@@ -9338,7 +9426,7 @@ async function performPaste(asPlainText = false) {
         // Restore the caret position that was saved when the context menu opened
         const targetPage = S.currentContextPage
             ? S.currentContextPage.querySelector('.page-content')
-            : document.getElementById('pageContent1');
+            : document.querySelector('#editorArea .page-content');
 
         targetPage.focus();
 

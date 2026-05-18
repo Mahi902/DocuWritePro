@@ -2273,7 +2273,7 @@ body.dark .gs-item:hover { background:#1a2a3a; color:#29b6f6; }
               </div>
               <div id="opPanel" style="display:none;padding:6px 2px 4px;">
                 <div id="opPageList" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;"></div>
-                <button onclick="fixAllOverlappingPages()" style="width:100%;padding:8px 10px;background:#d32f2f;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s;" onmouseover="this.style.background='#b71c1c'" onmouseout="this.style.background='#d32f2f'"><span class="material-symbols-outlined" style="font-size:16px;">auto_fix_high</span>Fix All</button>
+                <div style="font-size:11px;color:#e57373;line-height:1.5;padding:2px 2px 0;">Move the excess contents of the exceeding pages to a new page.</div>
               </div>
             </div>
 
@@ -5149,70 +5149,6 @@ function _renderOPList(overflowPages) {
   });
 }
 
-async function fixAllOverlappingPages() {
-  const marginVal = parseFloat(document.getElementById('pageMargin')?.value ?? 2);
-  const cmToPx = 37.795;
-  const maxH = (29.7 - marginVal * 2) * cmToPx;
-
-  const allPCs = [...document.querySelectorAll('.page-content')];
-  const overflowing = allPCs.filter(pc => pc.scrollHeight > pc.clientHeight + 6);
-  if (overflowing.length === 0) { showToast('No overlapping pages to fix', 'info'); return; }
-
-  let fixed = 0;
-  const reversed = [...overflowing].reverse();
-
-  for (const pc of reversed) {
-    const pageEl    = pc.closest('.page');
-    if (!pageEl) continue;
-    const pageOuter = pageEl.closest('.page-outer') || pageEl.parentElement;
-    const children  = [...pc.childNodes];
-    if (children.length === 0) continue;
-
-    // Measure split point
-    const measureDiv = document.createElement('div');
-    measureDiv.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;' +
-      'width:' + pc.offsetWidth + 'px;height:auto;max-height:none;' +
-      'font-size:' + getComputedStyle(pc).fontSize + ';' +
-      'font-family:' + getComputedStyle(pc).fontFamily + ';' +
-      'line-height:' + getComputedStyle(pc).lineHeight + ';' +
-      'word-wrap:break-word;padding:0;margin:0;';
-    document.body.appendChild(measureDiv);
-    let splitIdx = children.length;
-    for (let i = 0; i < children.length; i++) {
-      measureDiv.appendChild(children[i].cloneNode(true));
-      if (measureDiv.scrollHeight > maxH) { splitIdx = i; break; }
-    }
-    document.body.removeChild(measureDiv);
-
-    if (splitIdx === 0 || splitIdx === children.length) continue;
-
-    const overflowNodes = children.slice(splitIdx);
-    const uid = Date.now() + '_' + Math.floor(Math.random() * 9999) + '_' + fixed;
-    const newOuter = _buildPageOuter(uid);
-
-    // Copy page visual styling
-    const newPage = newOuter.querySelector('.page');
-    if (newPage) {
-      ['backgroundColor','backgroundImage','backgroundSize','backgroundPosition'].forEach(prop => {
-        if (pageEl.style[prop]) newPage.style[prop] = pageEl.style[prop];
-      });
-    }
-    // Move overflow nodes into new page content
-    const newPc = newOuter.querySelector('.page-content');
-    if (newPc) {
-      newPc.style.cssText = pc.style.cssText;
-      overflowNodes.forEach(node => { pc.removeChild(node); newPc.appendChild(node); });
-    }
-
-    pageOuter.after(newOuter);
-    fixed++;
-  }
-
-  _refreshPageState();
-  DOC.schedule();
-  showToast('Fixed ' + fixed + ' overlapping page' + (fixed !== 1 ? 's' : ''), 'success');
-  setTimeout(checkOverlappingPages, 400);
-}
 
 /* ═══════════════════════════════════════════════════════
    FONT CHOOSER

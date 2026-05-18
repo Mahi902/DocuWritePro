@@ -2264,64 +2264,18 @@ body.dark .gs-item:hover { background:#1a2a3a; color:#29b6f6; }
 
             </div>
 
-            <!-- ── Version History ── -->
-            <div class="vh-divider"></div>
-            <div class="aw-header" onclick="toggleVersionHistoryPanel()" style="margin-bottom:0;">
-              <span class="aw-header-label" style="font-weight:700;">Version History</span>
-              <div class="aw-header-right">
-                <span class="material-symbols-outlined aw-chevron" id="vhChevron">expand_more</span>
+            <!-- ── Overlapping Pages ── -->
+            <div id="opSection" style="display:none;">
+              <div style="height:1px;background:rgba(211,47,47,.2);margin:8px 0;"></div>
+              <div onclick="toggleOverlappingPages()" style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:rgba(211,47,47,.07);border-radius:8px;cursor:pointer;user-select:none;">
+                <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:#d32f2f;"><span class="material-symbols-outlined" style="font-size:16px;color:#d32f2f;">warning</span>Overlapping Pages<span id="opBadge" style="background:#d32f2f;color:#fff;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:2px;">0</span></span>
+                <span class="material-symbols-outlined" id="opChevron" style="color:#d32f2f;font-size:18px;transition:transform .2s;">expand_more</span>
+              </div>
+              <div id="opPanel" style="display:none;padding:6px 2px 4px;">
+                <div id="opPageList" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;"></div>
+                <button onclick="fixAllOverlappingPages()" style="width:100%;padding:8px 10px;background:#d32f2f;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s;" onmouseover="this.style.background='#b71c1c'" onmouseout="this.style.background='#d32f2f'"><span class="material-symbols-outlined" style="font-size:16px;">auto_fix_high</span>Fix All</button>
               </div>
             </div>
-            <div id="vhPanel" style="display:none;padding:6px 2px 4px;">
-              <!-- Auto-save interval label -->
-              <div style="font-size:10px;font-weight:700;color:#1976d2;text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px;">Auto-save Interval</div>
-              <div style="display:flex;align-items:center;gap:6px;">
-                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
-                  <input type="number" id="vhHours" min="0" max="23" value="0" oninput="vhApplyCustomInterval()"
-                    style="width:100%;padding:8px 4px;border:1.5px solid rgba(120,120,130,.25);border-radius:8px;font-size:16px;font-weight:700;font-family:inherit;color:inherit;background:transparent;outline:none;text-align:center;" onwheel="this.blur()"/>
-                  <span style="font-size:10px;font-weight:600;color:#8E8E93;text-transform:uppercase;letter-spacing:.4px;">hr</span>
-                </div>
-                <span style="font-size:20px;color:#8E8E93;padding-bottom:18px;line-height:1;">:</span>
-                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
-                  <input type="number" id="vhMins" min="0" max="59" value="5" oninput="vhApplyCustomInterval()"
-                    style="width:100%;padding:8px 4px;border:1.5px solid rgba(120,120,130,.25);border-radius:8px;font-size:16px;font-weight:700;font-family:inherit;color:inherit;background:transparent;outline:none;text-align:center;" onwheel="this.blur()"/>
-                  <span style="font-size:10px;font-weight:600;color:#8E8E93;text-transform:uppercase;letter-spacing:.4px;">min</span>
-                </div>
-                <span style="font-size:20px;color:#8E8E93;padding-bottom:18px;line-height:1;">:</span>
-                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
-                  <input type="number" id="vhSecs" min="0" max="59" value="0" oninput="vhApplyCustomInterval()"
-                    style="width:100%;padding:8px 4px;border:1.5px solid rgba(120,120,130,.25);border-radius:8px;font-size:16px;font-weight:700;font-family:inherit;color:inherit;background:transparent;outline:none;text-align:center;" onwheel="this.blur()"/>
-                  <span style="font-size:10px;font-weight:600;color:#8E8E93;text-transform:uppercase;letter-spacing:.4px;">sec</span>
-                </div>
-              </div>
-              <div id="vhIntervalNote" style="font-size:11px;color:#8E8E93;margin-top:4px;text-align:center;min-height:15px;"></div>
-              <div id="vhCloudIntervals" style="display:none;"></div>
-              
-              <!-- Saved versions header -->
-              <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 6px;">
-                <div style="font-size:10px;font-weight:700;color:#1976d2;text-transform:uppercase;letter-spacing:.6px;">Saved Versions</div>
-                <div style="display:flex;align-items:center;gap:0;">
-                  <button onclick="vhSelectAll()" title="Select all"
-                    style="background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;">
-                    <span class="material-symbols-outlined" style="font-size:18px;color:currentColor;">select_all</span>
-                  </button>
-                  <button onclick="vhDeleteSelected()" title="Delete selected"
-                    style="background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;">
-                    <span class="material-symbols-outlined" style="font-size:18px;color:#FF3B30;">delete</span>
-                  </button>
-                  <button onclick="vhDeleteAll()" title="Delete all"
-                    style="background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;display:flex;align-items:center;">
-                    <span class="material-symbols-outlined" style="font-size:18px;color:#FF3B30;">delete_sweep</span>
-                  </button>
-                </div>
-              </div>
-              <!-- Version list -->
-              <div id="vhList" style="max-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin-bottom:10px;"></div>
-
-            </div>
-
-
-
 
           </div>
         </div>
@@ -4757,7 +4711,6 @@ async function recOpenDoc(id) {
     _openedFromRecents = true;
     const backBtn = document.getElementById('recBackBtn');
     if (backBtn) backBtn.style.display = 'flex';
-    vhOnDocLoad();
     showToast('Document opened', 'success');
   } catch(e) {
     console.error('[recOpenDoc]', e);
@@ -4915,7 +4868,6 @@ let _openedFromRecents = false;
 let _isLoadingData = false; // true during loadData to suppress auto-saves
 
 function openRecentsScreen() {
-  vhStopTimers();
   document.getElementById('recentsScreen').classList.add('visible');
   recRender();
 }
@@ -5120,7 +5072,146 @@ function startOverflowCheck() {
   setInterval(() => {
     const over = [...document.querySelectorAll('.page-content')].some(p => p.scrollHeight > p.clientHeight + 6);
     document.getElementById('overflowAlert').style.display = over ? 'block' : 'none';
+    checkOverlappingPages();
   }, 900);
+}
+
+/* =========================================================
+   OVERLAPPING PAGES
+   ========================================================= */
+const OP = { _panelOpen: false };
+
+function checkOverlappingPages() {
+  const pages = [...document.querySelectorAll('.page-content')];
+  const overflowPages = pages
+    .map((pc, idx) => ({ el: pc, index: idx, pageNum: idx + 1 }))
+    .filter(p => p.el.scrollHeight > p.el.clientHeight + 6);
+  const section = document.getElementById('opSection');
+  const badge   = document.getElementById('opBadge');
+  if (!section) return;
+  if (overflowPages.length > 0) {
+    section.style.display = 'block';
+    if (badge) badge.textContent = overflowPages.length;
+    if (OP._panelOpen) _renderOPList(overflowPages);
+  } else {
+    section.style.display = 'none';
+    if (OP._panelOpen) {
+      OP._panelOpen = false;
+      const panel   = document.getElementById('opPanel');
+      const chevron = document.getElementById('opChevron');
+      if (panel)   panel.style.display = 'none';
+      if (chevron) chevron.style.transform = '';
+    }
+  }
+}
+
+function toggleOverlappingPages() {
+  OP._panelOpen = !OP._panelOpen;
+  const panel   = document.getElementById('opPanel');
+  const chevron = document.getElementById('opChevron');
+  if (!panel) return;
+  panel.style.display = OP._panelOpen ? 'block' : 'none';
+  if (chevron) chevron.style.transform = OP._panelOpen ? 'rotate(180deg)' : '';
+  if (OP._panelOpen) {
+    const pages = [...document.querySelectorAll('.page-content')];
+    const over = pages.map((pc, idx) => ({ el: pc, index: idx, pageNum: idx + 1 }))
+                      .filter(p => p.el.scrollHeight > p.el.clientHeight + 6);
+    _renderOPList(over);
+  }
+}
+
+function _renderOPList(overflowPages) {
+  const list = document.getElementById('opPageList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (overflowPages.length === 0) {
+    list.innerHTML = '<div style="font-size:12px;color:#8E8E93;padding:6px 4px;text-align:center;">No overlapping pages</div>';
+    return;
+  }
+  overflowPages.forEach(p => {
+    const overflow = p.el.scrollHeight - p.el.clientHeight;
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:rgba(211,47,47,.07);border:1px solid rgba(211,47,47,.2);border-radius:8px;cursor:pointer;transition:background .12s;';
+    item.onmouseover = () => { item.style.background = 'rgba(211,47,47,.15)'; };
+    item.onmouseout  = () => { item.style.background = 'rgba(211,47,47,.07)'; };
+    item.innerHTML =
+      '<span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#d32f2f;">' +
+        '<span class="material-symbols-outlined" style="font-size:14px;">article</span>' +
+        'Page ' + p.pageNum +
+        ' <span style="font-size:10px;font-weight:400;color:#e57373;">+' + Math.round(overflow) + 'px overflow</span>' +
+      '</span>' +
+      '<span class="material-symbols-outlined" style="font-size:14px;color:#d32f2f;">my_location</span>';
+    item.addEventListener('click', () => {
+      const outer = p.el.closest('.page-outer') || p.el.closest('.page') || p.el;
+      outer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    list.appendChild(item);
+  });
+}
+
+async function fixAllOverlappingPages() {
+  const marginVal = parseFloat(document.getElementById('pageMargin')?.value ?? 2);
+  const cmToPx = 37.795;
+  const maxH = (29.7 - marginVal * 2) * cmToPx;
+
+  const allPCs = [...document.querySelectorAll('.page-content')];
+  const overflowing = allPCs.filter(pc => pc.scrollHeight > pc.clientHeight + 6);
+  if (overflowing.length === 0) { showToast('No overlapping pages to fix', 'info'); return; }
+
+  let fixed = 0;
+  const reversed = [...overflowing].reverse();
+
+  for (const pc of reversed) {
+    const pageEl    = pc.closest('.page');
+    if (!pageEl) continue;
+    const pageOuter = pageEl.closest('.page-outer') || pageEl.parentElement;
+    const children  = [...pc.childNodes];
+    if (children.length === 0) continue;
+
+    // Measure split point
+    const measureDiv = document.createElement('div');
+    measureDiv.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;' +
+      'width:' + pc.offsetWidth + 'px;height:auto;max-height:none;' +
+      'font-size:' + getComputedStyle(pc).fontSize + ';' +
+      'font-family:' + getComputedStyle(pc).fontFamily + ';' +
+      'line-height:' + getComputedStyle(pc).lineHeight + ';' +
+      'word-wrap:break-word;padding:0;margin:0;';
+    document.body.appendChild(measureDiv);
+    let splitIdx = children.length;
+    for (let i = 0; i < children.length; i++) {
+      measureDiv.appendChild(children[i].cloneNode(true));
+      if (measureDiv.scrollHeight > maxH) { splitIdx = i; break; }
+    }
+    document.body.removeChild(measureDiv);
+
+    if (splitIdx === 0 || splitIdx === children.length) continue;
+
+    const overflowNodes = children.slice(splitIdx);
+    const uid = Date.now() + '_' + Math.floor(Math.random() * 9999) + '_' + fixed;
+    const newOuter = _buildPageOuter(uid);
+
+    // Copy page visual styling
+    const newPage = newOuter.querySelector('.page');
+    if (newPage) {
+      ['backgroundColor','backgroundImage','backgroundSize','backgroundPosition'].forEach(prop => {
+        if (pageEl.style[prop]) newPage.style[prop] = pageEl.style[prop];
+      });
+    }
+    // Move overflow nodes into new page content
+    const newPc = newOuter.querySelector('.page-content');
+    if (newPc) {
+      newPc.style.cssText = pc.style.cssText;
+      overflowNodes.forEach(node => { pc.removeChild(node); newPc.appendChild(node); });
+    }
+
+    pageOuter.after(newOuter);
+    fixed++;
+  }
+
+  _refreshPageState();
+  DOC.schedule();
+  showToast('Fixed ' + fixed + ' overlapping page' + (fixed !== 1 ? 's' : ''), 'success');
+  setTimeout(checkOverlappingPages, 400);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -7911,108 +8002,7 @@ async function exportDOCX() {
   s,strike { text-decoration:line-through; }
   sup { vertical-align:super; font-size:smaller; }
   sub { vertical-align:sub; font-size:smaller; }
-/* ── Version History ────────────────────────────────────────────── */
-/* Autosave pulse on expand button */
-#expandBtn.vh-pulsing {
-  animation: vh-btn-pulse 1.4s ease-in-out infinite;
-}
-@keyframes vh-btn-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(25,118,210,0); }
-  50% { opacity: 0.6; box-shadow: 0 0 0 5px rgba(25,118,210,0.22); }
-}
-.vh-divider {
-  height: 1px; background: rgba(0,0,0,.08); margin: 8px 0;
-}
-body.dark .vh-divider { background: rgba(255,255,255,.08); }
-.vh-select {
-  width: 100%; padding: 8px 10px; margin-top: 4px;
-  border: 1px solid rgba(0,0,0,.12); border-radius: 8px;
-  font-size: 13px; font-family: inherit; color: inherit;
-  background: transparent; outline: none; cursor: pointer;
-  appearance: auto;
-}
-body.dark .vh-select { border-color: rgba(255,255,255,.12); background: #111; color: #fff; }
-body.dark .vh-select option { background: #111; color: #fff; }
-.vh-cloud-chip {
-  padding: 4px 10px; border-radius: 20px; border: 1px solid #1976d2;
-  background: transparent; color: #1976d2; font-size: 11px; font-weight: 600;
-  cursor: pointer; font-family: inherit; transition: all .15s;
-}
-.vh-cloud-chip.active { background: #1976d2; color: #fff; }
-body.dark .vh-cloud-chip { border-color: #90caf9; color: #90caf9; }
-body.dark .vh-cloud-chip.active { background: #1976d2; color: #fff; }
-.vh-action-btn {
-  background: none; border: none; cursor: pointer; padding: 4px;
-  border-radius: 6px; display: flex; align-items: center; transition: background .12s;
-}
-.vh-action-btn:hover { background: rgba(0,0,0,.06); }
-body.dark .vh-action-btn:hover { background: rgba(255,255,255,.08); }
-.vh-btn {
-  display: flex; align-items: center; gap: 4px; padding: 7px 10px;
-  border-radius: 8px; border: 1px solid rgba(0,0,0,.12); background: transparent;
-  font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit;
-  color: #1976d2; transition: background .12s;
-}
-.vh-btn:hover { background: rgba(25,118,210,.06); }
-body.dark .vh-btn { border-color: rgba(255,255,255,.12); color: #90caf9; }
-body.dark .vh-btn:hover { background: rgba(144,202,249,.08); }
-#vhList::-webkit-scrollbar { width: 3px; }
-#vhList::-webkit-scrollbar-thumb { background: rgba(0,0,0,.15); border-radius: 2px; }
-body.dark #vhList::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); }
-.vh-item {
-  display: flex; align-items: center; gap: 8px; padding: 8px 10px;
-  border-radius: 8px; background: rgba(0,0,0,.03); cursor: pointer;
-  transition: background .12s; border: 1px solid transparent;
-}
-.vh-item:hover { background: rgba(25,118,210,.06); border-color: rgba(25,118,210,.15); }
-body.dark .vh-item { background: rgba(255,255,255,.04); }
-body.dark .vh-item:hover { background: rgba(144,202,249,.08); border-color: rgba(144,202,249,.2); }
-.vh-item.vh-selected { background: rgba(25,118,210,.1); border-color: #1976d2; }
-body.dark .vh-item.vh-selected { background: rgba(144,202,249,.12); border-color: #90caf9; }
-.vh-item-check { width: 14px; height: 14px; flex-shrink: 0; accent-color: #1976d2; }
-.vh-item-info { flex: 1; min-width: 0; }
-.vh-item-label { font-size: 12px; font-weight: 600; color: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.vh-item-meta { font-size: 10px; color: #8E8E93; margin-top: 1px; }
-.vh-item-actions { display: flex; gap: 4px; }
-.vh-item-btn {
-  background: none; border: none; cursor: pointer; padding: 3px;
-  border-radius: 5px; display: flex; align-items: center;
-  opacity: 0; transition: opacity .12s, background .12s;
-}
-.vh-item:hover .vh-item-btn { opacity: 1; }
-.vh-item-btn:hover { background: rgba(0,0,0,.08); }
-body.dark .vh-item-btn:hover { background: rgba(255,255,255,.1); }
-/* Autosave indicator */
-#vhSavingIndicator {
-  display: none;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #8E8E93;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  white-space: nowrap;
-  flex-shrink: 0;
-  pointer-events: none;
-}
-#vhSavingIndicator.active { display: flex; }
-body.dark #vhSavingIndicator { color: #636366; }
-.vh-saving-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #1976d2;
-  flex-shrink: 0;
-  animation: vh-pulse 1.2s ease-in-out infinite;
-}
-body.dark .vh-saving-dot { background: #90caf9; }
-@keyframes vh-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(0.6); }
-}
-#vhInterval option { background: #fff; color: #000; }
-body.dark #vhInterval { background: #111; color: #fff; border-color: #333; }
-body.dark #vhInterval option { background: #111; }
+
 
 /* Missing dark mode fixes */
 body.dark .tip-bar{background:#1C1C1E;color:#fff;border-color:#333;}
@@ -8266,7 +8256,6 @@ function handleImport(file) {
       _openedFromRecents = true;
       const backBtn = document.getElementById('recBackBtn');
       if (backBtn) backBtn.style.display = 'flex';
-      vhOnDocLoad();
 
       fill.style.width = '100%'; fill.style.background = '#1976d2';
       status.style.color = '#1976d2'; status.textContent = 'Import successful!';
@@ -11756,7 +11745,6 @@ async function recOpenLiveDoc(driveFileId) {
     _openedFromRecents = true;
     const backBtn = document.getElementById('recBackBtn');
     if (backBtn) backBtn.style.display = 'flex';
-    vhOnDocLoad();
     showToast('Drive document opened', 'success');
   } catch(e) {
     const card = document.getElementById('recCard-' + driveFileId);
@@ -11768,472 +11756,6 @@ async function recOpenLiveDoc(driveFileId) {
     const card = document.getElementById('recCard-' + driveFileId);
     if (card) card.classList.remove('card-opening');
   }
-}
-
-/* ═══════════════════════════════════════════════════════════════════
-   VERSION HISTORY ENGINE  —  Sugercane Editor
-   ═══════════════════════════════════════════════════════════════════ */
-
-const VH_STORE   = 'vh_versions';   // IndexedDB object store name
-const VH_DB_NAME = 'sugercane_vh';  // separate DB keeps it isolated
-const VH_DB_VER  = 1;
-const VH_MAX     = 100;             // max versions kept per document
-
-/* runtime state */
-const VH = {
-  intervalSec: 300,        // default: 5 min  (local + cloud)
-  cloudIntervalSec: 5,     // fast backup interval (only when _cloudFastEnabled)
-  _cloudFastEnabled: false,// fast backup off by default
-  _localTimer: null,
-  _cloudTimer: null,
-  _saving: false,
-  _panelOpen: false,
-};
-
-/* ── IndexedDB helpers ────────────────────────────────────────────── */
-function vhOpenDB() {
-  return new Promise((res, rej) => {
-    const req = indexedDB.open(VH_DB_NAME, VH_DB_VER);
-    req.onupgradeneeded = e => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(VH_STORE)) {
-        const store = db.createObjectStore(VH_STORE, { keyPath: 'id', autoIncrement: true });
-        store.createIndex('docId',    'docId',    { unique: false });
-        store.createIndex('savedAt',  'savedAt',  { unique: false });
-      }
-    };
-    req.onsuccess = e => res(e.target.result);
-    req.onerror   = e => rej(e.target.error);
-  });
-}
-
-async function vhGetVersions(docId) {
-  const db = await vhOpenDB();
-  return new Promise((res, rej) => {
-    const tx    = db.transaction(VH_STORE, 'readonly');
-    const index = tx.objectStore(VH_STORE).index('docId');
-    const req   = index.getAll(docId);
-    req.onsuccess = () => res((req.result || []).sort((a, b) => b.savedAt - a.savedAt));
-    req.onerror   = e => rej(e.target.error);
-  });
-}
-
-async function vhPutVersion(record) {
-  const db = await vhOpenDB();
-  return new Promise((res, rej) => {
-    const tx  = db.transaction(VH_STORE, 'readwrite');
-    const str = tx.objectStore(VH_STORE);
-    str.add(record);
-    tx.oncomplete = () => res();
-    tx.onerror    = e => rej(e.target.error);
-  });
-}
-
-async function vhDeleteVersion(id) {
-  const db = await vhOpenDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction(VH_STORE, 'readwrite');
-    tx.objectStore(VH_STORE).delete(id);
-    tx.oncomplete = () => res();
-    tx.onerror    = e => rej(e.target.error);
-  });
-}
-
-async function vhDeleteAllForDoc(docId) {
-  const versions = await vhGetVersions(docId);
-  const db = await vhOpenDB();
-  return new Promise((res, rej) => {
-    const tx  = db.transaction(VH_STORE, 'readwrite');
-    const str = tx.objectStore(VH_STORE);
-    versions.forEach(v => str.delete(v.id));
-    tx.oncomplete = () => res();
-    tx.onerror    = e => rej(e.target.error);
-  });
-}
-
-/* ── Trim old versions — keep newest VH_MAX ──────────────────────── */
-async function vhTrimVersions(docId) {
-  const versions = await vhGetVersions(docId);
-  if (versions.length <= VH_MAX) return;
-  const toDelete = versions.slice(VH_MAX);   // oldest are last after sort desc
-  const db = await vhOpenDB();
-  await new Promise((res, rej) => {
-    const tx  = db.transaction(VH_STORE, 'readwrite');
-    const str = tx.objectStore(VH_STORE);
-    toDelete.forEach(v => str.delete(v.id));
-    tx.oncomplete = () => res();
-    tx.onerror    = e => rej(e.target.error);
-  });
-}
-
-/* ── Core save-a-version ─────────────────────────────────────────── */
-async function vhSaveVersion(label) {
-  const docId = _currentDocIsLive ? (_currentDocDriveId || _currentDocId) : _currentDocId;
-  if (!docId) return;
-
-  const data   = collectData();
-  // embed fonts always
-  if (Object.keys(S.fonts || {}).length > 0 && !data.embeddedFonts) {
-    const ef = {};
-    Object.entries(S.fonts).forEach(([n, d]) => ef[n] = { type: 'file', data: d });
-    data.embeddedFonts = ef;
-  }
-
-  const json    = JSON.stringify(data);
-  const wordCnt = (document.getElementById('wordCountDisplay') || {}).textContent || '';
-
-  await vhPutVersion({
-    docId,
-    savedAt:   Date.now(),
-    label:     label || new Date().toLocaleString(),
-    isCloud:   !!_currentDocIsLive,
-    scdJson:   json,
-    wordCount: wordCnt,
-    charCount: json.length,
-  });
-  await vhTrimVersions(docId);
-}
-
-/* ── Saving indicator ────────────────────────────────────────────── */
-function vhShowSaving(msg) {
-  VH._saving = true;
-  const btn = document.getElementById('expandBtn');
-  if (btn) btn.classList.add('vh-pulsing');
-}
-
-function vhHideSaving() {
-  VH._saving = false;
-  const btn = document.getElementById('expandBtn');
-  if (btn) btn.classList.remove('vh-pulsing');
-}
-
-/* ── Auto-save tick (local) ──────────────────────────────────────── */
-async function vhLocalTick() {
-  if (!_currentDocId || _currentDocIsLive) return;
-  if (VH._saving) return; // prevent overlap
-  vhShowSaving('Auto-saving…');
-  try {
-    await dbSaveCurrent();
-    await vhSaveVersion();
-    if (VH._panelOpen) vhRenderList();
-  } catch(e) { console.error('VH local tick error:', e); }
-  finally { vhHideSaving(); }
-}
-
-/* ── Auto-save tick (cloud) ──────────────────────────────────────── */
-async function vhCloudTick() {
-  if (!_currentDocIsLive || !_currentDocDriveId) return;
-  if (VH._saving) return; // prevent overlap
-  vhShowSaving('Auto-saving…');
-  try {
-    await driveSaveCurrent();
-    await vhSaveVersion();
-    if (VH._panelOpen) vhRenderList();
-  } catch(e) { console.error('VH cloud tick error:', e); }
-  finally { vhHideSaving(); }
-}
-
-/* ── Timer management ───────────────────────────────────────────── */
-function vhStartTimers() {
-  vhStopTimers();
-  if (_currentDocIsLive && _currentDocDriveId) {
-    // Cloud docs use the minutes-based interval from the selector by default
-    // Fast backup chips (5s/10s/30s) only apply if user has chosen one
-    const useCloudFast = VH._cloudFastEnabled;
-    const intervalMs = useCloudFast
-      ? VH.cloudIntervalSec * 1000
-      : VH.intervalSec * 1000;
-    VH._cloudTimer = setInterval(() => vhCloudTick(), intervalMs);
-  } else if (_currentDocId) {
-    VH._localTimer = setInterval(() => vhLocalTick(), VH.intervalSec * 1000);
-  }
-}
-
-function vhStopTimers() {
-  clearInterval(VH._localTimer);
-  clearInterval(VH._cloudTimer);
-  VH._localTimer = null;
-  VH._cloudTimer = null;
-}
-
-function vhSetInterval(sec) {
-  if (!sec || sec < 5) sec = 5; // minimum 5 seconds
-  VH.intervalSec = sec;
-  const docId = _currentDocIsLive ? (_currentDocDriveId || _currentDocId) : _currentDocId;
-  if (docId) { try { localStorage.setItem('vh_interval_' + docId, String(sec)); } catch(e) {} }
-  vhStopTimers(); vhStartTimers();
-}
-
-function vhApplyCustomInterval() {
-  const h = parseInt(document.getElementById('vhHours')?.value) || 0;
-  const m = parseInt(document.getElementById('vhMins')?.value)  || 0;
-  const s = parseInt(document.getElementById('vhSecs')?.value)  || 0;
-  const total = (h * 3600) + (m * 60) + s;
-  const note = document.getElementById('vhIntervalNote');
-  if (total < 5) {
-    if (note) note.textContent = 'Minimum 5 seconds';
-    if (note) note.style.color = '#FF3B30';
-    return;
-  }
-  if (note) { note.textContent = 'Every ' + vhFmtInterval(total); note.style.color = '#8E8E93'; }
-  vhSetInterval(total);
-}
-
-function vhFmtInterval(sec) {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  const parts = [];
-  if (h) parts.push(h + 'h');
-  if (m) parts.push(m + 'm');
-  if (s) parts.push(s + 's');
-  return parts.join(' ') || '0s';
-}
-
-function vhPopulateInputs() {
-  const sec = VH.intervalSec || 300;
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = sec % 60;
-  const hEl = document.getElementById('vhHours');
-  const mEl = document.getElementById('vhMins');
-  const sEl = document.getElementById('vhSecs');
-  if (hEl) hEl.value = h;
-  if (mEl) mEl.value = m;
-  if (sEl) sEl.value = s;
-  const note = document.getElementById('vhIntervalNote');
-  if (note) { note.textContent = 'Every ' + vhFmtInterval(sec); note.style.color = '#8E8E93'; }
-}
-
-function vhSetCloudInterval(sec, btn) {
-  VH.cloudIntervalSec = sec;
-  VH._cloudFastEnabled = true;
-  document.querySelectorAll('.vh-cloud-chip').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  const docId = _currentDocIsLive ? (_currentDocDriveId || _currentDocId) : _currentDocId;
-  if (docId) { try { localStorage.setItem('vh_cloud_interval_' + docId, String(sec)); localStorage.setItem('vh_cloud_fast_' + docId, '1'); } catch(e) {} }
-  if (_currentDocIsLive) { vhStopTimers(); vhStartTimers(); }
-}
-
-/* ── Panel UI ────────────────────────────────────────────────────── */
-function toggleVersionHistoryPanel() {
-  VH._panelOpen = !VH._panelOpen;
-  const panel   = document.getElementById('vhPanel');
-  const chevron = document.getElementById('vhChevron');
-  if (!panel) return;
-  panel.style.display = VH._panelOpen ? 'block' : 'none';
-  if (chevron) chevron.style.transform = VH._panelOpen ? 'rotate(180deg)' : '';
-  if (VH._panelOpen) { vhPopulateInputs(); vhRenderList(); vhFixSelectStyle(); }
-}
-
-function vhFixSelectStyle() {
-  // Update hr/min/sec input border colors for dark mode
-  const dark = document.body.classList.contains('dark');
-  const borderColor = dark ? 'rgba(255,255,255,.15)' : 'rgba(120,120,130,.25)';
-  ['vhHours','vhMins','vhSecs'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.style.borderColor = borderColor;
-      el.style.color = dark ? '#fff' : '';
-    }
-  });
-}
-
-function vhFmtDate(ts) {
-  const d = new Date(ts);
-  return d.toLocaleDateString(undefined, { month:'short', day:'numeric' }) +
-         ' ' + d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
-}
-
-function vhFmtSize(bytes) {
-  if (bytes < 1024)        return bytes + ' B';
-  if (bytes < 1024*1024)   return (bytes/1024).toFixed(1) + ' KB';
-  return (bytes/(1024*1024)).toFixed(1) + ' MB';
-}
-
-async function vhRenderList() {
-  const list  = document.getElementById('vhList');
-  if (!list) return;
-  const docId = _currentDocIsLive ? (_currentDocDriveId || _currentDocId) : _currentDocId;
-  if (!docId) { list.innerHTML = '<div style="font-size:12px;color:#8E8E93;padding:8px 4px;">Open a document to see history.</div>'; return; }
-  const versions = await vhGetVersions(docId);
-  if (versions.length === 0) {
-    list.innerHTML = '<div style="font-size:12px;color:#8E8E93;padding:8px 4px;text-align:center;">No versions saved yet.</div>';
-    return;
-  }
-  list.innerHTML = '';
-  versions.forEach((v, i) => {
-    const item = document.createElement('div');
-    item.dataset.vid = v.id;
-    item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:rgba(0,0,0,.03);cursor:pointer;border:1px solid transparent;transition:background .12s;';
-    item.setAttribute('onmouseenter', "this.style.background='rgba(25,118,210,.06)';this.style.borderColor='rgba(25,118,210,.15)'");
-    item.setAttribute('onmouseleave', "if(!this._sel){this.style.background='rgba(0,0,0,.03)';this.style.borderColor='transparent'}");
-    item._sel = false;
-    item.innerHTML = `
-      <input type="checkbox" style="width:14px;height:14px;flex-shrink:0;accent-color:#1976d2;cursor:pointer;"
-        onchange="vhToggleSelect(this,${v.id},this.closest('[data-vid]'))" onclick="event.stopPropagation()"/>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i === 0 ? '<span class="material-symbols-outlined" style="font-size:13px;color:#FF9500;vertical-align:middle;margin-right:2px;">star</span>' : ''}${escHtml(v.label)}</div>
-        <div style="font-size:10px;color:#8E8E93;margin-top:1px;">${vhFmtSize(v.charCount || (v.scdJson||'').length || 0)}${v.wordCount ? ' · ' + v.wordCount : ''}</div>
-      </div>
-      <div style="display:flex;gap:2px;opacity:0;transition:opacity .12s;" class="vh-item-btns">
-        <button title="Restore" onclick="event.stopPropagation();vhRestore(${v.id})"
-          style="background:none;border:none;cursor:pointer;padding:3px;border-radius:5px;display:flex;align-items:center;">
-          <span class="material-symbols-outlined" style="font-size:15px;color:#1976d2;">restore</span>
-        </button>
-        <button title="Delete" onclick="event.stopPropagation();vhDeleteOne(${v.id})"
-          style="background:none;border:none;cursor:pointer;padding:3px;border-radius:5px;display:flex;align-items:center;">
-          <span class="material-symbols-outlined" style="font-size:15px;color:#FF3B30;">delete</span>
-        </button>
-      </div>`;
-    item.addEventListener('mouseenter', () => { const b = item.querySelector('.vh-item-btns'); if(b) b.style.opacity='1'; });
-    item.addEventListener('mouseleave', () => { const b = item.querySelector('.vh-item-btns'); if(b) b.style.opacity='0'; });
-    item.addEventListener('click', () => vhPreview(v));
-    list.appendChild(item);
-  });
-}
-
-function vhToggleSelect(cb, id, item) {
-  if (!item) item = cb.closest('[data-vid]');
-  if (!item) return;
-  item._sel = cb.checked;
-  if (cb.checked) {
-    item.style.background = 'rgba(25,118,210,.1)';
-    item.style.borderColor = '#1976d2';
-  } else {
-    item.style.background = 'rgba(0,0,0,.03)';
-    item.style.borderColor = 'transparent';
-  }
-}
-
-function vhSelectAll() {
-  document.querySelectorAll('#vhList [data-vid]').forEach(item => {
-    item._sel = true;
-    item.style.background = 'rgba(25,118,210,.1)';
-    item.style.borderColor = '#1976d2';
-    const cb = item.querySelector('input[type="checkbox"]');
-    if (cb) cb.checked = true;
-  });
-}
-
-async function vhDeleteOne(id) {
-  await vhDeleteVersion(id);
-  vhRenderList();
-}
-
-async function vhDeleteSelected() {
-  const selected = [...document.querySelectorAll('#vhList [data-vid]')].filter(i => i._sel);
-  if (selected.length === 0) { showToast('No versions selected', 'info'); return; }
-  for (const item of selected) {
-    await vhDeleteVersion(parseInt(item.dataset.vid));
-  }
-  showToast(`Deleted ${selected.length} version${selected.length > 1 ? 's' : ''}`, 'info');
-  vhRenderList();
-}
-
-async function vhDeleteAll() {
-  const docId = _currentDocIsLive ? (_currentDocDriveId || _currentDocId) : _currentDocId;
-  if (!docId) return;
-  await vhDeleteAllForDoc(docId);
-  showToast('All version history cleared', 'info');
-  vhRenderList();
-}
-
-/* ── Preview version in modal ────────────────────────────────────── */
-function vhPreview(v) {
-  // Open a read-only modal showing doc title and a restore button
-  let data;
-  try { data = JSON.parse(v.scdJson); } catch(e) { showToast('Cannot read version data', 'error'); return; }
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;';
-  modal.innerHTML = `
-    <div class="mbox" style="max-width:480px;width:92%;max-height:85vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;">
-      <div class="mhdr">
-        <h2 class="mtitle">Version Preview</h2>
-        <button class="mclose" onclick="this.closest('.modal').remove()"><span class="material-symbols-outlined">close</span></button>
-      </div>
-      <div style="font-size:13px;color:#8E8E93;margin-top:-8px;">${escHtml(v.label)}</div>
-      <div style="font-weight:700;font-size:16px;">${escHtml(data.title || 'Untitled')}</div>
-      <div style="border:1px solid rgba(0,0,0,.08);border-radius:10px;overflow:hidden;max-height:300px;overflow-y:auto;">
-        ${(data.pages || []).map((pg, i) => `
-          <div style="border-bottom:1px solid rgba(0,0,0,.06);padding:10px 14px;">
-            <div style="font-size:10px;color:#8E8E93;font-weight:600;margin-bottom:4px;">Page ${i+1}</div>
-            <div style="font-size:11px;line-height:1.5;color:inherit;pointer-events:none;overflow:hidden;max-height:120px;">
-              ${pg.replace(/<[^>]+>/g,'').slice(0,400)}${pg.length>400?'…':''}
-            </div>
-          </div>`).join('')}
-      </div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
-        <button class="mbtn sec" onclick="this.closest('.modal').remove()">Cancel</button>
-        <button class="mbtn" onclick="vhRestoreFromData(${v.id});this.closest('.modal').remove()">Restore This Version</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-}
-
-/* ── Restore version ────────────────────────────────────────────── */
-async function vhRestore(id) {
-  const db  = await vhOpenDB();
-  const rec = await new Promise((res, rej) => {
-    const tx  = db.transaction(VH_STORE, 'readonly');
-    const req = tx.objectStore(VH_STORE).get(id);
-    req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e.target.error);
-  });
-  if (!rec) { showToast('Version not found', 'error'); return; }
-  await vhRestoreFromData(id);
-}
-
-async function vhRestoreFromData(id) {
-  const db  = await vhOpenDB();
-  const rec = await new Promise((res, rej) => {
-    const tx  = db.transaction(VH_STORE, 'readonly');
-    const req = tx.objectStore(VH_STORE).get(id);
-    req.onsuccess = () => res(req.result);
-    req.onerror   = e => rej(e.target.error);
-  });
-  if (!rec) { showToast('Version not found', 'error'); return; }
-  let data;
-  try { data = JSON.parse(rec.scdJson); } catch(e) { showToast('Corrupt version data', 'error'); return; }
-  // Save a snapshot of current state before restoring
-  await vhSaveVersion('Before restore — ' + new Date().toLocaleString());
-  loadData(data);
-  scheduleAutoSave();
-  showToast('Version restored', 'success');
-  vhRenderList();
-}
-
-/* ── Called when a document is opened / switched ── */
-function vhOnDocLoad() {
-  vhStopTimers();
-  // Reset cloud chip UI visibility
-  const cloudRow = document.getElementById('vhCloudIntervals');
-  if (cloudRow) cloudRow.style.display = _currentDocIsLive ? 'block' : 'none';
-  // Restore saved interval pref from localStorage per-doc
-  const docId = _currentDocIsLive ? (_currentDocDriveId || _currentDocId) : _currentDocId;
-  if (docId) {
-    const stored = localStorage.getItem('vh_interval_' + docId);
-    if (stored) {
-      VH.intervalSec = parseInt(stored) || 300;
-      const sel = document.getElementById('vhInterval');
-      if (sel) sel.value = String(VH.intervalSec);
-    }
-    const storedCloud = localStorage.getItem('vh_cloud_interval_' + docId);
-    const storedFast  = localStorage.getItem('vh_cloud_fast_' + docId);
-    if (storedCloud && storedFast === '1') {
-      VH.cloudIntervalSec = parseInt(storedCloud) || 5;
-      VH._cloudFastEnabled = true;
-      document.querySelectorAll('.vh-cloud-chip').forEach(b => {
-        b.classList.toggle('active', String(b.dataset.val) === storedCloud);
-      });
-    } else {
-      VH._cloudFastEnabled = false;
-    }
-  }
-  vhStartTimers();
-  vhPopulateInputs();
-  if (VH._panelOpen) { vhRenderList(); vhFixSelectStyle(); }
 }
 
 

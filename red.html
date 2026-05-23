@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leaving DocuWritePro</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  --bg:#ffffff;
+  --text:#111111;
+  --text2:#555555;
+  --text3:#999999;
+  --btn-border:#dddddd;
+  --btn-hover:#f5f5f5;
+  --open-bg:#111111;
+  --open-fg:#ffffff;
+  --open-hover:#333333;
+}
+
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#000000;
+    --text:#f0f0f0;
+    --text2:#aaaaaa;
+    --text3:#555555;
+    --btn-border:#2a2a2a;
+    --btn-hover:#111111;
+    --open-bg:#f0f0f0;
+    --open-fg:#000000;
+    --open-hover:#cccccc;
+  }
+}
+
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+.page{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:48px 24px;
+  gap:0;
+}
+
+.heading{
+  font-size:22px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:-.3px;
+  margin-bottom:14px;
+  text-align:center;
+}
+
+.subline{
+  font-size:14px;
+  color:var(--text2);
+  text-align:center;
+  line-height:1.6;
+  margin-bottom:36px;
+  max-width:480px;
+}
+
+.subline .url{
+  color:var(--text);
+  font-weight:500;
+  word-break:break-all;
+}
+
+.subline .secs{
+  color:var(--text);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+
+.actions{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  width:100%;
+  max-width:320px;
+}
+
+.btn{
+  width:100%;
+  padding:13px 20px;
+  border-radius:10px;
+  font-size:15px;
+  font-weight:600;
+  font-family:inherit;
+  cursor:pointer;
+  border:none;
+  transition:background .15s,opacity .15s;
+  letter-spacing:.1px;
+}
+
+.btn-open{
+  background:var(--open-bg);
+  color:var(--open-fg);
+}
+.btn-open:hover{background:var(--open-hover);}
+.btn-open:disabled{opacity:.4;cursor:not-allowed;}
+
+.btn-cancel{
+  background:transparent;
+  color:var(--text2);
+  border:1.5px solid var(--btn-border);
+}
+.btn-cancel:hover{background:var(--btn-hover);color:var(--text);}
+
+.cancelled{
+  font-size:14px;
+  color:var(--text2);
+  text-align:center;
+  display:none;
+}
+
+.brand{
+  position:fixed;
+  bottom:24px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:11px;
+  color:var(--text3);
+  white-space:nowrap;
+  letter-spacing:.3px;
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="heading">You're leaving DocuWritePro</div>
+  <div class="subline" id="subline">
+    You will be redirected to <span class="url" id="urlSpan"></span> in <span class="secs" id="secsSpan">10</span> seconds.
+  </div>
+  <div class="actions" id="actions">
+    <button class="btn btn-open" id="btnOpen" onclick="openNow()">Open Link</button>
+    <button class="btn btn-cancel" onclick="cancelRedir()">Don't Open</button>
+  </div>
+  <div class="cancelled" id="cancelledMsg">Redirect cancelled. You can close this tab.</div>
+</div>
+<div class="brand">DocuWritePro</div>
+<script>
+(function(){
+  var TOTAL = 10;
+  var remaining = TOTAL;
+  var cancelled = false;
+  var done = false;
+  var timer = null;
+
+  function getUrl(){
+    var hash = window.location.hash || '';
+    var m = hash.match(/^#to=(.+)$/);
+    if(!m) return null;
+    try{ return decodeURIComponent(m[1]); }catch(e){ return null; }
+  }
+
+  var dest = getUrl();
+  var urlSpan  = document.getElementById('urlSpan');
+  var secsSpan = document.getElementById('secsSpan');
+  var actions  = document.getElementById('actions');
+  var subline  = document.getElementById('subline');
+  var cancelledMsg = document.getElementById('cancelledMsg');
+  var btnOpen  = document.getElementById('btnOpen');
+
+  if(!dest){
+    urlSpan.textContent = 'an unknown destination';
+    btnOpen.disabled = true;
+  } else {
+    urlSpan.textContent = dest;
+    document.title = 'Leaving DocuWritePro';
+  }
+
+  function tick(){
+    if(cancelled || done) return;
+    remaining--;
+    secsSpan.textContent = remaining === 1 ? '1 second' : remaining + ' seconds';
+    if(remaining <= 0){ done = true; openNow(); }
+    else timer = setTimeout(tick, 1000);
+  }
+
+  secsSpan.textContent = TOTAL + ' seconds';
+  timer = setTimeout(tick, 1000);
+
+  window.openNow = function(){
+    if(cancelled || !dest) return;
+    done = true;
+    clearTimeout(timer);
+    actions.style.display = 'none';
+    subline.style.display = 'none';
+    window.open(dest, '_blank', 'noopener,noreferrer');
+    document.querySelector('.heading').textContent = 'Opening link...';
+  };
+
+  window.cancelRedir = function(){
+    if(done) return;
+    cancelled = true;
+    clearTimeout(timer);
+    actions.style.display = 'none';
+    subline.style.display = 'none';
+    cancelledMsg.style.display = 'block';
+    document.querySelector('.heading').textContent = "You're staying on DocuWritePro";
+  };
+})();
+</script>
+</body>
+</html>

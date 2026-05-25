@@ -72,7 +72,7 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 
 
 
-### Sugercane Edition
+### Sugercane Editor
 
 <img width="2504" height="1247" alt="1000042461" src="https://github.com/user-attachments/assets/0b6cb555-5a51-4b5b-b35e-e5b8ea5434ed" />
 
@@ -80,29 +80,6 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 This is our main document editor. It uses the Sugercane Document Engine to generate perfect documents. The editor is filled with features your think are useless, but you use them anyway. The UI and the features, all were crafter with careful precision.
 
 
-
-
-#### Sugercane Edition: UI layout
-
-![1000042451](https://github.com/user-attachments/assets/20a81db0-9a88-49b0-9efe-fd233262b7b5)
-
-
-1. **Document Title**: Set the title of your document here.
-2. **Export Button**: Export your document using this button.
-3. **Taskbar/Toolbar**: Contains all the basic rich text formatting features you need.
-4. **Canvas**: Your writing area.
-5. **Viewing Adjustments**: Adjust the zoom of your document.
-6. **Watermark Editor**: Edit the watermark of your document.
-7. **Line Spacing**: Adjust the line spacing of your document.
-8. **Page Background**: Edit the background of your document.
-9. **Page Margins**: Choose the margins of your document.
-10. **Word Count**: See the word count of your document.
-11. **Collapse Button**: Hides the sidebar.
-12. **Add New Page Button**: Add a new page to your document.
-
-</details>
-
----
 
 ## Main Tools
 - **Editor**: Edit documents seamlessly with the clutter free PDF editor!
@@ -170,9 +147,7 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 
 Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 
-<details><summary>(Expand/Collapse)</summary>
- 
----
+
 
 
 ### Sharing Documents

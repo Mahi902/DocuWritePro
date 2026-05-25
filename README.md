@@ -1,4 +1,4 @@
-<img width="889" height="268" alt="1000032278" src="https://github.com/user-attachments/assets/c9090892-6fb1-4293-babb-8134c7d176a7" />
+<img width="889" height="268" alt="1000032278" src="https://mahi902.github.io/DocuWritePro/img/banner.jpg" />
 
 
 ## Premium Document Editing Suite
@@ -6,7 +6,7 @@
 
 
 ### 🔹mahi902.GitHub.io/DocuWritePro
-_Last updated: March 7th, 2026_
+_Last updated: May 25, 2026_
 
 ## Introduction
 
@@ -17,9 +17,9 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 <details>
 <summary><strong>Quicklinks</strong></summary>
 
-- [Lander →](https://mahi902.github.io/DocuWritePro/lander1.html)
+- [Lander →](https://mahi902.github.io/DocuWritePro/)
 - [Dashboard →](https://mahi902.github.io/DocuWritePro/Dashboard.html)
-- [Editor →](https://mahi902.github.io/DocuWritePro/document-writer.html)
+- [Download →](https://mahi902.github.io/DocuWritePro/instapp.html)
 - [Legal Documents →](https://mahi902.github.io/DocuWritePro/legal-documents.html)
 
 </details>
@@ -31,9 +31,7 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 
 - [Introduction](#introduction)
 - [Description](#description)
-- [DocuWrite Pro Tools](#docuwrite-pro-tools)
-  - [The Editor](#the-editor)
-    - [Sugercane Edition](#the-editor-sugercane-edition)
+- [Sugercane Editor](#sugercane-editor)
   - [Main Tools](#main-tools)
   - [Additional Tools](#additional-tools)
   - [Collaboration Tools](#collaboration-tools)
@@ -42,14 +40,10 @@ DocuWrite Pro is a completely client side based online document editor. No need 
   - [Install Mobile App](#install-mobile-app)
 - [Pricing](#pricing)
 - [Development](#development)
-  - [Privacy and Authentication](#privacy-and-authentication)
-    - [Web](#web-auth)
-    - [App](#app-auth)
-  - [Use of Artificial Intelligence](#use-of-ai)
   - [Contributing](#contributing)
 - [License](#license)
-- [Notes](#notes)
-- [Legal Info](#legal-info)
+  - [Notes](#notes)
+  - [Legal Info](#legal-info)
 - [Statistics](#statistics)
 - [Creator Profile](#creator-profile)
 
@@ -78,97 +72,14 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 
 
 
-
-## The Editor
-
-![Editor](https://i.ibb.co/yFnbSdRR/1000039569-modified.png)
-
-In DocuWrite Pro, the first tool that will come to mind is our premium and clutter-free document editor. The editor is enhanced with all the tools you'll need to craft a perfect document, which include **full rich text editing, watermark customization & more!** Below we've shown our editor and all the tools within it.
-
-<details>
-<summary>(Expand/Collapse)</summary>
-
----
-  
-<img width="2560" height="1308" alt="1000040577" src="https://github.com/user-attachments/assets/02bd0147-2d3a-4285-b992-ee9600856740" />
-
-1. **Hide Sidebar:** Use this button to completely hide the sidebar from view. 
-2. **Document Title:** Use this tool to change the title of the document. 
-3. **Theme Changer:** Use this tool to alternate between light and dark theme. 
-4. **Export:** Use this tool to export your document. 
-5. **Text Customization:** Use this tool to customize your texts colour and highlight. 
-6. **Font Viewer:** View the selected font.
-7. **Toolbar:** Use to format, align and insert images. 
-8. **Redo/Undo:** Redo or Undo changes in your document.
-9. **Preset Selector:** Choose presets of your text, such as size.
-    
-
-| Paragraph | Heading 1 | Heading 2 | Heading 3 | Heading 4 | Heading 5 | Heading 6 | Blockquote | Performatted |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-
-10. **Sidebar:** Contains all the tools. Available tools in the latest editor:
-
-
-| Name | Use | Result |
-| --- | --- | --- |
-| **Smart Lookup** | Lets you look up specific words instantly. | Displays definitions, phonetics, images, and synonyms for the selected word. |
-| **Autosave Settings** | Allows you to configure automatic save intervals. | Periodically creates downloadable backup copies of the document. |
-| **Smart Spelling** | Helps detect spelling mistakes in your document. | Highlights incorrect words with red underlines. |
-| **Custom Fonts** | Enables uploading custom font families or choosing from 300+ preloaded fonts. Also supports loading fonts directly from Google Fonts. | Applies the selected font across the entire document. |
-| **Customize Watermark** | Lets you edit, replace, or disable document watermarks. | Applies the customized watermark to every page. |
-| **Customize Theme** | Allows full customization of the editor’s appearance. | Applies the theme across the editor and remembers it after reload. |
-| **Line Spacing** | Enables adjustment of line spacing values. | Applies the selected spacing to the whole document. |
-| **Rearrange Pages** | Allows pages to be reordered or removed. | Updates page order or permanently deletes selected pages. |
-| **Insert Table** | Lets you add tables to the document. | Inserts a structured table at the selected position. |
-| **Word Count** | Provides detailed document statistics. | Shows word count, paragraph count, and word frequency instantly. |
-| **Translate Page** | Translates the entire document into a chosen language. | Replaces existing text with the translated version. |
-| **Share Page** | Enables quick sharing of specific pages. | Generates secure, shareable viewer links for selected pages. |
-
-
-11. **Collapse:** Collapses the sidebar as a second toolbar. 
-12. **Canvas:** Your writing area.
-    
-</details>
-
-
-### The Editor Sugercane Edition
+### Sugercane Edition
 
 <img width="2504" height="1247" alt="1000042461" src="https://github.com/user-attachments/assets/0b6cb555-5a51-4b5b-b35e-e5b8ea5434ed" />
 
 
-Asides from the default document editor, the Sugarcane editor is generally a light version of the main editor. It has all the essential tools you need to make a document. All the extra tools were scraped from this version, and the UI was completely revamped to a much lighter, cleaner and simpler layout and design.
-
-<details>
-<summary> (Collapse/Expand) </summary>
-
----
+This is our main document editor. It uses the Sugercane Document Engine to generate perfect documents. The editor is filled with features your think are useless, but you use them anyway. The UI and the features, all were crafter with careful precision.
 
 
-#### DocuWrite Pro vs Sugercane Edition – Feature Comparison
-
-| Category | DocuWrite Pro (Main Editor) | Sugercane Edition |
-|--------|----------------------------|-------------------|
-| Editor Philosophy | Power-user, feature-rich document editor | Minimalist, focus-first writing editor |
-| Target Use Case | Full document creation, analysis, and publishing | Fast drafting, simple writing, distraction-free editing |
-| UI Density | Tool-heavy, control-oriented interface | Clean, spacious, reduced visual clutter |
-| Themes | Multiple customizable themes available | Single fixed minimalist theme |
-| Dark Mode Control | Theme-based or advanced toggles | Simple on/off dark mode |
-| Smart Lookup | Available (context-aware lookup tools) | Not available |
-| Smart Spelling | Advanced spelling and suggestion system | Not available |
-| Font Import (via Link) | Supported | Not supported |
-| Font Import (via File Upload) | Supported | Supported |
-| Font Management | Advanced font controls | Basic font selection only |
-| Watermark Customization | Full control (text, opacity, position, style) | Text-only watermark with fixed centered angled faded style |
-| Page Rearranging | Pages can be reordered freely | Pages remain in linear order |
-| Word Count Detail | Advanced statistics (paragraphs, sentences, frequency, etc.) | Basic total word count only |
-| Text Translation | Built-in translation tools | Not available |
-| Page Sharing | Share page via link or built-in options | Not available |
-| Writing Assistance Tools | Extensive AI-assisted and smart tools | None |
-| Editing Distraction Level | Medium (many optional tools visible) | Very low |
-| Offline-first Design | Partial (some features rely on extras) | Strong offline-first focus |
-| Learning Curve | Moderate to high | Very low |
-| Best For | Long-form writing, publishing, research | Notes, drafts, quick writing sessions |
-| Export Capability | Available | Available |
 
 
 #### Sugercane Edition: UI layout
@@ -260,78 +171,8 @@ In DocuWrite Pro, there are various tools which support collaboration or can con
 Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 
 <details><summary>(Expand/Collapse)</summary>
-  
+ 
 ---
-
-
-  **➩ How the Collab Editor works:**
-
-<img src="https://i.ibb.co/JwnqxqzT/1000040454-modified.png" alt="Team Options Banner" />
-
-<ol>
-  <li><strong>Download as JPG</strong>: Download the document as a JPG image</li>
-  <li><strong>Leave Team</strong>: Leave the current team</li>
-  <li><strong>Team Code</strong>: Copy the team code to invite others</li>
-  <li><strong>Team Members</strong>: View all team members</li>
-  <li><strong>Edit Permissions (Admin Only)</strong>: Change permissions for team members</li>
-  <li><strong>Remove Member (Admin Only)</strong>: Remove a member from the team</li>
-  <li><strong>Delete Team (Admin Only)</strong>: Permanently delete the team and remove all members
-    <br><em>(Note: Non-admin users will see “Leave Team” instead)</em>
-  </li>
-  <li><strong>Toolbar</strong>: Edit the document using the toolbar</li>
-</ol>
-
-
-
----
-
-**➩ How the Connect Text Chat works:**
-
-<details>
-<summary><strong>Example Conversation</strong></summary>
-
-<a href="https://ibb.co/YT3YcXd2">
-  <img src="https://i.ibb.co/k6xk4JDK/Screenshot-2026-01-16-12-16-58-839-com-android-chrome-edit.jpg" 
-       alt="Screenshot 1" border="0">
-</a>
-
-<a href="https://ibb.co/5XRJLm8V">
-  <img src="https://i.ibb.co/vCjMkpP8/Screenshot-2026-01-16-12-17-14-113-com-android-chrome-edit.jpg" 
-       alt="Screenshot 2" border="0">
-</a>
-
-<a href="https://ibb.co/TDLbySLx">
-  <img src="https://i.ibb.co/Xf83Hg8r/Screenshot-2026-01-16-12-17-25-471-com-android-chrome-edit.jpg" 
-       alt="Screenshot 3" border="0">
-</a>
-</details>
-
-**How to access the text chat feature:**
-- **On Webpage**: Dashboard > Connect icon (top right) > Text Chat Icon
-- **On Mobile**: App Interface > Quick Tools > Swipe right > Text
-
----
-
-
-  **➩ How the Connect Call works:**
-  
-  **How to access the call feature:**
-- **On Webpage**: Dashboard > Connect icon (top right) > Call Icon
-- **On Mobile**: App Interface > Quick Tools > Swipe right > Call
-
----
-
-
-  **➩ How the DocuDrop File Share works:**
-
-  <ol>
-  <li>Choose <strong>Send File</strong> or <strong>Receive File</strong>.</li>
-  <li>Choose files.</li>
-  <li>Enter connection code.</li>
-  <li>Send or receive.</li>
-</ol>
-
-</details>
 
 
 ### Sharing Documents
@@ -339,23 +180,9 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 <img width="1065" height="255" alt="1000042595" src="https://github.com/user-attachments/assets/ec47d304-5020-4b3d-aa2c-8425a98011d3" />
 
 
-In both versions of the editor—Default and Sugercane—DocuWrite Pro offers a seamless way to share documents with others. Instead of downloading a PDF and then sending it manually, you can simply copy a link and share it directly. Both editors support this powerful feature, each in its own way.
+The DocuWrite Pro Sugercane Editor allows you to seamlessly share your documents. You can share as PDF, DOCX, or even SCD! Or you can also share a Template Link which will take you to the document in one click.
 
-<details>
-<summary>(Expand/Collapse)</summary>
 
----
-
-- Default Editor
-
-In the default DocuWrite Pro editor, sharing is done through the “Share Page” option available in the sidebar. You can select specific pages you want to share and generate a link for them. When someone opens this link, it displays a read-only version of the document, which can also be exported if needed.
-
-- Sugercane Edition
-
-Sharing in the Sugercane edition works a bit differently and is handled through Templates. Templates are quick-access links that usually contain small documents of 1–2 pages. You can create a template from the sidebar and copy its link. When opened, the link loads the exact document directly inside the editor, allowing it to be fully edited and exported.
-
-</details>
-  
  ## Clone or use DocuWrite Pro
  Either you want to use the DocuWrite Pro [web](https://mahi902.github.io/DocuWritePro/Dashboard.html), [app](https://mahi902.github.io/DocuWritePro/instapp.html) or clone the repository locally onto your device is completely up to you.
 
@@ -389,6 +216,7 @@ Comparison between the DocuWrite Pro app and website:
 | S | Pro | 0 USD | All | Unlimited | ✕ | ✓ |
 
 ⓘ DocuWrite Pro is a free-forall-forever project which is completely free. This is an [open source](#license) and publicly available software. We never ask for your credit card or other payment information. 
+
 ## Development
 
 DocuWrite Pro is fully designed, developed, and maintained by **Mohtadi Azad Mahi**. All aspects of the project—including concept planning, UI/UX design, core functionality, performance optimization, and ongoing improvements—are independently handled to ensure consistency, quality, and a clear long-term vision.
@@ -396,69 +224,7 @@ DocuWrite Pro is fully designed, developed, and maintained by **Mohtadi Azad Mah
 This solo development approach allows rapid iteration, creative freedom, and tight integration between features, resulting in a focused and polished document editing experience.
 
 
-### Privacy and Authentication
 
-![Banner8](https://i.ibb.co/wrQG6YdN/1000039764-Photoroom.png)
-
-
-#### Web Auth
-
-In DocuWrite Pro, we highly value your privacy. As a client side service, we don't connect or share your data with any external servers. In rare occasions we do let you know through your dashboard. 
-
-<details>
-<summary><strong>Forms of Authentication</strong></summary>
-
----
-
-- **Account Creation:**  
-  On the web version of DocuWrite Pro, you need to create an account on the Dashboard page. Your data is stored locally on your device. We use your **Name** and **Profile Picture** to enhance your experience within DocuWrite Pro tools. This data is **not shared with third-party services**. You can manually clear your browser cookies to remove this data.
-
-- **Human Verification:**  
-  On the web version of DocuWrite Pro, you also verify that you are human using a simple test. This service is provided by **MCaptcha**, a sub-division of DocuWrite Pro. MCaptcha helps keep our platform free from invaders and automated bots.
-
-</details>
-
-
-#### App Auth
-
-The DocuWrite Pro mobile app functions separately for the web app. Here you can choose to either use the app without and account, or connect your Google account for extra perks.
-
-<details>
-<summary><strong>Forms of Authentication</strong></summary>
-
----
-
-- **Account Creation:**  
- On the mobile version of DocuWrite Pro, you can sign up using your Google account. This uses Googles login system to log you in with DocuWrite Pro. This login also gives DocuWrite Pro special access of your Google account.
-
-- **OAuth Verification:**  
-  On the mobile version of DocuWrite Pro, when you sign up with Google, you may go through the OAuth service provided by Google for security reasons.
-
-</details>
-
-
-### Use of AI
-
-![Banner9](https://i.ibb.co/3Z784cQ/1000040372-Photoroom.png)
-
-ⓘ DocuWrite Pro (web) avoids built-in AI (Artificial Intelligence) to protect user privacy and security. As a fully client-side document editor, all data stays on the user’s device, ensuring full control, transparency, and trust.
-
-ⓘ DocuWrite Pro (app) has built-in AI functionalities which the user has the rights to disable at any time. The user has full control over what AI models they use and what API they use as well. They have full control over how much of their content is sent to the AI.
-
-<details>
-<summary><strong>Use of Artificial Intelligence in DocuWrite Pro</strong></summary>
-
----
-
-- <strong>Use of Artificial Intelligence during development:</strong><br>
-<img width="1376" height="768" alt="1000044951" src="https://github.com/user-attachments/assets/26d345a9-c96f-4ff9-b9a8-2492c913a4c4" />
-
-  During the development of DocuWrite Pro, we took guidance and inspiration from various AI models. This does not imply direct copying of code. Instead, AI tools were used for design inspiration, debugging assistance, general suggestions, and feedback analysis. Additionally, GitHub Copilot’s “Auto Generate” feature is used to create clear and structured commit messages during version control.
-
-- <strong>Use of Artificial Intelligence within DocuWrite Pro:</strong><br>
-  DocuWrite Pro is a fully self-hosted, independent project with no commercial partnerships or revenue sources. To keep the platform free and accessible, it relies entirely on GitHub’s hosting infrastructure. Due to these constraints—and because AI-generated outputs can sometimes be inaccurate or unreliable—DocuWrite Pro intentionally does not integrate Artificial Intelligence into its core features or functionality. For any AI features withing DocuWrite Pro, the user must use their own API, DocuWrite Pro doesn't charge for this feature.
-
-</details>
 
 
   

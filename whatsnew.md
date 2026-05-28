@@ -8,7 +8,7 @@
 * Added Numbered List Style menu in Sugarcane Editor.
 * Added Horizontal Lines menu in Sugarcane Editor.
 * Updated Insert Image menu in Sugarcane Editor.
-* Added Opcity, Border, Corner and Size customization to Insert Image in Sugarcane Editor.
+* Added Opacity, Border, Corner and Size customization to Insert Image in Sugarcane Editor.
 * Update Insert Table menu in Sugarcane Editor.
 * Added per cell customization to Insert Table in Sugarcane Editor.
 * Updated Insert Link menu in Sugarcane Editor.

@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>URL to PDF Converter</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght=0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght=400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#ebebeb;--surface:#ffffff;
+  --border:#e0e0e0;--border2:#c8c8c8;--text:#0d0d0d;--text2:#5a5a5a;--text3:#909090;
+  --accent:#1a1a1a;--btn-bg:#0d0d0d;--btn-text:#ffffff;--btn-hover:#2a2a2a;
+  --radius:10px;--radius-lg:14px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#000000;--bg2:#0f0f0f;--bg3:#1a1a1a;--surface:#111111;
+    --border:#252525;--border2:#383838;--text:#f0f0f0;--text2:#a0a0a0;--text3:#606060;
+    --accent:#f0f0f0;--btn-bg:#f0f0f0;--btn-text:#0d0d0d;--btn-hover:#cccccc;
+  }
+}
+[data-theme="light"]{
+  --bg:#ffffff;--bg2:#f5f5f5;--bg3:#ebebeb;--surface:#ffffff;
+  --border:#e0e0e0;--border2:#c8c8c8;--text:#0d0d0d;--text2:#5a5a5a;--text3:#909090;
+  --accent:#1a1a1a;--btn-bg:#0d0d0d;--btn-text:#ffffff;--btn-hover:#2a2a2a;
+}
+[data-theme="dark"]{
+  --bg:#000000;--bg2:#0f0f0f;--bg3:#1a1a1a;--surface:#111111;
+  --border:#252525;--border2:#383838;--text:#f0f0f0;--text2:#a0a0a0;--text3:#606060;
+  --accent:#f0f0f0;--btn-bg:#f0f0f0;--btn-text:#0d0d0d;--btn-hover:#cccccc;
+}
+html,body{
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;font-size:15px;
+  transition:background .2s,color .2s;
+}
+/* ── LAYOUT ── */
+.app{min-height:100vh;}
+.page{display:none;animation:fadeUp .25s ease both;}
+.page.active{display:flex;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ── PAGE 1: UPLOAD/INPUT ── */
+#page-upload{
+  flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:40px 24px;text-align:center;
+}
+.upload-title{
+  font-size:clamp(32px,5vw,52px);font-weight:300;
+  letter-spacing:-.02em;line-height:1.1;color:var(--text);margin-bottom:12px;
+}
+.upload-title strong{font-weight:600;}
+.upload-sub{
+  font-size:15px;color:var(--text2);margin-bottom:40px;
+  font-weight:300;letter-spacing:.01em;
+}
+.drop-zone{
+  width:min(520px,100%);border:1.5px solid var(--border2);
+  border-radius:var(--radius-lg);padding:32px 24px;
+  transition:border-color .15s,background .15s;background:var(--bg2);
+  position:relative;
+  text-align:left;
+  cursor:default;
+}
+.drop-label{font-size:14px;color:var(--text2);margin-bottom:12px;}
+.drop-label strong{color:var(--text);font-weight:500;}
+
+/* Sleek textarea */
+.url-textarea {
+  width: 100%;
+  height: 150px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  color: var(--text);
+  resize: none;
+  outline: none;
+  margin-bottom: 20px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.url-textarea:focus {
+  border-color: var(--accent);
+}
+.btn-upload{
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:8px;padding:12px 24px;width:100%;
+  background:var(--btn-bg);color:var(--btn-text);border:none;border-radius:var(--radius);
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;
+  transition:background .15s,transform .1s;letter-spacing:.01em;
+}
+.btn-upload:hover{background:var(--btn-hover);}
+.btn-upload:active{transform:scale(.98);}
+.upload-formats{margin-top:16px;font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;letter-spacing:.02em;text-align:center;}
+
+/* ── PAGE 2: ARRANGE ── */
+#page-arrange{flex-direction:column;min-height:100vh;}
+.arrange-header{
+  position:sticky;top:0;z-index:50;background:var(--bg);
+  border-bottom:1px solid var(--border);
+  padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.arrange-info{display:flex;flex-direction:column;gap:2px;}
+.arrange-info .doc-name{font-size:14px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;}
+.arrange-info .doc-meta{font-size:12px;color:var(--text3);}
+.arrange-actions{display:flex;align-items:center;gap:8px;}
+.btn-ghost{
+  padding:8px 14px;border:1px solid var(--border);border-radius:var(--radius);
+  background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:400;cursor:pointer;
+  transition:background .12s,color .12s,border-color .12s;white-space:nowrap;
+}
+.btn-ghost:hover{background:var(--bg3);color:var(--text);border-color:var(--border2);}
+.btn-primary{
+  padding:8px 18px;background:var(--btn-bg);color:var(--btn-text);
+  border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:500;cursor:pointer;
+  transition:background .12s,transform .1s;
+  display:flex;align-items:center;gap:6px;white-space:nowrap;
+}
+.btn-primary:hover{background:var(--btn-hover);}
+.btn-primary:active{transform:scale(.98);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.images-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px;padding:24px;
+}
+/* workspace thumb card */
+.img-thumb{
+  border-radius:var(--radius);border:2px solid var(--border);
+  background:var(--surface);overflow:hidden;cursor:grab;
+  transition:border-color .15s,transform .12s,opacity .15s;
+  position:relative;user-select:none;
+}
+.img-thumb:hover{border-color:var(--border2);}
+.img-thumb.dragging{opacity:.4;cursor:grabbing;transform:scale(.97);}
+.img-thumb.drag-over-top{border-top:3px solid var(--accent);}
+.img-thumb.drag-over-bottom{border-bottom:3px solid var(--accent);}
+.img-thumb .thumb-preview-container {
+  width: 100%;
+  height: 200px;
+  background: #fdfdfd;
+  overflow: hidden;
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+[data-theme="dark"] .img-thumb .thumb-preview-container {
+  background: #1e1e1e;
+}
+.img-thumb img{display:block;width:100%;height:100%;object-fit:cover;object-position:top center;}
+.img-thumb .thumb-bar{
+  padding:7px 10px;font-size:12px;color:var(--text2);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--bg2);gap:6px;
+}
+.thumb-name{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;
+  font-size:11px;color:var(--text3);
+}
+.thumb-order{
+  font-size:11px;font-family:'DM Mono',monospace;
+  color:var(--text3);flex-shrink:0;
+}
+.thumb-remove{
+  width:18px;height:18px;border-radius:4px;border:none;background:transparent;
+  cursor:pointer;color:var(--text3);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:background .12s,color .12s;padding:0;
+}
+.thumb-remove:hover{background:var(--bg3);color:var(--text);}
+/* add-more card */
+.add-more-card{
+  border-radius:var(--radius);border:1.5px dashed var(--border2);
+  background:var(--bg2);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:8px;min-height:238px;
+  transition:border-color .15s,background .15s;color:var(--text3);font-size:13px;
+}
+.add-more-card:hover{border-color:var(--accent);background:var(--bg3);color:var(--text2);}
+
+/* ── PAGE 3: CONVERTING ── */
+#page-converting{
+  flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:40px 24px;text-align:center;
+}
+.convert-title{font-size:22px;font-weight:500;margin-bottom:8px;color:var(--text);}
+.convert-sub{font-size:14px;color:var(--text2);margin-bottom:40px;}
+.progress-track{width:min(320px,100%);height:3px;background:var(--bg3);border-radius:4px;overflow:hidden;margin-bottom:12px;}
+.progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .3s ease;width:0%;}
+.progress-label{font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;}
+
+/* ── PAGE 4: DONE ── */
+#page-done{
+  flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:40px 24px;text-align:center;
+}
+.done-check{
+  width:56px;height:56px;border-radius:50%;border:1.5px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:24px;color:var(--text);
+}
+.done-filename{
+  font-size:18px;font-weight:500;letter-spacing:-.01em;color:var(--text);
+  margin-bottom:4px;cursor:text;
+  display:inline-flex;align-items:center;gap:6px;
+  border-bottom:1px solid transparent;transition:border-color .15s;
+}
+.done-filename:hover{border-color:var(--border2);}
+.done-filename input{
+  background:transparent;border:none;outline:none;
+  font-family:'DM Sans',sans-serif;font-size:18px;font-weight:500;
+  color:var(--text);letter-spacing:-.01em;width:auto;min-width:60px;
+}
+.done-meta{font-size:13px;color:var(--text3);margin-bottom:32px;}
+.done-actions{display:flex;flex-direction:column;align-items:center;gap:10px;width:min(280px,100%);}
+.btn-download{
+  width:100%;padding:12px 24px;background:var(--btn-bg);color:var(--btn-text);
+  border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;cursor:pointer;
+  transition:background .12s,transform .1s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-download:hover{background:var(--btn-hover);}
+.btn-download:active{transform:scale(.98);}
+.btn-home{
+  width:100%;padding:11px 24px;background:transparent;
+  border:1px solid var(--border);border-radius:var(--radius);color:var(--text2);
+  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:400;cursor:pointer;
+  transition:background .12s,color .12s,border-color .12s;
+}
+.btn-home:hover{background:var(--bg3);color:var(--text);border-color:var(--border2);}
+
+/* ── SETTINGS FAB ── */
+.settings-fab{
+  position:fixed;bottom:28px;right:28px;width:44px;height:44px;
+  border-radius:50%;background:var(--bg2);border:1px solid var(--border);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  color:var(--text2);transition:background .15s,border-color .15s,color .15s,transform .15s;
+  z-index:200;
+}
+.settings-fab:hover{background:var(--bg3);border-color:var(--border2);color:var(--text);}
+.settings-fab:active{transform:scale(.94);}
+
+/* ── SETTINGS OVERLAY ── */
+.settings-overlay{
+  position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0);
+  pointer-events:none;transition:background .2s;
+}
+.settings-overlay.open{background:rgba(0,0,0,.28);pointer-events:all;}
+[data-theme="light"] .settings-overlay.open{background:rgba(0,0,0,.18);}
+.settings-panel{
+  position:fixed;bottom:84px;right:28px;width:260px;
+  background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:4px 0;z-index:400;
+  transform:scale(.92) translateY(12px);transform-origin:bottom right;
+  opacity:0;pointer-events:none;
+  transition:transform .18s cubic-bezier(.34,1.4,.64,1),opacity .15s ease;
+  box-shadow:0 8px 32px rgba(0,0,0,.12);
+}
+.settings-panel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all;}
+.settings-header{
+  padding:12px 16px 8px;font-size:11px;font-weight:500;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--text3);
+  border-bottom:1px solid var(--border);margin-bottom:4px;
+}
+.settings-row{
+  padding:10px 16px;display:flex;align-items:center;
+  justify-content:space-between;gap:12px;
+}
+.settings-label{font-size:13px;color:var(--text);font-weight:400;}
+.settings-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.settings-row select{
+  background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+  padding:5px 8px;font-family:'DM Sans',sans-serif;font-size:12px;
+  color:var(--text);cursor:pointer;outline:none;transition:border-color .12s;
+}
+.settings-row select:hover{border-color:var(--border2);}
+
+/* ── CUSTOM INLINE MODAL (Add More URLs) ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open {
+  display: flex;
+}
+.modal-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: min(480px, 100%);
+  padding: 24px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  animation: modalScaleUp 0.2s cubic-bezier(.34,1.4,.64,1) both;
+}
+@keyframes modalScaleUp {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+.modal-title {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ── LOADING OVERLAY ── */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--bg), 0.85);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border-radius: var(--radius-lg);
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+.loading-overlay.active {
+  display: flex;
+}
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-size: 13px;
+  color: var(--text2);
+}
+
+/* ── TOAST ── */
+.toast-container{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:1999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;
+}
+.toast{
+  background:var(--accent);color:var(--btn-text);padding:10px 20px;
+  border-radius:10px;font-size:13px;font-weight:500;
+  animation:toastIn .2s ease,toastOut .2s ease 2.3s both;
+  white-space:nowrap;pointer-events:none;
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(4px)}}
+</style>
+</head>
+<body>
+<main class="app">
+  <!-- PAGE 1: ENTER URLS -->
+  <section class="page active" id="page-upload">
+    <h1 class="upload-title"><strong>URL</strong> to PDF</h1>
+    <p class="upload-sub">Enter webpage addresses to convert to PDF</p>
+    <div class="drop-zone" id="drop-zone">
+      <div class="loading-overlay" id="upload-loading">
+        <div class="spinner"></div>
+        <div class="loading-text" id="upload-loading-text">Crawling & parsing pages...</div>
+      </div>
+      <p class="drop-label"><strong>Enter web addresses</strong> (one per line):</p>
+      <textarea class="url-textarea" id="url-input" placeholder="https://example.com&#10;https://wikipedia.org" spellcheck="false"></textarea>
+      <button class="btn-upload" id="load-urls-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        Load Webpages
+      </button>
+      <p class="upload-formats">Multiple addresses supported · Autodetects landscape formatting</p>
+    </div>
+  </section>
+
+  <!-- PAGE 2: ARRANGE -->
+  <section class="page" id="page-arrange">
+    <div class="arrange-header">
+      <div class="arrange-info">
+        <span class="doc-name" id="doc-name-label">Webpages</span>
+        <span class="doc-meta" id="doc-meta-label">0 URLs · drag to reorder</span>
+      </div>
+      <div class="arrange-actions">
+        <button class="btn-ghost" id="back-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+        <button class="btn-primary" id="convert-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Convert
+        </button>
+      </div>
+    </div>
+    <div class="images-grid" id="images-grid"></div>
+  </section>
+
+  <!-- PAGE 3: CONVERTING -->
+  <section class="page" id="page-converting">
+    <div class="convert-title">Building PDF</div>
+    <div class="convert-sub" id="convert-sub">Preparing…</div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-label" id="progress-label">0 / 0</div>
+  </section>
+
+  <!-- PAGE 4: DONE -->
+  <section class="page" id="page-done">
+    <div class="done-check">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="done-filename" id="done-filename-wrap">
+      <input type="text" id="done-filename-input" value="converted">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.4"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </div>
+    <div class="done-meta" id="done-meta"></div>
+    <div class="done-actions">
+      <button class="btn-download" id="download-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </button>
+      <button class="btn-home" id="done-home-btn">Done</button>
+    </div>
+  </section>
+</main>
+
+<!-- ADD MORE MODAL -->
+<div class="modal-overlay" id="add-more-modal">
+  <div class="modal-card">
+    <div class="modal-title">Add Webpages</div>
+    <p class="drop-label">Enter one or more web addresses below:</p>
+    <textarea class="url-textarea" id="modal-url-input" placeholder="https://news.ycombinator.com" style="height: 100px; margin-bottom: 8px;" spellcheck="false"></textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="modal-cancel-btn">Cancel</button>
+      <button class="btn-primary" id="modal-submit-btn">Add URLs</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS FAB -->
+<button class="settings-fab" id="settings-fab" title="Settings" aria-label="Settings" style="display:none">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+</button>
+
+<!-- SETTINGS OVERLAY -->
+<div class="settings-overlay" id="settings-overlay"></div>
+
+<!-- SETTINGS PANEL -->
+<div class="settings-panel" id="settings-panel" role="dialog" aria-label="Settings">
+  <div class="settings-header">PDF settings</div>
+  <div class="settings-row">
+    <div>
+      <div class="settings-label">Page size</div>
+      <div class="settings-sub">Output page dimensions</div>
+    </div>
+    <select id="page-size-select">
+      <option value="fit">Fit Webpage Size</option>
+      <option value="a4" selected>A4</option>
+      <option value="letter">Letter</option>
+      <option value="a3">A3</option>
+    </select>
+  </div>
+  <div class="settings-row">
+    <div>
+      <div class="settings-label">Orientation</div>
+      <div class="settings-sub">Page layout direction</div>
+    </div>
+    <select id="orientation-select">
+      <option value="auto" selected>Auto</option>
+      <option value="portrait">Portrait</option>
+      <option value="landscape">Landscape</option>
+    </select>
+  </div>
+  <div class="settings-row">
+    <div>
+      <div class="settings-label">Margin</div>
+      <div class="settings-sub">Padding around content</div>
+    </div>
+    <select id="margin-select">
+      <option value="0">None</option>
+      <option value="20" selected>Small</option>
+      <option value="40">Medium</option>
+      <option value="60">Large</option>
+    </select>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Required Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+'use strict';
+
+/* ── THEME VIA HASH ── */
+const htmlElement = document.documentElement;
+function applyThemeFromHash(){
+  const h = window.location.hash;
+  if(h==='#light') htmlElement.setAttribute('data-theme','light');
+  else if(h==='#dark') htmlElement.setAttribute('data-theme','dark');
+  else htmlElement.removeAttribute('data-theme');
+}
+applyThemeFromHash();
+window.addEventListener('hashchange', applyThemeFromHash);
+
+/* ── SETTINGS ── */
+const fab = document.getElementById('settings-fab');
+const panel = document.getElementById('settings-panel');
+const overlay = document.getElementById('settings-overlay');
+let settingsOpen = false;
+
+function openSettings(){ settingsOpen=true; panel.classList.add('open'); overlay.classList.add('open'); }
+function closeSettings(){ settingsOpen=false; panel.classList.remove('open'); overlay.classList.remove('open'); }
+fab.addEventListener('click', e => { e.stopPropagation(); settingsOpen ? closeSettings() : openSettings(); });
+overlay.addEventListener('click', closeSettings);
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeSettings(); });
+
+function updateFabVisibility(name){
+  fab.style.display = name === 'arrange' ? 'flex' : 'none';
+}
+
+/* ── STATE ── */
+let imageItems = []; // {file: {name}, url (thumbnail image dataUrl), textContent, rawUrl, id}
+let pdfBlob = null;
+let idCounter = 0;
+
+/* ── PAGES ── */
+const pages = {
+  upload: document.getElementById('page-upload'),
+  arrange: document.getElementById('page-arrange'),
+  converting: document.getElementById('page-converting'),
+  done: document.getElementById('page-done'),
+};
+
+function showPage(name){
+  Object.values(pages).forEach(p => p.classList.remove('active'));
+  pages[name].classList.add('active');
+  updateFabVisibility(name);
+  closeSettings();
+}
+updateFabVisibility('upload');
+
+/* ── URL PARSING & NORMALIZATION ── */
+function cleanUrl(urlStr) {
+  let cleaned = urlStr.trim();
+  if (!cleaned) return null;
+  if (!/^https?:\/\//i.test(cleaned)) {
+    cleaned = 'https://' + cleaned;
+  }
+  try {
+    new URL(cleaned);
+    return cleaned;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* ── CORS-SAFE PAGE HTML CRAWLER ── */
+async function fetchWebpageContent(rawUrl) {
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(rawUrl)}`;
+  const response = await fetch(proxyUrl);
+  if (!response.ok) throw new Error('CORS proxy blocked access');
+  const data = await response.json();
+  let html = data.contents;
+  if (!html) throw new Error('No content resolved from page');
+
+  // Inject `<base href="...">` to head block so relative resources load safely
+  const baseTag = `<base href="${rawUrl}">`;
+  if (html.includes('<head>')) {
+    html = html.replace('<head>', `<head>${baseTag}`);
+  } else if (html.includes('<HEAD>')) {
+    html = html.replace('<HEAD>', `<HEAD>${baseTag}`);
+  } else {
+    html = baseTag + html;
+  }
+  return html;
+}
+
+/* ── HIGH PERFORMANCE HTML-TO-IMAGE ENGINE FOR PREVIEWS ── */
+function renderHtmlToThumbnail(htmlContent, rawUrl) {
+  return new Promise((resolve) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.top = '-10000px';
+    iframe.style.left = '-10000px';
+    iframe.style.width = '1024px'; 
+    iframe.style.height = '1200px';
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    doc.write(htmlContent);
+    doc.close();
+
+    let completed = false;
+    const processCanvas = async () => {
+      if (completed) return;
+      completed = true;
+      try {
+        const scrollHeight = Math.min(doc.documentElement.scrollHeight || doc.body.scrollHeight || 1024, 2048);
+        iframe.style.height = scrollHeight + 'px';
+
+        const canvas = await html2canvas(doc.body, {
+          useCORS: true,
+          logging: false,
+          scale: 0.6, // Low scale for UI workspace preview
+          backgroundColor: '#ffffff'
+        });
+        document.body.removeChild(iframe);
+        resolve(canvas.toDataURL('image/jpeg', 0.4));
+      } catch (err) {
+        console.error('Thumbnail generation failed', err);
+        if (iframe.parentNode) document.body.removeChild(iframe);
+        
+        // Secondary ultra-reliable public snapshot fallback
+        resolve(`https://api.microlink.io?url=${encodeURIComponent(rawUrl)}&screenshot=true&embed=screenshot.url`);
+      }
+    };
+
+    iframe.contentWindow.onload = () => { setTimeout(processCanvas, 600); };
+    setTimeout(processCanvas, 2500); 
+  });
+}
+
+/* ── WORKSPACE LOADER ── */
+const loadUrlsBtn = document.getElementById('load-urls-btn');
+const urlInput = document.getElementById('url-input');
+const uploadLoading = document.getElementById('upload-loading');
+const uploadLoadingText = document.getElementById('upload-loading-text');
+
+loadUrlsBtn.addEventListener('click', async () => {
+  const lines = urlInput.value.split('\n');
+  const validUrls = [];
+  lines.forEach(line => {
+    const norm = cleanUrl(line);
+    if (norm) validUrls.push(norm);
+  });
+
+  if (!validUrls.length) {
+    toast('Please enter at least one valid URL');
+    return;
+  }
+
+  uploadLoading.classList.add('active');
+  
+  for (let i = 0; i < validUrls.length; i++) {
+    const url = validUrls[i];
+    const parsedDomain = new URL(url).hostname;
+    uploadLoadingText.textContent = `Fetching webpage ${i+1} of ${validUrls.length} (${parsedDomain})...`;
+    
+    try {
+      const htmlContent = await fetchWebpageContent(url);
+      const previewUrl = await renderHtmlToThumbnail(htmlContent, url);
+      
+      imageItems.push({
+        file: { name: parsedDomain },
+        url: previewUrl, 
+        textContent: htmlContent,
+        rawUrl: url,
+        id: ++idCounter
+      });
+    } catch(err) {
+      console.warn(`HTML fetch failed for ${url}, fallback to snapshot API...`, err);
+      // Clean fallback if AllOrigins is blocked or page is heavily protected
+      const screenshotProxy = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`;
+      
+      imageItems.push({
+        file: { name: parsedDomain },
+        url: screenshotProxy, 
+        textContent: null, // Signals renderer to use pure image fallback
+        rawUrl: url,
+        id: ++idCounter
+      });
+    }
+  }
+
+  uploadLoading.classList.remove('active');
+
+  if(imageItems.length > 0){
+    showPage('arrange');
+    renderGrid();
+    updateMeta();
+    urlInput.value = ''; // Reset primary input area
+  }
+});
+
+/* ── ADD MORE (Inline Workspace Modal) ── */
+const addMoreCardBtn = document.getElementById('add-more-modal');
+const modalOverlay = document.getElementById('add-more-modal');
+const modalCancel = document.getElementById('modal-cancel-btn');
+const modalSubmit = document.getElementById('modal-submit-btn');
+const modalUrlInput = document.getElementById('modal-url-input');
+
+function showModal() {
+  modalOverlay.classList.add('open');
+  modalUrlInput.value = '';
+  modalUrlInput.focus();
+}
+
+function hideModal() {
+  modalOverlay.classList.remove('open');
+}
+
+modalCancel.addEventListener('click', hideModal);
+modalOverlay.addEventListener('click', e => { if(e.target === modalOverlay) hideModal(); });
+
+modalSubmit.addEventListener('click', async () => {
+  const lines = modalUrlInput.value.split('\n');
+  const validUrls = [];
+  lines.forEach(line => {
+    const norm = cleanUrl(line);
+    if (norm) validUrls.push(norm);
+  });
+
+  if (!validUrls.length) {
+    toast('No valid URLs entered');
+    return;
+  }
+
+  hideModal();
+  uploadLoadingText.textContent = 'Resolving new addresses...';
+  uploadLoading.classList.add('active');
+  showPage('upload'); // Return temporarily to show progress safely
+
+  for (let i = 0; i < validUrls.length; i++) {
+    const url = validUrls[i];
+    const parsedDomain = new URL(url).hostname;
+    uploadLoadingText.textContent = `Resolving ${i+1} of ${validUrls.length}...`;
+    try {
+      const htmlContent = await fetchWebpageContent(url);
+      const previewUrl = await renderHtmlToThumbnail(htmlContent, url);
+      imageItems.push({
+        file: { name: parsedDomain },
+        url: previewUrl, 
+        textContent: htmlContent,
+        rawUrl: url,
+        id: ++idCounter
+      });
+    } catch(err) {
+      const screenshotProxy = `https://api.microlink.io?url=${encodeURIComponent(url)}&screenshot=true&embed=screenshot.url`;
+      imageItems.push({
+        file: { name: parsedDomain },
+        url: screenshotProxy, 
+        textContent: null,
+        rawUrl: url,
+        id: ++idCounter
+      });
+    }
+  }
+
+  uploadLoading.classList.remove('active');
+  showPage('arrange');
+  renderGrid();
+  updateMeta();
+});
+
+/* ── BACK ── */
+document.getElementById('back-btn').addEventListener('click', ()=>{
+  imageItems = []; pdfBlob = null;
+  document.getElementById('url-input').value='';
+  document.getElementById('images-grid').innerHTML='';
+  const h = window.location.hash;
+  if(h!=='#light'&&h!=='#dark') window.location.hash='';
+  showPage('upload');
+});
+
+/* ── GRID ── */
+function updateMeta(){
+  const n = imageItems.length;
+  document.getElementById('doc-name-label').textContent =
+    n===1 ? imageItems[0].file.name : `${n} Webpages`;
+  document.getElementById('doc-meta-label').textContent =
+    `${n} webpage${n!==1?'s':''} · drag to reorder`;
+}
+
+function renderGrid(){
+  const grid = document.getElementById('images-grid');
+  grid.innerHTML='';
+  imageItems.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className='img-thumb';
+    card.draggable=true;
+    card.dataset.id = item.id;
+
+    const previewContainer = document.createElement('div');
+    previewContainer.className = 'thumb-preview-container';
+    
+    if (item.url) {
+      const img = document.createElement('img');
+      img.src = item.url;
+      img.alt = item.file.name;
+      previewContainer.appendChild(img);
+    } else {
+      const placeholder = document.createElement('div');
+      placeholder.style.cssText = 'height:100%; display:flex; align-items:center; justify-content:center; font-family:monospace; font-size:11px; color:var(--text3);';
+      placeholder.textContent = '<CRAWLING>';
+      previewContainer.appendChild(placeholder);
+    }
+
+    const bar = document.createElement('div');
+    bar.className='thumb-bar';
+    const order = document.createElement('span');
+    order.className='thumb-order';
+    order.textContent = `${idx+1}`;
+    const name = document.createElement('span');
+    name.className='thumb-name';
+    name.textContent = item.file.name;
+    const removeBtn = document.createElement('button');
+    removeBtn.className='thumb-remove';
+    removeBtn.title='Remove';
+    removeBtn.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    removeBtn.addEventListener('click', e => { e.stopPropagation(); removeItem(item.id); });
+    
+    bar.appendChild(order);
+    bar.appendChild(name);
+    bar.appendChild(removeBtn);
+    card.appendChild(previewContainer);
+    card.appendChild(bar);
+    
+    card.addEventListener('dragstart', onDragStart);
+    card.addEventListener('dragover', onDragOver);
+    card.addEventListener('dragleave', onDragLeave);
+    card.addEventListener('drop', onDrop);
+    card.addEventListener('dragend', onDragEnd);
+    grid.appendChild(card);
+  });
+
+  const addCard = document.createElement('div');
+  addCard.className='add-more-card';
+  addCard.innerHTML=`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>Add pages</span>`;
+  addCard.addEventListener('click', showModal);
+  grid.appendChild(addCard);
+}
+
+function removeItem(id){
+  const idx = imageItems.findIndex(it => it.id===id);
+  if(idx===-1) return;
+  imageItems.splice(idx,1);
+  if(imageItems.length===0){
+    document.getElementById('file-input').value='';
+    showPage('upload');
+    return;
+  }
+  renderGrid();
+  updateMeta();
+}
+
+/* ── DRAG REORDER ── */
+let dragSrcId = null;
+function onDragStart(e){
+  dragSrcId = parseInt(this.dataset.id);
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed='move';
+}
+function onDragOver(e){
+  e.preventDefault(); e.dataTransfer.dropEffect='move';
+  this.classList.add('drag-over-top');
+}
+function onDragLeave(){
+  this.classList.remove('drag-over-top','drag-over-bottom');
+}
+function onDrop(e){
+  e.preventDefault();
+  this.classList.remove('drag-over-top','drag-over-bottom');
+  const targetId = parseInt(this.dataset.id);
+  if(!targetId || dragSrcId===targetId) return;
+  const srcIdx = imageItems.findIndex(it=>it.id===dragSrcId);
+  const tgtIdx = imageItems.findIndex(it=>it.id===targetId);
+  if(srcIdx===-1||tgtIdx===-1) return;
+  const [moved] = imageItems.splice(srcIdx,1);
+  imageItems.splice(tgtIdx,0,moved);
+  renderGrid();
+  updateMeta();
+}
+function onDragEnd(){
+  this.classList.remove('dragging');
+  document.querySelectorAll('.img-thumb').forEach(c=>c.classList.remove('drag-over-top','drag-over-bottom'));
+}
+
+/* ── STRETCH VIEWPORT IFRAME ENGINE (Renders target size exact ratios) ── */
+function renderHtmlToSizedCanvas(htmlContent, targetW_pts, targetH_pts, margin_pts, isFit, fallbackUrl) {
+  return new Promise((resolve, reject) => {
+    // If crawling failed earlier, draw with pure snapshot image
+    if (!htmlContent) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || 1024;
+        canvas.height = img.naturalHeight || 1200;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.drawImage(img, 0, 0);
+        resolve({ canvas, widthPx: canvas.width, heightPx: canvas.height });
+      };
+      img.onerror = () => {
+        // Direct backup render
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024; canvas.height = 768;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,1024,768);
+        ctx.fillStyle = '#111'; ctx.font = '20px sans-serif';
+        ctx.fillText(`Fallback snapshot for: ${fallbackUrl}`, 50, 100);
+        resolve({ canvas, widthPx: 1024, heightPx: 768 });
+      };
+      // Use premium snapshot URL directly
+      img.src = `https://api.microlink.io?url=${encodeURIComponent(fallbackUrl)}&screenshot=true&embed=screenshot.url`;
+      return;
+    }
+
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.top = '-10000px';
+    iframe.style.left = '-10000px';
+    iframe.style.visibility = 'hidden';
+    
+    const dpiScale = 96 / 72;
+    let iframeWidthPx, iframeHeightPx;
+
+    if (isFit) {
+      iframeWidthPx = 1024; 
+      iframe.style.width = '1024px';
+      iframe.style.height = '100px'; 
+    } else {
+      iframeWidthPx = Math.round((targetW_pts - margin_pts * 2) * dpiScale);
+      iframeHeightPx = Math.round((targetH_pts - margin_pts * 2) * dpiScale);
+      iframe.style.width = iframeWidthPx + 'px';
+      iframe.style.height = iframeHeightPx + 'px';
+    }
+    
+    document.body.appendChild(iframe);
+    
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    doc.open();
+    const viewportInjectedStyles = `
+      <style>
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          box-sizing: border-box !important;
+          overflow: hidden !important;
+        }
+      </style>
+    `;
+    doc.write(viewportInjectedStyles + htmlContent);
+    doc.close();
+    
+    let completed = false;
+    const process = async () => {
+      if (completed) return;
+      completed = true;
+      try {
+        if (isFit) {
+          const scrollHeight = doc.documentElement.scrollHeight || doc.body.scrollHeight || 1024;
+          iframeHeightPx = scrollHeight;
+          iframe.style.height = scrollHeight + 'px';
+        }
+        
+        const canvas = await html2canvas(doc.body, {
+          useCORS: true,
+          logging: false,
+          scale: 1.8, // 1.8x retina quality rendering
+          width: iframeWidthPx,
+          height: iframeHeightPx,
+          backgroundColor: '#ffffff'
+        });
+        
+        document.body.removeChild(iframe);
+        resolve({ canvas, widthPx: iframeWidthPx, heightPx: iframeHeightPx });
+      } catch (err) {
+        if (iframe.parentNode) document.body.removeChild(iframe);
+        reject(err);
+      }
+    };
+    
+    iframe.contentWindow.onload = () => { setTimeout(process, 500); };
+    setTimeout(process, 3000); 
+  });
+}
+
+/* ── CONVERT ── */
+document.getElementById('convert-btn').addEventListener('click', startConvert);
+
+async function startConvert(){
+  if(imageItems.length===0) return;
+  showPage('converting');
+  const total = imageItems.length;
+  const progressFill = document.getElementById('progress-fill');
+  const progressLabel = document.getElementById('progress-label');
+  const convertSub = document.getElementById('convert-sub');
+  const pageSizeKey = document.getElementById('page-size-select').value;
+  const orientation = document.getElementById('orientation-select').value;
+  const margin = parseInt(document.getElementById('margin-select').value) || 0;
+
+  const PAGE_SIZES = {
+    a4:     [595.28, 841.89],
+    letter: [612, 792],
+    a3:     [841.89, 1190.55],
+  };
+
+  const { PDFDocument } = PDFLib;
+  const pdfDoc = await PDFDocument.create();
+
+  for(let i=0; i<total; i++){
+    const item = imageItems[i];
+    convertSub.textContent = `Formatting Webpage ${i+1} of ${total} (${item.file.name})...`;
+    progressLabel.textContent = `${i} / ${total}`;
+    progressFill.style.width = `${(i/total)*100}%`;
+
+    let targetPageW_pts, targetPageH_pts;
+    const isFit = (pageSizeKey === 'fit');
+    
+    if (isFit) {
+      targetPageW_pts = 0;
+      targetPageH_pts = 0;
+    } else {
+      const [baseW, baseH] = PAGE_SIZES[pageSizeKey];
+      if(orientation === 'landscape'){ 
+        targetPageW_pts = Math.max(baseW, baseH); 
+        targetPageH_pts = Math.min(baseW, baseH); 
+      } else if(orientation === 'portrait'){ 
+        targetPageW_pts = Math.min(baseW, baseH); 
+        targetPageH_pts = Math.max(baseW, baseH); 
+      } else { 
+        targetPageW_pts = Math.min(baseW, baseH); 
+        targetPageH_pts = Math.max(baseW, baseH); 
+      }
+    }
+
+    let renderResult;
+    try {
+      renderResult = await renderHtmlToSizedCanvas(item.textContent, targetPageW_pts, targetPageH_pts, margin, isFit, item.rawUrl);
+    } catch(err) {
+      console.error(err);
+      toast(`Failed rendering ${item.file.name}`);
+      continue;
+    }
+
+    const canvas = renderResult.canvas;
+    
+    let finalPageW_pts, finalPageH_pts;
+    if (isFit) {
+      const dpiScale = 96 / 72;
+      finalPageW_pts = (renderResult.widthPx / dpiScale) + margin * 2;
+      finalPageH_pts = (renderResult.heightPx / dpiScale) + margin * 2;
+    } else {
+      finalPageW_pts = targetPageW_pts;
+      finalPageH_pts = targetPageH_pts;
+    }
+
+    const imgDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    const ab = await (await fetch(imgDataUrl)).arrayBuffer();
+    const pdfImg = await pdfDoc.embedJpg(ab);
+
+    const page = pdfDoc.addPage([finalPageW_pts, finalPageH_pts]);
+    const drawW = finalPageW_pts - margin * 2;
+    const drawH = finalPageH_pts - margin * 2;
+    
+    page.drawImage(pdfImg, {
+      x: margin,
+      y: margin,
+      width: drawW,
+      height: drawH
+    });
+  }
+
+  progressFill.style.width='100%';
+  progressLabel.textContent=`${total} / ${total}`;
+  convertSub.textContent='Finalising…';
+  const bytes = await pdfDoc.save();
+  pdfBlob = new Blob([bytes], {type:'application/pdf'});
+  showDone();
+}
+
+function showDone(){
+  const baseName = imageItems.length===1
+    ? imageItems[0].file.name.replace(/\.[^.]+$/,'')
+    : 'converted_links';
+  document.getElementById('done-filename-input').value = baseName;
+  resizeInput(document.getElementById('done-filename-input'));
+  const sizeMB = (pdfBlob.size/1024/1024).toFixed(2);
+  const n = imageItems.length;
+  document.getElementById('done-meta').textContent =
+    `${n} webpage${n!==1?'s':''} · ${sizeMB} MB`;
+  const h = window.location.hash;
+  if(h!=='#light'&&h!=='#dark') window.location.hash='#done';
+  showPage('done');
+}
+
+/* ── DONE ── */
+const filenameInput = document.getElementById('done-filename-input');
+filenameInput.addEventListener('input', ()=>resizeInput(filenameInput));
+
+function resizeInput(inp){
+  const tmp = document.createElement('span');
+  tmp.style.cssText='position:absolute;visibility:hidden;white-space:pre;font-size:18px;font-weight:500;font-family:DM Sans,sans-serif;';
+  tmp.textContent = inp.value||'x';
+  document.body.appendChild(tmp);
+  inp.style.width=(tmp.offsetWidth+4)+'px';
+  document.body.removeChild(tmp);
+}
+
+document.getElementById('download-btn').addEventListener('click', ()=>{
+  if(!pdfBlob) return;
+  const name = (filenameInput.value.trim()||'converted')+'.pdf';
+  const url = URL.createObjectURL(pdfBlob);
+  const a = document.createElement('a');
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),10000);
+  toast('Download started');
+});
+
+document.getElementById('done-home-btn').addEventListener('click', ()=>{
+  imageItems=[]; pdfBlob=null;
+  document.getElementById('url-input').value='';
+  document.getElementById('images-grid').innerHTML='';
+  const h = window.location.hash;
+  if(h!=='#light'&&h!=='#dark') window.location.hash='';
+  showPage('upload');
+});
+
+/* ── TOAST ── */
+function toast(msg){
+  const el=document.createElement('div');
+  el.className='toast';el.textContent=msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>el.remove(),2700);
+}
+</script>
+</body>
+</html>

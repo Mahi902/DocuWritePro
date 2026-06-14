@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DocuWrite Pro 5.0.4.7</title>
+    <title>DocuWrite Pro 5.0.4.8</title>
     <meta name="description" content="DocuWrite Pro">
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -216,6 +216,67 @@
         .search-box { flex: 1; background: var(--search-bg); border-radius: 10px; padding: 10px 12px; display: flex; align-items: center; }
         .search-box input { border: none; background: transparent; width: 100%; outline: none; margin-left: 8px; font-size: 16px; color: var(--text-primary); }
         .sort-btn { width: 44px; height: 44px; background: var(--bg-card); border: none; border-radius: 50%; color: var(--primary-color); box-shadow: var(--shadow-card); display: flex; align-items: center; justify-content: center; }
+
+        /* ── Quick Tools & Converters (inline, flat) ── */
+        .qt-section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 4px 0 10px 5px; font-weight: 600; }
+        .qt-row { display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 6px; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+        .qt-row::-webkit-scrollbar { display: none; }
+        .qt-tile {
+            flex-shrink: 0; scroll-snap-align: start;
+            width: 76px; height: 76px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg-card); border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            cursor: pointer; transition: transform 0.15s, background 0.2s;
+        }
+        .qt-tile:active { transform: scale(0.94); background: var(--separator); }
+        .qt-tile .material-symbols-rounded { font-size: 28px; color: var(--primary-color); }
+        .qt-conv-row { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
+        .qt-conv-row::-webkit-scrollbar { display: none; }
+        .qt-conv-pill {
+            flex-shrink: 0; scroll-snap-align: start;
+            display: flex; align-items: center; gap: 8px;
+            padding: 14px 18px; border-radius: var(--radius-lg);
+            background: var(--bg-card); box-shadow: var(--shadow-card);
+            font-size: 14px; font-weight: 600; color: var(--text-primary);
+            cursor: pointer; transition: transform 0.15s, background 0.2s;
+            white-space: nowrap;
+        }
+        .qt-conv-pill:active { transform: scale(0.96); background: var(--separator); }
+        .qt-conv-pill .material-symbols-rounded { font-size: 18px; color: var(--primary-color); }
+        .qt-conv-pill .qt-arrow { font-size: 16px; color: var(--text-secondary); opacity: 0.6; }
+        .qt-conv-empty { font-size: 13px; color: var(--text-secondary); padding: 14px 6px; }
+        .qt-conv-skel { display: flex; gap: 10px; padding: 2px 2px 6px; }
+        .qt-skel-pill { width: 110px; height: 48px; border-radius: var(--radius-lg); background: linear-gradient(90deg, var(--bg-card) 25%, var(--separator) 50%, var(--bg-card) 75%); background-size: 200% 100%; animation: qtShimmer 1.4s ease-in-out infinite; flex-shrink: 0; }
+
+        /* Converters grid view: two overlapping documents with a swap badge */
+        .qt-conv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
+        .qt-conv-stack {
+            position: relative; cursor: pointer;
+            background: var(--bg-card); border-radius: var(--radius-xl);
+            padding: 16px 8px 14px; box-shadow: var(--shadow-card);
+            display: flex; flex-direction: column; align-items: center; text-align: center;
+            transition: transform 0.15s;
+            overflow: visible;
+        }
+        .qt-conv-stack:active { transform: scale(0.96); }
+        .qt-conv-stack-docs { position: relative; width: 90px; height: 76px; margin-bottom: 10px; }
+        .qt-conv-doc { position: absolute; top: 4px; width: 56px; height: 72px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08)); }
+        .qt-conv-doc.qt-doc-from { left: -2px; z-index: 1; transform: rotate(-4deg); }
+        .qt-conv-doc.qt-doc-to { left: 36px; z-index: 2; transform: rotate(4deg); }
+        .qt-conv-doc svg { width: 100%; height: 100%; display: block; }
+        .qt-conv-swap-badge {
+            position: absolute; left: 50%; top: 56%; transform: translate(-50%, -50%);
+            width: 30px; height: 30px; border-radius: 10px;
+            background: var(--primary-color); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25), 0 0 0 3px var(--bg-card);
+            z-index: 3;
+        }
+        .qt-conv-swap-badge .material-symbols-rounded { font-size: 17px; }
+        .qt-conv-stack-from, .qt-conv-stack-to { font-size: 13px; line-height: 1.3; font-weight: 600; color: var(--text-primary); }
+        .qt-conv-stack-to { color: var(--text-secondary); font-size: 11.5px; font-weight: 500; margin-top: 1px; }
+        @keyframes qtShimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .tool-category h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin: 25px 0 10px 5px; font-weight: 600; }
         .home-header-row { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 15px 0; gap: 12px; }
         .home-header-row h2 { margin: 0; flex-shrink: 0; }
@@ -690,6 +751,14 @@
                 </div>
                 <button class="sort-btn" id="sort-trigger"><span class="material-symbols-rounded">sort</span></button>
             </div>
+            <div id="quick-tools-section">
+                <div class="qt-section-title">Quick Tools</div>
+                <div class="qt-row" id="qt-main-row"></div>
+            </div>
+            <div id="converters-section">
+                <div class="qt-section-title">Converters</div>
+                <div id="qt-converters-container"></div>
+            </div>
             <div id="offline-tool-search-banner" class="offline-tool-search-banner">
                 <div class="otb-icon"><span class="material-symbols-rounded">wifi_off</span></div>
                 <div class="otb-body">
@@ -786,7 +855,7 @@
                 </div>
             </div>
 
-            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.0.4.7 • Build 2026</p>
+            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.0.4.8 • Build 2026</p>
             <div style="height: 80px;"></div>
         </div>
     </div>
@@ -997,6 +1066,7 @@
 
     <!-- offline-fullscreen-overlay removed: users can access tools offline -->
 
+
     <script>
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('touchstart', e => {}, {passive: true});
@@ -1029,7 +1099,6 @@
             { id: "qr", name: "QR Maker", url: "qr-code-maker.html", cat: "Document Editing", icon: "qr_code" },
             { id: "id_card", name: "ID Maker", url: "id-card-maker.html", cat: "Document Editing", icon: "badge" },
             { id: "zip", name: "Zipper", url: "file-zipper.html", cat: "Document Editing", icon: "archive" },
-            { id: "pdf_conv", name: "Format Converter", url: "converters.html", cat: "Document Editing", icon: "multiple_stop" },
             { id: "compress", name: "Compressor", url: "pdfcompressor.html", cat: "Document Editing", icon: "compress" },
             { id: "context", name: "Context", url: "context-field.html", cat: "Document Editing", icon: "summarize" },
             { id: "metadata", name: "Metadata", url: "metadatainspector.html", cat: "Document Editing", icon: "movie_info" },
@@ -1052,6 +1121,192 @@
             { id: "text", name: "Text", url: "connect1.html", cat: "Collaboration", icon: "chat", onlineOnly: true },
             { id: "call", name: "Call", url: "connect.html", cat: "Collaboration", icon: "call", onlineOnly: true },
         ];
+
+        /* ── Quick Tools (liquid popup) ── */
+        const QT_MAIN_IDS = ['doc_editor', 'spreadsheet', 'chart', 'graph', 'mindmap', 'qr', 'draw', 'html_edit'];
+        const QT_CACHE_KEY = 'mtools_converters_cache';
+        const QT_CACHE_DAYS = 1;
+        let _allConverters = [];
+
+        function renderQuickToolsMain() {
+            const row = document.getElementById('qt-main-row');
+            row.innerHTML = '';
+            QT_MAIN_IDS.forEach(id => {
+                const tool = toolsDB.find(t => t.id === id);
+                if (!tool) return;
+                const tile = document.createElement('div');
+                tile.className = 'qt-tile';
+                tile.title = tool.name;
+                tile.innerHTML = `<span class="material-symbols-rounded">${tool.icon}</span>`;
+                tile.onclick = () => openTool(tool.url, tool.name);
+                row.appendChild(tile);
+            });
+        }
+
+        // Parses "mtools.pdf2jpg.html" -> { from: "pdf", to: "jpg", url: "mtools.pdf2jpg.html" }
+        function parseConverterFilename(filename) {
+            const m = filename.match(/^mtools\.([a-z0-9]+)2([a-z0-9]+)\.html$/i);
+            if (!m) return null;
+            return { from: m[1].toLowerCase(), to: m[2].toLowerCase(), url: filename };
+        }
+
+        function iconForExt(ext) {
+            const map = {
+                pdf: 'picture_as_pdf', jpg: 'image', jpeg: 'image', png: 'image', gif: 'gif', webp: 'image', svg: 'image',
+                doc: 'description', docx: 'description', txt: 'article', csv: 'table_chart', xlsx: 'table_chart', xls: 'table_chart',
+                ppt: 'slideshow', pptx: 'slideshow', html: 'code', json: 'data_object', xml: 'code', zip: 'folder_zip',
+                mp3: 'audio_file', mp4: 'movie', md: 'markdown', scds: 'edit_document'
+            };
+            return map[ext] || 'sync_alt';
+        }
+
+        function colorForExt(ext) {
+            const map = {
+                pdf: '#F8786B', jpg: '#7FB8E8', jpeg: '#7FB8E8', png: '#7FB8E8', gif: '#9FD9A0', webp: '#7FB8E8', svg: '#B59FE0',
+                doc: '#7FA8E8', docx: '#7FA8E8', txt: '#B0B7C3', csv: '#7FCBA3', xlsx: '#7FCBA3', xls: '#7FCBA3',
+                ppt: '#F2A66A', pptx: '#F2A66A', html: '#F0B36B', json: '#B0B7C3', xml: '#F0B36B', zip: '#D9B36C',
+                mp3: '#C99FE0', mp4: '#9FAEE0', md: '#B0B7C3', scds: '#F2C572'
+            };
+            return map[ext] || '#C9CDD4';
+        }
+
+        // Renders a flat "page" document icon with a folded top-right corner and the
+        // extension label printed on it, in the style of generic file-type artwork.
+        function docSVG(ext, opts) {
+            opts = opts || {};
+            const fill = colorForExt(ext);
+            const fold = opts.fold || '#FFFFFF';
+            const stroke = '#2B2B33';
+
+            if (ext === 'scds') {
+                // Custom Sugarcane (SCEditor) document icon: page + stalk/leaf glyph
+                return `<svg viewBox="0 0 100 128" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 6 H66 L92 32 V116 A6 6 0 0 1 86 122 H8 A6 6 0 0 1 2 116 V12 A6 6 0 0 1 8 6 Z" fill="${fill}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>
+                    <path d="M66 6 L92 32 H72 A6 6 0 0 1 66 26 Z" fill="${fold}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>
+                    <line x1="14" y1="86" x2="58" y2="86" stroke="${stroke}" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="14" y1="100" x2="80" y2="100" stroke="${stroke}" stroke-width="5" stroke-linecap="round"/>
+                    <g stroke="${stroke}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+                        <path d="M50 70 V40"/>
+                        <path d="M50 56 C50 48, 62 46, 64 38"/>
+                        <path d="M50 64 C50 56, 38 54, 36 46"/>
+                        <path d="M50 44 C50 36, 60 34, 62 28"/>
+                    </g>
+                    <circle cx="50" cy="70" r="4" fill="${stroke}"/>
+                </svg>`;
+            }
+
+            const label = ext.toUpperCase();
+            const fontSize = label.length > 4 ? 9 : (label.length > 3 ? 10.5 : 12.5);
+            return `<svg viewBox="0 0 100 128" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 6 H66 L92 32 V116 A6 6 0 0 1 86 122 H8 A6 6 0 0 1 2 116 V12 A6 6 0 0 1 8 6 Z" fill="${fill}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>
+                <path d="M66 6 L92 32 H72 A6 6 0 0 1 66 26 Z" fill="${fold}" stroke="${stroke}" stroke-width="4" stroke-linejoin="round"/>
+                <line x1="14" y1="62" x2="58" y2="62" stroke="${stroke}" stroke-width="5" stroke-linecap="round"/>
+                <line x1="14" y1="76" x2="80" y2="76" stroke="${stroke}" stroke-width="5" stroke-linecap="round"/>
+                <line x1="14" y1="90" x2="68" y2="90" stroke="${stroke}" stroke-width="5" stroke-linecap="round"/>
+                <text x="50" y="44" text-anchor="middle" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="800" fill="${stroke}" letter-spacing="0.5">${label}</text>
+            </svg>`;
+        }
+
+        async function loadConverters() {
+            const container = document.getElementById('qt-converters-container');
+            let cached = null;
+            try { cached = JSON.parse(localStorage.getItem(QT_CACHE_KEY) || 'null'); } catch (e) {}
+
+            const now = Date.now();
+            if (cached && cached.tools && (now - cached.fetchedAt) < QT_CACHE_DAYS * 24 * 60 * 60 * 1000) {
+                _allConverters = cached.tools;
+                renderConverters();
+                return;
+            }
+
+            if (cached && cached.tools) { _allConverters = cached.tools; renderConverters(); }
+            else container.innerHTML = `<div class="qt-conv-skel"><div class="qt-skel-pill"></div><div class="qt-skel-pill"></div><div class="qt-skel-pill"></div></div>`;
+
+            if (!navigator.onLine) {
+                if (!cached) container.innerHTML = `<div class="qt-conv-empty">Connect to the internet to load converters.</div>`;
+                return;
+            }
+
+            try {
+                const resp = await fetch('https://api.github.com/repos/mahi902/DocuWritePro/contents/', { cache: 'no-cache' });
+                if (!resp.ok) throw new Error('fetch failed');
+                const files = await resp.json();
+                const converters = files
+                    .map(f => f.name)
+                    .filter(name => name.toLowerCase().includes('mtools'))
+                    .map(parseConverterFilename)
+                    .filter(Boolean);
+
+                localStorage.setItem(QT_CACHE_KEY, JSON.stringify({ fetchedAt: now, tools: converters }));
+                _allConverters = converters;
+                renderConverters();
+            } catch (e) {
+                if (!cached) container.innerHTML = `<div class="qt-conv-empty">Couldn't load converters.</div>`;
+            }
+        }
+
+        function openConverter(c, name) {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const isDark = theme === 'dark' || (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            openTool('https://mahi902.github.io/DocuWritePro/' + c.url + '#' + (isDark ? 'dark' : 'light'), name);
+        }
+
+        function renderConverters() {
+            const container = document.getElementById('qt-converters-container');
+            const section = document.getElementById('converters-section');
+            const searchTerm = document.getElementById('tool-search').value.toLowerCase().trim();
+            const viewMode = localStorage.getItem('view_mode') || 'grid';
+            container.innerHTML = '';
+
+            const converters = _allConverters || [];
+            const displayConverters = searchTerm
+                ? converters.filter(c => c.from.includes(searchTerm) || c.to.includes(searchTerm) || (c.from + '2' + c.to).includes(searchTerm) || (c.from + ' to ' + c.to).includes(searchTerm))
+                : converters;
+
+            if (searchTerm && displayConverters.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+            section.style.display = '';
+
+            if (converters.length === 0) {
+                container.innerHTML = `<div class="qt-conv-empty">No converters found.</div>`;
+                return;
+            }
+
+            if (viewMode === 'grid') {
+                const grid = document.createElement('div');
+                grid.className = 'qt-conv-grid';
+                displayConverters.forEach(c => {
+                    const name = `${c.from.toUpperCase()} to ${c.to.toUpperCase()}`;
+                    const stack = document.createElement('div');
+                    stack.className = 'qt-conv-stack';
+                    stack.innerHTML = `
+                        <div class="qt-conv-stack-docs">
+                            <div class="qt-conv-doc qt-doc-from">${docSVG(c.from)}</div>
+                            <div class="qt-conv-doc qt-doc-to">${docSVG(c.to)}</div>
+                            <div class="qt-conv-swap-badge"><span class="material-symbols-rounded">sync_alt</span></div>
+                        </div>
+                        <div class="qt-conv-stack-from">${c.from.toUpperCase()}</div>
+                        <div class="qt-conv-stack-to">to ${c.to.toUpperCase()}</div>`;
+                    stack.onclick = () => openConverter(c, name);
+                    grid.appendChild(stack);
+                });
+                container.appendChild(grid);
+            } else {
+                const row = document.createElement('div');
+                row.className = 'qt-conv-row';
+                displayConverters.forEach(c => {
+                    const pill = document.createElement('div');
+                    pill.className = 'qt-conv-pill';
+                    const name = `${c.from.toUpperCase()} to ${c.to.toUpperCase()}`;
+                    pill.innerHTML = `<span class="material-symbols-rounded">${iconForExt(c.from)}</span><span>${c.from.toUpperCase()}</span><span class="material-symbols-rounded qt-arrow">arrow_forward</span><span>${c.to.toUpperCase()}</span>`;
+                    pill.onclick = () => openConverter(c, name);
+                    row.appendChild(pill);
+                });
+                container.appendChild(row);
+            }
+        }
 
         let currentSort = 'All';
         let isPinningMode = false;
@@ -1081,7 +1336,7 @@
                 newFrame.src = applyNoAniHash('https://mahi902.github.io/DocuWritePro/sceditor.html' + hash);
                 tab.appendChild(newFrame);
             }
-            if (tabId === 'tools') { renderTools(); updateViewMode(); }
+            if (tabId === 'tools') { renderTools(); updateViewMode(); renderQuickToolsMain(); loadConverters(); }
         }
 
         function updateOnlineStatus() {
@@ -1304,6 +1559,9 @@
             const viewMode = localStorage.getItem('view_mode') || 'grid';
             const pinned = getPinnedTools();
             container.innerHTML = '';
+
+            document.getElementById('quick-tools-section').style.display = searchTerm ? 'none' : '';
+            renderConverters();
 
             // Offline search banner: show when search returns no results but matches an online-only tool
             const banner = document.getElementById('offline-tool-search-banner');

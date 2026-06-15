@@ -1152,6 +1152,48 @@
 
         /* ── Sticker icon set: custom hand-designed SVG icons per tool ── */
         function isStickerMode() { return (localStorage.getItem('icon_mode') || 'global') === 'sticker'; }
+        function isDarkTheme() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            return theme === 'dark' || (!theme && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        }
+        /* Recolors a sticker's SVG body for dark mode: dark ink lines become
+           light so they pop, white/light card fills become dark slate, and
+           pastel accent fills are brightened/saturated for contrast. */
+        const STICKER_DARK_MAP = {
+            '#2B2B33': '#E7E9F0',
+            '#FFFFFF': '#3A3D46',
+            '#E8E8ED': '#4C505A',
+            '#A6D8F0': '#5FC2F2',
+            '#F2A8A0': '#F58E84',
+            '#7AC9A0': '#52CC8E',
+            '#F4C16A': '#FFCA4D',
+            '#F9E27A': '#FFE066',
+            '#1976D2': '#7AC4FF',
+        };
+        const stickerDarkCache = {};
+        function darkenSticker(svg) {
+            if (stickerDarkCache[svg]) return stickerDarkCache[svg];
+            const out = svg.replace(/#[0-9A-Fa-f]{6}/g, hex => STICKER_DARK_MAP[hex.toUpperCase()] || hex);
+            stickerDarkCache[svg] = out;
+            return out;
+        }
+        function stickerSvg(name) {
+            const svg = STICKER_ICONS[name];
+            if (!svg) return svg;
+            return isDarkTheme() ? darkenSticker(svg) : svg;
+        }
+        function navStickerSvg(name) {
+            if (isDarkTheme() && NAV_STICKER_ICONS_DARK[name]) return NAV_STICKER_ICONS_DARK[name];
+            const svg = NAV_STICKER_ICONS[name];
+            if (!svg) return svg;
+            return isDarkTheme() ? darkenSticker(svg) : svg;
+        }
+        function quickActionStickerSvg(name) {
+            if (isDarkTheme() && QUICK_ACTION_STICKER_ICONS_DARK[name]) return QUICK_ACTION_STICKER_ICONS_DARK[name];
+            const svg = QUICK_ACTION_STICKER_ICONS[name];
+            if (!svg) return svg;
+            return isDarkTheme() ? darkenSticker(svg) : svg;
+        }
 
         const STICKER_ICONS = {
             doc_editor: `<rect x="9" y="6" width="46" height="52" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
@@ -1444,6 +1486,26 @@
 <path d="M32 4 V14 M32 50 V60 M4 32 H14 M50 32 H60" stroke="#1976D2" stroke-width="6" stroke-linecap="round"/>`,
         };
 
+        // ── Dark-theme variants of the nav stickers ──
+        // The light versions rely on a pale blue fill against a white card,
+        // which loses contrast on dark backgrounds. These use a deep navy
+        // fill with a bright cyan stroke/accent so the glyphs stay crisp.
+        const NAV_STICKER_ICONS_DARK = {
+            home: `<path d="M8 30 L32 8 L56 30 V54 H8 Z" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="5" stroke-linejoin="round"/>
+<rect x="26" y="36" width="12" height="18" fill="#7AD4FF"/>`,
+
+            recents: `<circle cx="32" cy="32" r="24" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="5"/>
+<path d="M32 18 V32 L43 38" fill="none" stroke="#7AD4FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            tools: `<rect x="8" y="8" width="21" height="21" rx="3" fill="#7AD4FF"/>
+<rect x="35" y="8" width="21" height="21" rx="3" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="4"/>
+<rect x="8" y="35" width="21" height="21" rx="3" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="4"/>
+<rect x="35" y="35" width="21" height="21" rx="3" fill="#7AD4FF"/>`,
+
+            settings: `<circle cx="32" cy="32" r="10" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="5"/>
+<path d="M32 4 V14 M32 50 V60 M4 32 H14 M50 32 H60" stroke="#7AD4FF" stroke-width="6" stroke-linecap="round"/>`,
+        };
+
         // ── Home quick-action sticker icon set: New Document, Edit Image, Write Code, All Tools ──
         // Simple single-tone blue glyphs matching the nav stickers.
         const QUICK_ACTION_STICKER_ICONS = {
@@ -1467,6 +1529,30 @@
 <path d="M20 18 H38 M20 27 H38" stroke="#1976D2" stroke-width="4" stroke-linecap="round"/>`,
         };
 
+        // ── Dark-theme variants of the quick-action stickers ──
+        // Same navy-fill / cyan-line treatment as the nav stickers, so the
+        // glyphs read clearly against dark surfaces instead of fading out.
+        const QUICK_ACTION_STICKER_ICONS_DARK = {
+            'btn-new-doc': `<rect x="14" y="6" width="36" height="52" rx="4" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="5"/>
+<path d="M24 22 H40 M24 32 H40 M24 42 H34" stroke="#7AD4FF" stroke-width="5" stroke-linecap="round"/>`,
+
+            'btn-new-img': `<rect x="6" y="10" width="52" height="44" rx="4" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="5"/>
+<circle cx="22" cy="26" r="6" fill="#7AD4FF"/>
+<path d="M12 46 L26 32 L38 44 L48 34 L56 42 V50 H12 Z" fill="#7AD4FF"/>`,
+
+            'btn-new-code': `<rect x="6" y="10" width="52" height="44" rx="4" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="5"/>
+<path d="M22 24 L14 32 L22 40 M42 24 L50 32 L42 40" fill="none" stroke="#7AD4FF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            'btn-all-tools': `<rect x="8" y="8" width="21" height="21" rx="3" fill="#7AD4FF"/>
+<rect x="35" y="8" width="21" height="21" rx="3" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="4"/>
+<rect x="8" y="35" width="21" height="21" rx="3" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="4"/>
+<rect x="35" y="35" width="21" height="21" rx="3" fill="#7AD4FF"/>`,
+
+            'btn-dynote': `<path d="M12 8 C12 6 13 5 15 5 H42 C44 5 45 6 45 8 V40 L33 52 H15 C13 52 12 51 12 49 Z" fill="#1E3A4F" stroke="#7AD4FF" stroke-width="5" stroke-linejoin="round"/>
+<path d="M33 52 V42 C33 40 34 39 36 39 H45" fill="none" stroke="#7AD4FF" stroke-width="5" stroke-linejoin="round"/>
+<path d="M20 18 H38 M20 27 H38" stroke="#7AD4FF" stroke-width="4" stroke-linecap="round"/>`,
+        };
+
         // Renders sticker SVGs into the bottom-nav items when sticker mode is active,
         // restoring the original Material Symbols glyphs otherwise.
         function renderNavStickers() {
@@ -1478,7 +1564,7 @@
                 const existingIcon = el.querySelector('.material-symbols-rounded, .nav-sticker-icon');
                 if (!existingIcon) return;
                 if (isStickerMode()) {
-                    const svg = `<svg class="nav-sticker-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${NAV_STICKER_ICONS[navMap[navId]]}</svg>`;
+                    const svg = `<svg class="nav-sticker-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${navStickerSvg(navMap[navId])}</svg>`;
                     existingIcon.outerHTML = svg;
                 } else {
                     existingIcon.outerHTML = `<span class="material-symbols-rounded">${glyphMap[navId]}</span>`;
@@ -1497,7 +1583,7 @@
                 const existingIcon = circle.querySelector('.material-symbols-rounded, .nav-sticker-icon');
                 if (!existingIcon) return;
                 if (isStickerMode()) {
-                    const svg = `<svg class="nav-sticker-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${QUICK_ACTION_STICKER_ICONS[btnId]}</svg>`;
+                    const svg = `<svg class="nav-sticker-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${quickActionStickerSvg(btnId)}</svg>`;
                     existingIcon.outerHTML = svg;
                     circle.style.background = 'transparent';
                 } else {
@@ -1517,7 +1603,10 @@
             extraClass = extraClass || '';
             if (isStickerMode()) {
                 const sticker = STICKER_ICONS[tool.id] || STICKER_ICONS[tool.icon];
-                if (sticker) return `<svg class="sticker-icon ${extraClass}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${sticker}</svg>`;
+                if (sticker) {
+                    const key = STICKER_ICONS[tool.id] ? tool.id : tool.icon;
+                    return `<svg class="sticker-icon ${extraClass}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${stickerSvg(key)}</svg>`;
+                }
             }
             return `<span class="material-symbols-rounded ${extraClass}">${tool.icon}</span>`;
         }
@@ -2295,6 +2384,12 @@
             if(theme==='system')resolved=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
             if(resolved==='dark')html.setAttribute('data-theme','dark'); else html.setAttribute('data-theme','light');
             if(theme)setThemeCookie(theme);
+            if (isStickerMode()) {
+                renderNavStickers();
+                renderQuickActionStickers();
+                if (document.getElementById('tab-tools').classList.contains('active')) renderTools();
+                if (typeof renderQuickToolsMain === 'function') renderQuickToolsMain();
+            }
         }
         function openThemePicker() {
             const current=getThemeCookie()||'system';

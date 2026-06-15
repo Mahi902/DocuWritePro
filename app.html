@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DocuWrite Pro 5.0.4.8</title>
+    <title>DocuWrite Pro 5.5.0.0</title>
     <meta name="description" content="DocuWrite Pro">
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -174,6 +174,8 @@
         .nav-item.active { color: var(--primary-color); }
         .nav-item .material-symbols-rounded { font-size: 26px; margin-bottom: 4px; font-variation-settings: 'FILL' 0, 'wght' 400; transition: all 0.2s; }
         .nav-item.active .material-symbols-rounded { font-variation-settings: 'FILL' 1, 'wght' 500; }
+        .nav-item .nav-sticker-icon { width: 26px; height: 26px; margin-bottom: 4px; }
+        .action-icon-circle .nav-sticker-icon { width: 44px; height: 44px; }
         h2 { font-size: 34px; font-weight: 700; margin: 20px 0 15px 0; letter-spacing: -0.5px; color: var(--text-primary); }
         .section-header { display: flex; justify-content: space-between; align-items: center; margin: 30px 0 15px 0; }
         .section-title { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
@@ -188,6 +190,7 @@
         .tool-card { background: var(--bg-card); border-radius: var(--radius-xl); padding: 18px 10px; display: flex; flex-direction: column; align-items: center; text-align: center; box-shadow: var(--shadow-card); transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); position: relative; }
         .tool-card:active { transform: scale(0.95); opacity: 0.8; }
         .tool-card span.material-symbols-rounded.tool-icon-main { font-size: 32px; color: var(--primary-color); margin-bottom: 12px; background: var(--primary-light); padding: 10px; border-radius: 16px; }
+        .tool-card svg.sticker-icon.tool-icon-main { width: 52px; height: 52px; margin-bottom: 10px; }
         .tool-name { font-size: 13px; line-height: 1.35; font-weight: 500; color: var(--text-primary); }
         .pinned-star { position: absolute; top: 8px; right: 8px; font-size: 16px; color: #FF9500; font-variation-settings: 'FILL' 1; display: none; }
         .tool-card.pinned .pinned-star { display: block; }
@@ -196,6 +199,8 @@
         .list-card:active { background: var(--separator); transform: scale(0.99); }
         .list-card-left { display: flex; align-items: center; gap: 12px; }
         .list-card-icon { width: 40px; height: 40px; background: var(--primary-light); color: var(--primary-color); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+        .list-card-icon:has(svg.sticker-icon) { background: none; }
+        .list-card-icon svg.sticker-icon { width: 40px; height: 40px; background: none; }
         .list-card-details { display: flex; flex-direction: column; }
         .list-card-name { font-size: 16px; font-weight: 600; color: var(--text-primary); }
         .list-card-category { font-size: 13px; color: var(--text-secondary); }
@@ -231,6 +236,7 @@
         }
         .qt-tile:active { transform: scale(0.94); background: var(--separator); }
         .qt-tile .material-symbols-rounded { font-size: 28px; color: var(--primary-color); }
+        .qt-tile svg.sticker-icon { width: 44px; height: 44px; }
         .qt-conv-row { display: flex; gap: 10px; overflow-x: auto; padding: 2px 2px 6px; -webkit-overflow-scrolling: touch; scroll-snap-type: x proximity; }
         .qt-conv-row::-webkit-scrollbar { display: none; }
         .qt-conv-pill {
@@ -716,7 +722,7 @@
                 <div class="action-btn" id="btn-new-doc"><div class="action-icon-circle"><span class="material-symbols-rounded">note_add</span></div><div class="action-label">New<br>Document</div></div>
                 <div class="action-btn" id="btn-new-img"><div class="action-icon-circle"><span class="material-symbols-rounded">add_photo_alternate</span></div><div class="action-label">Edit<br>Image</div></div>
                 <div class="action-btn" id="btn-new-code"><div class="action-icon-circle"><span class="material-symbols-rounded">terminal</span></div><div class="action-label">Write<br>Code</div></div>
-                <div class="action-btn" onclick="switchTab('tools')"><div class="action-icon-circle" style="background: var(--bg-body); color: var(--text-secondary);"><span class="material-symbols-rounded">apps</span></div><div class="action-label">All<br>Tools</div></div>
+                <div class="action-btn" id="btn-all-tools" onclick="switchTab('tools')"><div class="action-icon-circle" style="background: var(--bg-body); color: var(--text-secondary);"><span class="material-symbols-rounded">apps</span></div><div class="action-label">All<br>Tools</div></div>
                 <div class="action-btn full-width" id="btn-dynote" style="display: none;" onclick="openDyNoteTool()"><div class="action-icon-circle" style="background: rgba(142, 142, 147, 0.15); color: var(--text-secondary);"><span class="material-symbols-rounded">sticky_note_2</span></div><div class="action-label">My DyNotes</div></div>
             </div>
             <div id="templates-section">
@@ -819,6 +825,7 @@
             <div class="settings-group">
                 <div class="setting-row" onclick="openThemePicker()"><span class="setting-label">Theme</span><div class="setting-value-container"><span class="setting-value" id="display-theme">System</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
                 <div class="setting-row" onclick="openViewModePicker()"><span class="setting-label">Tool View</span><div class="setting-value-container"><span class="setting-value" id="display-view-mode">Grid View</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
+                <div class="setting-row" onclick="openIconsPicker()"><span class="setting-label">Icons</span><div class="setting-value-container"><span class="setting-value" id="display-icons">Global</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
                 <div class="setting-row" onclick="openAnimationsPicker()"><span class="setting-label">Animations</span><div class="setting-value-container"><span class="setting-value" id="display-animations">Enabled</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
             </div>
 
@@ -855,7 +862,7 @@
                 </div>
             </div>
 
-            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.0.4.8 • Build 2026</p>
+            <p style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px;">Version 5.5.0.0 • Build 2026</p>
             <div style="height: 80px;"></div>
         </div>
     </div>
@@ -1137,10 +1144,382 @@
                 const tile = document.createElement('div');
                 tile.className = 'qt-tile';
                 tile.title = tool.name;
-                tile.innerHTML = `<span class="material-symbols-rounded">${tool.icon}</span>`;
+                tile.innerHTML = getToolIconHTML(tool);
                 tile.onclick = () => openTool(tool.url, tool.name);
                 row.appendChild(tile);
             });
+        }
+
+        /* ── Sticker icon set: custom hand-designed SVG icons per tool ── */
+        function isStickerMode() { return (localStorage.getItem('icon_mode') || 'global') === 'sticker'; }
+
+        const STICKER_ICONS = {
+            doc_editor: `<rect x="9" y="6" width="46" height="52" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<rect x="9" y="6" width="46" height="13" rx="4" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3"/>
+<circle cx="18" cy="12.5" r="2.6" fill="#2B2B33"/>
+<circle cx="27" cy="12.5" r="2.6" fill="#2B2B33"/>
+<circle cx="36" cy="12.5" r="2.6" fill="#2B2B33"/>
+<rect x="43" y="9.5" width="8" height="6" rx="1.5" fill="#FFFFFF" stroke="#2B2B33" stroke-width="2"/>
+<path d="M16 30 H38" stroke="#2B2B33" stroke-width="3" stroke-linecap="round"/>
+<rect x="40" y="24.5" width="3" height="11" fill="#F4C16A"/>
+<path d="M16 42 H30" stroke="#2B2B33" stroke-width="3" stroke-linecap="round" opacity="0.35"/>`,
+
+            doc_viewer: `<path d="M8 14 C8 12 9 11 12 11 C20 11 26 13 30 17 V50 C26 46 20 44 12 44 C9 44 8 43 8 41 Z" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>
+<path d="M52 14 C52 12 51 11 48 11 C40 11 34 13 30 17 V50 C34 46 40 44 48 44 C51 44 52 43 52 41 Z" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>
+<path d="M14 20 H24 M14 27 H24 M36 20 H46 M36 27 H46" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round"/>
+<circle cx="40" cy="42" r="11" fill="#F2A8A0" stroke="#2B2B33" stroke-width="3"/>
+<path d="M48 50 L58 60" stroke="#2B2B33" stroke-width="4" stroke-linecap="round"/>`,
+
+            markup: `<rect x="6" y="36" width="34" height="11" rx="2" fill="#F9E27A" stroke="#2B2B33" stroke-width="2.5"/>
+<path d="M6 22 H40" stroke="#2B2B33" stroke-width="3" stroke-linecap="round"/>
+<g transform="rotate(45 42 28)">
+  <rect x="32" y="10" width="20" height="34" rx="3" fill="#7AC9A0" stroke="#2B2B33" stroke-width="3"/>
+  <rect x="32" y="10" width="20" height="9" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+  <path d="M37 44 L42 54 L47 44 Z" fill="#2B2B33"/>
+</g>`,
+
+            word_finder: `<path d="M10 8 C10 6 11 5 13 5 H46 C48 5 49 6 49 8 V52 C49 54 48 55 46 55 H13 C11 55 10 54 10 52 Z" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>
+<path d="M16 16 H43 M16 24 H43" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round"/>
+<rect x="15" y="29.5" width="18" height="9" rx="2" fill="#F4C16A" transform="rotate(-2 24 34)"/>
+<path d="M16 44 H38" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round"/>
+<circle cx="41" cy="40" r="13" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3.5"/>
+<path d="M50.5 49.5 L60 59" stroke="#2B2B33" stroke-width="4.5" stroke-linecap="round"/>`,
+
+            translator: `<path d="M4 10 C4 8 5 7 7 7 H30 C32 7 33 8 33 10 V25 C33 27 32 28 30 28 H16 L8 35 L10 28 H7 C5 28 4 27 4 25 Z" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>
+<text x="18.5" y="22" font-family="Arial, sans-serif" font-size="15" font-weight="800" fill="#2B2B33" text-anchor="middle">A</text>
+<path d="M31 30 C31 28 32 27 34 27 H57 C59 27 60 28 60 30 V45 C60 47 59 48 57 48 H43 L51 56 L36 48 H34 C32 48 31 47 31 45 Z" fill="#F4C16A" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>
+<path d="M40 39 L48 39 M40 43 L52 43" stroke="#2B2B33" stroke-width="2.3" stroke-linecap="round"/>`,
+
+            signer: `<path d="M10 6 H40 L52 18 V56 C52 58 51 59 49 59 H12 C10 59 9 58 9 56 V9 C9 7 10 6 10 6 Z" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>
+<path d="M40 6 L40 16 C40 18 41 18 43 18 H52" fill="none" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>
+<path d="M16 28 H38 M16 35 H44 M16 42 H32" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round"/>
+<path d="M15 51 C19 45 22 53 26 48 C29 44 31 51 35 47 C38 44 40 48 43 46" fill="none" stroke="#F2A8A0" stroke-width="3" stroke-linecap="round"/>
+<path d="M52 52 L60 44 L54 38 L46 46 Z" fill="#F4C16A" stroke="#2B2B33" stroke-width="2.8" stroke-linejoin="round"/>`,
+
+            find_replace: `<circle cx="26" cy="26" r="15" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3.5"/>
+<path d="M37.5 37.5 L50 50" stroke="#2B2B33" stroke-width="5" stroke-linecap="round"/>
+<text x="26" y="32" font-family="Arial, sans-serif" font-size="15" font-weight="800" fill="#2B2B33" text-anchor="middle">A</text>
+<rect x="34" y="6" width="22" height="16" rx="3" fill="#F4C16A" stroke="#2B2B33" stroke-width="2.6"/>
+<text x="45" y="17" font-family="Arial, sans-serif" font-size="11" font-weight="800" fill="#2B2B33" text-anchor="middle">B</text>
+<path d="M22 44 C18 50 22 54 28 54 C34 54 38 50 34 44" fill="none" stroke="#F2A8A0" stroke-width="3" stroke-linecap="round"/>`,
+
+            page_nums: `<rect x="14" y="13" width="34" height="44" rx="3" fill="#E8E8ED" stroke="#2B2B33" stroke-width="3" transform="rotate(-6 31 35)"/>
+<rect x="16" y="9" width="34" height="44" rx="3" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M22 19 H44 M22 27 H44 M22 35 H38" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round"/>
+<circle cx="44" cy="46" r="11" fill="#F4C16A" stroke="#2B2B33" stroke-width="3"/>
+<text x="44" y="51" font-family="Arial, sans-serif" font-size="15" font-weight="800" fill="#2B2B33" text-anchor="middle">2</text>`,
+
+            spreadsheet: `<rect x="7" y="9" width="50" height="46" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M7 24 H57 M7 39 H57 M24 9 V55 M41 9 V55" stroke="#2B2B33" stroke-width="2.4"/>
+<rect x="24.5" y="24.5" width="16" height="14" fill="#7AC9A0" opacity="0.85"/>
+<path d="M12 18 C14 13 18 13 20 18" fill="none" stroke="#F2A8A0" stroke-width="2.6" stroke-linecap="round"/>`,
+
+            merge: `<rect x="6" y="10" width="24" height="32" rx="3" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3" transform="rotate(-10 18 26)"/>
+<rect x="32" y="10" width="24" height="32" rx="3" fill="#F2A8A0" stroke="#2B2B33" stroke-width="3" transform="rotate(10 44 26)"/>
+<rect x="19" y="20" width="26" height="34" rx="3" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M25 28 H39 M25 35 H39 M25 42 H39 M25 49 H34" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round"/>`,
+
+            encrypt: `<path d="M18 26 V18 C18 10 23 5 32 5 C41 5 46 10 46 18 V26" fill="none" stroke="#2B2B33" stroke-width="4" stroke-linecap="round"/>
+<rect x="10" y="26" width="44" height="32" rx="5" fill="#F4C16A" stroke="#2B2B33" stroke-width="3"/>
+<circle cx="32" cy="40" r="6" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M32 46 V52" stroke="#2B2B33" stroke-width="4" stroke-linecap="round"/>`,
+
+            chart: `<rect x="7" y="9" width="50" height="46" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M16 45 V32" stroke="#A6D8F0" stroke-width="7" stroke-linecap="round"/>
+<path d="M28 45 V20" stroke="#F2A8A0" stroke-width="7" stroke-linecap="round"/>
+<path d="M40 45 V27" stroke="#7AC9A0" stroke-width="7" stroke-linecap="round"/>
+<path d="M14 45 H48" stroke="#2B2B33" stroke-width="2.6" stroke-linecap="round"/>`,
+
+            graph: `<rect x="7" y="9" width="50" height="46" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M14 47 V17 M14 47 H50" stroke="#2B2B33" stroke-width="2.6" stroke-linecap="round"/>
+<path d="M16 38 L26 28 L36 34 L50 16" fill="none" stroke="#F2A8A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="26" cy="28" r="3" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2"/>
+<circle cx="36" cy="34" r="3" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2"/>`,
+
+            whiteboard: `<rect x="6" y="10" width="52" height="36" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M32 46 V58 M22 58 H42" stroke="#2B2B33" stroke-width="3.5" stroke-linecap="round"/>
+<path d="M14 22 C22 16 30 28 38 20 C44 15 48 22 50 26" fill="none" stroke="#7AC9A0" stroke-width="3" stroke-linecap="round"/>
+<rect x="38" y="30" width="14" height="9" rx="2" fill="#F4C16A" transform="rotate(-4 45 34)"/>`,
+
+            mindmap: `<circle cx="14" cy="32" r="9" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3"/>
+<circle cx="46" cy="14" r="8" fill="#F2A8A0" stroke="#2B2B33" stroke-width="3"/>
+<circle cx="50" cy="40" r="8" fill="#7AC9A0" stroke="#2B2B33" stroke-width="3"/>
+<circle cx="34" cy="56" r="7" fill="#F4C16A" stroke="#2B2B33" stroke-width="3"/>
+<path d="M22 28 L39 17 M22 35 L43 39 M28 38 L29 50" stroke="#2B2B33" stroke-width="2.6" stroke-linecap="round"/>`,
+
+            table: `<rect x="7" y="9" width="50" height="46" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M7 22 H57 M7 35 H57 M7 48 H57 M24 9 V55 M41 9 V55" stroke="#2B2B33" stroke-width="2.4"/>
+<rect x="24.5" y="22.5" width="16" height="12.5" fill="#A6D8F0" opacity="0.85"/>
+<rect x="41.5" y="35.5" width="15" height="12.5" fill="#F2A8A0" opacity="0.85"/>`,
+
+            watermark: `<rect x="9" y="6" width="46" height="52" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M16 18 H48 M16 26 H48 M16 34 H48 M16 42 H38" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.4"/>
+<circle cx="38" cy="38" r="16" fill="#A6D8F0" opacity="0.55" stroke="#2B2B33" stroke-width="3"/>
+<path d="M31 38 L36 43 L46 31" fill="none" stroke="#2B2B33" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            email: `<rect x="6" y="14" width="52" height="38" rx="4" fill="#F4C16A" stroke="#2B2B33" stroke-width="3"/>
+<path d="M8 16 L32 38 L56 16" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>`,
+
+            qr: `<rect x="8" y="8" width="20" height="20" rx="2" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<rect x="14" y="14" width="8" height="8" fill="#2B2B33"/>
+<rect x="36" y="8" width="20" height="20" rx="2" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<rect x="42" y="14" width="8" height="8" fill="#2B2B33"/>
+<rect x="8" y="36" width="20" height="20" rx="2" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<rect x="14" y="42" width="8" height="8" fill="#2B2B33"/>
+<rect x="38" y="38" width="8" height="8" fill="#7AC9A0"/>
+<rect x="48" y="38" width="8" height="8" fill="#2B2B33"/>
+<rect x="38" y="48" width="8" height="8" fill="#2B2B33"/>
+<rect x="48" y="48" width="8" height="8" fill="#F2A8A0"/>`,
+
+            draw: `<rect x="6" y="6" width="46" height="46" rx="3" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M14 38 C18 30 22 42 28 34 C33 27 36 40 44 32" fill="none" stroke="#A6D8F0" stroke-width="4" stroke-linecap="round"/>
+<path d="M12 28 C18 24 24 32 30 24 C35 18 40 28 46 22" fill="none" stroke="#F2A8A0" stroke-width="3.5" stroke-linecap="round"/>
+<circle cx="20" cy="18" r="4" fill="#F4C16A" opacity="0.85"/>
+<circle cx="38" cy="40" r="3.5" fill="#7AC9A0" opacity="0.85"/>
+<path d="M44 18 L57 5 C59 3 61 3 62 5 C63 7 63 9 61 11 L48 24 Z" fill="#E8E8ED" stroke="#2B2B33" stroke-width="2.6" stroke-linejoin="round"/>
+<path d="M44 18 L48 24 L40 30 C37 33 33 29 36 26 Z" fill="#7AC9A0" stroke="#2B2B33" stroke-width="2.6" stroke-linejoin="round"/>`,
+
+            spell: `<rect x="9" y="6" width="46" height="52" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M16 18 H44 M16 26 H44" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.4"/>
+<path d="M18 44 L24 32 L30 44 M20.5 39 H27.5" stroke="#F2A8A0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<circle cx="42" cy="40" r="13" fill="#7AC9A0" stroke="#2B2B33" stroke-width="3"/>
+<path d="M36 40 L40 44 L48 35" fill="none" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            extractor: `<rect x="9" y="6" width="32" height="40" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M15 16 H35 M15 23 H35 M15 30 H29" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.4"/>
+<rect x="30" y="34" width="26" height="26" rx="4" fill="#F4C16A" stroke="#2B2B33" stroke-width="3"/>
+<path d="M43 41 V53 M37 47 L43 53 L49 47" fill="none" stroke="#2B2B33" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            id_card: `<rect x="6" y="13" width="52" height="38" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<circle cx="20" cy="30" r="7" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2.5"/>
+<path d="M11 44 C11 38 14 36 20 36 C26 36 29 38 29 44" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2.5"/>
+<path d="M36 24 H50 M36 31 H50 M36 38 H46" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round"/>
+<rect x="6" y="13" width="52" height="9" fill="#F2A8A0" stroke="#2B2B33" stroke-width="3"/>`,
+
+            zip: `<rect x="12" y="8" width="40" height="50" rx="4" fill="#F4C16A" stroke="#2B2B33" stroke-width="3"/>
+<rect x="26" y="8" width="12" height="50" fill="#FFFFFF" stroke="#2B2B33" stroke-width="2.4" stroke-dasharray="4 4"/>
+<rect x="27" y="12" width="10" height="6" fill="#2B2B33"/>
+<rect x="27" y="24" width="10" height="6" fill="#2B2B33"/>
+<rect x="27" y="36" width="10" height="6" fill="#2B2B33"/>
+<circle cx="32" cy="48" r="5" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2.4"/>`,
+
+
+            compress: `<rect x="9" y="6" width="46" height="52" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M9 24 H55 M9 40 H55" stroke="#2B2B33" stroke-width="2.6"/>
+<path d="M22 16 L32 24 L42 16" fill="none" stroke="#7AC9A0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22 50 L32 42 L42 50" fill="none" stroke="#7AC9A0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="24" y="28" width="16" height="8" rx="1.5" fill="#F4C16A"/>`,
+
+            context: `<rect x="9" y="6" width="46" height="52" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M16 18 H48 M16 26 H48 M16 34 H48" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.35"/>
+<rect x="13" y="42" width="38" height="12" rx="3" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2.6"/>
+<path d="M19 48 H45" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round"/>`,
+
+            metadata: `<rect x="10" y="8" width="36" height="46" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<rect x="16" y="14" width="24" height="16" rx="2" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2.4"/>
+<path d="M16 36 H40 M16 43 H34 M16 50 H40" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.4"/>
+<circle cx="46" cy="46" r="12" fill="#F4C16A" stroke="#2B2B33" stroke-width="3"/>
+<path d="M46 40 V46 L50 49" stroke="#2B2B33" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+
+            gift: `<rect x="10" y="26" width="44" height="30" rx="3" fill="#F2A8A0" stroke="#2B2B33" stroke-width="3"/>
+<rect x="10" y="26" width="44" height="10" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<rect x="29" y="26" width="6" height="30" fill="#A6D8F0"/>
+<path d="M32 26 C20 26 22 12 32 16 C42 12 44 26 32 26 Z" fill="#F4C16A" stroke="#2B2B33" stroke-width="2.6" stroke-linejoin="round"/>`,
+
+            share: `<rect x="10" y="22" width="44" height="36" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M32 38 V8 M22 18 L32 8 L42 18" fill="none" stroke="#7AC9A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18 44 H46 M18 50 H38" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.4"/>`,
+
+            scan_text: `<path d="M10 18 V10 H18 M46 10 H54 V18 M54 46 V54 H46 M18 54 H10 V46" fill="none" stroke="#2B2B33" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="16" y="20" width="32" height="24" rx="2" fill="#FFFFFF" stroke="#2B2B33" stroke-width="2.6"/>
+<path d="M21 27 H43 M21 33 H43 M21 39 H35" stroke="#2B2B33" stroke-width="2.2" stroke-linecap="round" opacity="0.4"/>
+<rect x="10" y="30" width="44" height="4" fill="#F2A8A0" opacity="0.7"/>`,
+
+            key_test: `<rect x="6" y="18" width="52" height="32" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<rect x="12" y="24" width="8" height="8" rx="1.5" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2"/>
+<rect x="23" y="24" width="8" height="8" rx="1.5" fill="#F2A8A0" stroke="#2B2B33" stroke-width="2"/>
+<rect x="34" y="24" width="8" height="8" rx="1.5" fill="#7AC9A0" stroke="#2B2B33" stroke-width="2"/>
+<rect x="45" y="24" width="8" height="8" rx="1.5" fill="#F4C16A" stroke="#2B2B33" stroke-width="2"/>
+<rect x="12" y="36" width="41" height="8" rx="1.5" fill="#E8E8ED" stroke="#2B2B33" stroke-width="2"/>`,
+
+            ide: `<rect x="6" y="10" width="52" height="44" rx="4" fill="#2B2B33" stroke="#2B2B33" stroke-width="3"/>
+<rect x="6" y="10" width="52" height="10" rx="4" fill="#E8E8ED" stroke="#2B2B33" stroke-width="3"/>
+<circle cx="13" cy="15" r="2" fill="#F2A8A0"/>
+<circle cx="20" cy="15" r="2" fill="#F4C16A"/>
+<circle cx="27" cy="15" r="2" fill="#7AC9A0"/>
+<path d="M16 32 L24 38 L16 44" fill="none" stroke="#7AC9A0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M30 44 H48" stroke="#A6D8F0" stroke-width="3.5" stroke-linecap="round"/>`,
+
+            html_edit: `<rect x="6" y="10" width="52" height="44" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M6 22 H58" stroke="#2B2B33" stroke-width="2.6"/>
+<path d="M14 32 L9 37 L14 42 M28 32 L33 37 L28 42" fill="none" stroke="#7AC9A0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M22 30 L18 44" stroke="#F2A8A0" stroke-width="3" stroke-linecap="round"/>
+<rect x="38" y="30" width="14" height="14" rx="2" fill="#A6D8F0" opacity="0.7"/>`,
+
+            html_ai: `<rect x="6" y="10" width="52" height="44" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M6 22 H58" stroke="#2B2B33" stroke-width="2.6"/>
+<path d="M16 33 L11 38 L16 43 M28 33 L33 38 L28 43" fill="none" stroke="#7AC9A0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M44 28 L48 38 L44 48 M48 38 L52 32 M48 38 L52 44" stroke="#F4C16A" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`,
+
+            md: `<rect x="6" y="14" width="52" height="36" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M14 38 V26 L21 34 L28 26 V38" fill="none" stroke="#2B2B33" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M40 26 V38 M34 32 L40 38 L46 32" fill="none" stroke="#7AC9A0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            btn_dev: `<rect x="9" y="20" width="46" height="24" rx="12" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3"/>
+<text x="32" y="36" font-family="Arial, sans-serif" font-size="13" font-weight="800" fill="#2B2B33" text-anchor="middle">BTN</text>
+<path d="M14 12 C14 8 16 6 20 6 M50 12 C50 8 48 6 44 6 M14 52 C14 56 16 58 20 58 M50 52 C50 56 48 58 44 58" fill="none" stroke="#F4C16A" stroke-width="3" stroke-linecap="round"/>`,
+
+            split: `<rect x="6" y="14" width="24" height="36" rx="3" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3"/>
+<rect x="34" y="14" width="24" height="36" rx="3" fill="#F2A8A0" stroke="#2B2B33" stroke-width="3"/>
+<path d="M14 24 H22 M14 32 H22 M14 40 H22 M42 24 H50 M42 32 H50 M42 40 H50" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.45"/>
+<path d="M32 8 V56" stroke="#2B2B33" stroke-width="3" stroke-linecap="round" stroke-dasharray="4 4"/>`,
+
+            goto: `<rect x="9" y="9" width="46" height="46" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M16 32 H42 M34 24 L42 32 L34 40" fill="none" stroke="#7AC9A0" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M16 18 H30 M16 46 H24" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.35"/>`,
+
+            snipper: `<rect x="9" y="6" width="46" height="52" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M16 18 H48 M16 26 H40" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.35"/>
+<path d="M16 42 H48 M16 50 H36" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.35"/>
+<path d="M18 34 H46" stroke="#2B2B33" stroke-width="2.6" stroke-dasharray="5 4"/>
+<circle cx="14" cy="28" r="4.5" fill="#F2A8A0" stroke="#2B2B33" stroke-width="2.2"/>
+<circle cx="14" cy="40" r="4.5" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2.2"/>
+<path d="M18 28 L34 34 L18 40" fill="none" stroke="#2B2B33" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            img_edit: `<rect x="8" y="10" width="48" height="38" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<circle cx="20" cy="22" r="5" fill="#F4C16A" stroke="#2B2B33" stroke-width="2.4"/>
+<path d="M12 42 L26 28 L36 38 L46 26 L52 32 V44 H12 Z" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2.6" stroke-linejoin="round"/>
+<path d="M44 50 L52 58 L60 50 L52 42 Z" fill="#7AC9A0" stroke="#2B2B33" stroke-width="2.6" stroke-linejoin="round"/>`,
+
+            attr_edit: `<rect x="9" y="9" width="46" height="46" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<rect x="16" y="16" width="32" height="20" rx="2" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2.6"/>
+<circle cx="46" cy="46" r="3" fill="#2B2B33"/>
+<circle cx="32" cy="46" r="3" fill="#2B2B33"/>
+<circle cx="18" cy="46" r="3" fill="#2B2B33"/>
+<path d="M14 46 H50" stroke="#2B2B33" stroke-width="2" stroke-dasharray="2 4"/>`,
+
+            collab: `<circle cx="22" cy="22" r="9" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3"/>
+<path d="M10 46 C10 36 14 32 22 32 C30 32 34 36 34 46" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3"/>
+<circle cx="44" cy="22" r="9" fill="#F2A8A0" stroke="#2B2B33" stroke-width="3"/>
+<path d="M32 46 C32 36 36 32 44 32 C52 32 56 36 56 46" fill="#F2A8A0" stroke="#2B2B33" stroke-width="3"/>`,
+
+            text: `<path d="M6 10 C6 8 7 7 9 7 H50 C52 7 53 8 53 10 V40 C53 42 52 43 50 43 H24 L13 53 L15 43 H9 C7 43 6 42 6 40 Z" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>
+<circle cx="18" cy="25" r="3" fill="#7AC9A0"/>
+<circle cx="29.5" cy="25" r="3" fill="#F4C16A"/>
+<circle cx="41" cy="25" r="3" fill="#F2A8A0"/>`,
+
+            call: `<path d="M14 10 C14 8 15 7 17 7 H24 L29 19 L22 24 C25 33 31 39 40 42 L45 35 L57 40 V47 C57 49 56 50 54 50 C30 50 14 34 14 10 Z" fill="#7AC9A0" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>`,
+
+            // ── Fallback stickers for recents entries not tied to a toolsDB id ──
+            qr_code_scanner: `<path d="M10 18 V10 H18 M46 10 H54 V18 M54 46 V54 H46 M18 54 H10 V46" fill="none" stroke="#2B2B33" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="16" y="20" width="32" height="24" rx="2" fill="#A6D8F0" stroke="#2B2B33" stroke-width="2.6"/>
+<path d="M10 32 H54" stroke="#F2A8A0" stroke-width="3.5" stroke-linecap="round"/>`,
+
+            description: `<rect x="12" y="6" width="40" height="52" rx="4" fill="#FFFFFF" stroke="#2B2B33" stroke-width="3"/>
+<path d="M20 18 H44 M20 26 H44 M20 34 H44 M20 42 H34" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.4"/>
+<path d="M36 44 L40 48 L48 38" fill="none" stroke="#7AC9A0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            sticky_note_2: `<path d="M10 8 C10 6 11 5 13 5 H44 C46 5 47 6 47 8 V38 L34 53 H13 C11 53 10 52 10 50 Z" fill="#F4C16A" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>
+<path d="M34 53 V42 C34 40 35 39 37 39 H47" fill="none" stroke="#2B2B33" stroke-width="2.6" stroke-linejoin="round"/>
+<path d="M18 18 H38 M18 26 H38" stroke="#2B2B33" stroke-width="2.4" stroke-linecap="round" opacity="0.4"/>`,
+
+            extension: `<path d="M14 14 H26 V8 C26 4 32 4 32 8 V14 H44 V26 H50 C54 26 54 32 50 32 H44 V44 H32 V38 C32 34 26 34 26 38 V44 H14 V32 H8 C4 32 4 26 8 26 H14 Z" fill="#A6D8F0" stroke="#2B2B33" stroke-width="3" stroke-linejoin="round"/>`,
+        };
+
+        // ── Bottom-nav sticker icon set: Home, Recents, Tools, Settings ──
+        // Simple single-tone blue glyphs to match the app accent color.
+        const NAV_STICKER_ICONS = {
+            home: `<path d="M8 30 L32 8 L56 30 V54 H8 Z" fill="#A6D8F0" stroke="#1976D2" stroke-width="5" stroke-linejoin="round"/>
+<rect x="26" y="36" width="12" height="18" fill="#1976D2"/>`,
+
+            recents: `<circle cx="32" cy="32" r="24" fill="#A6D8F0" stroke="#1976D2" stroke-width="5"/>
+<path d="M32 18 V32 L43 38" fill="none" stroke="#1976D2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            tools: `<rect x="8" y="8" width="21" height="21" rx="3" fill="#1976D2"/>
+<rect x="35" y="8" width="21" height="21" rx="3" fill="#A6D8F0" stroke="#1976D2" stroke-width="4"/>
+<rect x="8" y="35" width="21" height="21" rx="3" fill="#A6D8F0" stroke="#1976D2" stroke-width="4"/>
+<rect x="35" y="35" width="21" height="21" rx="3" fill="#1976D2"/>`,
+
+            settings: `<circle cx="32" cy="32" r="10" fill="#A6D8F0" stroke="#1976D2" stroke-width="5"/>
+<path d="M32 4 V14 M32 50 V60 M4 32 H14 M50 32 H60" stroke="#1976D2" stroke-width="6" stroke-linecap="round"/>`,
+        };
+
+        // ── Home quick-action sticker icon set: New Document, Edit Image, Write Code, All Tools ──
+        // Simple single-tone blue glyphs matching the nav stickers.
+        const QUICK_ACTION_STICKER_ICONS = {
+            'btn-new-doc': `<rect x="14" y="6" width="36" height="52" rx="4" fill="#A6D8F0" stroke="#1976D2" stroke-width="5"/>
+<path d="M24 22 H40 M24 32 H40 M24 42 H34" stroke="#1976D2" stroke-width="5" stroke-linecap="round"/>`,
+
+            'btn-new-img': `<rect x="6" y="10" width="52" height="44" rx="4" fill="#A6D8F0" stroke="#1976D2" stroke-width="5"/>
+<circle cx="22" cy="26" r="6" fill="#1976D2"/>
+<path d="M12 46 L26 32 L38 44 L48 34 L56 42 V50 H12 Z" fill="#1976D2"/>`,
+
+            'btn-new-code': `<rect x="6" y="10" width="52" height="44" rx="4" fill="#A6D8F0" stroke="#1976D2" stroke-width="5"/>
+<path d="M22 24 L14 32 L22 40 M42 24 L50 32 L42 40" fill="none" stroke="#1976D2" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>`,
+
+            'btn-all-tools': `<rect x="8" y="8" width="21" height="21" rx="3" fill="#1976D2"/>
+<rect x="35" y="8" width="21" height="21" rx="3" fill="#A6D8F0" stroke="#1976D2" stroke-width="4"/>
+<rect x="8" y="35" width="21" height="21" rx="3" fill="#A6D8F0" stroke="#1976D2" stroke-width="4"/>
+<rect x="35" y="35" width="21" height="21" rx="3" fill="#1976D2"/>`,
+
+            'btn-dynote': `<path d="M12 8 C12 6 13 5 15 5 H42 C44 5 45 6 45 8 V40 L33 52 H15 C13 52 12 51 12 49 Z" fill="#A6D8F0" stroke="#1976D2" stroke-width="5" stroke-linejoin="round"/>
+<path d="M33 52 V42 C33 40 34 39 36 39 H45" fill="none" stroke="#1976D2" stroke-width="5" stroke-linejoin="round"/>
+<path d="M20 18 H38 M20 27 H38" stroke="#1976D2" stroke-width="4" stroke-linecap="round"/>`,
+        };
+
+        // Renders sticker SVGs into the bottom-nav items when sticker mode is active,
+        // restoring the original Material Symbols glyphs otherwise.
+        function renderNavStickers() {
+            const navMap = { 'nav-home': 'home', 'nav-recents': 'recents', 'nav-tools': 'tools', 'nav-settings': 'settings' };
+            const glyphMap = { 'nav-home': 'home', 'nav-recents': 'history', 'nav-tools': 'grid_view', 'nav-settings': 'settings' };
+            Object.keys(navMap).forEach(navId => {
+                const el = document.getElementById(navId);
+                if (!el) return;
+                const existingIcon = el.querySelector('.material-symbols-rounded, .nav-sticker-icon');
+                if (!existingIcon) return;
+                if (isStickerMode()) {
+                    const svg = `<svg class="nav-sticker-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${NAV_STICKER_ICONS[navMap[navId]]}</svg>`;
+                    existingIcon.outerHTML = svg;
+                } else {
+                    existingIcon.outerHTML = `<span class="material-symbols-rounded">${glyphMap[navId]}</span>`;
+                }
+            });
+        }
+
+        // Renders sticker SVGs into the home screen's four quick-action buttons
+        // (New Document, Edit Image, Write Code, All Tools) when sticker mode is active.
+        function renderQuickActionStickers() {
+            Object.keys(QUICK_ACTION_STICKER_ICONS).forEach(btnId => {
+                const el = document.getElementById(btnId);
+                if (!el) return;
+                const circle = el.querySelector('.action-icon-circle');
+                if (!circle) return;
+                const existingIcon = circle.querySelector('.material-symbols-rounded, .nav-sticker-icon');
+                if (!existingIcon) return;
+                if (isStickerMode()) {
+                    const svg = `<svg class="nav-sticker-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${QUICK_ACTION_STICKER_ICONS[btnId]}</svg>`;
+                    existingIcon.outerHTML = svg;
+                    circle.style.background = 'transparent';
+                } else {
+                    const glyphMap = { 'btn-new-doc': 'note_add', 'btn-new-img': 'add_photo_alternate', 'btn-new-code': 'terminal', 'btn-all-tools': 'apps', 'btn-dynote': 'sticky_note_2' };
+                    existingIcon.outerHTML = `<span class="material-symbols-rounded">${glyphMap[btnId]}</span>`;
+                    circle.removeAttribute('style');
+                    if (btnId === 'btn-all-tools') { circle.style.background = 'var(--bg-body)'; circle.style.color = 'var(--text-secondary)'; }
+                    if (btnId === 'btn-dynote') { circle.style.background = 'rgba(142, 142, 147, 0.15)'; circle.style.color = 'var(--text-secondary)'; }
+                }
+            });
+        }
+
+
+        // Returns the inner SVG markup for a tool's icon: either the sticker SVG body
+        // (wrapped) or a Material Symbols span using the tool's default icon glyph.
+        function getToolIconHTML(tool, extraClass) {
+            extraClass = extraClass || '';
+            if (isStickerMode()) {
+                const sticker = STICKER_ICONS[tool.id] || STICKER_ICONS[tool.icon];
+                if (sticker) return `<svg class="sticker-icon ${extraClass}" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">${sticker}</svg>`;
+            }
+            return `<span class="material-symbols-rounded ${extraClass}">${tool.icon}</span>`;
         }
 
         // Parses "mtools.pdf2jpg.html" -> { from: "pdf", to: "jpg", url: "mtools.pdf2jpg.html" }
@@ -1449,7 +1828,10 @@
         }
 
         function openToolWithCat(url, name, cat) {
-            if (name) addToRecents({ name, url, icon: getIconForTool(url), cat });
+            if (name) {
+                const match = toolsDB.find(t => t.url === url || url.includes(t.url) || t.name === name);
+                addToRecents({ name, url, icon: getIconForTool(url), cat, id: match ? match.id : undefined });
+            }
             const frame = document.getElementById('app-frame');
             const container = document.getElementById('tool-iframe-container');
             document.getElementById('iframe-title-text').textContent = name || 'Tool';
@@ -1463,7 +1845,10 @@
                 url = def === 'sugarcane' ? 'https://mahi902.github.io/DocuWritePro/sceditor.html' : 'https://mahi902.github.io/DocuWritePro/document-writer.html';
             }
             url = applyNoAniHash(url);
-            if (name) addToRecents({ name, url, icon: getIconForTool(url) });
+            if (name) {
+                const match = toolsDB.find(t => t.url === url || url.includes(t.url) || t.name === name);
+                addToRecents({ name, url, icon: getIconForTool(url), id: match ? match.id : undefined });
+            }
             const frame = document.getElementById('app-frame');
             const container = document.getElementById('tool-iframe-container');
             document.getElementById('iframe-title-text').textContent = name || 'Tool';
@@ -1550,7 +1935,7 @@
         }
 
         // Online-only tool IDs for offline search banner
-        const ONLINE_ONLY_TOOL_IDS = ['markup','word_finder','translator','spell','chart','share','scan_text','html_ai','collab','text','call','pdf_conv'];
+        const ONLINE_ONLY_TOOL_IDS = ['markup','word_finder','translator','spell','chart','share','scan_text','html_ai','collab','text','call'];
 
         function renderTools() {
             const container = document.getElementById('tools-list-container');
@@ -1607,7 +1992,7 @@
                     tools.forEach(tool => {
                         const card = document.createElement('div');
                         card.className = `tool-card ${pinned.includes(tool.id)?'pinned':''} ${tool.onlineOnly?'online-only':''}`;
-                        card.innerHTML = `<span class="material-symbols-rounded tool-icon-main">${tool.icon}</span><div class="tool-name">${tool.name}</div><span class="material-symbols-rounded pinned-star">star</span>`;
+                        card.innerHTML = `${getToolIconHTML(tool, 'tool-icon-main')}<div class="tool-name">${tool.name}</div><span class="material-symbols-rounded pinned-star">star</span>`;
                         card.onclick = () => openTool(tool.url, tool.name);
                         gridDiv.appendChild(card);
                     });
@@ -1618,7 +2003,7 @@
                     tools.forEach(tool => {
                         const card = document.createElement('div');
                         card.className = `list-card ${pinned.includes(tool.id)?'pinned':''} ${tool.onlineOnly?'online-only':''}`;
-                        card.innerHTML = `<div class="list-card-left"><div class="list-card-icon"><span class="material-symbols-rounded">${tool.icon}</span></div><div class="list-card-details"><div class="list-card-name">${tool.name}</div><div class="list-card-category">${tool.cat}</div></div></div><span class="material-symbols-rounded list-card-chevron">chevron_right</span>`;
+                        card.innerHTML = `<div class="list-card-left"><div class="list-card-icon">${getToolIconHTML(tool)}</div><div class="list-card-details"><div class="list-card-name">${tool.name}</div><div class="list-card-category">${tool.cat}</div></div></div><span class="material-symbols-rounded list-card-chevron">chevron_right</span>`;
                         card.onclick = () => openTool(tool.url, tool.name);
                         listDiv.appendChild(card);
                     });
@@ -1650,6 +2035,19 @@
                 localStorage.setItem('view_mode', val);
                 document.getElementById('display-view-mode').textContent = label;
                 updateViewMode(); renderTools();
+                if (document.getElementById('tab-home').classList.contains('active')) renderRecents();
+            });
+        }
+        function updateIconMode() {
+            const mode = localStorage.getItem('icon_mode') || 'global';
+            document.getElementById('display-icons').textContent = mode === 'sticker' ? "Sticker" : "Global";
+        }
+        function openIconsPicker() {
+            const current = localStorage.getItem('icon_mode') || 'global';
+            openPicker('Icons', [{label:'Global',value:'global'},{label:'Sticker',value:'sticker'}], current, (val,label) => {
+                localStorage.setItem('icon_mode', val);
+                document.getElementById('display-icons').textContent = label;
+                renderTools(); renderQuickToolsMain(); renderNavStickers(); renderQuickActionStickers();
                 if (document.getElementById('tab-home').classList.contains('active')) renderRecents();
             });
         }
@@ -1748,7 +2146,7 @@
             if (recents.length === 0) { grid.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:30px 20px;text-align:center;color:var(--text-secondary);grid-column:1/-1;"><span class="material-symbols-rounded" style="font-size:40px;opacity:0.5;">history</span><div style="font-size:14px;font-weight:500;">No Recent Tools</div></div>`; return; }
             recents.forEach(tool => {
                 const card = document.createElement('div'); card.className = 'tool-card';
-                card.innerHTML = `<span class="material-symbols-rounded tool-icon-main">${tool.icon}</span><div class="tool-name">${tool.name}</div>`;
+                card.innerHTML = `${getToolIconHTML(tool, 'tool-icon-main')}<div class="tool-name">${tool.name}</div>`;
                 card.onclick = () => openTool(tool.url, tool.name); grid.appendChild(card);
             });
         }
@@ -1759,7 +2157,7 @@
             if (recents.length === 0) { list.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:10px;padding:30px 20px;text-align:center;color:var(--text-secondary);"><span class="material-symbols-rounded" style="font-size:40px;opacity:0.5;">history</span><div style="font-size:14px;font-weight:500;">No Recent Tools</div></div>`; return; }
             recents.forEach(tool => {
                 const card = document.createElement('div'); card.className = 'list-card';
-                card.innerHTML = `<div class="list-card-left"><div class="list-card-icon"><span class="material-symbols-rounded">${tool.icon}</span></div><div class="list-card-details"><div class="list-card-name">${tool.name}</div><div class="list-card-category">${tool.cat||''}</div></div></div><span class="material-symbols-rounded list-card-chevron">chevron_right</span>`;
+                card.innerHTML = `<div class="list-card-left"><div class="list-card-icon">${getToolIconHTML(tool)}</div><div class="list-card-details"><div class="list-card-name">${tool.name}</div><div class="list-card-category">${tool.cat||''}</div></div></div><span class="material-symbols-rounded list-card-chevron">chevron_right</span>`;
                 card.onclick = () => openTool(tool.url, tool.name); list.appendChild(card);
             });
         }
@@ -1981,6 +2379,7 @@
         function loadSettings() {
             const viewMode=localStorage.getItem('view_mode')||'grid';
             document.getElementById('display-view-mode').textContent=viewMode==='grid'?'Grid View':'List View';
+            updateIconMode();
             const anim=localStorage.getItem('animations_enabled')||'true';
             document.getElementById('display-animations').textContent=anim==='true'?'Enabled':'Disabled';
             if(anim==='false')document.documentElement.classList.add('no-animations');
@@ -1989,7 +2388,7 @@
             document.getElementById('display-dynote').textContent=localStorage.getItem('dynote_enabled')==='true'?'Enabled':'Disabled';
             document.getElementById('display-quick-note').textContent=localStorage.getItem('quick_note_enabled')==='true'?'Enabled':'Disabled';
             document.getElementById('display-scanner').textContent=localStorage.getItem('scanner_enabled')!=='false'?'Enabled':'Disabled';
-            initTheme();checkTemplateVisibility();updateLockSettingsUI();checkDyNoteVisibility();checkScannerVisibility();checkRecentsVisibility();
+            initTheme();checkTemplateVisibility();updateLockSettingsUI();checkDyNoteVisibility();checkScannerVisibility();checkRecentsVisibility();renderNavStickers();renderQuickActionStickers();
         }
 
         document.getElementById('btn-new-doc').onclick=()=>{const val=localStorage.getItem('def_doc')||'sugarcane';const scUrl=val==='sugarcane'?applyNoAniHash('https://mahi902.github.io/DocuWritePro/sceditor.html'):'https://mahi902.github.io/DocuWritePro/document-writer.html';openTool(scUrl,'New Document');}

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<title>AgentD</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0" />
+<style>
+  :root{
+    --agentd-accent1:#5b21b6;
+    --agentd-accent2:#7c3aed;
+    --agentd-bg:#ffffff;
+    --agentd-bg-msgs:#f7f5fb;
+    --agentd-bubble-agent:#ffffff;
+    --agentd-bubble-agent-border:#ececec;
+    --agentd-bubble-user:linear-gradient(135deg,#5b21b6,#7c3aed);
+    --agentd-text:#1c1c1e;
+    --agentd-text-sub:#8a8a90;
+    --agentd-border:#ececec;
+    --agentd-input-bg:#f0eef5;
+  }
+  body.dark{
+    --agentd-bg:#161618;
+    --agentd-bg-msgs:#161618;
+    --agentd-bubble-agent:#232326;
+    --agentd-bubble-agent-border:#2f2f33;
+    --agentd-text:#eee;
+    --agentd-text-sub:#8f8f96;
+    --agentd-border:#2c2c2e;
+    --agentd-input-bg:#232326;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;height:100%;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--agentd-bg);color:var(--agentd-text);
+    overflow:hidden;
+  }
+  .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 20;font-size:18px;line-height:1;vertical-align:middle;}
+
+  #agRoot{display:flex;flex-direction:column;height:100%;width:100%;}
+
+  /* ── Loading screen ── */
+  #agLoading{
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+    background:var(--agentd-bg);z-index:20;
+  }
+  #agLoading .ag-spin{
+    width:34px;height:34px;border-radius:50%;
+    border:3px solid rgba(124,58,237,.18);border-top-color:var(--agentd-accent2);
+    animation:agSpin .8s linear infinite;
+  }
+  @keyframes agSpin{to{transform:rotate(360deg);}}
+  #agLoading .ag-loading-text{font-size:12.5px;color:var(--agentd-text-sub);font-weight:600;letter-spacing:.2px;}
+  #agLoading.hide{display:none;}
+
+  #agErr{
+    position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:var(--agentd-bg);z-index:19;padding:24px;text-align:center;
+  }
+  #agErr.show{display:flex;}
+  #agErr .material-symbols-outlined{font-size:30px;color:#d32f2f;}
+  #agErr .ag-err-title{font-size:13px;font-weight:700;}
+  #agErr .ag-err-sub{font-size:11.5px;color:var(--agentd-text-sub);max-width:280px;}
+  #agErr button{
+    margin-top:4px;border:none;border-radius:9px;padding:7px 16px;font-size:12px;font-weight:700;
+    background:var(--agentd-accent2);color:#fff;cursor:pointer;
+  }
+
+  /* ── Messages ── */
+  #agMsgs{
+    flex:1;overflow-y:auto;padding:12px 12px 6px;
+    display:flex;flex-direction:column;gap:9px;
+    background:var(--agentd-bg-msgs);
+    scroll-behavior:smooth;
+  }
+  .ag-row{display:flex;width:100%;}
+  .ag-row.user{justify-content:flex-end;}
+  .ag-row.agent{justify-content:flex-start;}
+  .ag-bubble{
+    max-width:82%;padding:8px 12px;border-radius:15px;font-size:13px;line-height:1.42;
+    white-space:pre-wrap;word-break:break-word;
+  }
+  .ag-row.agent .ag-bubble{
+    background:var(--agentd-bubble-agent);
+    border:1px solid var(--agentd-bubble-agent-border);
+    color:var(--agentd-text);
+    border-bottom-left-radius:4px;
+  }
+  .ag-row.user .ag-bubble{
+    background:var(--agentd-bubble-user);
+    color:#fff;
+    border-bottom-right-radius:4px;
+  }
+  .ag-row.agent .ag-bubble.ag-err{border-color:#e5a6a6;color:#c0392b;}
+  body.dark .ag-row.agent .ag-bubble.ag-err{border-color:#7a3030;color:#ff8a80;}
+  .ag-row.agent .ag-bubble.ag-help{white-space:normal;}
+  .ag-help h4{margin:0 0 4px;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--agentd-accent2);}
+  .ag-help .ag-help-group{margin-bottom:8px;}
+  .ag-help .ag-help-group:last-child{margin-bottom:0;}
+  .ag-help .ag-help-ex{font-size:12.5px;color:var(--agentd-text);opacity:.85;margin:2px 0;}
+  .ag-help .ag-help-ex::before{content:"› ";opacity:.55;}
+
+  .ag-typing{display:flex;gap:3px;align-items:center;padding:2px 3px;}
+  .ag-typing span{width:5px;height:5px;border-radius:50%;background:var(--agentd-text-sub);opacity:.6;animation:agBlink 1.2s infinite ease-in-out;}
+  .ag-typing span:nth-child(2){animation-delay:.15s;}
+  .ag-typing span:nth-child(3){animation-delay:.3s;}
+  @keyframes agBlink{0%,80%,100%{opacity:.25;transform:scale(.75);}40%{opacity:1;transform:scale(1);}}
+
+  /* ── Quick suggestions (shown at start) ── */
+  #agQuick{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 10px;background:var(--agentd-bg-msgs);}
+  .ag-chip{
+    font-size:11px;padding:5px 10px;border-radius:20px;
+    background:var(--agentd-input-bg);color:var(--agentd-text);
+    border:1px solid var(--agentd-border);cursor:pointer;white-space:nowrap;
+    transition:background .15s;
+  }
+  .ag-chip:hover{background:var(--agentd-accent2);color:#fff;border-color:transparent;}
+
+  /* ── Input row ── */
+  #agInputRow{
+    display:flex;align-items:center;gap:8px;padding:10px 12px;
+    border-top:1px solid var(--agentd-border);background:var(--agentd-bg);flex-shrink:0;
+  }
+  #agInput{
+    flex:1;border:none;outline:none;background:var(--agentd-input-bg);
+    color:var(--agentd-text);border-radius:20px;padding:9px 14px;font-size:13px;font-family:inherit;
+  }
+  #agInput::placeholder{color:var(--agentd-text-sub);}
+  #agSend{
+    width:34px;height:34px;border-radius:50%;border:none;flex-shrink:0;
+    background:linear-gradient(135deg,var(--agentd-accent1),var(--agentd-accent2));
+    color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:opacity .15s,transform .1s;
+  }
+  #agSend:active{transform:scale(.92);}
+  #agSend[disabled]{opacity:.4;cursor:default;}
+
+  #agMsgs::-webkit-scrollbar{width:6px;}
+  #agMsgs::-webkit-scrollbar-thumb{background:rgba(124,58,237,.25);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div id="agRoot">
+  <div id="agMsgs"></div>
+  <div id="agQuick"></div>
+  <div id="agInputRow">
+    <input type="text" id="agInput" placeholder="Tell AgentD what to do…" autocomplete="off" />
+    <button id="agSend" title="Send"><span class="material-symbols-outlined">arrow_upward</span></button>
+  </div>
+</div>
+
+<div id="agLoading">
+  <div class="ag-spin"></div>
+  <div class="ag-loading-text" id="agLoadingText">Loading AgentD…</div>
+</div>
+
+<div id="agErr">
+  <span class="material-symbols-outlined">error</span>
+  <div class="ag-err-title">Couldn't load AgentD's command list</div>
+  <div class="ag-err-sub">conv.json could not be reached. Check your connection and try again.</div>
+  <button onclick="agRetryLoad()">Retry</button>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   AGENTD — natural-language → editor command matcher
+   Loads conv.json (command registry), fuzzy-matches whatever the
+   user types against it, resolves {n}/{s} placeholders, then
+   postMessages the resolved action up to the parent (SCEditor),
+   which actually performs the edit and reports back.
+   ═══════════════════════════════════════════════════════════════ */
+
+const CONV_URL_PRIMARY  = 'https://mahi902.github.io/DocuWritePro/conv.json';
+const CONV_URL_FALLBACK = './conv.json';
+
+const EXECUTE_THRESHOLD = 0.52;   // score needed to just run the command
+const SUGGEST_THRESHOLD = 0.30;   // score needed to offer a "did you mean"
+
+let CONV = null;          // parsed conv.json
+let PATTERN_INDEX = [];   // flat [{cmd, pattern}] list built from CONV
+let pendingSuggestion = null; // {cmd, pattern} awaiting a yes/no confirmation
+
+/* ── Theme (driven by parent via #theme=dark|light hash, or postMessage) ── */
+(function initTheme(){
+  const hash = location.hash.replace('#','');
+  const params = {};
+  hash.split('|').forEach(p => { const [k,v] = p.split('='); if (k) params[k] = decodeURIComponent(v||''); });
+  if (params.theme === 'dark') document.body.classList.add('dark');
+})();
+window.addEventListener('message', ev => {
+  if (ev.data && ev.data.type === 'agentd-theme'){
+    document.body.classList.toggle('dark', ev.data.theme === 'dark');
+  }
+});
+
+/* ── Boot ── */
+window.addEventListener('DOMContentLoaded', () => {
+  loadConv();
+  document.getElementById('agSend').addEventListener('click', handleSend);
+  document.getElementById('agInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); handleSend(); }
+  });
+  try { window.parent.postMessage({ type:'agentd-ready' }, '*'); } catch(e){}
+});
+
+function agRetryLoad(){
+  document.getElementById('agErr').classList.remove('show');
+  document.getElementById('agLoading').classList.remove('hide');
+  loadConv();
+}
+
+async function loadConv(){
+  const loadingText = document.getElementById('agLoadingText');
+  let data = null;
+  try{
+    loadingText.textContent = 'Loading command registry…';
+    const r = await fetch(CONV_URL_PRIMARY, { cache:'no-store' });
+    if (!r.ok) throw new Error('bad status ' + r.status);
+    data = await r.json();
+  }catch(e1){
+    try{
+      const r2 = await fetch(CONV_URL_FALLBACK, { cache:'no-store' });
+      if (!r2.ok) throw new Error('bad status ' + r2.status);
+      data = await r2.json();
+    }catch(e2){
+      document.getElementById('agLoading').classList.add('hide');
+      document.getElementById('agErr').classList.add('show');
+      return;
+    }
+  }
+
+  CONV = data;
+  PATTERN_INDEX = [];
+  (CONV.commands || []).forEach(cmd => {
+    (cmd.patterns || []).forEach(pattern => {
+      PATTERN_INDEX.push({ cmd, pattern: normalize(pattern) });
+    });
+  });
+
+  document.getElementById('agLoading').classList.add('hide');
+  renderQuickChips();
+  pushAgent(`Hi! I'm AgentD 👋 Tell me what to do to this document — things like "set left margin to 3" or "make it bold". Type "help" any time to see everything I can do.`);
+  document.getElementById('agInput').focus();
+}
+
+/* ═══════════════════════ Matching engine ═══════════════════════ */
+
+function normalize(s){
+  return String(s || '').toLowerCase().trim().replace(/\s+/g,' ');
+}
+
+function bigrams(str){
+  const s = str.replace(/\s+/g,' ');
+  const grams = [];
+  for (let i=0;i<s.length-1;i++) grams.push(s.substr(i,2));
+  return grams;
+}
+
+/* Dice coefficient over character bigrams — cheap, good general-purpose
+   "closest matching phrase" scorer that tolerates typos & word reordering. */
+function diceScore(a, b){
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  const ga = bigrams(a), gb = bigrams(b);
+  if (!ga.length || !gb.length) return a === b ? 1 : 0;
+  const map = new Map();
+  ga.forEach(g => map.set(g, (map.get(g)||0) + 1));
+  let hits = 0;
+  gb.forEach(g => {
+    const c = map.get(g);
+    if (c > 0){ hits++; map.set(g, c - 1); }
+  });
+  return (2 * hits) / (ga.length + gb.length);
+}
+
+function levenshtein(a, b){
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  const dp = Array.from({length:m+1}, (_,i)=>[i,...Array(n).fill(0)]);
+  for (let j=0;j<=n;j++) dp[0][j] = j;
+  for (let i=1;i<=m;i++){
+    for (let j=1;j<=n;j++){
+      dp[i][j] = a[i-1] === b[j-1]
+        ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j-1], dp[i-1][j], dp[i][j-1]);
+    }
+  }
+  return dp[m][n];
+}
+function wordSim(a, b){
+  if (!a && !b) return 1;
+  if (!a || !b) return 0;
+  const d = levenshtein(a, b);
+  return 1 - d / Math.max(a.length, b.length);
+}
+
+function extractFirstNumber(str){
+  const m = str.match(/-?\d+(?:\.\d+)?/);
+  if (!m) return null;
+  return { raw:m[0], value:parseFloat(m[0]), index:m.index, length:m[0].length };
+}
+
+/* Score how well `inputWords` starts with `prefixWords` (used for {s} patterns) */
+function prefixScore(inputWords, prefixWords){
+  if (!prefixWords.length) return inputWords.length ? 0.35 : 0; // patterns like "type {s}" alone
+  if (inputWords.length < prefixWords.length) return 0;
+  let total = 0;
+  for (let i=0;i<prefixWords.length;i++){
+    total += wordSim(inputWords[i], prefixWords[i]);
+  }
+  const avg = total / prefixWords.length;
+  // Require there to actually be trailing words to fill {s}
+  const hasTail = inputWords.length > prefixWords.length;
+  return hasTail ? avg : avg * 0.4;
+}
+
+/* Returns {entry, score, numInfo, sValue} for the best match, or null */
+function matchInput(rawInput){
+  const norm = normalize(rawInput);
+  if (!norm) return null;
+  const normWords = norm.split(' ');
+  const rawWords = String(rawInput).trim().replace(/\s+/g,' ').split(' ');
+  const numInfo = extractFirstNumber(norm);
+
+  let best = null;
+
+  PATTERN_INDEX.forEach(entry => {
+    const pattern = entry.pattern;
+    const hasS = pattern.includes('{s}');
+    const hasN = pattern.includes('{n}');
+    let score = 0;
+    let sValue = null;
+
+    if (hasS){
+      const idx = pattern.indexOf('{s}');
+      const prefix = pattern.slice(0, idx).trim();
+      const prefixWords = prefix ? prefix.split(' ') : [];
+      score = prefixScore(normWords, prefixWords);
+      if (normWords.length > prefixWords.length){
+        sValue = rawWords.slice(prefixWords.length).join(' ').trim();
+      }
+    } else if (hasN){
+      const candidate = numInfo ? (norm.slice(0,numInfo.index) + '{n}' + norm.slice(numInfo.index+numInfo.length)) : norm;
+      score = diceScore(candidate, pattern);
+    } else {
+      score = diceScore(norm, pattern);
+    }
+
+    if (!best || score > best.score){
+      best = { entry, score, numInfo, sValue };
+    }
+  });
+
+  return best;
+}
+
+/* Resolve {n}, {n|default}, {s} tokens inside a string using captured values */
+function resolveTemplate(val, numInfo, sValue){
+  if (typeof val !== 'string') return val;
+  let out = val;
+  out = out.replace(/\{n\|([^}]*)\}/g, (_, def) => (numInfo ? String(numInfo.value) : def));
+  out = out.replace(/\{n\}/g, () => (numInfo ? String(numInfo.value) : ''));
+  out = out.replace(/\{s\}/g, () => (sValue != null ? sValue : ''));
+  return out;
+}
+
+function buildResolvedAction(action, numInfo, sValue){
+  const resolved = {};
+  Object.keys(action).forEach(k => { resolved[k] = resolveTemplate(action[k], numInfo, sValue); });
+  return resolved;
+}
+
+/* ═══════════════════════ Command dispatch ═══════════════════════ */
+
+let _reqCounter = 0;
+function sendCommandToParent(action){
+  return new Promise(resolve => {
+    const id = 'agentd_' + Date.now() + '_' + (++_reqCounter);
+    const timer = setTimeout(() => {
+      window.removeEventListener('message', handler);
+      resolve({ success:false, timeout:true });
+    }, 5000);
+    function handler(ev){
+      if (ev.data && ev.data.type === 'agentd-result' && ev.data.id === id){
+        clearTimeout(timer);
+        window.removeEventListener('message', handler);
+        resolve(ev.data);
+      }
+    }
+    window.addEventListener('message', handler);
+    try{
+      window.parent.postMessage({ type:'agentd-command', id, action }, '*');
+    }catch(e){
+      clearTimeout(timer);
+      window.removeEventListener('message', handler);
+      resolve({ success:false, error:String(e) });
+    }
+  });
+}
+
+async function runCommand(entry, numInfo, sValue){
+  const cmd = entry.cmd;
+
+  if (cmd.action && cmd.action.type === 'HELP'){
+    renderHelp();
+    return;
+  }
+
+  const resolvedAction = buildResolvedAction(cmd.action, numInfo, sValue);
+  const typingEl = pushTyping();
+  const result = await sendCommandToParent(resolvedAction);
+  removeTyping(typingEl);
+
+  if (result.timeout){
+    pushAgent("I sent that to the editor but didn't hear back in time — it might still have worked. Try again if nothing changed.", true);
+    return;
+  }
+  if (result.success === false){
+    pushAgent("I couldn't do that: " + (result.error || 'the editor rejected the command') + '.', true);
+    return;
+  }
+
+  if (cmd.reply === '__dynamic__'){
+    pushAgent(result.reply || 'Done.');
+  } else {
+    pushAgent(resolveTemplate(cmd.reply, numInfo, sValue));
+  }
+}
+
+async function handleSend(){
+  const input = document.getElementById('agInput');
+  const text = input.value.trim();
+  if (!text || !CONV) return;
+  input.value = '';
+  pushUser(text);
+
+  // Handle a pending yes/no "did you mean" confirmation first
+  if (pendingSuggestion){
+    const yes = /^(y|yes|yeah|yep|sure|correct|do it|go ahead)\b/i.test(text);
+    const no  = /^(n|no|nope|nah|cancel)\b/i.test(text);
+    const suggestion = pendingSuggestion;
+    pendingSuggestion = null;
+    if (yes){
+      await runCommand(suggestion.entry, suggestion.numInfo, suggestion.sValue);
+      return;
+    }
+    if (no){
+      pushAgent("No problem — try rephrasing, or type \"help\" to see what I can do.");
+      return;
+    }
+    // Not a clear yes/no — fall through and treat as a fresh message
+  }
+
+  if (/^help$|what can you do|^commands$|^list commands$|^show commands$|^capabilities$/i.test(normalize(text))){
+    renderHelp();
+    return;
+  }
+
+  const match = matchInput(text);
+  if (!match || match.score < SUGGEST_THRESHOLD){
+    pushAgent("I'm not sure what you mean by that. Try rephrasing, or type \"help\" to see what I can do.", true);
+    return;
+  }
+
+  if (match.score >= EXECUTE_THRESHOLD){
+    await runCommand(match.entry, match.numInfo, match.sValue);
+    return;
+  }
+
+  // Below execute threshold but plausible — confirm before acting
+  pendingSuggestion = match;
+  const preview = previewReply(match);
+  pushAgent(`Did you mean: "${preview}"? (yes/no)`);
+}
+
+function previewReply(match){
+  const cmd = match.entry.cmd;
+  if (cmd.reply === '__dynamic__') return cmd.id.replace(/_/g,' ');
+  return resolveTemplate(cmd.reply, match.numInfo, match.sValue);
+}
+
+/* ═══════════════════════ UI rendering ═══════════════════════ */
+
+function scrollToBottom(){
+  const el = document.getElementById('agMsgs');
+  el.scrollTop = el.scrollHeight;
+}
+
+function pushUser(text){
+  const wrap = document.createElement('div');
+  wrap.className = 'ag-row user';
+  wrap.innerHTML = `<div class="ag-bubble"></div>`;
+  wrap.querySelector('.ag-bubble').textContent = text;
+  document.getElementById('agMsgs').appendChild(wrap);
+  scrollToBottom();
+  hideQuickChips();
+}
+
+function pushAgent(text, isError){
+  const wrap = document.createElement('div');
+  wrap.className = 'ag-row agent';
+  wrap.innerHTML = `<div class="ag-bubble${isError ? ' ag-err' : ''}"></div>`;
+  wrap.querySelector('.ag-bubble').textContent = text;
+  document.getElementById('agMsgs').appendChild(wrap);
+  scrollToBottom();
+}
+
+function pushTyping(){
+  const wrap = document.createElement('div');
+  wrap.className = 'ag-row agent';
+  wrap.innerHTML = `<div class="ag-bubble"><div class="ag-typing"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('agMsgs').appendChild(wrap);
+  scrollToBottom();
+  return wrap;
+}
+function removeTyping(el){ if (el && el.parentNode) el.parentNode.removeChild(el); }
+
+function renderQuickChips(){
+  const wrap = document.getElementById('agQuick');
+  const examples = [
+    'set left margin to 3',
+    'make it bold',
+    'zoom to 125',
+    'font size 20',
+    'word count',
+    'help'
+  ];
+  wrap.innerHTML = '';
+  examples.forEach(ex => {
+    const chip = document.createElement('button');
+    chip.className = 'ag-chip';
+    chip.type = 'button';
+    chip.textContent = ex;
+    chip.onclick = () => {
+      document.getElementById('agInput').value = ex;
+      handleSend();
+    };
+    wrap.appendChild(chip);
+  });
+}
+function hideQuickChips(){
+  const wrap = document.getElementById('agQuick');
+  if (wrap) wrap.style.display = 'none';
+}
+
+function renderHelp(){
+  if (!CONV){ pushAgent("Still loading — one moment."); return; }
+  const groups = {};
+  (CONV.commands || []).forEach(cmd => {
+    if (cmd.action && cmd.action.type === 'HELP') return;
+    const cat = cmd.category || 'Other';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(cmd.patterns[0]);
+  });
+
+  const wrap = document.createElement('div');
+  wrap.className = 'ag-row agent';
+  const bubble = document.createElement('div');
+  bubble.className = 'ag-bubble ag-help';
+  let html = `<h4>What I can do</h4>`;
+  Object.keys(groups).forEach(cat => {
+    html += `<div class="ag-help-group"><div style="font-weight:700;font-size:12px;margin-bottom:2px;">${escapeHtml(cat)}</div>`;
+    groups[cat].slice(0,6).forEach(ex => {
+      html += `<div class="ag-help-ex">${escapeHtml(ex.replace('{n}', '5').replace('{s}', '…'))}</div>`;
+    });
+    html += `</div>`;
+  });
+  bubble.innerHTML = html;
+  wrap.appendChild(bubble);
+  document.getElementById('agMsgs').appendChild(wrap);
+  scrollToBottom();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>

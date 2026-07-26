@@ -338,7 +338,23 @@
         .settings-logout-btn:active { background: var(--danger-bg); }
         #tab-settings { padding: 0; background: var(--bg-body); }
         #tab-settings h2 { padding: 20px 20px 5px 20px; }
-        .settings-section-title { margin: 24px 0 8px 20px; font-size: 13px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; }
+        .settings-section-title { margin: 24px 20px 8px 20px; font-size: 13px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .beta-pill { margin-left: auto; background: linear-gradient(135deg,#7c4dff,#448aff); color: #fff; font-size: 9.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; padding: 2px 8px 3px; border-radius: 20px; white-space: nowrap; }
+        .ai-page-content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .ai-info-box { margin: 16px 16px 0; background: var(--bg-card); border-radius: 12px; padding: 14px 16px; font-size: 13px; line-height: 1.5; color: var(--text-secondary); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .eds-add-row { margin: 16px 16px 0; display: flex; gap: 8px; }
+        .eds-add-input { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--separator); background: var(--bg-card); color: var(--text-primary); font-size: 14px; font-family: inherit; }
+        .eds-add-btn { flex-shrink: 0; padding: 0 16px; border: none; border-radius: 10px; background: var(--primary-color); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .eds-hint { margin: 6px 16px 0; font-size: 12px; color: var(--text-secondary); }
+        .eds-list { margin: 12px 16px 0; background: var(--bg-card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .eds-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; position: relative; }
+        .eds-item:not(:last-child)::after { content: ""; position: absolute; bottom: 0; right: 0; width: calc(100% - 16px); height: 1px; background: var(--separator); }
+        .eds-item-icon { color: var(--text-secondary); font-size: 20px; flex-shrink: 0; }
+        .eds-item-info { flex: 1; min-width: 0; }
+        .eds-item-url { font-size: 14px; color: var(--text-primary); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .eds-item-type { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .3px; margin-top: 2px; }
+        .eds-item-remove { flex-shrink: 0; color: var(--danger); cursor: pointer; display: flex; }
+        .eds-empty { padding: 24px 16px; text-align: center; color: var(--text-secondary); font-size: 13px; }
         .settings-group { background: var(--bg-card); border-radius: 12px; margin: 0 16px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: var(--bg-card); cursor: pointer; position: relative; }
         .setting-row:not(:last-child)::after { content: ""; position: absolute; bottom: 0; right: 0; width: calc(100% - 20px); height: 1px; background: var(--separator); }
@@ -786,7 +802,7 @@
         <div id="tab-settings" class="tab-view">
             <h2>Settings</h2>
 
-            <div class="settings-section-title" style="margin-top:10px;">Account</div>
+            <div class="settings-section-title" style="margin-top:10px;" data-sec="account">Account</div>
             <div class="settings-offline-account" id="settingsOfflineAccount">
                 <div class="soa-icon"><span class="material-symbols-rounded">wifi_off</span></div>
                 <div class="soa-body">
@@ -831,7 +847,7 @@
                 <div class="setting-row" id="support-us-settings-app" onclick="openSupportPage()" style="display:none;"><span class="setting-label">Support DocuWrite Pro</span><div class="setting-value-container"><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
             </div>
 
-            <div class="settings-section-title">Preferences</div>
+            <div class="settings-section-title" data-sec="preferences">Preferences</div>
             <div class="settings-group">
                 <div class="setting-row" onclick="openThemePicker()"><span class="setting-label">Theme</span><div class="setting-value-container"><span class="setting-value" id="display-theme">System</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
                 <div class="setting-row" onclick="openViewModePicker()"><span class="setting-label">Tool View</span><div class="setting-value-container"><span class="setting-value" id="display-view-mode">Grid View</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
@@ -839,20 +855,28 @@
                 <div class="setting-row" onclick="openAnimationsPicker()"><span class="setting-label">Animations</span><div class="setting-value-container"><span class="setting-value" id="display-animations">Enabled</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
             </div>
 
-            <div class="settings-section-title">Defaults</div>
+            <div class="settings-section-title" data-sec="defaults">Defaults</div>
             <div class="settings-group">
                 <div class="setting-row" onclick="openEditorPicker('doc')"><span class="setting-label">Document Editor</span><div class="setting-value-container"><span class="setting-value" id="display-doc-editor">Default</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
                 <div class="setting-row" onclick="openEditorPicker('img')"><span class="setting-label">Image Editor</span><div class="setting-value-container"><span class="setting-value" id="display-img-editor">Drawing Board</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
                 <div class="setting-row" onclick="openEditorPicker('code')"><span class="setting-label">Code Editor</span><div class="setting-value-container"><span class="setting-value" id="display-code-editor">HTML</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
             </div>
 
+            <!-- AI -->
+            <div class="settings-section-title" data-sec="ai">AI</div>
+            <div class="settings-group">
+                <div class="setting-row" onclick="openAIFeaturesPicker()"><span class="setting-label">AI Features</span><div class="setting-value-container"><span class="setting-value" id="display-ai-features">Disabled</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
+                <div class="setting-row" id="ai-datasources-row" style="display:none;" onclick="openDataSourcesPage()"><span class="setting-label">Data Sources</span><div class="setting-value-container"><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
+                <div class="setting-row" id="ai-usecases-row" style="display:none;" onclick="openAIUsecasesPage()"><span class="setting-label">AI Usecases</span><div class="setting-value-container"><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
+            </div>
+
             <!-- SECURITY -->
-            <div class="settings-section-title">Security</div>
+            <div class="settings-section-title" data-sec="security">Security</div>
             <div class="settings-group">
                 <div class="setting-row" onclick="openLockApp()"><span class="setting-label">Lock App</span><div class="setting-value-container"><span class="setting-value" id="display-lock-status">Off</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
             </div>
 
-            <div class="settings-section-title">Extra</div>
+            <div class="settings-section-title" data-sec="extra">Extra</div>
             <div class="settings-group">
                 <div class="setting-row" onclick="openDyNotePicker()"><span class="setting-label">DyNote Functionality</span><div class="setting-value-container"><span class="setting-value" id="display-dynote">Disabled</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
                 <div class="setting-row" id="quick-note-setting" style="display: none;" onclick="openQuickNotePicker()"><span class="setting-label">Quick Note</span><div class="setting-value-container"><span class="setting-value" id="display-quick-note">Disabled</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
@@ -897,6 +921,48 @@
         <div id="tpl-content">
             <div id="tpl-loader" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px;gap:12px;"><div class="loader"></div><p style="color:var(--text-secondary);font-size:14px;">Loading templates…</p></div>
             <div class="tpl-full-grid" id="tpl-full-grid" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- ── AI: Data Sources page ── -->
+    <div id="ai-datasources-page" class="slide-page">
+        <div class="iframe-header" style="width:100%; flex-shrink:0;">
+            <div class="iframe-title">Data Sources</div>
+            <div class="close-tool-btn" onclick="closeDataSourcesPage()">Back</div>
+        </div>
+        <div class="ai-page-content">
+            <div class="ai-info-box">Choose what DocuWrite Pro's on-device AI features are allowed to read from when generating suggestions. Everything runs locally in your browser — nothing is uploaded anywhere, except fetching the external pages you add below.</div>
+
+            <div class="settings-section-title" style="margin-top:24px;">Sugarcane</div>
+            <div class="settings-group">
+                <div class="setting-row" onclick="openSugarcaneDocsPicker()"><span class="setting-label">Use My Documents as Sources</span><div class="setting-value-container"><span class="setting-value" id="display-ai-ds-docs">None</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
+            </div>
+
+            <div class="settings-section-title">External Data Sources</div>
+            <div class="eds-add-row">
+                <input type="text" id="eds-url-input" class="eds-add-input" placeholder="https://example.com/page.html, .md or .txt" />
+                <button class="eds-add-btn" onclick="addExternalDataSource()"><span class="material-symbols-rounded" style="font-size:18px;">add</span>Add</button>
+            </div>
+            <div class="eds-hint">Add page URLs, or links to .md / .txt files, to use as extra sources.</div>
+            <div class="eds-list" id="eds-list"></div>
+            <div style="height:60px;"></div>
+        </div>
+    </div>
+
+    <!-- ── AI: Usecases page ── -->
+    <div id="ai-usecases-page" class="slide-page">
+        <div class="iframe-header" style="width:100%; flex-shrink:0;">
+            <div class="iframe-title">AI Usecases</div>
+            <div class="close-tool-btn" onclick="closeAIUsecasesPage()">Back</div>
+        </div>
+        <div class="ai-page-content">
+            <div class="ai-info-box">Turn on AI-assisted features for individual apps. An app only gets access to your sources if you enable it here.</div>
+
+            <div class="settings-section-title" style="margin-top:24px;">Sugarcane</div>
+            <div class="settings-group">
+                <div class="setting-row" onclick="openAIUsecaseSugarcanePicker()"><span class="setting-label">Sugarcane</span><div class="setting-value-container"><span class="setting-value" id="display-ai-usecase-sugarcane">Disabled</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
+            </div>
+            <div style="height:60px;"></div>
         </div>
     </div>
 
@@ -2602,6 +2668,113 @@
             document.getElementById('display-quick-note').textContent=localStorage.getItem('quick_note_enabled')==='true'?'Enabled':'Disabled';
             document.getElementById('display-scanner').textContent=localStorage.getItem('scanner_enabled')!=='false'?'Enabled':'Disabled';
             initTheme();checkTemplateVisibility();updateLockSettingsUI();checkDyNoteVisibility();checkScannerVisibility();checkRecentsVisibility();renderNavStickers();renderQuickActionStickers();
+            checkAIVisibility();
+        }
+
+        /* ═══════════════════════════════════════════════════════
+           AI SETTINGS — stored as cookies (path=/) so other pages
+           on the site (e.g. sceditor.html) can read them too.
+        ═══════════════════════════════════════════════════════ */
+        function aiGetCookie(n,fallback){const v=getCookie(n);return v===undefined||v===null||v===''?fallback:v;}
+        function aiSetCookie(n,v){setCookie(n,v,365);}
+
+        function checkAIVisibility(){
+            const enabled=aiGetCookie('ai_features_enabled','false')==='true';
+            document.getElementById('display-ai-features').textContent=enabled?'Enabled':'Disabled';
+            document.getElementById('ai-datasources-row').style.display=enabled?'flex':'none';
+            document.getElementById('ai-usecases-row').style.display=enabled?'flex':'none';
+            document.getElementById('display-ai-ds-docs').textContent=(()=>{const v=aiGetCookie('ai_ds_sugarcane_docs','none');return v==='pinned'?'Pinned (local)':v==='local'?'Local':'None';})();
+            document.getElementById('display-ai-usecase-sugarcane').textContent=aiGetCookie('ai_usecase_sugarcane','false')==='true'?'Enabled':'Disabled';
+        }
+
+        function openAIFeaturesPicker(){
+            const current=aiGetCookie('ai_features_enabled','false');
+            openPicker('AI Features',[{label:'Enabled',value:'true'},{label:'Disabled',value:'false'}],current,(val,label)=>{
+                aiSetCookie('ai_features_enabled',val);
+                document.getElementById('display-ai-features').textContent=label;
+                checkAIVisibility();
+            });
+        }
+
+        function openDataSourcesPage(){
+            const el=document.getElementById('ai-datasources-page');
+            if(el){renderExternalDataSources();el.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('slide-open')));}
+        }
+        function closeDataSourcesPage(){const el=document.getElementById('ai-datasources-page');if(el)el.classList.remove('slide-open');}
+
+        function openAIUsecasesPage(){
+            const el=document.getElementById('ai-usecases-page');
+            if(el){el.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('slide-open')));}
+        }
+        function closeAIUsecasesPage(){const el=document.getElementById('ai-usecases-page');if(el)el.classList.remove('slide-open');}
+
+        function openSugarcaneDocsPicker(){
+            const current=aiGetCookie('ai_ds_sugarcane_docs','none');
+            openPicker('Use My Documents as Sources',[{label:'None',value:'none'},{label:'Pinned (local)',value:'pinned'},{label:'Local',value:'local'}],current,(val,label)=>{
+                aiSetCookie('ai_ds_sugarcane_docs',val);
+                document.getElementById('display-ai-ds-docs').textContent=label;
+            });
+        }
+
+        function openAIUsecaseSugarcanePicker(){
+            const current=aiGetCookie('ai_usecase_sugarcane','false');
+            openPicker('Sugarcane',[{label:'Enabled',value:'true'},{label:'Disabled',value:'false'}],current,(val,label)=>{
+                aiSetCookie('ai_usecase_sugarcane',val);
+                document.getElementById('display-ai-usecase-sugarcane').textContent=label;
+            });
+        }
+
+        /* ── External Data Sources (custom page/.md/.txt URLs) ── */
+        function getExternalDataSources(){
+            try{
+                const raw=aiGetCookie('ai_ds_external','');
+                if(!raw)return[];
+                return JSON.parse(decodeURIComponent(raw))||[];
+            }catch(e){return[];}
+        }
+        function saveExternalDataSources(list){aiSetCookie('ai_ds_external',encodeURIComponent(JSON.stringify(list)));}
+        function classifyEdsUrl(url){
+            const clean=url.split('?')[0].split('#')[0].toLowerCase();
+            if(clean.endsWith('.md'))return'md';
+            if(clean.endsWith('.txt'))return'txt';
+            return'page';
+        }
+        function addExternalDataSource(){
+            const input=document.getElementById('eds-url-input');
+            let url=(input.value||'').trim();
+            if(!url)return;
+            if(!/^https?:\/\//i.test(url))url='https://'+url;
+            try{new URL(url);}catch(e){alert('Please enter a valid URL.');return;}
+            const list=getExternalDataSources();
+            if(list.some(s=>s.url===url)){input.value='';return;}
+            list.push({url,type:classifyEdsUrl(url),added:Date.now()});
+            saveExternalDataSources(list);
+            input.value='';
+            renderExternalDataSources();
+        }
+        function removeExternalDataSource(idx){
+            const list=getExternalDataSources();
+            list.splice(idx,1);
+            saveExternalDataSources(list);
+            renderExternalDataSources();
+        }
+        function renderExternalDataSources(){
+            const container=document.getElementById('eds-list');
+            if(!container)return;
+            const list=getExternalDataSources();
+            if(!list.length){container.innerHTML='<div class="eds-empty">No external sources added yet.</div>';return;}
+            const typeIcon={md:'description',txt:'article',page:'language'};
+            const typeLabel={md:'Markdown',txt:'Text file',page:'Web page'};
+            container.innerHTML=list.map((s,i)=>`
+                <div class="eds-item">
+                    <span class="material-symbols-rounded eds-item-icon">${typeIcon[s.type]||'language'}</span>
+                    <div class="eds-item-info">
+                        <div class="eds-item-url">${s.url.replace(/</g,'&lt;')}</div>
+                        <div class="eds-item-type">${typeLabel[s.type]||'Web page'}</div>
+                    </div>
+                    <span class="material-symbols-rounded eds-item-remove" onclick="removeExternalDataSource(${i})">close</span>
+                </div>
+            `).join('');
         }
 
         document.getElementById('btn-new-doc').onclick=()=>{const val=localStorage.getItem('def_doc')||'sugarcane';const scUrl=val==='sugarcane'?applyNoAniHash('https://mahi902.github.io/DocuWritePro/sceditor.html'):'https://mahi902.github.io/DocuWritePro/document-writer.html';openTool(scUrl,'New Document');}
@@ -2851,6 +3024,32 @@
 
         let _notifItems = []; // [{date, md}] — active notifications for today
 
+        // Returns true while today's date has not yet passed the given expiry date.
+        // Accepts "28/5/2026", "15.2.2026" (exact expiry) or "14.2" (expires that day, this year).
+        function _betaDateNotPassed(dateStr) {
+            const now = new Date();
+            const parts = dateStr.trim().replace(/\//g, '.').split('.');
+            let d, m, y;
+            if (parts.length === 3) { d = parseInt(parts[0], 10); m = parseInt(parts[1], 10); y = parseInt(parts[2], 10); }
+            else if (parts.length === 2) { d = parseInt(parts[0], 10); m = parseInt(parts[1], 10); y = now.getFullYear(); }
+            else return true; // unrecognised format → treat as always active
+            const expiry = new Date(y, m - 1, d, 23, 59, 59, 999);
+            return now.getTime() <= expiry.getTime();
+        }
+        function _clearBetaPills() {
+            document.querySelectorAll('.settings-section-title .beta-pill').forEach(p => p.remove());
+        }
+        function _applyBetaPill(name) {
+            const target = Array.from(document.querySelectorAll('.settings-section-title'))
+                .find(el => (el.getAttribute('data-sec') || '').toLowerCase() === name.trim().toLowerCase());
+            if (target && !target.querySelector('.beta-pill')) {
+                const pill = document.createElement('span');
+                pill.className = 'beta-pill';
+                pill.textContent = 'Beta';
+                target.appendChild(pill);
+            }
+        }
+
         async function loadCurrentTxt() {
             try {
                 const resp = await fetch('https://mahi902.github.io/DocuWritePro/current.txt', { cache: 'no-cache' });
@@ -2860,6 +3059,8 @@
                 let appDisabled = false;
                 let notifDisabled = false;  // any "false" line kills all
                 let notifCandidates = [];   // collect before applying
+                let betaDisabled = false;   // any "beta:false" line kills all beta pills
+                let betaCandidates = [];    // collect before applying: {dateStr, name}
 
                 for (const line of lines) {
                     const trimmed = line.trim();
@@ -2871,6 +3072,15 @@
 
                     if (id === 'app-disabled') {
                         if (rest === 'true') appDisabled = true;
+                    } else if (id === 'beta') {
+                        // rest = "false"  OR  "true:(Name)"  OR  "true:DATE:(Name)"
+                        if (rest === 'false' || rest.startsWith('false:')) {
+                            betaDisabled = true;
+                        } else if (rest.startsWith('true:')) {
+                            const afterTrue = rest.substring(5); // strip "true:"
+                            const m = afterTrue.match(/^(?:([\d./]+):)?\(([^)]+)\)\s*$/);
+                            if (m) betaCandidates.push({ dateStr: m[1] || null, name: m[2].trim() });
+                        }
                     } else if (id === 'app-notification') {
                         if (rest === 'false' || rest.startsWith('false:')) {
                             notifDisabled = true;
@@ -2898,6 +3108,13 @@
 
                 if (appDisabled) {
                     document.getElementById('app-disabled-overlay').classList.add('visible');
+                }
+
+                _clearBetaPills();
+                if (!betaDisabled && betaCandidates.length > 0) {
+                    betaCandidates.forEach(b => {
+                        if (!b.dateStr || _betaDateNotPassed(b.dateStr)) _applyBetaPill(b.name);
+                    });
                 }
 
                 if (!notifDisabled && notifCandidates.length > 0) {

@@ -72,7 +72,7 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 
 
 
-### Sugercane Editor
+### Sugarcane Editor
 
 <img width="2504" height="1247" alt="1000042461" src="https://github.com/user-attachments/assets/0b6cb555-5a51-4b5b-b35e-e5b8ea5434ed" />
 

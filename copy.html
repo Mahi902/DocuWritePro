@@ -1,1 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Copy — DocuWrite Pro</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#fff;--text:#111;--text2:#555;--text3:#999;
+  --border:#ddd;--hover:#f5f5f5;--btnbg:#111;--btnfg:#fff;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#000;--text:#f0f0f0;--text2:#aaa;--text3:#555;
+    --border:#2a2a2a;--hover:#111;--btnbg:#f0f0f0;--btnfg:#000;
+  }
+}
+html,body{
+  min-height:100%;background:var(--bg);color:var(--text);
+  font-family:'Segoe UI',system-ui,-apple-system,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.page{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  padding:32px 20px;
+}
+.card{width:100%;max-width:520px;text-align:center}
+.heading{font-size:22px;font-weight:700;letter-spacing:-.3px;margin-bottom:12px}
+.status{font-size:14px;color:var(--text2);line-height:1.6;min-height:24px}
+.textbox{
+  display:none;width:100%;margin:24px 0 14px;padding:14px;
+  border:1px solid var(--border);border-radius:10px;background:var(--bg);
+  color:var(--text);font:14px/1.55 inherit;text-align:left;
+  white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;
+}
+.btn{
+  display:none;width:100%;padding:12px 18px;border-radius:10px;
+  font:600 15px inherit;cursor:pointer;border:none;
+  background:var(--btnbg);color:var(--btnfg);
+}
+.btn:hover{opacity:.85}
+.error{color:var(--text2)}
+.brand{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  font-size:11px;color:var(--text3);letter-spacing:.3px;white-space:nowrap;
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <main class="card">
+    <div class="heading" id="heading">Copying…</div>
+    <div class="status" id="status">Please wait.</div>
+    <div class="textbox" id="textbox"></div>
+    <button class="btn" id="copyBtn">Copy</button>
+  </main>
+</div>
+<div class="brand">DocuWrite Pro</div>
 
+<script>
+(function(){
+  const MAX=1500;
+  const heading=document.getElementById('heading');
+  const status=document.getElementById('status');
+  const textbox=document.getElementById('textbox');
+  const copyBtn=document.getElementById('copyBtn');
+
+  function getText(){
+    const hash=location.hash||'';
+    const m=hash.match(/^#lcopy=(.*)$/);
+    if(!m) return null;
+    try{return decodeURIComponent(m[1]).slice(0,MAX)}catch(e){return null}
+  }
+
+  function showText(){
+    textbox.textContent=text;
+    textbox.style.display='block';
+    copyBtn.style.display='block';
+  }
+
+  async function copyText(){
+    try{
+      if(navigator.clipboard && window.isSecureContext){
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+      throw new Error('Clipboard API unavailable');
+    }catch(e){
+      // Some browsers expose clipboard only after permission/user gesture.
+      try{
+        const ta=document.createElement('textarea');
+        ta.value=text;
+        ta.setAttribute('readonly','');
+        ta.style.position='fixed';
+        ta.style.left='-9999px';
+        document.body.appendChild(ta);
+        ta.focus();ta.select();
+        const ok=document.execCommand('copy');
+        ta.remove();
+        if(ok) return true;
+      }catch(ignore){}
+      return false;
+    }
+  }
+
+  function closeAfterSuccess(){
+    heading.textContent='Copied!';
+    status.textContent='The text was copied to your clipboard.';
+    setTimeout(function(){window.close()},500);
+  }
+
+  const text=getText();
+
+  if(text===null){
+    heading.textContent='Nothing to copy';
+    status.textContent='This copy link is missing or invalid.';
+    status.className='status error';
+    return;
+  }
+
+  copyText().then(function(ok){
+    if(ok){
+      closeAfterSuccess();
+    }else{
+      heading.textContent='Copy text';
+      status.textContent='Your browser did not allow automatic copying. Select Copy below.';
+      showText();
+    }
+  });
+
+  copyBtn.addEventListener('click',async function(){
+    copyBtn.disabled=true;
+    const old=copyBtn.textContent;
+    const ok=await copyText();
+    copyBtn.disabled=false;
+    if(ok){
+      heading.textContent='Copied!';
+      status.textContent='The text was copied to your clipboard.';
+      textbox.style.display='none';
+      copyBtn.style.display='none';
+      setTimeout(function(){window.close()},500);
+    }else{
+      copyBtn.textContent=old;
+      status.textContent='Copy was not successful. Please select the text and copy it manually.';
+    }
+  });
+})();
+</script>
+</body>
+</html>

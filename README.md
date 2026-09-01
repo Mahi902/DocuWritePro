@@ -8,8 +8,6 @@
 ### 🔹mahi902.GitHub.io/DocuWritePro
 _Last updated: Sep 1, 2026_
 
-[![Web Dashboard](https://img.shields.io/badge/Web%20Dashboard-v5.0.4.7-lightblue?style=for-the-badge\&logo=googlechrome\&logoColor=white)](#) [![App](https://img.shields.io/badge/App-v5.5.5-blue?style=for-the-badge\&logo=android\&logoColor=white)](#)
-
 
 ## Introduction
 
@@ -272,8 +270,10 @@ Learn more about DocuWrite Pro's Privacy Policy, Terms of Use & Third Party Poli
   <tr>
     <td><img src="https://img.shields.io/github/languages/code-size/Mahi902/DocuWritePro?style=flat-square&label=codebase" alt="Codebase" height="40"></td>
     <td><img src="https://img.shields.io/github/last-commit/Mahi902/DocuWritePro?style=flat-square&label=active" alt="Active Dev" height="40"></td>
-    <td colspan="3"></td>
-  </tr>
+    <td><img src="https://img.shields.io/badge/Web%20Dashboard-v5.0.4.7-lightblue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Web Dashboard" height="40"></td>
+    <td><img src="https://img.shields.io/badge/App-v5.5.5-blue?style=for-the-badge&logo=android&logoColor=white" alt="App" height="40"></td>
+    <td></td>
+   </tr>
 </table>
 
 <a href="https://www.producthunt.com/products/docuwrite-pro?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-docuwrite-pro" target="_blank" rel="noopener noreferrer"><img alt="DocuWrite Pro - Premium Document Editing Suite  | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1147794&amp;theme=neutral&amp;t=1778858307691"></a>

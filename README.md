@@ -6,7 +6,9 @@
 
 
 ### 🔹mahi902.GitHub.io/DocuWritePro
-_Last updated: May 25, 2026_
+_Last updated: Sep 01, 2026_
+[![Web Dashboard](https://img.shields.io/badge/Web%20Dashboard-v5.0.4.7-lightblue?style=for-the-badge\&logo=googlechrome\&logoColor=white)](#) [![App](https://img.shields.io/badge/App-v5.5.5-blue?style=for-the-badge\&logo=android\&logoColor=white)](#)
+
 
 ## Introduction
 

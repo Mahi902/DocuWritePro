@@ -1,0 +1,139 @@
+/* ══════════════════════════════════════════════════════════════════
+   TOUCH CURSOR — add-on stylesheet
+   All new classes are "tc-" prefixed so this never collides with the
+   host app or with other Sugarcane add-ons. Everything reuses the
+   existing TOOLSTRUCTER tokens (blue #1976d2 accent, Inter font,
+   body.dark theme) wherever a matching host class already exists.
+═══════════════════════════════════════════════════════════════════ */
+
+/* ---- Virtual cursor ---- */
+#tcCursor{
+  position:fixed;top:0;left:0;pointer-events:none;z-index:99999;
+  width:32px;height:32px;transform:translate(-50%,-50%);
+  display:none;align-items:center;justify-content:center;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.35));
+  transition:filter .15s;
+}
+#tcCursor.tc-active{display:flex;}
+#tcCursor.tc-held{filter:drop-shadow(0 0 7px #ff5252) drop-shadow(0 2px 4px rgba(0,0,0,.35));}
+#tcCursor.tc-clicking{filter:drop-shadow(0 0 7px #1976d2) drop-shadow(0 2px 4px rgba(0,0,0,.35));}
+#tcCursorIcon{display:flex;align-items:center;justify-content:center;width:100%;height:100%;line-height:1;}
+#tcCursorIcon .material-symbols-outlined{color:#1976d2;}
+#tcCursorIcon img{width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none;}
+body.dark #tcCursorIcon .material-symbols-outlined{color:#64b5f6;}
+
+/* ---- Cursor pad ---- */
+#tcPad{
+  position:fixed;z-index:99997;border-radius:50%;
+  background:rgba(25,118,210,.16);border:2px solid rgba(25,118,210,.55);
+  touch-action:none;display:none;box-shadow:0 4px 18px rgba(0,0,0,.18);
+}
+#tcPad.tc-visible{display:block;}
+#tcPad.tc-square{border-radius:16px;}
+#tcPad.tc-move-mode{border-style:dashed;background:rgba(245,124,0,.16);border-color:rgba(245,124,0,.75);}
+#tcPad.tc-holding{border-color:#ff5252;background:rgba(255,82,82,.18);}
+#tcPad::after{
+  content:'';position:absolute;inset:0;margin:auto;width:8px;height:8px;
+  border-radius:50%;background:rgba(25,118,210,.55);pointer-events:none;
+}
+#tcPad.tc-move-mode::after{background:rgba(245,124,0,.6);}
+body.dark #tcPad{background:rgba(100,181,246,.14);border-color:rgba(100,181,246,.55);}
+
+#tcModeBtn{
+  position:absolute;top:-11px;right:-11px;width:26px;height:26px;border-radius:50%;
+  background:#1976d2;color:#fff;border:2px solid #fff;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.25);
+  touch-action:manipulation;
+}
+#tcModeBtn .material-symbols-outlined{font-size:14px;}
+body.dark #tcModeBtn{border-color:#1a1a1a;}
+
+/* ---- Left/right click buttons ---- */
+#tcClickBtns{position:fixed;z-index:99997;display:none;gap:6px;}
+#tcClickBtns.tc-visible{display:flex;}
+.tc-click-btn{
+  width:46px;height:34px;border-radius:9px;background:#1976d2;color:#fff;
+  display:flex;align-items:center;justify-content:center;gap:3px;
+  box-shadow:0 3px 10px rgba(0,0,0,.22);cursor:pointer;touch-action:manipulation;
+  user-select:none;font-size:11px;font-weight:700;transition:transform .1s,background .15s;
+}
+.tc-click-btn .material-symbols-outlined{font-size:15px;}
+.tc-click-btn:active{transform:scale(.9);background:#1565c0;}
+.tc-click-btn.tc-right{background:#546e7a;}
+.tc-click-btn.tc-right:active{background:#37474f;}
+
+/* ---- Scrollable-area affordance arrows ---- */
+.tc-arrow{
+  position:fixed;z-index:99996;color:#fff;background:rgba(0,0,0,.6);
+  width:22px;height:22px;border-radius:50%;display:none;align-items:center;
+  justify-content:center;pointer-events:none;
+}
+.tc-arrow.tc-show{display:flex;}
+.tc-arrow .material-symbols-outlined{font-size:15px;}
+
+/* ---- Quick shortcut popover (3-second pad hold) ---- */
+.tc-quick-popover{
+  position:fixed;z-index:99999;background:#fff;border-radius:12px;
+  box-shadow:0 8px 30px rgba(0,0,0,.32);padding:10px;display:none;
+  flex-direction:column;gap:6px;min-width:180px;
+}
+.tc-quick-popover.tc-show{display:flex;}
+.tc-quick-popover .tc-qp-title{
+  font-size:10.5px;font-weight:700;color:#888;text-transform:uppercase;
+  letter-spacing:.4px;margin-bottom:2px;
+}
+.tc-quick-popover button{
+  padding:8px 10px;border-radius:8px;border:1px solid #e0e0e0;background:#fafafa;
+  font-size:12px;font-weight:600;cursor:pointer;text-align:left;display:flex;
+  align-items:center;gap:6px;font-family:inherit;color:#444;
+}
+.tc-quick-popover button .material-symbols-outlined{font-size:15px;}
+.tc-quick-popover button.active{border-color:#1976d2;background:#e3f2fd;color:#1976d2;}
+body.dark .tc-quick-popover{background:#1e1e1e;}
+body.dark .tc-quick-popover button{background:#252525;border-color:#333;color:#ddd;}
+body.dark .tc-quick-popover button.active{background:#1a2a4a;border-color:#1976d2;color:#90caf9;}
+
+/* ---- Modal: cursor style gallery ---- */
+.tc-cursor-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 4px;}
+.tc-cursor-opt{
+  border:2px solid #e0e0e0;border-radius:10px;padding:10px 4px;display:flex;
+  align-items:center;justify-content:center;cursor:pointer;background:#fafafa;
+  transition:all .15s;
+}
+.tc-cursor-opt .material-symbols-outlined{font-size:20px;color:#666;}
+.tc-cursor-opt:hover{border-color:#90caf9;}
+.tc-cursor-opt.active{border-color:#1976d2;background:#e3f2fd;}
+.tc-cursor-opt.active .material-symbols-outlined{color:#1976d2;}
+body.dark .tc-cursor-opt{background:#1c1c1c;border-color:#333;}
+body.dark .tc-cursor-opt .material-symbols-outlined{color:#aaa;}
+body.dark .tc-cursor-opt.active{background:#1a2a4a;border-color:#1976d2;}
+
+.tc-preview-row{display:flex;align-items:center;gap:10px;margin:8px 0;}
+.tc-preview-box{
+  width:44px;height:44px;border-radius:10px;background:#f2f6fb;border:1px solid #e0e0e0;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;
+}
+.tc-preview-box img{width:100%;height:100%;object-fit:contain;}
+body.dark .tc-preview-box{background:#1c1c1c;border-color:#333;}
+
+.tc-upload-btn{
+  padding:7px 12px;border:1px solid #1976d2;color:#1976d2;background:#e3f2fd;
+  border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;display:inline-flex;
+  align-items:center;gap:5px;
+}
+.tc-upload-btn .material-symbols-outlined{font-size:14px;}
+body.dark .tc-upload-btn{background:#1a2a4a;}
+
+/* ---- Modal: gesture assignment rows ---- */
+.tc-gesture-row{margin-bottom:12px;}
+.tc-gesture-title{
+  font-size:11.5px;font-weight:700;color:#555;margin-bottom:5px;
+  display:flex;align-items:center;gap:5px;
+}
+.tc-gesture-title .material-symbols-outlined{font-size:14px;color:#1976d2;}
+body.dark .tc-gesture-title{color:#ccc;}
+.tc-gesture-chips .scale-chip{cursor:pointer;}
+
+@media (max-width:640px){
+  .tc-cursor-grid{grid-template-columns:repeat(3,1fr);}
+}

@@ -1,0 +1,184 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     TOUCH CURSOR — add-on markup
+     Loaded once by the Sugarcane Add-on runtime. The sidebar section
+     lives inside a <template> so touch-cursor.js can clone it into
+     #sidebar in the right spot (above Collapse, below Collaborate)
+     without depending on load order against any other add-on.
+═══════════════════════════════════════════════════════════════════ -->
+
+<template id="tcSidebarTpl">
+<div class="sb-section" id="tcSbSection">
+  <div class="aw-header" id="tcHeader">
+    <span class="aw-header-label aw-label-blue">Touch Cursor</span>
+    <div class="aw-header-right">
+      <span class="material-symbols-outlined aw-chevron" id="tcChevron">expand_more</span>
+    </div>
+  </div>
+  <div class="aw-dropdown" id="tcDropdown">
+    <div class="aw-inner">
+      <div class="aw-row">
+        <div>
+          <div class="aw-row-label">Touch Cursor Toggle</div>
+          <div class="aw-row-sub">Control the page with a virtual cursor</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="tcEnableToggle"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div style="padding:0 10px 8px">
+        <button class="aw-correct-btn" id="tcModsBtn" style="background:#546e7a">
+          <span class="material-symbols-outlined" style="font-size:13px">tune</span>Modifications
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</template>
+
+<!-- Modifications modal -->
+<div class="modal" id="touchCursorMdl">
+  <div class="mbox" style="max-width:560px">
+    <div class="mhdr">
+      <h2 class="mtitle"><span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;margin-right:6px;color:#1976d2">touch_app</span>Touch Cursor</h2>
+      <button class="mclose" onclick="closeMdl('touchCursorMdl')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+
+    <!-- Appearance -->
+    <div class="sm-section">
+      <div class="sm-label">Cursor Appearance</div>
+      <div class="vw-mode-row" id="tcTypeRow">
+        <button class="vw-mode-btn active" data-type="preset"><span class="material-symbols-outlined">near_me</span>Preset</button>
+        <button class="vw-mode-btn" data-type="text"><span class="material-symbols-outlined">emoji_emotions</span>Text</button>
+        <button class="vw-mode-btn" data-type="image"><span class="material-symbols-outlined">image</span>Image</button>
+      </div>
+
+      <div id="tcPresetPanel">
+        <div class="tc-cursor-grid" id="tcPresetGrid"></div>
+      </div>
+
+      <div id="tcTextPanel" style="display:none;padding:0 2px;">
+        <input type="text" id="tcTextInput" class="finput" maxlength="4" placeholder="e.g. 👆 or ➤" style="text-align:center;font-size:16px"/>
+        <div class="sc-hint">An emoji or a couple of characters works best.</div>
+      </div>
+
+      <div id="tcImagePanel" style="display:none;padding:0 2px;">
+        <div class="tc-preview-row">
+          <div class="tc-preview-box" id="tcImgPreviewBox"><span class="material-symbols-outlined" style="color:#bbb">image</span></div>
+          <label class="tc-upload-btn">
+            <span class="material-symbols-outlined">upload</span>Upload Image
+            <input type="file" accept="image/*" id="tcImgUpload" style="display:none"/>
+          </label>
+        </div>
+        <input type="text" id="tcImgUrlInput" class="finput" placeholder="…or paste an image URL"/>
+      </div>
+
+      <div class="sm-row" style="margin-top:12px">
+        <span style="font-size:11.5px;color:#888;width:78px;flex-shrink:0">Size</span>
+        <input type="range" class="sm-slider" id="tcSizeSlider" min="16" max="72" value="32"/>
+        <span class="sm-val" id="tcSizeVal">32px</span>
+      </div>
+    </div>
+
+    <div style="height:1px;background:#e8f0f8;margin:4px 0 12px;"></div>
+
+    <!-- Movement -->
+    <div class="sm-section">
+      <div class="sm-label">Movement</div>
+      <div class="sm-row">
+        <span style="font-size:11.5px;color:#888;width:78px;flex-shrink:0">Sensitivity</span>
+        <input type="range" class="sm-slider" id="tcSensSlider" min="0.5" max="3" step="0.1" value="1.5"/>
+        <span class="sm-val" id="tcSensVal">1.5x</span>
+      </div>
+      <div class="sm-row">
+        <span style="font-size:11.5px;color:#888;width:78px;flex-shrink:0">Pad Size</span>
+        <input type="range" class="sm-slider" id="tcPadSizeSlider" min="70" max="200" value="110"/>
+        <span class="sm-val" id="tcPadSizeVal">110px</span>
+      </div>
+      <div class="sm-row">
+        <span style="font-size:11.5px;color:#888;width:78px;flex-shrink:0">Pad Opacity</span>
+        <input type="range" class="sm-slider" id="tcPadOpSlider" min="20" max="100" value="85"/>
+        <span class="sm-val" id="tcPadOpVal">85%</span>
+      </div>
+
+      <div class="vw-mode-row" id="tcShapeRow" style="margin-top:4px">
+        <button class="vw-mode-btn active" data-shape="round"><span class="material-symbols-outlined">circle</span>Round Pad</button>
+        <button class="vw-mode-btn" data-shape="square"><span class="material-symbols-outlined">crop_square</span>Square Pad</button>
+      </div>
+
+      <div class="vw-mode-row" id="tcModeRow">
+        <button class="vw-mode-btn active" data-mode="input"><span class="material-symbols-outlined">touch_app</span>Input Mode</button>
+        <button class="vw-mode-btn" data-mode="move"><span class="material-symbols-outlined">open_with</span>Move Mode</button>
+      </div>
+      <div class="sc-hint" style="margin-top:0">Input mode: the pad stays put — drag inside it to move the cursor. Move mode: drag the pad itself to reposition it anywhere on screen.</div>
+
+      <div class="aw-row" style="margin-top:8px">
+        <div>
+          <div class="aw-row-label">Click Buttons</div>
+          <div class="aw-row-sub">Show left/right click buttons next to the pad</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="tcShowBtnsToggle" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <button class="cmarg-add-btn" id="tcRecenterBtn" style="margin-top:10px">
+        <span class="material-symbols-outlined" style="font-size:14px">center_focus_strong</span>Recenter Cursor &amp; Pad
+      </button>
+    </div>
+
+    <div style="height:1px;background:#e8f0f8;margin:4px 0 12px;"></div>
+
+    <!-- Gestures -->
+    <div class="sm-section">
+      <div class="sm-label">Gestures &amp; Shortcuts</div>
+      <div class="sc-hint" style="margin-top:0;margin-bottom:10px">Double-tap the pad to fire its shortcut (default Left Click). Hold the pad for 3 seconds to quickly change what double-tap does. Every trigger below can be set to None.</div>
+
+      <div class="tc-gesture-row" data-gesture="singleTap">
+        <div class="tc-gesture-title"><span class="material-symbols-outlined">touch_app</span>Single Tap</div>
+        <div class="scale-chip-row tc-gesture-chips"></div>
+      </div>
+      <div class="tc-gesture-row" data-gesture="doubleTap">
+        <div class="tc-gesture-title"><span class="material-symbols-outlined">ads_click</span>Double Tap</div>
+        <div class="scale-chip-row tc-gesture-chips"></div>
+      </div>
+      <div class="tc-gesture-row" data-gesture="tripleTap">
+        <div class="tc-gesture-title"><span class="material-symbols-outlined">looks_3</span>Triple Tap</div>
+        <div class="scale-chip-row tc-gesture-chips"></div>
+      </div>
+      <div class="tc-gesture-row" data-gesture="hold2s">
+        <div class="tc-gesture-title"><span class="material-symbols-outlined">timer</span>Hold 2 Seconds</div>
+        <div class="scale-chip-row tc-gesture-chips"></div>
+      </div>
+    </div>
+
+    <div class="mfooter">
+      <button class="mbtn sec" id="tcResetBtn">Reset to Defaults</button>
+      <button class="mbtn primary" onclick="closeMdl('touchCursorMdl')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- On-screen overlay -->
+<div id="tcCursor"><div id="tcCursorIcon"></div></div>
+
+<div id="tcPad">
+  <div id="tcModeBtn" title="Toggle Input / Move mode"><span class="material-symbols-outlined">touch_app</span></div>
+</div>
+
+<div id="tcClickBtns">
+  <div class="tc-click-btn" id="tcLeftBtn"><span class="material-symbols-outlined">mouse</span>L</div>
+  <div class="tc-click-btn tc-right" id="tcRightBtn"><span class="material-symbols-outlined">menu_open</span>R</div>
+</div>
+
+<div class="tc-arrow" id="tcArrowLeft"><span class="material-symbols-outlined">chevron_left</span></div>
+<div class="tc-arrow" id="tcArrowRight"><span class="material-symbols-outlined">chevron_right</span></div>
+<div class="tc-arrow" id="tcArrowUp"><span class="material-symbols-outlined">keyboard_arrow_up</span></div>
+<div class="tc-arrow" id="tcArrowDown"><span class="material-symbols-outlined">keyboard_arrow_down</span></div>
+
+<div class="tc-quick-popover" id="tcQuickPopover">
+  <div class="tc-qp-title">Double-Tap Shortcut</div>
+  <button data-qp="leftClick"><span class="material-symbols-outlined">mouse</span>Left Click</button>
+  <button data-qp="rightClick"><span class="material-symbols-outlined">menu_open</span>Right Click</button>
+</div>

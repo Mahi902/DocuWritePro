@@ -1,24 +1,39 @@
 /* ══════════════════════════════════════════════════════════════════
-   TOUCH CURSOR — add-on engine
+   TOUCH CURSOR — add-on engine (v1.0.3)
    Adds a desktop-style virtual cursor, driven by an on-screen trackpad,
    to touch devices. Runs in the same document as the host editor (the
    Sugarcane Add-on runtime injects this after the DOM is ready), so it
    talks to the host's own openMdl/closeMdl/showToast helpers directly.
+
+   A note on how the click/drag/menu simulation works: browsers only
+   run their OWN default behaviours (native text-selection dragging,
+   the OS right-click menu, link navigation via raw pointer capture)
+   in response to a REAL, trusted input event — never one dispatched
+   from script. Author-installed JS listeners (onclick, mouseenter,
+   a custom right-click menu, a checkbox's change handler) fire fine
+   for synthetic events either way. So: clicks, hovers, and any
+   custom context menu the editor defines all work through ordinary
+   dispatchEvent(); text selection is done for real, directly through
+   the Selection API, which is unaffected by trust and also fires a
+   genuine 'selectionchange' event the host's own toolbar can react to.
 ═══════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
 
   var STORAGE_KEY = 'tc_addon_state_v1';
 
+  var WIN_CURSOR_PATH = 'M2 1 L2 17.5 L6 13.8 L9 20.5 L12 19.1 L9 12.6 L15.5 12.2 Z';
+
   var PRESETS = [
-    {id:'arrow',     icon:'near_me',              label:'Arrow'},
-    {id:'hand',      icon:'front_hand',           label:'Hand'},
-    {id:'point',     icon:'touch_app',            label:'Point'},
-    {id:'precision', icon:'adjust',               label:'Precision'},
-    {id:'dot',       icon:'radio_button_checked', label:'Dot'},
-    {id:'ibeam',     icon:'text_fields',          label:'Text'},
-    {id:'grab',      icon:'pan_tool',             label:'Grab'},
-    {id:'target',    icon:'my_location',          label:'Target'}
+    {id:'winCursor', label:'Cursor',    isSvg:true, hotspot:{x:0.10,y:0.05}},
+    {id:'arrow',     label:'Arrow',     icon:'near_me'},
+    {id:'hand',      label:'Hand',      icon:'front_hand'},
+    {id:'point',     label:'Point',     icon:'touch_app'},
+    {id:'precision', label:'Precision', icon:'adjust'},
+    {id:'dot',       label:'Dot',       icon:'radio_button_checked'},
+    {id:'ibeam',     label:'Text',      icon:'text_fields'},
+    {id:'grab',      label:'Grab',      icon:'pan_tool'},
+    {id:'target',    label:'Target',    icon:'my_location'}
   ];
 
   var ACTIONS = [
@@ -43,6 +58,7 @@
     padMode:'input',          // input | move
     padPos:null,              // {x,y} top-left px, computed on first activation
     showClickButtons:true,
+    scrollAssist:true,        // scroll arrows near the cursor + scroll buttons under the pad
     gestures:{ singleTap:'none', doubleTap:'leftClick', tripleTap:'rightClick', hold2s:'hold' }
   };
 
@@ -54,6 +70,11 @@
     padPos:state.padPos ? {x:state.padPos.x,y:state.padPos.y} : null,
     isHolding:false,
     lastHoverEl:null,
+    leftBtnActive:false,
+    leftBtnMoved:false,
+    selectionStart:null,
+    scrollH:null,
+    scrollV:null,
     pointer:{ active:false, startX:0, startY:0, lastX:0, lastY:0, startTime:0, moved:false,
               tapCount:0, tapTimer:null, hold2sTimer:null, hold3sTimer:null, popoverShown:false }
   };
@@ -83,9 +104,9 @@
     if(!sidebar || !tpl || document.getElementById('tcSbSection')) return;
     var node = tpl.content.firstElementChild.cloneNode(true);
     var collapseBtn = sidebar.querySelector('.collapse-btn');
-    // Placed right before Collapse — i.e. the very bottom of whatever
-    // sections already exist (Collaborate included), and other add-ons
-    // that follow the same pattern simply stack above this one.
+    // Placed right before Collapse — the very bottom of whatever sections
+    // already exist (Collaborate included). Other add-ons that follow the
+    // same "insert before Collapse" pattern simply stack above this one.
     if(collapseBtn) sidebar.insertBefore(node, collapseBtn);
     else sidebar.appendChild(node);
   }
@@ -97,6 +118,13 @@
   }
 
   /* ══════════════════ Cursor / pad visuals ══════════════════ */
+  function cursorTransform(){
+    if(state.cursorType === 'preset'){
+      var p = PRESETS.filter(function(pp){return pp.id===state.presetId;})[0];
+      if(p && p.hotspot) return 'translate(-' + (p.hotspot.x*100) + '%,-' + (p.hotspot.y*100) + '%)';
+    }
+    return 'translate(-50%,-50%)';
+  }
   function applyCursorStyle(){
     var icon = els.cursorIcon;
     var size = state.cursorSize;
@@ -105,9 +133,15 @@
     } else if(state.cursorType === 'image' && state.customImageUrl){
       icon.innerHTML = '<img src="' + state.customImageUrl.replace(/"/g,'&quot;') + '" alt=""/>';
     } else {
-      var p = PRESETS.filter(function(p){return p.id===state.presetId;})[0] || PRESETS[0];
-      icon.innerHTML = '<span class="material-symbols-outlined" style="font-size:' + size + 'px">' + p.icon + '</span>';
+      var p = PRESETS.filter(function(pp){return pp.id===state.presetId;})[0] || PRESETS[1];
+      if(p.isSvg){
+        icon.innerHTML = '<svg viewBox="0 0 20 22" preserveAspectRatio="xMinYMin meet" style="width:100%;height:100%;display:block;overflow:visible">' +
+          '<path d="' + WIN_CURSOR_PATH + '" fill="#ffffff" stroke="#000000" stroke-width="1.3" stroke-linejoin="round"/></svg>';
+      } else {
+        icon.innerHTML = '<span class="material-symbols-outlined" style="font-size:' + size + 'px">' + p.icon + '</span>';
+      }
     }
+    els.cursor.style.transform = cursorTransform();
   }
   function applyCursorSize(){
     els.cursor.style.width = state.cursorSize + 'px';
@@ -122,7 +156,7 @@
     els.pad.classList.toggle('tc-move-mode', state.padMode === 'move');
     els.modeBtn.querySelector('.material-symbols-outlined').textContent =
       state.padMode === 'move' ? 'open_with' : 'touch_app';
-    positionClickButtons();
+    positionAuxButtons();
   }
   function defaultPadPos(){
     return { x: window.innerWidth - state.padSize - 22, y: window.innerHeight - state.padSize - 110 };
@@ -133,14 +167,20 @@
     rt.padPos.y = clamp(rt.padPos.y, 0, Math.max(0, window.innerHeight - state.padSize));
     els.pad.style.left = rt.padPos.x + 'px';
     els.pad.style.top = rt.padPos.y + 'px';
-    positionClickButtons();
+    positionAuxButtons();
   }
-  function positionClickButtons(){
-    if(!state.showClickButtons || !rt.padPos) return;
-    var x = clamp(rt.padPos.x + state.padSize/2 - 52, 4, window.innerWidth - 104);
-    var y = clamp(rt.padPos.y + state.padSize + 8, 4, window.innerHeight - 40);
-    els.clickBtns.style.left = x + 'px';
-    els.clickBtns.style.top = y + 'px';
+  // Stacks the left/right click buttons and the scroll-assist buttons
+  // under the pad, one row after another, so they never overlap.
+  function positionAuxButtons(){
+    if(!rt.padPos) return;
+    var y = rt.padPos.y + state.padSize + 8;
+    if(state.showClickButtons){
+      els.clickBtns.style.left = clamp(rt.padPos.x + state.padSize/2 - 52, 4, window.innerWidth - 104) + 'px';
+      els.clickBtns.style.top = clamp(y, 4, window.innerHeight - 40) + 'px';
+      y += 42;
+    }
+    els.scrollBtns.style.left = clamp(rt.padPos.x + state.padSize/2 - 72, 4, window.innerWidth - 148) + 'px';
+    els.scrollBtns.style.top = clamp(y, 4, window.innerHeight - 40) + 'px';
   }
   function moveCursorAbs(x,y){
     rt.cursorPos.x = clamp(x, 0, window.innerWidth);
@@ -155,7 +195,7 @@
     rt.padPos = defaultPadPos();
     applyPadPosition();
     hideQuickPopover();
-    updateScrollArrows();
+    updateScrollAssist();
   }
 
   /* ══════════════════ Enable / disable ══════════════════ */
@@ -181,7 +221,9 @@
     els.cursor.classList.remove('tc-active');
     els.clickBtns.classList.remove('tc-visible');
     hideQuickPopover();
-    hideArrows();
+    hideScrollAssist();
+    if(rt.lastHoverEl){ rt.lastHoverEl.classList.remove('tc-hover-target'); rt.lastHoverEl = null; }
+    rt.leftBtnActive = false; rt.selectionStart = null;
     window.removeEventListener('resize', onResize);
   }
   function onResize(){
@@ -196,21 +238,32 @@
     catch(e){ var single = document.elementFromPoint(rt.cursorPos.x, rt.cursorPos.y); list = single ? [single] : []; }
     for(var i=0;i<list.length;i++){
       var el = list[i];
-      if(!el.closest('#tcPad,#tcCursor,#tcClickBtns,.tc-arrow,#tcQuickPopover')) return el;
+      if(!el.closest('#tcPad,#tcCursor,#tcClickBtns,#tcScrollBtns,.tc-arrow,#tcQuickPopover')) return el;
     }
     return null;
   }
 
   /* ══════════════════ Synthetic input dispatch ══════════════════ */
-  function dispatchAt(el, type, x, y, button){
+  // buttonsMask is the live "which buttons are currently down" bitmask.
+  // Left undefined it's inferred sensibly, but callers in an active
+  // drag pass it explicitly so listeners checking event.buttons see
+  // the truth instead of a stale guess.
+  function dispatchAt(el, type, x, y, button, buttonsMask){
     if(!el) return;
-    var opts = { bubbles:true, cancelable:true, view:window, clientX:x, clientY:y,
-                 button: button||0, buttons: button===2?2:1 };
-    var Evt = (type.indexOf('pointer')===0 && window.PointerEvent) ? PointerEvent : MouseEvent;
+    var btn = button || 0;
+    var mask;
+    if(buttonsMask !== undefined) mask = buttonsMask;
+    else if(type === 'mousedown' || type === 'pointerdown') mask = (btn === 2 ? 2 : 1);
+    else mask = 0;
+    var opts = { bubbles:true, cancelable:true, view:window, clientX:x, clientY:y, button:btn, buttons:mask };
+    var Evt = (type.indexOf('pointer') === 0 && window.PointerEvent) ? PointerEvent : MouseEvent;
     try{ el.dispatchEvent(new Evt(type, opts)); }
     catch(e){ try{ el.dispatchEvent(new MouseEvent(type, opts)); }catch(e2){} }
   }
 
+  function isTextTarget(el){
+    return !!(el && (el.closest('[contenteditable="true"]') || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'));
+  }
   function placeCaretIfEditable(el, x, y){
     if(!el) return;
     if(el.tagName === 'INPUT' || el.tagName === 'TEXTAREA'){ el.focus(); return; }
@@ -227,6 +280,53 @@
     if(range){ var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
   }
 
+  /* ---- Real text selection, driven directly through the Selection API ----
+     (dispatched mouse events can't trigger the browser's own selection
+     drag since that default action only runs for trusted input) */
+  function getCaretPos(x,y){
+    if(document.caretRangeFromPoint){
+      var r = document.caretRangeFromPoint(x,y);
+      if(r) return {node:r.startContainer, offset:r.startOffset};
+    } else if(document.caretPositionFromPoint){
+      var p = document.caretPositionFromPoint(x,y);
+      if(p) return {node:p.offsetNode, offset:p.offset};
+    }
+    return null;
+  }
+  function beginSelectionDrag(x,y){
+    var pos = getCaretPos(x,y);
+    if(!pos){ rt.selectionStart = null; return; }
+    var container = pos.node.nodeType === 3 ? pos.node.parentElement : pos.node;
+    var editable = container && container.closest && container.closest('[contenteditable="true"]');
+    if(editable) editable.focus();
+    rt.selectionStart = pos;
+    var sel = window.getSelection();
+    var range = document.createRange();
+    try{
+      range.setStart(pos.node, pos.offset);
+      range.collapse(true);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }catch(e){ rt.selectionStart = null; }
+  }
+  function extendSelectionDrag(x,y){
+    if(!rt.selectionStart) return;
+    var pos = getCaretPos(x,y);
+    if(!pos) return;
+    var sel = window.getSelection();
+    try{
+      if(typeof sel.extend === 'function'){
+        sel.extend(pos.node, pos.offset);
+      } else {
+        var range = document.createRange();
+        range.setStart(rt.selectionStart.node, rt.selectionStart.offset);
+        range.setEnd(pos.node, pos.offset);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }catch(e){}
+  }
+
   function performClick(kind){
     var x = rt.cursorPos.x, y = rt.cursorPos.y;
     var el = elementAtCursor();
@@ -237,6 +337,9 @@
       dispatchAt(el,'pointerup',x,y,0);   dispatchAt(el,'mouseup',x,y,0);
       dispatchAt(el,'click',x,y,0);
     } else {
+      // The OS right-click menu can only ever be opened by a trusted
+      // event; this fires the editor's own custom context menu, if
+      // it defines one for whatever is under the cursor.
       dispatchAt(el,'pointerdown',x,y,2); dispatchAt(el,'mousedown',x,y,2);
       dispatchAt(el,'contextmenu',x,y,2);
       dispatchAt(el,'pointerup',x,y,2);   dispatchAt(el,'mouseup',x,y,2);
@@ -252,30 +355,43 @@
     var x = rt.cursorPos.x, y = rt.cursorPos.y;
     var el = elementAtCursor();
     if(!el) return;
-    if(rt.isHolding){ dispatchAt(el,'pointerdown',x,y,0); dispatchAt(el,'mousedown',x,y,0); }
-    else { dispatchAt(el,'pointerup',x,y,0); dispatchAt(el,'mouseup',x,y,0); dispatchAt(el,'click',x,y,0); }
+    if(rt.isHolding){ dispatchAt(el,'pointerdown',x,y,0,1); dispatchAt(el,'mousedown',x,y,0,1); }
+    else { dispatchAt(el,'pointerup',x,y,0,0); dispatchAt(el,'mouseup',x,y,0,0); dispatchAt(el,'click',x,y,0,0); }
   }
 
+  /* ══════════════════ Hover ══════════════════
+     JS-authored mouseenter/mouseover/mousemove listeners (custom
+     dropdowns, tooltips, drag-to-resize handles) fire fine on
+     dispatched events. CSS :hover itself never can, since it tracks
+     the OS pointer directly — so a generic outline highlight stands
+     in for it on whatever the virtual cursor is currently over. */
   function dispatchHover(){
     var x = rt.cursorPos.x, y = rt.cursorPos.y;
     var el = elementAtCursor();
     if(!el) return;
     if(el !== rt.lastHoverEl){
-      if(rt.lastHoverEl){ dispatchAt(rt.lastHoverEl,'mouseout',x,y); dispatchAt(rt.lastHoverEl,'mouseleave',x,y); }
-      dispatchAt(el,'mouseover',x,y); dispatchAt(el,'mouseenter',x,y);
+      if(rt.lastHoverEl){
+        dispatchAt(rt.lastHoverEl,'mouseout',x,y);
+        dispatchAt(rt.lastHoverEl,'mouseleave',x,y);
+        rt.lastHoverEl.classList.remove('tc-hover-target');
+      }
+      dispatchAt(el,'mouseover',x,y);
+      dispatchAt(el,'mouseenter',x,y);
+      el.classList.add('tc-hover-target');
       rt.lastHoverEl = el;
     }
-    dispatchAt(el,'mousemove',x,y);
-    dispatchAt(el,'pointermove',x,y);
-    if(rt.isHolding) dispatchAt(el,'mousedown',x,y,0); // keeps drag-selection extending while held
+    var activeButtons = (rt.leftBtnActive || rt.isHolding) ? 1 : 0;
+    dispatchAt(el,'mousemove',x,y,undefined,activeButtons);
+    dispatchAt(el,'pointermove',x,y,undefined,activeButtons);
   }
 
-  /* ══════════════════ Scrollable-area affordance arrows ══════════════════ */
-  var arrowRaf = null;
-  function updateScrollArrows(){
-    if(arrowRaf) return;
-    arrowRaf = requestAnimationFrame(function(){
-      arrowRaf = null;
+  /* ══════════════════ Scroll assist: arrows near the cursor + buttons under the pad ══════════════════ */
+  var scrollRaf = null;
+  function updateScrollAssist(){
+    if(!state.scrollAssist){ hideScrollAssist(); return; }
+    if(scrollRaf) return;
+    scrollRaf = requestAnimationFrame(function(){
+      scrollRaf = null;
       var x = rt.cursorPos.x, y = rt.cursorPos.y;
       var el = elementAtCursor();
       var h = null, v = null, node = el;
@@ -286,11 +402,13 @@
         if(!v && node.scrollHeight > node.clientHeight + 2 && /auto|scroll/.test(cs.overflowY)) v = node;
         if(h && v) break;
       }
+      rt.scrollH = h; rt.scrollV = v;
       var half = state.cursorSize/2;
       var showL = !!(h && h.scrollLeft > 2);
       var showR = !!(h && h.scrollLeft + h.clientWidth < h.scrollWidth - 2);
       var showU = !!(v && v.scrollTop > 2);
       var showD = !!(v && v.scrollTop + v.clientHeight < v.scrollHeight - 2);
+
       els.arrowLeft.classList.toggle('tc-show', showL);
       els.arrowRight.classList.toggle('tc-show', showR);
       els.arrowUp.classList.toggle('tc-show', showU);
@@ -303,10 +421,25 @@
         els.arrowUp.style.left = (x - 11) + 'px';   els.arrowUp.style.top = (y - half - 26) + 'px';
         els.arrowDown.style.left = (x - 11) + 'px'; els.arrowDown.style.top = (y + half + 4) + 'px';
       }
+
+      els.scrollLeftBtn.style.display = showL ? '' : 'none';
+      els.scrollRightBtn.style.display = showR ? '' : 'none';
+      els.scrollUpBtn.style.display = showU ? '' : 'none';
+      els.scrollDownBtn.style.display = showD ? '' : 'none';
+      var any = showL || showR || showU || showD;
+      els.scrollBtns.classList.toggle('tc-visible', any && state.enabled);
+      if(any) positionAuxButtons();
     });
   }
-  function hideArrows(){
+  function hideScrollAssist(){
     [els.arrowLeft, els.arrowRight, els.arrowUp, els.arrowDown].forEach(function(a){ a.classList.remove('tc-show'); });
+    els.scrollBtns.classList.remove('tc-visible');
+  }
+  function wireScrollButtons(){
+    els.scrollLeftBtn.addEventListener('click', function(){ if(rt.scrollH) rt.scrollH.scrollBy({left:-140, behavior:'smooth'}); });
+    els.scrollRightBtn.addEventListener('click', function(){ if(rt.scrollH) rt.scrollH.scrollBy({left:140, behavior:'smooth'}); });
+    els.scrollUpBtn.addEventListener('click', function(){ if(rt.scrollV) rt.scrollV.scrollBy({top:-140, behavior:'smooth'}); });
+    els.scrollDownBtn.addEventListener('click', function(){ if(rt.scrollV) rt.scrollV.scrollBy({top:140, behavior:'smooth'}); });
   }
 
   /* ══════════════════ Gestures ══════════════════ */
@@ -371,8 +504,12 @@
       applyPadPosition();
     } else {
       moveCursorBy(dx * state.sensitivity, dy * state.sensitivity);
+      if(rt.leftBtnActive){
+        rt.leftBtnMoved = true;
+        if(rt.selectionStart) extendSelectionDrag(rt.cursorPos.x, rt.cursorPos.y);
+      }
       dispatchHover();
-      updateScrollArrows();
+      updateScrollAssist();
     }
     p.lastX = e.clientX; p.lastY = e.clientY;
   }
@@ -399,9 +536,39 @@
     syncModalFromState();
   }
 
-  /* ══════════════════ Click buttons ══════════════════ */
+  /* ══════════════════ Click buttons ══════════════════
+     Left: pressing and holding it, then dragging the pad, drags out a
+     real text selection (see beginSelectionDrag/extendSelectionDrag).
+     A quick press-and-release with no drag is a plain left click.
+     Right: a straightforward right click at the cursor position. */
   function wireClickButtons(){
-    els.leftBtn.addEventListener('click', function(){ performClick('left'); });
+    els.leftBtn.addEventListener('pointerdown', function(e){
+      e.preventDefault();
+      try{ els.leftBtn.setPointerCapture(e.pointerId); }catch(err){}
+      rt.leftBtnActive = true; rt.leftBtnMoved = false;
+      var x = rt.cursorPos.x, y = rt.cursorPos.y;
+      var el = elementAtCursor();
+      if(isTextTarget(el)) beginSelectionDrag(x,y);
+      dispatchAt(el,'pointerdown',x,y,0,1); dispatchAt(el,'mousedown',x,y,0,1);
+      els.cursor.classList.add('tc-clicking');
+    });
+    function endLeft(e){
+      if(!rt.leftBtnActive) return;
+      rt.leftBtnActive = false;
+      try{ els.leftBtn.releasePointerCapture(e.pointerId); }catch(err){}
+      var x = rt.cursorPos.x, y = rt.cursorPos.y;
+      var el = elementAtCursor();
+      dispatchAt(el,'pointerup',x,y,0,0); dispatchAt(el,'mouseup',x,y,0,0);
+      if(!rt.leftBtnMoved){
+        placeCaretIfEditable(el,x,y);
+        dispatchAt(el,'click',x,y,0,0);
+      }
+      rt.selectionStart = null;
+      els.cursor.classList.remove('tc-clicking');
+    }
+    els.leftBtn.addEventListener('pointerup', endLeft);
+    els.leftBtn.addEventListener('pointercancel', endLeft);
+
     els.rightBtn.addEventListener('click', function(){ performClick('right'); });
   }
 
@@ -433,7 +600,12 @@
       var opt = document.createElement('div');
       opt.className = 'tc-cursor-opt' + (state.presetId === p.id ? ' active' : '');
       opt.title = p.label;
-      opt.innerHTML = '<span class="material-symbols-outlined">' + p.icon + '</span>';
+      if(p.isSvg){
+        opt.innerHTML = '<svg viewBox="0 0 20 22" preserveAspectRatio="xMinYMin meet" style="width:18px;height:20px">' +
+          '<path d="' + WIN_CURSOR_PATH + '" fill="#ffffff" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+      } else {
+        opt.innerHTML = '<span class="material-symbols-outlined">' + p.icon + '</span>';
+      }
       opt.addEventListener('click', function(){
         state.presetId = p.id;
         state.cursorType = 'preset';
@@ -503,6 +675,7 @@
       b.classList.toggle('active', b.dataset.mode === state.padMode);
     });
     els.showBtnsToggle.checked = state.showClickButtons;
+    els.scrollAssistToggle.checked = state.scrollAssist;
     renderGestureChips();
   }
 
@@ -610,8 +783,14 @@
     els.showBtnsToggle.addEventListener('change', function(){
       state.showClickButtons = this.checked;
       els.clickBtns.classList.toggle('tc-visible', state.showClickButtons && state.enabled);
-      positionClickButtons();
+      positionAuxButtons();
       saveState();
+    });
+
+    els.scrollAssistToggle.addEventListener('change', function(){
+      state.scrollAssist = this.checked;
+      saveState();
+      if(!state.scrollAssist) hideScrollAssist();
     });
 
     els.recenterBtn.addEventListener('click', recenter);
@@ -649,6 +828,11 @@
     els.arrowRight = document.getElementById('tcArrowRight');
     els.arrowUp = document.getElementById('tcArrowUp');
     els.arrowDown = document.getElementById('tcArrowDown');
+    els.scrollBtns = document.getElementById('tcScrollBtns');
+    els.scrollLeftBtn = document.getElementById('tcScrollLeftBtn');
+    els.scrollRightBtn = document.getElementById('tcScrollRightBtn');
+    els.scrollUpBtn = document.getElementById('tcScrollUpBtn');
+    els.scrollDownBtn = document.getElementById('tcScrollDownBtn');
     els.quickPopover = document.getElementById('tcQuickPopover');
 
     els.presetGrid = document.getElementById('tcPresetGrid');
@@ -668,6 +852,7 @@
     els.padOpSlider = document.getElementById('tcPadOpSlider');
     els.padOpVal = document.getElementById('tcPadOpVal');
     els.showBtnsToggle = document.getElementById('tcShowBtnsToggle');
+    els.scrollAssistToggle = document.getElementById('tcScrollAssistToggle');
     els.recenterBtn = document.getElementById('tcRecenterBtn');
     els.resetBtn = document.getElementById('tcResetBtn');
   }
@@ -689,6 +874,7 @@
     wireModal();
     wireClickButtons();
     wireQuickPopover();
+    wireScrollButtons();
 
     els.pad.addEventListener('pointerdown', onPadPointerDown);
     els.pad.addEventListener('pointermove', onPadPointerMove);

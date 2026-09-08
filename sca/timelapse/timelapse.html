@@ -1,0 +1,129 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     TIMELAPSE — add-on markup
+     Sidebar section lives inside a <template>; timelapse.js clones it
+     into #sidebar right before Collapse, same pattern as every other
+     Sugarcane add-on, so installs stack cleanly regardless of order.
+═══════════════════════════════════════════════════════════════════ -->
+
+<template id="tlSidebarTpl">
+<div class="sb-section" id="tlSbSection">
+  <div class="aw-header" id="tlHeader">
+    <span class="aw-header-label aw-label-blue">Timelapse</span>
+    <div class="aw-header-right">
+      <span class="material-symbols-outlined aw-chevron" id="tlChevron">expand_more</span>
+    </div>
+  </div>
+  <div class="aw-dropdown" id="tlDropdown">
+    <div class="aw-inner">
+
+      <div style="padding:0 10px 8px">
+        <div class="vw-mode-row" id="tlModeRow">
+          <button class="vw-mode-btn active" data-mode="full"><span class="material-symbols-outlined">desktop_windows</span>Full Editor</button>
+          <button class="vw-mode-btn" data-mode="page"><span class="material-symbols-outlined">description</span>This Page</button>
+        </div>
+        <div class="sc-hint" id="tlTargetHint" style="margin-top:6px">Recording the full editor — everything shown.</div>
+      </div>
+
+      <div style="padding:0 10px 8px">
+        <button class="aw-correct-btn" id="tlRecordBtn" style="width:100%;background:#e53935">
+          <span class="material-symbols-outlined" style="font-size:14px" id="tlRecordIcon">fiber_manual_record</span>
+          <span id="tlRecordLabel">Start Recording</span>
+        </button>
+      </div>
+
+      <div class="aw-row" id="tlLiveRow" style="display:none">
+        <div>
+          <div class="aw-row-label" id="tlTimer">00:00</div>
+          <div class="aw-row-sub" id="tlFrameCount">0 frames captured</div>
+        </div>
+        <button class="mbtn sec" id="tlPauseBtn" style="padding:6px 10px;font-size:11px">Pause</button>
+      </div>
+
+      <div id="tlResultBlock" style="display:none">
+        <div style="padding:0 10px" class="sc-hint" id="tlResultSummary"></div>
+        <div style="display:flex;gap:6px;padding:6px 10px 8px">
+          <button class="mbtn primary" id="tlExportBtn" style="flex:1;font-size:11.5px;padding:8px">
+            <span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle;margin-right:3px">movie</span>Export Video
+          </button>
+          <button class="mbtn sec" id="tlDiscardBtn" style="font-size:11.5px;padding:8px 12px">Discard</button>
+        </div>
+      </div>
+
+      <div style="padding:0 10px 8px">
+        <button class="aw-correct-btn" id="tlModsBtn" style="background:#546e7a;width:100%">
+          <span class="material-symbols-outlined" style="font-size:13px">tune</span>Modifications
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+</template>
+
+<!-- Modifications modal -->
+<div class="modal" id="tlSettingsMdl">
+  <div class="mbox" style="max-width:520px">
+    <div class="mhdr">
+      <h2 class="mtitle"><span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;margin-right:6px;color:#1976d2">movie</span>Timelapse</h2>
+      <button class="mclose" onclick="closeMdl('tlSettingsMdl')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label">Capture</div>
+      <div class="sm-row">
+        <span style="font-size:11.5px;color:#888;width:90px;flex-shrink:0">Interval</span>
+        <input type="range" class="sm-slider" id="tlIntervalSlider" min="0.5" max="10" step="0.5" value="2"/>
+        <span class="sm-val" id="tlIntervalVal">2.0s</span>
+      </div>
+      <div class="sc-hint" style="margin-top:0">A snapshot is taken every interval while recording. Shorter intervals capture more detail but use more memory during a long session.</div>
+
+      <div style="margin-top:12px">
+        <div class="tl-subtitle"><span class="material-symbols-outlined">photo_size_select_large</span>Frame Width</div>
+        <div class="scale-chip-row" id="tlWidthChips"></div>
+      </div>
+
+      <div class="sm-row" style="margin-top:12px">
+        <span style="font-size:11.5px;color:#888;width:90px;flex-shrink:0">Quality</span>
+        <input type="range" class="sm-slider" id="tlQualitySlider" min="40" max="100" step="5" value="75"/>
+        <span class="sm-val" id="tlQualityVal">75%</span>
+      </div>
+
+      <div class="aw-row" style="margin-top:6px">
+        <div>
+          <div class="aw-row-label">Recording Badge</div>
+          <div class="aw-row-sub">Show a small ● REC indicator while capturing</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="tlBadgeToggle" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div style="height:1px;background:#e8f0f8;margin:4px 0 12px;"></div>
+
+    <div class="sm-section">
+      <div class="sm-label">Export</div>
+      <div class="tl-subtitle"><span class="material-symbols-outlined">speed</span>Playback Speed</div>
+      <div class="scale-chip-row" id="tlSpeedChips"></div>
+      <div class="sc-hint" style="margin-top:6px">Higher speeds compress your session into a shorter clip — the actual recording length doesn't change, only how fast it plays back.</div>
+    </div>
+
+    <div class="mfooter">
+      <button class="mbtn sec" id="tlResetBtn">Reset to Defaults</button>
+      <button class="mbtn primary" onclick="closeMdl('tlSettingsMdl')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- On-screen overlay -->
+<div id="tlBadge"><span class="tl-dot"></span><span id="tlBadgeTime">00:00</span></div>
+
+<div id="tlExportOverlay">
+  <div id="tlExportCard">
+    <span class="material-symbols-outlined" style="font-size:28px;color:#1976d2">movie</span>
+    <div id="tlExportStatus">Rendering timelapse…</div>
+    <div id="tlExportBarTrack"><div id="tlExportBarFill"></div></div>
+    <div id="tlExportPct">0%</div>
+  </div>
+</div>

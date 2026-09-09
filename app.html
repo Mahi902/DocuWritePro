@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DocuWrite Pro 5.5.5</title>
+    <title>DocuWrite Pro 5.5.6</title>
     <meta name="description" content="DocuWrite Pro">
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -751,16 +751,6 @@
         @keyframes secretTick { to { stroke-dashoffset: 0; } }
         #app-secret-burst.play svg { animation: secretPop 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards; }
         @keyframes secretPop { 0%{transform:scale(0.5);} 45%{transform:scale(1.08);} 65%{transform:scale(1);} 100%{transform:scale(1);} }
-        #app-secret-toast {
-            position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px);
-            transform: translate(-50%, 16px); opacity: 0; z-index: 99999;
-            background: var(--bg-card); color: var(--text-primary); font-size: 13px; font-weight: 600;
-            padding: 10px 16px; border-radius: 999px; box-shadow: var(--shadow-float);
-            display: flex; align-items: center; gap: 6px; pointer-events: none;
-            transition: transform 0.4s cubic-bezier(0.34,1.4,0.4,1), opacity 0.3s;
-        }
-        #app-secret-toast.show { transform: translate(-50%, 0); opacity: 1; }
-        #app-secret-toast .material-symbols-rounded { font-size: 15px; color: var(--primary-color); font-variation-settings: 'FILL' 1; }
 
         /* ── Dark-theme aware Google button used on Account Perks ── */
         .perks-google-btn {
@@ -835,7 +825,6 @@
     <div id="app-secret-burst">
         <svg viewBox="0 0 64 64"><circle class="ring" cx="32" cy="32" r="28"/><path class="tick" d="M20 33 L28 41 L45 23"/></svg>
     </div>
-    <div id="app-secret-toast"><span class="material-symbols-rounded">auto_awesome</span><span id="app-secret-toast-text"></span></div>
 
     <!-- ── App-disabled overlay ── -->
     <div id="app-disabled-overlay">
@@ -1105,6 +1094,7 @@
             <div class="settings-group">
                 <div class="setting-row" onclick="openSugarcaneAddonsEnabledPicker()"><span class="setting-label">Apply Add-ons</span><div class="setting-value-container"><span class="setting-value" id="display-sugarcane-addons">Disabled</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
                 <div class="setting-row" id="sugarcane-addons-library-row" style="display:none;" onclick="openSugarcaneAddonsLibrary()"><span class="setting-label">Library</span><div class="setting-value-container"><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
+                <div class="setting-row" id="sugarcane-addons-store-row" style="display:none;" onclick="openSugarcaneAddonsStore()"><span class="setting-label">Store</span><div class="setting-value-container"><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
             </div>
 
             <!-- SECURITY -->
@@ -1133,7 +1123,7 @@
                 </div>
             </div>
 
-            <p id="about-app-version" class="about-version-tap" style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px; cursor:pointer;">Version 5.5.5 • Build 2026</p>
+            <p id="about-app-version" class="about-version-tap" style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px; cursor:pointer;">Version 5.5.6 • Build 2026</p>
             <div style="height: 80px;"></div>
         </div>
     </div>
@@ -1205,6 +1195,35 @@
             <div class="addons-footnote">Linked add-ons can be checked for updates. An update is available when the linked file reports a newer version than the locally loaded version. Uploaded files do not have an update source unless they are later added from a link.</div>
             <div class="settings-section-title" style="margin-top:24px;">Developer</div>
             <button class="addons-action-btn" style="margin:0 16px;width:calc(100% - 32px);" onclick="openSugarcaneAddonGuide()"><span class="material-symbols-rounded" style="font-size:19px">menu_book</span>Sugarcane Add-on (.sca) creation guide</button>
+            <div style="height:28px"></div>
+        </div>
+    </div>
+
+    <!-- ── Sugarcane Add-ons Store page ── -->
+    <div id="sugarcane-addons-store-page" class="slide-page">
+        <div class="iframe-header" style="width:100%; flex-shrink:0;">
+            <div class="iframe-title">Add-ons Store</div>
+            <div class="close-tool-btn" onclick="closeSugarcaneAddonsStore()">Back</div>
+        </div>
+        <div class="addons-page-content">
+            <div class="page-hero" style="padding-top:26px; padding-bottom:14px;">
+                <div class="page-hero-glow"></div>
+                <div class="page-hero-icon"><span class="material-symbols-rounded">storefront</span></div>
+                <div class="page-hero-title">Discover Add-ons</div>
+                <div class="page-hero-sub">Every add-on published at mahi902.github.io/DocuWritePro/sca — tap Get to install one directly, no copying links.</div>
+            </div>
+            <div class="addons-search-row">
+                <div class="addons-search-box">
+                    <span class="material-symbols-rounded">search</span>
+                    <input id="sugarcane-store-search" type="search" placeholder="Search the store" autocomplete="off" oninput="renderSugarcaneAddonsStore()">
+                </div>
+            </div>
+            <div class="addons-action-grid" style="grid-template-columns:1fr;">
+                <button class="addons-action-btn" onclick="loadSugarcaneAddonsStore(true)"><span class="material-symbols-rounded" style="font-size:18px">refresh</span>Refresh Store</button>
+            </div>
+            <div class="settings-section-title" style="margin-top:24px;">Available Add-ons</div>
+            <div class="addons-list" id="sugarcane-store-list"><div class="addon-empty">Loading store…</div></div>
+            <div class="addons-footnote">The store lists every ".sca" file published directly inside the "sca" folder of the DocuWritePro repository. Add-ons you already have show as Installed, or Update if the store has a newer version.</div>
             <div style="height:28px"></div>
         </div>
     </div>
@@ -1565,9 +1584,23 @@
             el.querySelector('.app-toast-msg').textContent = message;
             stack.appendChild(el);
             requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+            let startX = null, currentX = 0, swiping = false;
             const remove = () => { el.classList.add('leaving'); el.classList.remove('show'); setTimeout(() => el.remove(), 320); };
+            const finishSwipe = () => {
+                if (startX === null) return;
+                const distance = currentX - startX;
+                el.classList.remove('swiping');
+                if (Math.abs(distance) > 70) {
+                    el.style.setProperty('--swipe-x', (distance < 0 ? -Math.max(110,Math.abs(distance)+30) : Math.max(110,Math.abs(distance)+30)) + 'px');
+                    el.classList.add('swipe-away'); setTimeout(() => el.remove(), 230);
+                } else el.style.removeProperty('--swipe-x');
+                startX = null; currentX = 0; swiping = false;
+            };
+            el.addEventListener('pointerdown', e => { startX=e.clientX; currentX=e.clientX; swiping=true; el.classList.add('swiping'); });
+            el.addEventListener('pointermove', e => { if(!swiping || startX===null)return; currentX=e.clientX; el.style.setProperty('--swipe-x',(currentX-startX)+'px'); });
+            el.addEventListener('pointerup', finishSwipe); el.addEventListener('pointercancel', finishSwipe); el.addEventListener('pointerleave', () => { if(swiping) finishSwipe(); });
+            el.addEventListener('click', () => { if (startX === null) remove(); });
             setTimeout(remove, 3200);
-            el.addEventListener('click', remove);
         }
 
         let _appDialogResolve = null;
@@ -1647,16 +1680,10 @@
             if (_secretBurstBusy) return;
             _secretBurstBusy = true;
             const burst = document.getElementById('app-secret-burst');
-            const toast = document.getElementById('app-secret-toast');
-            const toastText = document.getElementById('app-secret-toast-text');
-            burst.classList.remove('play'); void burst.offsetWidth; burst.classList.add('play');
-            if (note){
-                toastText.textContent = note;
-                setTimeout(() => toast.classList.add('show'), 260);
-                setTimeout(() => toast.classList.remove('show'), 2400);
-            }
-            if (navigator.vibrate) { try { navigator.vibrate([8, 40, 14]); } catch(e){} }
-            setTimeout(() => { burst.classList.remove('play'); _secretBurstBusy = false; }, 1150);
+            if (burst) { burst.classList.remove('play'); void burst.offsetWidth; burst.classList.add('play'); }
+            if (note && typeof showToast === 'function') showToast(note, 'success');
+            if (navigator.vibrate) { try { navigator.vibrate([8,40,14]); } catch(e){} }
+            setTimeout(() => { if (burst) burst.classList.remove('play'); _secretBurstBusy = false; }, 1150);
         }
         (function setupSecretTriggers(){
             // Secret 1: tap the version number in About App 7 times.
@@ -3191,9 +3218,11 @@
         function checkSugarcaneAddonsVisibility(){
             const enabled = sugarcaneAddonsEnabled();
             const display = document.getElementById('display-sugarcane-addons');
-            const row = document.getElementById('sugarcane-addons-library-row');
+            const libraryRow = document.getElementById('sugarcane-addons-library-row');
+            const storeRow = document.getElementById('sugarcane-addons-store-row');
             if (display) display.textContent = enabled ? 'Enabled' : 'Disabled';
-            if (row) row.style.display = enabled ? 'flex' : 'none';
+            if (libraryRow) libraryRow.style.display = enabled ? 'flex' : 'none';
+            if (storeRow) storeRow.style.display = enabled ? 'flex' : 'none';
         }
         function openSugarcaneAddonsEnabledPicker(){
             const current = sugarcaneAddonsEnabled() ? 'true' : 'false';
@@ -3308,6 +3337,116 @@
                 await installSugarcaneAddonText(await response.text(), url, url.split('/').pop() || url);
             } catch(e){ if (typeof showToast === 'function') showToast('Could not load add-on: ' + e.message, 'error'); }
         }
+        const SUGARcANE_ADDONS_STORE_PATH = 'sca/';
+        const SUGARcANE_ADDONS_REPO = 'mahi902/DocuWritePro';
+        let _sugarcaneStoreItems = [];
+        let _sugarcaneStoreLoading = false;
+
+        function sugarcaneStoreRawUrl(path, branch='main'){
+            return 'https://raw.githubusercontent.com/' + SUGARcANE_ADDONS_REPO + '/' + branch + '/' + String(path).split('/').map(encodeURIComponent).join('/');
+        }
+        function sugarcaneStoreAssetUrl(value, sourceUrl){
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            if (/^(?:https?:|data:|blob:)/i.test(raw)) return raw;
+            try { return new URL(raw, sourceUrl).href; } catch(e) { return raw; }
+        }
+        async function sugarcaneStoreFetchJson(url){
+            const r = await fetch(url, {cache:'no-cache', headers:{'Accept':'application/vnd.github+json'}});
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        }
+        async function loadSugarcaneAddonsStore(forceRefresh){
+            const listEl = document.getElementById('sugarcane-store-list');
+            if (!listEl || _sugarcaneStoreLoading) return;
+            _sugarcaneStoreLoading = true;
+            listEl.innerHTML = '<div class="addon-empty"><span class="material-symbols-rounded" style="font-size:26px;display:block;margin-bottom:8px;">sync</span>Scanning every folder in sca…</div>';
+            try {
+                const repo = await sugarcaneStoreFetchJson('https://api.github.com/repos/' + SUGARcANE_ADDONS_REPO);
+                const branch = repo.default_branch || 'main';
+                const tree = await sugarcaneStoreFetchJson('https://api.github.com/repos/' + SUGARcANE_ADDONS_REPO + '/git/trees/' + encodeURIComponent(branch) + '?recursive=1');
+                if (tree.truncated) throw new Error('GitHub returned a truncated repository tree. Please refresh and try again.');
+                const files = Array.isArray(tree.tree) ? tree.tree.filter(item => item.type === 'blob' && String(item.path || '').toLowerCase().startsWith(SUGARcANE_ADDONS_STORE_PATH) && String(item.path || '').toLowerCase().endsWith('.sca')) : [];
+                const results = [];
+                const batchSize = 6;
+                for (let i=0; i<files.length; i += batchSize) {
+                    const settled = await Promise.allSettled(files.slice(i,i+batchSize).map(async file => {
+                        const sourceUrl = sugarcaneStoreRawUrl(file.path, branch);
+                        const response = await fetch(sourceUrl, {cache:'no-cache'});
+                        if (!response.ok) throw new Error(file.path + ' · HTTP ' + response.status);
+                        const parsed = parseSugarcaneSca(await response.text());
+                        return parsed.map((data, idx) => {
+                            const item = Object.assign({}, data);
+                            item.icon = sugarcaneStoreAssetUrl(item.icon, sourceUrl);
+                            item.html = sugarcaneStoreAssetUrl(item.html, sourceUrl);
+                            item.css = sugarcaneStoreAssetUrl(item.css, sourceUrl);
+                            item.js = sugarcaneStoreAssetUrl(item.js, sourceUrl);
+                            item.sourceUrl = sourceUrl;
+                            item.sourcePath = file.path;
+                            item.sourceName = file.path.split('/').pop();
+                            item.storeId = 'store_' + file.path + '_' + idx;
+                            return item;
+                        });
+                    }));
+                    settled.forEach(s => { if (s.status === 'fulfilled') results.push(...s.value); });
+                }
+                _sugarcaneStoreItems = results.sort((a,b) => String(a.name).localeCompare(String(b.name)));
+                renderSugarcaneAddonsStore();
+            } catch(e) {
+                listEl.innerHTML = '<div class="addon-empty">Could not load the Store.<br><span style="font-size:11px;">' + escAddonHtml(e.message || e) + '</span></div>';
+            } finally { _sugarcaneStoreLoading = false; }
+        }
+        function renderSugarcaneAddonsStore(){
+            const container = document.getElementById('sugarcane-store-list');
+            if (!container) return;
+            const q = (document.getElementById('sugarcane-store-search')?.value || '').trim().toLowerCase();
+            const installed = getSugarcaneAddons();
+            const items = _sugarcaneStoreItems.filter(a => !q || [a.name,a.creator,a.version,a.description,a.sourcePath].join(' ').toLowerCase().includes(q));
+            if (!items.length) { container.innerHTML = '<div class="addon-empty">' + (q ? 'No add-ons match your search.' : (_sugarcaneStoreLoading ? 'Scanning…' : 'No .sca add-ons found.')) + '</div>'; return; }
+            container.innerHTML = items.map(item => {
+                const local = installed.find(a => a.name.toLowerCase() === String(item.name).toLowerCase());
+                const newer = local && compareSugarcaneVersions(item.version, local.version) > 0;
+                const icon = item.icon ? '<img src="' + escAddonHtml(item.icon) + '" alt="">' : '<span class="material-symbols-rounded">extension</span>';
+                const state = newer ? '<span class="addon-update-badge">Update · v' + escAddonHtml(item.version) + '</span>' : local ? '<span class="addon-source-badge">Installed · v' + escAddonHtml(local.version) + '</span>' : '<span class="addon-source-badge">Ready to get</span>';
+                const buttonLabel = newer ? 'Update' : (local ? 'Get again' : 'Get');
+                const buttonIcon = newer ? 'system_update_alt' : 'download';
+                return '<div class="addon-card"><div class="addon-card-top"><div class="addon-icon">' + icon + '</div><div class="addon-main"><div class="addon-name">' + escAddonHtml(item.name) + '</div><div class="addon-meta">v' + escAddonHtml(item.version) + ' · by ' + escAddonHtml(item.creator) + '</div></div></div>' + (item.description ? '<div class="addon-description">' + addonMarkdown(item.description) + '</div>' : '') + '<div class="addon-status-row">' + state + '<button class="addons-action-btn primary" style="margin-left:auto;padding:8px 13px;font-size:12px;box-shadow:none;" data-store-id="' + escAddonHtml(item.storeId) + '"><span class="material-symbols-rounded" style="font-size:16px">' + buttonIcon + '</span>' + buttonLabel + '</button></div></div>';
+            }).join('');
+            container.querySelectorAll('[data-store-id]').forEach(btn => { btn.onclick = () => getSugarcaneStoreAddon(btn.getAttribute('data-store-id')); });
+        }
+        async function getSugarcaneStoreAddon(storeId){
+            const item = _sugarcaneStoreItems.find(a => a.storeId === storeId);
+            if (!item) return;
+            try {
+                showToast('Downloading ' + item.name + '…', 'info');
+                const response = await fetch(item.sourceUrl, {cache:'no-cache'});
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const parsed = parseSugarcaneSca(await response.text());
+                if (!parsed.length) throw new Error('The .sca file contains no valid add-on record.');
+                const list = getSugarcaneAddons();
+                for (const data of parsed) {
+                    const addonData = Object.assign({}, data, {icon:sugarcaneStoreAssetUrl(data.icon,item.sourceUrl),html:sugarcaneStoreAssetUrl(data.html,item.sourceUrl),css:sugarcaneStoreAssetUrl(data.css,item.sourceUrl),js:sugarcaneStoreAssetUrl(data.js,item.sourceUrl)});
+                    const addon = makeSugarcaneAddonObject(addonData, item.sourceUrl, item.sourceName);
+                    const existing = list.find(a => a.name.toLowerCase() === addon.name.toLowerCase());
+                    if (existing) Object.assign(existing, addon, {id:existing.id, enabled:true}); else list.push(addon);
+                }
+                saveSugarcaneAddons(list);
+                localStorage.setItem('sugarcane_addons_revision', String(Date.now()));
+                renderSugarcaneAddonsLibrary(); renderSugarcaneAddonsStore();
+                showToast(item.name + ' added to your Library', 'success');
+                playSecretMoment('Add-on downloaded.');
+            } catch(e) { showToast('Could not download ' + item.name + ': ' + (e.message || e), 'error'); }
+        }
+        function openSugarcaneAddonsStore(){
+            const el = document.getElementById('sugarcane-addons-store-page');
+            if (!el) return;
+            el.scrollTop = 0;
+            const search = document.getElementById('sugarcane-store-search'); if (search) search.value = '';
+            renderSugarcaneAddonsStore();
+            requestAnimationFrame(()=>requestAnimationFrame(()=>{ el.classList.add('slide-open'); loadSugarcaneAddonsStore(false); }));
+        }
+        function closeSugarcaneAddonsStore(){ const el = document.getElementById('sugarcane-addons-store-page'); if (el) el.classList.remove('slide-open'); }
+
         async function openSugarcaneAddonGuide(){
             const overlay = document.getElementById('addon-guide-overlay'); const body = document.getElementById('addon-guide-body');
             if (!overlay || !body) return;

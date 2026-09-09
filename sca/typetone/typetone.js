@@ -1,20 +1,25 @@
 /* ══════════════════════════════════════════════════════════════════
-   TYPETONE — add-on engine
-   Every sound is synthesized live with the Web Audio API — no audio
-   files, nothing to host. Detection uses three layers, roughly in
-   order of how solid they are:
-     1. Native InputEvent.inputType (typing/deleting/newline/paste) —
-        spec-guaranteed, fires for real typing regardless of the
-        editor's own internals.
-     2. Structural DOM signals this addon has directly confirmed
-        (.aw-header/.aw-dropdown, .collapse-btn, #editorArea .page,
-        body.dark) — solid, these are the editor's own conventions.
-     3. Best-effort pattern matching on toolbar buttons (Material
-        Symbols ligature text + title/aria-label/id/class keywords)
-        for formatting/export/import/theme actions whose exact
-        selectors weren't inspected — heuristic by design, and easy
-        to retune via the ICON_MAP table below if a button doesn't
-        match your build.
+   TYPETONE — add-on engine (v1.0.1)
+   Every sound is synthesized live with the Web Audio API. Mechanical
+   sounds (typing, deleting, carriage return, page changes) are built
+   from layered, resonance-filtered NOISE bursts — not oscillator
+   tones — because that's what an actual percussive mechanical impact
+   sounds like: a sharp broadband transient shaped by the resonant
+   cavity that produced it, not a clean sine/square beep. Each "clack"
+   is three layers:
+     tick  — a very short high-passed noise burst: the contact transient
+     body  — a bandpass-filtered noise burst: the pitched "clack" itself
+     thump — a short low sine: the mechanical weight behind it
+   The carriage return additionally layers a sliding noise sweep, a
+   few ratchet ticks, and a proper inharmonic bell (three detuned
+   partials, like a real bell) instead of a simple beep.
+
+   Detection layers (unchanged from v1.0.0):
+     1. Native InputEvent.inputType — typing/deleting/newline/paste
+     2. Confirmed host DOM conventions — .aw-header/.aw-dropdown,
+        .collapse-btn, #editorArea .page, body.dark
+     3. Best-effort icon/label pattern matching for toolbar actions —
+        see ICON_MAP if a button in your build doesn't match.
 ═══════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
@@ -63,30 +68,52 @@
     ]}
   ];
 
+  /* Each variant feeds the clack() layering function below.
+     bodyFreq/bodyQ/bodyDur/bodyVol shape the resonant "clack" itself;
+     tickFreq/tickVol add (or, at 0, omit) the sharp contact transient;
+     thumpFreq/thumpVol/thumpDur add (or, at 0, omit) the low mechanical
+     thud beneath it; bodyFilter lets softer styles use a lowpass
+     instead of a bandpass for a rounder, less percussive body. */
   var STYLES = {
     classic:{ label:'Classic Typewriter',
-      type:[ {freq:180,oscType:'square',dur:.045,tvol:.16,nfreq:2200,nvol:.09},
-             {freq:195,oscType:'square',dur:.04, tvol:.15,nfreq:2600,nvol:.10},
-             {freq:170,oscType:'square',dur:.05, tvol:.17,nfreq:2000,nvol:.08} ],
-      del:[  {freq:130,dur:.09,tvol:.20,nfreq:750,nvol:.08},
-             {freq:120,dur:.095,tvol:.19,nfreq:820,nvol:.09} ] },
-    soft:{ label:'Soft Touch',
-      type:[ {freq:900,oscType:'sine',dur:.02, tvol:.09,nfreq:5000,nvol:.03,ndur:.01},
-             {freq:950,oscType:'sine',dur:.018,tvol:.08,nfreq:5200,nvol:.03,ndur:.01},
-             {freq:870,oscType:'sine',dur:.022,tvol:.10,nfreq:4800,nvol:.035,ndur:.012} ],
-      del:[  {freq:500,dur:.05,tvol:.12,nfreq:2500,nvol:.03},
-             {freq:470,dur:.055,tvol:.11,nfreq:2300,nvol:.03} ] },
+      type:[
+        {bodyFreq:2000,bodyQ:4.5,bodyDur:.035,bodyVol:.34, tickFreq:5500,tickVol:.16, thumpFreq:190,thumpVol:.16,thumpDur:.05},
+        {bodyFreq:2300,bodyQ:5,  bodyDur:.032,bodyVol:.32, tickFreq:6000,tickVol:.18, thumpFreq:175,thumpVol:.15,thumpDur:.048},
+        {bodyFreq:1850,bodyQ:4,  bodyDur:.038,bodyVol:.35, tickFreq:5200,tickVol:.15, thumpFreq:205,thumpVol:.17,thumpDur:.052}
+      ],
+      del:[
+        {bodyFreq:1400,bodyQ:3.5,bodyDur:.045,bodyVol:.32, tickFreq:4200,tickVol:.12, thumpFreq:140,thumpVol:.20,thumpDur:.07},
+        {bodyFreq:1300,bodyQ:3.2,bodyDur:.05, bodyVol:.34, tickFreq:4000,tickVol:.11, thumpFreq:130,thumpVol:.22,thumpDur:.075}
+      ]},
     mechanical:{ label:'Mechanical',
-      type:[ {freq:260,oscType:'sawtooth',dur:.05, tvol:.14,nfreq:3500,nvol:.12},
-             {freq:280,oscType:'sawtooth',dur:.048,tvol:.15,nfreq:3800,nvol:.13},
-             {freq:250,oscType:'sawtooth',dur:.052,tvol:.13,nfreq:3300,nvol:.11} ],
-      del:[  {freq:160,oscType:'sawtooth',dur:.09,tvol:.20,nfreq:1000,nvol:.10},
-             {freq:150,oscType:'sawtooth',dur:.095,tvol:.19,nfreq:1100,nvol:.11} ] },
+      type:[
+        {bodyFreq:3200,bodyQ:7,  bodyDur:.018,bodyVol:.28, tickFreq:7000,tickVol:.26, thumpFreq:0,thumpVol:0,thumpDur:0},
+        {bodyFreq:3500,bodyQ:7.5,bodyDur:.016,bodyVol:.26, tickFreq:7500,tickVol:.28, thumpFreq:0,thumpVol:0,thumpDur:0},
+        {bodyFreq:3000,bodyQ:6.5,bodyDur:.02, bodyVol:.30, tickFreq:6800,tickVol:.24, thumpFreq:0,thumpVol:0,thumpDur:0}
+      ],
+      del:[
+        {bodyFreq:2400,bodyQ:6,  bodyDur:.022,bodyVol:.28, tickFreq:5500,tickVol:.20, thumpFreq:100,thumpVol:.08,thumpDur:.03},
+        {bodyFreq:2600,bodyQ:6.5,bodyDur:.02, bodyVol:.27, tickFreq:5800,tickVol:.22, thumpFreq:95, thumpVol:.09,thumpDur:.028}
+      ]},
+    soft:{ label:'Soft Touch',
+      type:[
+        {bodyFreq:1400,bodyQ:1.5,bodyDur:.012,bodyVol:.12,bodyFilter:'lowpass', tickFreq:4000,tickVol:.04, thumpFreq:0,thumpVol:0,thumpDur:0},
+        {bodyFreq:1500,bodyQ:1.6,bodyDur:.011,bodyVol:.11,bodyFilter:'lowpass', tickFreq:4200,tickVol:.05, thumpFreq:0,thumpVol:0,thumpDur:0},
+        {bodyFreq:1350,bodyQ:1.4,bodyDur:.013,bodyVol:.13,bodyFilter:'lowpass', tickFreq:3800,tickVol:.04, thumpFreq:0,thumpVol:0,thumpDur:0}
+      ],
+      del:[
+        {bodyFreq:900,bodyQ:1.3,bodyDur:.02, bodyVol:.13,bodyFilter:'lowpass', tickFreq:2800,tickVol:.03, thumpFreq:0,thumpVol:0,thumpDur:0},
+        {bodyFreq:850,bodyQ:1.2,bodyDur:.022,bodyVol:.12,bodyFilter:'lowpass', tickFreq:2600,tickVol:.03, thumpFreq:0,thumpVol:0,thumpDur:0}
+      ]},
     muted:{ label:'Muted Felt',
-      type:[ {freq:140,oscType:'sine',dur:.06, tvol:.10,nfreq:900,nvol:.03},
-             {freq:135,oscType:'sine',dur:.065,tvol:.09,nfreq:850,nvol:.03} ],
-      del:[  {freq:100,dur:.09,tvol:.12,nfreq:500,nvol:.03},
-             {freq:95, dur:.095,tvol:.11,nfreq:480,nvol:.03} ] }
+      type:[
+        {bodyFreq:800,bodyQ:1.2,bodyDur:.03, bodyVol:.20,bodyFilter:'lowpass', tickFreq:1800,tickVol:.03, thumpFreq:150,thumpVol:.14,thumpDur:.06},
+        {bodyFreq:750,bodyQ:1.1,bodyDur:.032,bodyVol:.22,bodyFilter:'lowpass', tickFreq:1700,tickVol:.03, thumpFreq:140,thumpVol:.15,thumpDur:.065}
+      ],
+      del:[
+        {bodyFreq:550,bodyQ:1,  bodyDur:.045,bodyVol:.20,bodyFilter:'lowpass', tickFreq:1200,tickVol:.02, thumpFreq:100,thumpVol:.18,thumpDur:.08},
+        {bodyFreq:500,bodyQ:.9, bodyDur:.05, bodyVol:.21,bodyFilter:'lowpass', tickFreq:1100,tickVol:.02, thumpFreq:95, thumpVol:.19,thumpDur:.085}
+      ]}
   };
   var STYLE_ORDER = ['classic','soft','mechanical','muted'];
 
@@ -119,7 +146,7 @@
   function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
   function has(cat){ return state.enabled && !!state.categories[cat]; }
 
-  /* ══════════════════ Audio synthesis ══════════════════ */
+  /* ══════════════════ Audio synthesis primitives ══════════════════ */
   function ctx(){
     if(!AC){ AC = new (window.AudioContext||window.webkitAudioContext)(); }
     if(AC.state === 'suspended') AC.resume();
@@ -142,69 +169,103 @@
       osc.start(t); osc.stop(t+dur+0.03);
     }catch(e){}
   }
-  function noise(dur, opts){
+  // The core mechanical-sound primitive: a short burst of white noise
+  // shaped by a resonant filter and a fast exponential-decay envelope.
+  // This — not a pure oscillator tone — is what a percussive impact
+  // (a key strike, a ratchet tick, paper rustle) actually sounds like.
+  function noiseBurst(dur, opts){
     opts = opts || {};
     try{
       var c = ctx(); var t = c.currentTime;
       var bufSize = Math.max(1, Math.floor(c.sampleRate*dur));
       var buf = c.createBuffer(1, bufSize, c.sampleRate);
       var data = buf.getChannelData(0);
-      var decayPow = opts.decayPow || 2;
+      var decayPow = opts.decayPow!==undefined ? opts.decayPow : 3;
       for(var i=0;i<bufSize;i++) data[i] = (Math.random()*2-1) * Math.pow(1-i/bufSize, decayPow);
       var src = c.createBufferSource(); src.buffer = buf;
       var filt = c.createBiquadFilter();
       filt.type = opts.filterType || 'bandpass';
-      filt.frequency.setValueAtTime(opts.filterFreq||2500, t);
-      filt.Q.value = opts.q!==undefined ? opts.q : 1;
+      filt.frequency.setValueAtTime(opts.freq||2500, t);
+      if(opts.freqEnd) filt.frequency.exponentialRampToValueAtTime(Math.max(40,opts.freqEnd), t+dur);
+      filt.Q.value = opts.q!==undefined ? opts.q : 3;
       var g = c.createGain();
-      var vol = (opts.vol!==undefined?opts.vol:0.15) * state.volume;
+      var vol = (opts.vol!==undefined?opts.vol:0.25) * state.volume;
       g.gain.setValueAtTime(vol, t);
       src.connect(filt); filt.connect(g); g.connect(c.destination);
-      src.start(t);
+      src.start(t); src.stop(t+dur+0.02);
     }catch(e){}
   }
-  function chime(freq,dur,opts){ tone(freq,dur,Object.assign({type:'sine',vol:.22,attack:.005},opts||{})); }
-  function sweep(f1,f2,dur,opts){ tone(f1,dur,Object.assign({type:'sine',vol:.14,attack:.01,freqEnd:f2},opts||{})); }
-  function blip(freq,dur,opts){ tone(freq,dur,Object.assign({type:'triangle',vol:.16,attack:.002},opts||{})); }
+  // Three-layer mechanical impact: tick (contact transient) + body
+  // (the resonant, pitched "clack") + thump (low mechanical weight).
+  // Any layer is skipped when its *Vol/*Freq is 0/falsy.
+  function clack(o){
+    o = o || {};
+    if(o.tickFreq && o.tickVol) noiseBurst(0.006, {freq:o.tickFreq, freqEnd:o.tickFreq*0.8, q:2, vol:o.tickVol, decayPow:6, filterType:'highpass'});
+    noiseBurst(o.bodyDur||.03, {freq:o.bodyFreq||2000, q:o.bodyQ||4, vol:o.bodyVol||.3, decayPow:2.2, filterType:o.bodyFilter||'bandpass'});
+    if(o.thumpFreq && o.thumpVol) tone(o.thumpFreq, o.thumpDur||.05, {type:'sine', vol:o.thumpVol, attack:.001, freqEnd:o.thumpFreq*0.7});
+  }
+  // A real bell/chime has inharmonic partials (not a clean overtone
+  // series) — three detuned sine layers with decreasing amplitude and
+  // slightly different decay give it that "ting" character instead
+  // of sounding like a plain beep.
+  function bell(freq, dur, vol){
+    [ [1, 1], [2.41, 0.5], [3.76, 0.28] ].forEach(function(p){
+      tone(freq*p[0], dur*(0.55+0.45*p[1]), {type:'sine', vol:(vol!==undefined?vol:.2)*p[1], attack:.003});
+    });
+  }
+  function blip(freq,dur,opts){ tone(freq,dur,Object.assign({type:'triangle',vol:.13,attack:.002},opts||{})); }
+  function sweep(f1,f2,dur,opts){ tone(f1,dur,Object.assign({type:'sine',vol:.12,attack:.01,freqEnd:f2},opts||{})); }
+  function softNoise(dur,opts){ noiseBurst(dur, Object.assign({filterType:'bandpass',decayPow:1.4,vol:.09},opts||{})); }
 
-  /* ══════════════════ Keyboard-style variation pools ══════════════════ */
+  /* ══════════════════ Keyboard-style typing/deleting ══════════════════ */
   function pickVariant(pool){ return state.variation ? pool[Math.floor(Math.random()*pool.length)] : pool[0]; }
-  function playType(){
-    var s = STYLES[state.style] || STYLES.classic;
-    var v = pickVariant(s.type);
-    tone(v.freq, v.dur, {type:v.oscType||'square', vol:v.tvol, attack:.001});
-    noise(v.ndur||.02, {filterFreq:v.nfreq, vol:v.nvol, decayPow:3});
-  }
-  function playDelete(){
-    var s = STYLES[state.style] || STYLES.classic;
-    var v = pickVariant(s.del);
-    tone(v.freq, v.dur, {type:'sine', vol:v.tvol, attack:.002, freqEnd:v.freq*0.6});
-    noise(.03, {filterFreq:v.nfreq, vol:v.nvol, decayPow:2});
-  }
+  function playType(){ clack(pickVariant((STYLES[state.style]||STYLES.classic).type)); }
+  function playDelete(){ clack(pickVariant((STYLES[state.style]||STYLES.classic).del)); }
 
   /* ══════════════════ Fixed event sounds ══════════════════ */
-  function playNewLine(){ chime(660,.12); setTimeout(function(){chime(880,.15);},70); }
-  function playInsert(){ blip(500,.05); setTimeout(function(){blip(720,.05);},40); }
-  function playDeleteEmpty(){ noise(.045,{filterFreq:400,filterType:'lowpass',vol:.14,decayPow:1}); }
-  function playNewPage(){ noise(.18,{filterFreq:1800,vol:.10,decayPow:1}); chime(520,.2,{vol:.12}); }
-  function playDeletePage(){ sweep(700,200,.18,{vol:.14}); noise(.12,{filterFreq:1200,vol:.09,decayPow:1.5}); }
-  function playEditing(){ blip(420,.05,{vol:.12}); }
-  function playBold(){ tone(300,.07,{type:'square',vol:.15}); }
-  function playItalic(){ sweep(500,650,.06,{vol:.14}); }
-  function playUnderline(){ tone(260,.08,{type:'triangle',vol:.15,freqEnd:200}); }
-  function playStrikethrough(){ noise(.06,{filterFreq:2000,vol:.10,decayPow:2}); tone(240,.05,{vol:.10}); }
-  function playAlignment(){ blip(560,.04); }
-  function playNewList(){ blip(600,.04); setTimeout(function(){blip(720,.04);},50); }
-  function playFont(){ sweep(400,700,.09,{vol:.13}); }
-  function playTextColor(){ chime(720,.08,{vol:.12}); }
-  function playHighlight(){ chime(560,.08,{vol:.12}); }
-  function playExport(){ sweep(500,1000,.16,{vol:.15}); }
-  function playImport(){ sweep(1000,500,.16,{vol:.15}); }
-  function playSidebarShow(){ sweep(400,750,.12,{vol:.12}); }
-  function playSidebarHide(){ sweep(750,400,.12,{vol:.12}); }
-  function playSectionOpen(){ blip(650,.05,{vol:.10}); }
-  function playSectionClose(){ blip(480,.05,{vol:.10}); }
-  function playTheme(){ sweep(300,900,.3,{vol:.16}); noise(.2,{filterFreq:3000,vol:.05,decayPow:1}); }
+  // Carriage return: the carriage physically slides (a sweeping
+  // filtered-noise "zzhick" with a few ratchet ticks along the way),
+  // then the bell rings once the slide completes.
+  function playNewLine(){
+    noiseBurst(0.22, {freq:2600, freqEnd:600, q:1.2, vol:.11, decayPow:1, filterType:'bandpass'});
+    [0,45,95,150].forEach(function(delay){
+      setTimeout(function(){ noiseBurst(0.008, {freq:3600, q:6, vol:.05, decayPow:6}); }, delay);
+    });
+    setTimeout(function(){ bell(2100, .45, .18); }, 190);
+  }
+  function playInsert(){ blip(500,.05,{vol:.12}); setTimeout(function(){blip(720,.05,{vol:.11});},40); }
+  // A dry, dead hit with no resonance or pitch — like striking a key
+  // with nothing behind it, instead of a normal clack.
+  function playDeleteEmpty(){ noiseBurst(0.04, {freq:450, freqEnd:220, q:.8, vol:.16, decayPow:1.4, filterType:'lowpass'}); }
+  // Feeding in a fresh sheet: a longer paper rustle plus roller-knob
+  // ratchet ticks.
+  function playNewPage(){
+    softNoise(0.32, {freq:3200, freqEnd:1100, q:.7, vol:.09});
+    [0,60,125,190,255].forEach(function(delay){
+      setTimeout(function(){ noiseBurst(.008,{freq:4200,q:5,vol:.05,decayPow:6}); }, delay);
+    });
+  }
+  function playDeletePage(){
+    noiseBurst(.16, {freq:3500, freqEnd:700, q:1, vol:.16, decayPow:1.4, filterType:'bandpass'});
+    clack({bodyFreq:900,bodyQ:2.5,bodyDur:.05,bodyVol:.2, tickFreq:4000,tickVol:.08, thumpFreq:120,thumpVol:.16,thumpDur:.08});
+  }
+  function playEditing(){ blip(420,.045,{vol:.1}); }
+  function playBold(){ clack({bodyFreq:900,bodyQ:3,bodyDur:.02,bodyVol:.16, tickFreq:0, thumpFreq:220,thumpVol:.13,thumpDur:.05}); }
+  function playItalic(){ sweep(560,720,.06,{vol:.13}); }
+  function playUnderline(){ tone(280,.09,{type:'sine',vol:.14,freqEnd:190}); }
+  function playStrikethrough(){ noiseBurst(.05,{freq:1800,q:1.5,vol:.1,decayPow:2.5}); tone(260,.045,{vol:.09}); }
+  function playAlignment(){ blip(560,.04,{vol:.12}); }
+  function playNewList(){ blip(600,.035,{vol:.11}); setTimeout(function(){blip(760,.035,{vol:.1});},55); }
+  function playFont(){ sweep(420,700,.09,{vol:.12}); }
+  function playTextColor(){ bell(900,.16,.14); }
+  function playHighlight(){ bell(700,.16,.14); }
+  function playExport(){ softNoise(.1,{freq:2500,q:1,vol:.06}); sweep(560,1050,.15,{vol:.13}); }
+  function playImport(){ softNoise(.1,{freq:2500,q:1,vol:.06}); sweep(1050,560,.15,{vol:.13}); }
+  function playSidebarShow(){ sweep(420,760,.11,{vol:.11}); }
+  function playSidebarHide(){ sweep(760,420,.11,{vol:.11}); }
+  function playSectionOpen(){ blip(650,.045,{vol:.09}); }
+  function playSectionClose(){ blip(480,.045,{vol:.09}); }
+  function playTheme(){ sweep(320,900,.32,{vol:.15}); softNoise(.22,{freq:3200,q:.8,vol:.05}); }
 
   var PLAYERS = {
     bold:playBold, italic:playItalic, underline:playUnderline, strikethrough:playStrikethrough,
@@ -232,7 +293,7 @@
 
   function onInput(e){
     if(!state.enabled) return;
-    if(!e.target || !e.target.closest || !e.target.closest('#editorArea')) return; // ignore settings/inputs elsewhere
+    if(!e.target || !e.target.closest || !e.target.closest('#editorArea')) return;
     var t = e.inputType || '';
     if(t === 'insertText' || t === 'insertCompositionText'){
       if(has('typing')) playType();
@@ -280,10 +341,10 @@
     if(!dd) return;
     setTimeout(function(){
       dd.classList.contains('open') ? playSectionOpen() : playSectionClose();
-    }, 30); // let the header's own toggle handler run first
+    }, 30);
   }
 
-  /* ══════════════════ Detection: sidebar collapse/expand (geometry-based, no class guessing) ══════════════════ */
+  /* ══════════════════ Detection: sidebar collapse/expand (geometry-based) ══════════════════ */
   function onCollapseClick(e){
     if(!state.enabled) return;
     var btn = e.target.closest ? e.target.closest('#sidebar .collapse-btn') : null;
@@ -296,7 +357,7 @@
     }, 60);
   }
 
-  /* ══════════════════ Detection: new/delete page (MutationObserver on #editorArea) ══════════════════ */
+  /* ══════════════════ Detection: new/delete page ══════════════════ */
   function watchPages(){
     var editorArea = document.getElementById('editorArea');
     if(!editorArea){ setTimeout(watchPages, 1000); return; }
@@ -314,7 +375,7 @@
     mo.observe(editorArea, {childList:true});
   }
 
-  /* ══════════════════ Detection: theme change (body.dark, the confirmed host convention) ══════════════════ */
+  /* ══════════════════ Detection: theme change ══════════════════ */
   function watchTheme(){
     var lastDark = document.body.classList.contains('dark');
     var mo = new MutationObserver(function(){
@@ -351,7 +412,7 @@
       chip.textContent = STYLES[key].label;
       chip.addEventListener('click', function(){
         state.style = key; saveState(); renderStyleChips();
-        playType(); // little preview so you can hear the style you just picked
+        playType();
       });
       els.styleChips.appendChild(chip);
     });

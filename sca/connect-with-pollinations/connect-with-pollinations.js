@@ -680,7 +680,11 @@
     });
     if(!res.ok){
       let detail = '';
-      try { detail = (await res.json()).error || ''; } catch(e){}
+      try {
+        const errBody = (await res.json()).error;
+        detail = typeof errBody === 'string' ? errBody : (errBody && errBody.message) || '';
+      } catch(e){}
+      if(!detail && res.status === 401) detail = 'invalid, missing, or expired API key';
       throw new Error('Pollinations request failed (' + res.status + ')' + (detail ? ': ' + detail : ''));
     }
     const data = await res.json();
@@ -938,10 +942,16 @@
         '<div class="aw-inner">' +
 
           '<label class="pl-cfg-label">API Key</label>' +
-          '<input type="password" class="pl-cfg-input" id="plApiKeyInput" placeholder="Pollinations API key (optional on free tier)" autocomplete="off">' +
+          '<div class="pl-input-row">' +
+            '<input type="password" class="pl-cfg-input" id="plApiKeyInput" placeholder="Pollinations API key (optional on free tier)" autocomplete="off">' +
+            '<button type="button" class="pl-paste-btn" id="plApiKeyPasteBtn" title="Paste from clipboard"><span class="material-symbols-outlined">content_paste</span></button>' +
+          '</div>' +
 
           '<label class="pl-cfg-label">Model name</label>' +
-          '<input type="text" class="pl-cfg-input" id="plModelInput" placeholder="e.g. openai, openai-large, gemini, deepseek">' +
+          '<div class="pl-input-row">' +
+            '<input type="text" class="pl-cfg-input" id="plModelInput" placeholder="e.g. openai, openai-large, gemini, deepseek">' +
+            '<button type="button" class="pl-paste-btn" id="plModelPasteBtn" title="Paste from clipboard"><span class="material-symbols-outlined">content_paste</span></button>' +
+          '</div>' +
 
           '<div class="aw-row">' +
             '<div><div class="aw-row-label">Auto-execute</div><div class="aw-row-sub">Run commands the AI issues without asking</div></div>' +
@@ -975,7 +985,7 @@
             '<label class="toggle-switch"><input type="checkbox" id="plAllowClicksToggle"><span class="toggle-slider"></span></label>' +
           '</div>' +
 
-          '<button type="button" class="tc-mod-btn" id="plOpenChatBtn"><span class="material-symbols-outlined">chat</span>Open Pollinations Chat</button>' +
+          '<button type="button" class="tc-mod-btn pl-open-chat-btn" id="plOpenChatBtn"><span class="material-symbols-outlined">chat</span>Open Pollinations Chat</button>' +
 
         '</div>' +
       '</div>';
@@ -996,6 +1006,24 @@
     const modelInput = document.getElementById('plModelInput');
     modelInput.value = cfg.model;
     modelInput.addEventListener('change', () => { cfg.model = modelInput.value.trim(); saveCfg(); });
+
+    async function pasteInto(input, onSave){
+      try {
+        const text = await navigator.clipboard.readText();
+        if(text == null) return;
+        input.value = text.trim();
+        onSave();
+        input.focus();
+      } catch(e){
+        input.focus(); // clipboard read blocked (permissions/insecure context) — let the user paste manually
+      }
+    }
+    document.getElementById('plApiKeyPasteBtn').addEventListener('click', () => {
+      pasteInto(apiKeyInput, () => { cfg.apiKey = apiKeyInput.value; saveCfg(); });
+    });
+    document.getElementById('plModelPasteBtn').addEventListener('click', () => {
+      pasteInto(modelInput, () => { cfg.model = modelInput.value; saveCfg(); });
+    });
 
     const autoToggle = document.getElementById('plAutoExecToggle');
     autoToggle.checked = cfg.autoExecute;

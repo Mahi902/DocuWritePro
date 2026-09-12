@@ -33,6 +33,8 @@
       pages: 'selected'      // 'all' | 'selected' (uses scopePages) | 'aichoice'
     },
     allowClicks: false,       // master switch for the /click command (gated, 30-click batches)
+    autoApproveClicks: false, // when on, each new 30-click batch is approved automatically — no manual tap
+    clickCooldown: true,      // when on, a multi-command reply executes one command at a time with a pause between
     allowScreenShare: false   // sends a live on-screen clickable-control snapshot every message,
                               // and lifts the click batch limit entirely
   };
@@ -42,6 +44,8 @@
   // before the AI can click anything.
   let clickBudget = 0;
   const CLICK_BATCH = 30;
+  const COOLDOWN_MS = 2000; // pause between commands in a multi-command reply, when Click Cooldown is on
+  function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
 
   let cfg = loadCfg();
   function loadCfg(){
@@ -171,6 +175,73 @@
     const el = pageContentByNum(num);
     return (el && el.textContent.trim()) || '(empty)';
   });
+
+  // Converts a plain-text character range within a container into an actual
+  // DOM Range, by walking its text nodes and accumulating lengths. Needed
+  // because page content isn't one flat text node — it's whatever mix of
+  // text nodes and inline elements (bold spans, links, etc.) formatting has
+  // produced, so a character index has to be mapped through that structure.
+  function charOffsetToRange(containerEl, start, end){
+    const walker = document.createTreeWalker(containerEl, NodeFilter.SHOW_TEXT, null);
+    let node, pos = 0, startNode = null, startOffset = 0, endNode = null, endOffset = 0;
+    while((node = walker.nextNode())){
+      const len = node.textContent.length;
+      if(startNode === null && pos + len >= start){ startNode = node; startOffset = start - pos; }
+      if(endNode === null && pos + len >= end){ endNode = node; endOffset = end - pos; }
+      pos += len;
+      if(startNode && endNode) break;
+    }
+    if(!startNode || !endNode) return null;
+    const range = document.createRange();
+    range.setStart(startNode, startOffset);
+    range.setEnd(endNode, endOffset);
+    return range;
+  }
+
+  reg('lookup', 'words', 'info',
+    'lookup <n> <phrase...> — find every occurrence of a phrase on page n and report its character position(s), e.g. "15-27". Every character, including spaces, counts as one position. Feed a start-end pair into /select.',
+    (n, ...rest) => {
+      if(!elAllowed('content')) return denyMsg('page content');
+      const num = parseInt(n,10) || 1;
+      if(!pageAllowed(num)) return denyMsg('page ' + num);
+      const phrase = rest.join(' ');
+      if(!phrase) return 'Missing search phrase — use /lookup <page> <phrase>.';
+      const pc = pageContentByNum(num);
+      if(!pc) return 'Page ' + num + ' not found.';
+      const text = pc.textContent;
+      const hits = [];
+      let idx = 0;
+      while(hits.length < 20 && (idx = text.indexOf(phrase, idx)) !== -1){
+        hits.push(idx + '-' + (idx + phrase.length));
+        idx += phrase.length;
+      }
+      if(!hits.length) return 'Phrase "' + phrase + '" not found on page ' + num + '.';
+      return 'Page ' + num + ': ' + hits.length + ' occurrence(s) of "' + phrase + '" (' + phrase.length + ' chars). Position(s) [start-end]: ' + hits.join(', ') + '. Use /select ' + num + ' <start> <end> with one of these pairs.';
+    }
+  );
+
+  reg('select', 'words', 'action',
+    'select <n> <start> <end> — select page n\'s characters from start up to (not including) end, using positions from /lookup, so a following command like /bold acts on exactly that text.',
+    (n, start, end) => {
+      if(!elAllowed('selection')) return denyMsg('selection');
+      const num = parseInt(n,10) || 1;
+      if(!pageAllowed(num)) return denyMsg('page ' + num);
+      const s = parseInt(start,10), e = parseInt(end,10);
+      if(isNaN(s) || isNaN(e) || s < 0 || e <= s) return 'Invalid range — use /select <page> <start> <end> with start < end (get these from /lookup).';
+      const pc = pageContentByNum(num);
+      if(!pc) return 'Page ' + num + ' not found.';
+      const total = pc.textContent.length;
+      if(e > total) return 'Range exceeds page ' + num + '\'s length (' + total + ' characters).';
+      const range = charOffsetToRange(pc, s, e);
+      if(!range) return 'Could not resolve that range to a selection.';
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      pc.focus();
+      const preview = pc.textContent.slice(s, Math.min(e, s + 40));
+      return 'Selected ' + (e - s) + ' character(s) on page ' + num + ': "' + preview + (e - s > 40 ? '…' : '') + '".';
+    }
+  );
 
   reg('selection', 'none', 'info', 'Currently selected text, if any.', () => {
     if(!elAllowed('selection')) return denyMsg('selection');
@@ -662,8 +733,9 @@
       'Any line beginning with "/" in your reply is parsed and run automatically — info commands return data to you (you may need to ask again in a follow-up turn to see the result and continue), action commands change the document. Do not use slash commands for anything except the documented ones below. Never invent commands.',
       'You cannot click UI elements directly by intent — the only way to interact with one is the /click command, which looks it up by its visible label/title/aria-label.' + (cfg.allowScreenShare
         ? ' It is unlimited right now (Allow Screen Share is on) — no confirmation batches, click as many things in a row as you need.'
-        : ' It is gated: it only works when the user has turned on "Allow UI Clicks", and every ' + CLICK_BATCH + ' clicks needs a fresh confirmation from the user before more can happen — if you get "waiting on a new confirmation", stop and wait rather than repeating the command.') + ' Any other "clickable elements" list you see is descriptive context, not something you can trigger some other way.',
+        : ' It is gated: it only works when the user has turned on "Allow UI Clicks", and every ' + CLICK_BATCH + ' clicks needs a fresh confirmation from the user before more can happen' + (cfg.autoApproveClicks ? ' — that confirmation is auto-approved right now, so batches just continue without visibly pausing' : ' — if you get "waiting on a new confirmation", stop and wait rather than repeating the command')) + '. Any other "clickable elements" list you see is descriptive context, not something you can trigger some other way.',
       'You have NO knowledge of the document\'s actual current state until you ask via an info command (or read it from an attached EDITOR CONTEXT / SCREEN SHARE snapshot) — do not assume values.',
+      'To format a specific word or phrase (bold/italic/underline/etc.) rather than whatever happens to be selected: first run /lookup <page> <phrase> to get its character position(s), wait for that result, then run /select <page> <start> <end> with one of the reported pairs, then the formatting command — /select and the formatting command CAN be on the same line/turn together, but /lookup\'s result must come back first since you need its numbers.',
       exploreNote,
       screenShareNote,
       '',
@@ -899,6 +971,28 @@
     return box;
   }
 
+  // Runs a list of already-approved commands against an existing pending
+  // command block (rows with no result yet, from renderCommandBlock(cmds, null)).
+  // With Click Cooldown on, commands run one at a time with a pause between —
+  // each row fills in its result as its command actually finishes, rather
+  // than all of them landing at once. With it off, behavior is unchanged
+  // (all run back-to-back, no pause).
+  async function runCommandsIntoBlock(cmds, block){
+    const results = [];
+    for(let i = 0; i < cmds.length; i++){
+      const result = runCommand(cmds[i]);
+      results.push(result);
+      const row = block && block.children[i];
+      if(row){
+        row.querySelector('.pl-cmdresult').textContent = result;
+        row.classList.add('pl-cmdrow-done');
+        msgsEl.scrollTop = msgsEl.scrollHeight;
+      }
+      if(cfg.clickCooldown && i < cmds.length - 1) await delay(COOLDOWN_MS);
+    }
+    return results;
+  }
+
   function renderClickGate(cmds, onDecision){
     const box = document.createElement('div');
     box.className = 'pl-cmdblock pl-clickgate';
@@ -971,22 +1065,21 @@
     let shouldContinue = false;
     if(cmds.length){
       if(cfg.autoExecute){
-        const results = cmds.map(runCommand);
-        renderCommandBlock(cmds, results);
+        const block = renderCommandBlock(cmds, null);
+        const results = await runCommandsIntoBlock(cmds, block);
         const summary = cmds.map((c,i) => c.raw + ' → ' + results[i]).join('\n');
         chat.push({role:'tool', text: 'Command results:\n' + summary, t: Date.now()}); saveChat();
         shouldContinue = true;
       } else {
         shouldContinue = await new Promise(resolve => {
-          renderApproval(cmds, (approved) => {
+          renderApproval(cmds, async (approved) => {
             if(!approved){
               chat.push({role:'tool', text: 'The user denied the pending command(s). Do not repeat them without being asked.', t: Date.now()}); saveChat();
               resolve(false); return;
             }
-            const results = cmds.map(runCommand);
             const blocks = msgsEl.querySelectorAll('.pl-cmdblock');
             const block = blocks[blocks.length-1];
-            if(block) cmds.forEach((c,i) => { block.children[i].querySelector('.pl-cmdresult').textContent = results[i]; block.children[i].classList.add('pl-cmdrow-done'); });
+            const results = await runCommandsIntoBlock(cmds, block);
             const summary = cmds.map((c,i) => c.raw + ' → ' + results[i]).join('\n');
             chat.push({role:'tool', text: 'Command results:\n' + summary, t: Date.now()}); saveChat();
             resolve(true);
@@ -996,17 +1089,26 @@
     }
 
     if(gated.length){
+      if(cfg.autoApproveClicks){
+        clickBudget = CLICK_BATCH;
+        const block = renderCommandBlock(gated, null);
+        const results = await runCommandsIntoBlock(gated, block);
+        const summary = gated.map((c,i) => c.raw + ' → ' + results[i]).join('\n');
+        chat.push({role:'tool', text: 'Command results:\n' + summary, t: Date.now()}); saveChat();
+        looping = false;
+        await converse(round + 1);
+        return;
+      }
       looping = false; sendBtn.disabled = false;
-      renderClickGate(gated, (approved) => {
+      renderClickGate(gated, async (approved) => {
         if(!approved){
           chat.push({role:'tool', text: 'The user denied the click session. Do not attempt further /click commands without being asked.', t: Date.now()}); saveChat();
           return;
         }
         clickBudget = CLICK_BATCH;
-        const results = gated.map(runCommand);
         const blocks = msgsEl.querySelectorAll('.pl-cmdblock');
         const block = blocks[blocks.length-1];
-        if(block) gated.forEach((c,i) => { block.children[i].querySelector('.pl-cmdresult').textContent = results[i]; block.children[i].classList.add('pl-cmdrow-done'); });
+        const results = await runCommandsIntoBlock(gated, block);
         const summary = gated.map((c,i) => c.raw + ' → ' + results[i]).join('\n');
         chat.push({role:'tool', text: 'Command results:\n' + summary, t: Date.now()}); saveChat();
         converse(round + 1);
@@ -1082,6 +1184,14 @@
           '<div class="aw-row pl-risky-row">' +
             '<div><div class="aw-row-label">Allow UI Clicks</div><div class="aw-row-sub">Lets the AI click any labeled control via /click. Every ' + CLICK_BATCH + ' clicks needs your confirmation.</div></div>' +
             '<label class="toggle-switch"><input type="checkbox" id="plAllowClicksToggle"><span class="toggle-slider"></span></label>' +
+          '</div>' +
+          '<div class="aw-row">' +
+            '<div><div class="aw-row-label">Approve all click requests</div><div class="aw-row-sub">Auto-approves every new batch of ' + CLICK_BATCH + ' clicks instead of waiting for you to tap Approve.</div></div>' +
+            '<label class="toggle-switch"><input type="checkbox" id="plAutoApproveClicksToggle"><span class="toggle-slider"></span></label>' +
+          '</div>' +
+          '<div class="aw-row">' +
+            '<div><div class="aw-row-label">Click Cooldown</div><div class="aw-row-sub">When the AI sends several commands in one message, runs them one at a time with a ' + (COOLDOWN_MS/1000) + 's pause between each instead of all at once.</div></div>' +
+            '<label class="toggle-switch"><input type="checkbox" id="plClickCooldownToggle"><span class="toggle-slider"></span></label>' +
           '</div>' +
 
           '<button type="button" class="tc-mod-btn pl-open-chat-btn" id="plOpenChatBtn"><span class="material-symbols-outlined">chat</span>Open Pollinations Chat</button>' +
@@ -1181,6 +1291,20 @@
     allowClicksToggle.addEventListener('change', () => {
       cfg.allowClicks = allowClicksToggle.checked;
       clickBudget = 0; // always start a fresh session — off→on or on→off, either way needs a new confirmation
+      saveCfg();
+    });
+
+    const autoApproveClicksToggle = document.getElementById('plAutoApproveClicksToggle');
+    autoApproveClicksToggle.checked = cfg.autoApproveClicks;
+    autoApproveClicksToggle.addEventListener('change', () => {
+      cfg.autoApproveClicks = autoApproveClicksToggle.checked;
+      saveCfg();
+    });
+
+    const clickCooldownToggle = document.getElementById('plClickCooldownToggle');
+    clickCooldownToggle.checked = cfg.clickCooldown;
+    clickCooldownToggle.addEventListener('change', () => {
+      cfg.clickCooldown = clickCooldownToggle.checked;
       saveCfg();
     });
 

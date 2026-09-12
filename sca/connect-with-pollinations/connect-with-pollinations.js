@@ -32,7 +32,9 @@
       enabled: false,
       pages: 'selected'      // 'all' | 'selected' (uses scopePages) | 'aichoice'
     },
-    allowClicks: false        // master switch for the /click command
+    allowClicks: false,       // master switch for the /click command (gated, 30-click batches)
+    allowScreenShare: false   // sends a live on-screen clickable-control snapshot every message,
+                              // and lifts the click batch limit entirely
   };
 
   // Click-session budget. Deliberately NOT persisted to localStorage — every
@@ -62,9 +64,20 @@
     return document.querySelector('.page-content:focus') || document.querySelector('#editorArea .page-content');
   }
   function pageNumFromEl(el){
-    const m = el && el.id && el.id.match(/pageContent(\d+)/);
-    return m ? parseInt(m[1], 10) : 1;
+    // Page IDs are NOT guaranteed sequential — pages inserted via
+    // addPageAfter()/addPageBefore() get timestamp+random uid-based IDs.
+    // Always resolve position from live DOM order, matching how the host
+    // itself computes the current page number (getCurrentPageNum()).
+    if(!el) return 1;
+    const contentEl = el.matches && el.matches('.page-content') ? el : el.closest('.page-content');
+    if(!contentEl) return 1;
+    const all = [...document.querySelectorAll('#editorArea .page-content')];
+    const idx = all.indexOf(contentEl);
+    return idx === -1 ? 1 : idx + 1;
   }
+  // DOM-order page lookups — the addressing scheme every /command below uses.
+  function pageContentByNum(n){ return document.querySelectorAll('#editorArea .page-content')[n-1] || null; }
+  function pageByNum(n){ return document.querySelectorAll('#editorArea .page')[n-1] || null; }
   function allowedPages(){
     if(cfg.scopePages === 'all') return null; // null = no restriction
     if(cfg.scopePages === 'current'){
@@ -137,21 +150,26 @@
     if(!elAllowed('header')) return denyMsg('page header');
     const num = parseInt(n,10) || 1;
     if(!pageAllowed(num)) return denyMsg('page ' + num);
-    return textOf('pageHeader' + num) || '(empty)';
+    const p = pageByNum(num); if(!p) return 'Page ' + num + ' not found.';
+    const el = p.querySelector('.page-header-area');
+    return (el && el.textContent.trim()) || '(empty)';
   });
 
   reg('footer', 'words', 'info', 'footer <n> — text of page n\'s footer.', (n) => {
     if(!elAllowed('footer')) return denyMsg('page footer');
     const num = parseInt(n,10) || 1;
     if(!pageAllowed(num)) return denyMsg('page ' + num);
-    return textOf('pageFooter' + num) || '(empty)';
+    const p = pageByNum(num); if(!p) return 'Page ' + num + ' not found.';
+    const el = p.querySelector('.page-footer-area');
+    return (el && el.textContent.trim()) || '(empty)';
   });
 
   reg('pagetext', 'words', 'info', 'pagetext <n> — plain text content of page n.', (n) => {
     if(!elAllowed('content')) return denyMsg('page content');
     const num = parseInt(n,10) || 1;
     if(!pageAllowed(num)) return denyMsg('page ' + num);
-    return textOf('pageContent' + num) || '(empty)';
+    const el = pageContentByNum(num);
+    return (el && el.textContent.trim()) || '(empty)';
   });
 
   reg('selection', 'none', 'info', 'Currently selected text, if any.', () => {
@@ -224,24 +242,33 @@
     if(!elAllowed('header')) return denyMsg('page header');
     const num = parseInt(n,10) || 1;
     if(!pageAllowed(num)) return denyMsg('page ' + num);
-    const el = document.getElementById('pageHeader' + num); if(!el) return 'Page ' + num + ' not found.';
+    const p = pageByNum(num); if(!p) return 'Page ' + num + ' not found.';
+    const el = p.querySelector('.page-header-area'); if(!el) return 'Page ' + num + ' not found.';
     el.textContent = rest.join(' '); return 'Header on page ' + num + ' updated.';
   });
   reg('footerset', 'words', 'action', 'footerset <n> <text...> — set page n\'s footer text.', (n, ...rest) => {
     if(!elAllowed('footer')) return denyMsg('page footer');
     const num = parseInt(n,10) || 1;
     if(!pageAllowed(num)) return denyMsg('page ' + num);
-    const el = document.getElementById('pageFooter' + num); if(!el) return 'Page ' + num + ' not found.';
+    const p = pageByNum(num); if(!p) return 'Page ' + num + ' not found.';
+    const el = p.querySelector('.page-footer-area'); if(!el) return 'Page ' + num + ' not found.';
     el.textContent = rest.join(' '); return 'Footer on page ' + num + ' updated.';
   });
 
   reg('addpage', 'none', 'action', 'Add a new page at the end of the document.', () => {
-    if(typeof addPage === 'function'){ addPage(); return 'Page added.'; }
+    if(typeof addNewPage === 'function'){ addNewPage(); return 'Page added.'; }
     return 'Add-page function not available.';
   });
   reg('removepage', 'words', 'action', 'removepage <n> — delete page n.', (n) => {
-    if(typeof deletePage === 'function'){ deletePage(parseInt(n,10)||1); return 'Page ' + n + ' removed.'; }
-    return 'Delete-page function not available.';
+    const num = parseInt(n,10) || 1;
+    if(!pageAllowed(num)) return denyMsg('page ' + num);
+    const pages = document.querySelectorAll('#editorArea .page');
+    if(pages.length <= 1) return 'Cannot delete the only page.';
+    const pageEl = pages[num-1];
+    if(!pageEl) return 'Page ' + num + ' not found.';
+    if(typeof _executeDeletePage !== 'function') return 'Delete-page function not available.';
+    _executeDeletePage(pageEl);
+    return 'Page ' + num + ' removed.';
   });
 
   reg('inserttext', 'rest', 'action', 'inserttext <text> — insert plain text at the cursor.', (text) => {
@@ -371,7 +398,7 @@
   reg('gotopage', 'words', 'info', 'gotopage <n> — scroll page n into view.', (n) => {
     const num = parseInt(n,10)||1;
     if(!pageAllowed(num)) return denyMsg('page ' + num);
-    const el = document.getElementById('page' + num);
+    const el = pageByNum(num);
     if(!el) return 'Page ' + num + ' not found.';
     el.scrollIntoView({behavior:'smooth', block:'start'});
     return 'Scrolled to page ' + num + '.';
@@ -501,24 +528,58 @@
   reg('duplicatepage', 'words', 'action', 'duplicatepage <n> — duplicate page n and insert the copy right after it.', (n) => {
     const num = parseInt(n,10) || 1;
     if(!pageAllowed(num)) return denyMsg('page ' + num);
-    const src = document.getElementById('pageContent' + num);
-    const outer = src && src.closest('.page-outer, .page');
-    if(!src || !outer) return 'Page ' + num + ' not found.';
-    if(typeof addPageAfter === 'function'){
-      const before = document.querySelectorAll('#editorArea .page').length;
-      outer.dataset.tcClonePending = '1';
-      addPageAfter();
-      const after = document.querySelectorAll('#editorArea .page').length;
-      if(after > before){
-        const newPc = document.querySelectorAll('#editorArea .page-content')[num]; // 0-indexed, new page sits right after n
-        if(newPc) newPc.innerHTML = src.innerHTML;
-      }
-      return 'Page ' + num + ' duplicated.';
+    const srcPage = pageByNum(num);
+    if(!srcPage) return 'Page ' + num + ' not found.';
+    if(typeof addPageAfter !== 'function') return 'Page duplication function not available.';
+    const srcHeader = srcPage.querySelector('.page-header-area');
+    const srcContent = srcPage.querySelector('.page-content');
+    const srcFooter = srcPage.querySelector('.page-footer-area');
+    // addPageAfter() inserts after whichever page currently has editor
+    // focus/context, not after an arbitrary page N — so point the host's
+    // own context pointer at page N first, exactly like clicking into it
+    // would, then restore it. This keeps cert-minting, indicator refresh,
+    // etc. on the host's real code path instead of hand-rolling a clone.
+    const hasS = typeof S !== 'undefined';
+    const savedContext = hasS ? S.currentContextPage : undefined;
+    if(hasS) S.currentContextPage = srcPage;
+    addPageAfter();
+    if(hasS) S.currentContextPage = savedContext;
+    const newPage = pageByNum(num + 1); // sits right after srcPage
+    if(newPage){
+      const nh = newPage.querySelector('.page-header-area');
+      const nc = newPage.querySelector('.page-content');
+      const nf = newPage.querySelector('.page-footer-area');
+      if(nh && srcHeader) nh.innerHTML = srcHeader.innerHTML;
+      if(nc && srcContent) nc.innerHTML = srcContent.innerHTML;
+      if(nf && srcFooter) nf.innerHTML = srcFooter.innerHTML;
     }
-    return 'Page duplication function not available.';
+    return 'Page ' + num + ' duplicated.';
   });
 
   // ── Click anything (gated: batches of CLICK_BATCH need user confirmation) ──
+  function collectClickTargets(){
+    // Same selector findClickable() matches against, so the list the AI is
+    // given is exactly what /click can actually hit — no phantom options.
+    // Filtered to what's genuinely visible & usable right now (hidden modal
+    // contents, disabled controls excluded) so it reflects the live screen.
+    const nodes = document.querySelectorAll(
+      'button, [onclick], a[href], input[type="checkbox"], input[type="radio"], select, .tbtn, .mbtn, .aw-header, .sb-title'
+    );
+    const labels = new Set();
+    nodes.forEach(n => {
+      if(n.disabled) return;
+      if(n.offsetParent === null && getComputedStyle(n).position !== 'fixed') return; // hidden (display:none or in a closed panel)
+      if(getComputedStyle(n).visibility === 'hidden') return;
+      const label = (n.getAttribute('title') || n.getAttribute('aria-label') || n.textContent || '').trim().replace(/\s+/g,' ');
+      if(label && label.length < 60) labels.add(label);
+    });
+    return [...labels].slice(0, 150);
+  }
+  function buildScreenShareContext(){
+    const targets = collectClickTargets();
+    return 'Clickable controls currently on screen (' + targets.length + '), click any of these EXACTLY by label via /click:\n' + targets.join(', ');
+  }
+
   function findClickable(label){
     const norm = s => (s||'').trim().toLowerCase().replace(/\s+/g,' ');
     const target = norm(label);
@@ -543,14 +604,15 @@
     el.click();
   }
   reg('click', 'rest', 'action',
-    'click <element label> — click any labeled UI control by its visible text/title/aria-label (must be turned on in Pollinations Configuration; every ' + CLICK_BATCH + ' clicks needs your confirmation).',
+    'click <element label> — click any labeled UI control by its visible text/title/aria-label (needs "Allow UI Clicks", gated in batches of ' + CLICK_BATCH + ', or "Allow Screen Share" for unlimited back-to-back clicks).',
     (label) => {
-      if(!cfg.allowClicks) return 'Clicking is off — enable "Allow UI Clicks" in Pollinations Configuration.';
-      if(clickBudget <= 0) return 'Click budget exhausted — waiting on a new confirmation from the user.';
+      if(!cfg.allowClicks && !cfg.allowScreenShare) return 'Clicking is off — enable "Allow UI Clicks" or "Allow Screen Share" in Pollinations Configuration.';
+      if(!cfg.allowScreenShare && clickBudget <= 0) return 'Click budget exhausted — waiting on a new confirmation from the user.';
       if(!label) return 'Missing element label.';
       const el = findClickable(label);
       if(!el) return 'No clickable element found matching "' + label + '".';
       doClick(el);
+      if(cfg.allowScreenShare) return 'Clicked "' + label + '".';
       clickBudget--;
       return 'Clicked "' + label + '" (' + clickBudget + ' of ' + CLICK_BATCH + ' left before the next confirmation).';
     }
@@ -558,8 +620,10 @@
   // Splits a parsed command list at the point (if any) where a /click would
   // exceed the remaining budget, so everything from there needs a fresh
   // confirmation before any of it — including later non-click commands in
-  // the same reply, to keep execution order intact — runs.
+  // the same reply, to keep execution order intact — runs. Skipped entirely
+  // when Allow Screen Share is on: clicks just run like any other action.
   function splitForClickGate(cmds){
+    if(cfg.allowScreenShare) return {ready: cmds, gated: []};
     let sim = clickBudget;
     for(let i = 0; i < cmds.length; i++){
       if(cmds[i].name === 'click' && cfg.allowClicks){
@@ -587,15 +651,21 @@
       ? '\nExplore Mode is ON: a live "EDITOR CONTEXT" snapshot (UI overview + document text, per the current page setting) is attached fresh before your next reply on every turn. Treat it as ground truth for that turn; it is not saved to history.'
       + (cfg.explore.pages === 'aichoice' ? ' Page text is NOT included automatically in this mode — ask for specific pages with /pagetext <n> when you need them.' : '')
       : '';
+    const screenShareNote = cfg.allowScreenShare
+      ? '\nAllow Screen Share is ON: a live "SCREEN SHARE" snapshot of every currently visible, enabled, clickable control is attached fresh on every turn — this is your only reliable list of real /click targets right now (a control not in it either doesn\'t exist or isn\'t clickable at the moment, e.g. a closed panel). /click has NO batch limit while this is on — use it as many times, back-to-back, as the task needs.'
+      : '';
     return [
       'You are Pollinations, an AI assistant embedded in the Sugarcane document editor.',
       'You can read and control the editor ONLY through slash commands. Put each command on its own line, exactly as documented, e.g.:',
       '/wordcount',
       '/marginset left 2.5',
       'Any line beginning with "/" in your reply is parsed and run automatically — info commands return data to you (you may need to ask again in a follow-up turn to see the result and continue), action commands change the document. Do not use slash commands for anything except the documented ones below. Never invent commands.',
-      'You cannot click UI elements directly by intent — the only way to interact with one is the /click command, which looks it up by its visible label/title/aria-label. It is gated: it only works when the user has turned on "Allow UI Clicks", and every ' + CLICK_BATCH + ' clicks needs a fresh confirmation from the user before more can happen — if you get "waiting on a new confirmation", stop and wait rather than repeating the command. Any other "clickable elements" list you see is descriptive context, not something you can trigger some other way.',
-      'You have NO knowledge of the document\'s actual current state until you ask via an info command (or read it from an attached EDITOR CONTEXT snapshot) — do not assume values.',
+      'You cannot click UI elements directly by intent — the only way to interact with one is the /click command, which looks it up by its visible label/title/aria-label.' + (cfg.allowScreenShare
+        ? ' It is unlimited right now (Allow Screen Share is on) — no confirmation batches, click as many things in a row as you need.'
+        : ' It is gated: it only works when the user has turned on "Allow UI Clicks", and every ' + CLICK_BATCH + ' clicks needs a fresh confirmation from the user before more can happen — if you get "waiting on a new confirmation", stop and wait rather than repeating the command.') + ' Any other "clickable elements" list you see is descriptive context, not something you can trigger some other way.',
+      'You have NO knowledge of the document\'s actual current state until you ask via an info command (or read it from an attached EDITOR CONTEXT / SCREEN SHARE snapshot) — do not assume values.',
       exploreNote,
+      screenShareNote,
       '',
       'COMMAND REFERENCE:',
       ref,
@@ -729,6 +799,22 @@
     });
     wireDrag();
     renderHistory();
+    // Keep a floating panel on-screen across rotation/resize (a fixed
+    // left/top in px doesn't reflow on its own the way right/bottom does).
+    window.addEventListener('resize', clampPanelToViewport);
+    window.addEventListener('orientationchange', () => setTimeout(clampPanelToViewport, 60));
+  }
+
+  function clampPanelToViewport(){
+    if(!panelEl || cfg.dockMode !== 'floating') return;
+    const margin = 4;
+    const rect = panelEl.getBoundingClientRect();
+    const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+    const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+    const left = Math.min(Math.max(rect.left, margin), maxLeft);
+    const top = Math.min(Math.max(rect.top, margin), maxTop);
+    panelEl.style.left = left + 'px';
+    panelEl.style.top = top + 'px';
   }
 
   function toggleDock(){
@@ -736,7 +822,7 @@
     saveCfg();
     panelEl.classList.remove('pl-docked','pl-floating');
     panelEl.classList.add('pl-' + cfg.dockMode);
-    if(cfg.dockMode === 'floating'){ panelEl.style.right='auto'; panelEl.style.bottom='auto'; panelEl.style.top='90px'; panelEl.style.left='90px'; }
+    if(cfg.dockMode === 'floating'){ panelEl.style.right='auto'; panelEl.style.bottom='auto'; panelEl.style.top='90px'; panelEl.style.left='90px'; clampPanelToViewport(); }
     else { panelEl.style.top='auto'; panelEl.style.left='auto'; panelEl.style.right='18px'; panelEl.style.bottom='18px'; }
   }
 
@@ -751,8 +837,12 @@
     });
     header.addEventListener('pointermove', (e) => {
       if(!dragging) return;
-      panelEl.style.left = Math.max(4, ox + (e.clientX - sx)) + 'px';
-      panelEl.style.top = Math.max(4, oy + (e.clientY - sy)) + 'px';
+      const rect = panelEl.getBoundingClientRect();
+      const margin = 4;
+      const maxLeft = Math.max(margin, window.innerWidth - rect.width - margin);
+      const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+      panelEl.style.left = Math.min(Math.max(margin, ox + (e.clientX - sx)), maxLeft) + 'px';
+      panelEl.style.top = Math.min(Math.max(margin, oy + (e.clientY - sy)), maxTop) + 'px';
     });
     header.addEventListener('pointerup', () => { dragging = false; });
   }
@@ -760,7 +850,7 @@
   function togglePanel(show){
     if(!panelEl) buildPanel();
     panelEl.style.display = show ? 'flex' : 'none';
-    if(show) inputEl.focus();
+    if(show){ inputEl.focus(); clampPanelToViewport(); }
   }
 
   function addMsg(role, text){
@@ -858,6 +948,10 @@
       if(cfg.explore.enabled){
         // Freshly rebuilt every call, never persisted to chat/localStorage.
         messages.push({role:'system', content: 'EDITOR CONTEXT (live, this turn only):\n' + buildExploreContext()});
+      }
+      if(cfg.allowScreenShare){
+        // Independent of Explore Mode — this is UI state, not document text.
+        messages.push({role:'system', content: 'SCREEN SHARE (live, this turn only):\n' + buildScreenShareContext()});
       }
       reply = await callPollinations(messages);
     } catch(e){
@@ -981,6 +1075,11 @@
           '</div>' +
 
           '<div class="aw-row pl-risky-row">' +
+            '<div><div class="aw-row-label">Allow Screen Share</div><div class="aw-row-sub">Sends a live snapshot of every clickable control actually on screen right now with each message, and lets /click run back-to-back with no batch limit.</div></div>' +
+            '<label class="toggle-switch"><input type="checkbox" id="plAllowScreenShareToggle"><span class="toggle-slider"></span></label>' +
+          '</div>' +
+
+          '<div class="aw-row pl-risky-row">' +
             '<div><div class="aw-row-label">Allow UI Clicks</div><div class="aw-row-sub">Lets the AI click any labeled control via /click. Every ' + CLICK_BATCH + ' clicks needs your confirmation.</div></div>' +
             '<label class="toggle-switch"><input type="checkbox" id="plAllowClicksToggle"><span class="toggle-slider"></span></label>' +
           '</div>' +
@@ -1068,6 +1167,14 @@
       cfg.explore.pages = b.dataset.v; saveCfg(); syncExploreSeg();
     }));
     syncExploreSeg();
+
+    const allowScreenShareToggle = document.getElementById('plAllowScreenShareToggle');
+    allowScreenShareToggle.checked = cfg.allowScreenShare;
+    allowScreenShareToggle.addEventListener('change', () => {
+      cfg.allowScreenShare = allowScreenShareToggle.checked;
+      clickBudget = 0; // switching modes always starts fresh
+      saveCfg();
+    });
 
     const allowClicksToggle = document.getElementById('plAllowClicksToggle');
     allowClicksToggle.checked = cfg.allowClicks;

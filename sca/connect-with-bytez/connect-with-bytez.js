@@ -1,296 +1,1056 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Sugarcane Add-on: Connect with Bytez
+   Adds a "Bytez Configuration" sidebar dropdown for wiring up a Bytez
+   (bytez.com) AI model, plus a dockable chat panel. The AI can read and
+   control the editor through a slash-command protocol: a fixed set of
+   info/action commands, scoped by what the user has allowed it to see.
+
+   Honest scope note:
+   Sugarcane doesn't have true per-page margins/background/watermark —
+   those are single global settings shared by every page. So commands
+   like /marginset and /bgset act globally, not per page, and the
+   command set below covers a broad, real slice of the editor rather
+   than literally every menu action — the registry is written so new
+   commands are a ~5-line addition.
+═══════════════════════════════════════════════════════════════════════ */
 (function(){
-'use strict';
+  'use strict';
+  const CFG_KEY = 'sugarcane_addon_bytez_config';
+  const CHAT_KEY = 'sugarcane_addon_bytez_chat';
 
-const KEY='sc_bytez_config_v1';
-const DEFAULT={apiKey:'',model:'Qwen/Qwen3-4B',endpoint:'https://api.bytez.com/models/v2/{modelId}',autoExecute:false,exploreMode:false,pageMode:'all',pages:[],scopes:{
-  pageContent:true,header:false,footer:false,watermark:false,watermarkOptions:false,pageBackground:true,pageMargins:true,pageNumbering:false,typography:true,documentTitle:true,selection:true,tables:true,images:true,links:true,banners:true,shapes:true,toolbar:false,sidebar:false,rawHtml:false
-},history:[]};
-const SCOPE_DEFS=[
- ['pageContent','Page content'],['header','Current page header'],['footer','Current page footer'],['watermark','Watermark text'],['watermarkOptions','Watermark options'],['pageBackground','Page background'],['pageMargins','Page margins'],['pageNumbering','Page numbering'],['typography','Typography / spacing'],['documentTitle','Document title / metadata'],['selection','Current selection'],['tables','Tables / table data'],['images','Images / image data'],['links','Links'],['banners','Banners'],['shapes','Shapes / charts / drawings'],['toolbar','Toolbar controls'],['sidebar','Sidebar controls'],['rawHtml','Raw editor HTML']
-];
-let cfg=loadCfg(), pending=[], chat=[], dragging=false, dragOffset={x:0,y:0};
+  const defaults = {
+    apiKey: '',
+    model: '',
+    autoExecute: false,
+    scopePages: 'all',       // 'all' | 'current' | comma list e.g. "1,3"
+    elements: {
+      header: true, footer: true, watermark: true, background: true,
+      margins: true, counts: true, content: true, selection: true, tables: true
+    },
+    dockMode: 'docked',      // 'docked' | 'floating'
+    explore: {
+      enabled: false,
+      pages: 'selected'      // 'all' | 'selected' (uses scopePages) | 'aichoice'
+    },
+    allowClicks: false        // master switch for the /click command
+  };
 
-function loadCfg(){try{return Object.assign(structuredClone(DEFAULT),JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){return structuredClone(DEFAULT);}}
-function saveCfg(){localStorage.setItem(KEY,JSON.stringify(cfg));}
-function q(id){return document.getElementById(id)}
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function status(text,error){const e=q('bytezConfigStatus'); if(e){e.textContent=text||'';e.classList.toggle('error',!!error);}}
-function currentPages(){return [...document.querySelectorAll('#editorArea .page')];}
-function pageNum(p){const ps=currentPages(); return Math.max(1,ps.indexOf(p)+1);}
-function currentPage(){try{if(typeof getCurrentPageEl==='function'){const p=getCurrentPageEl(); if(p) return p;}}catch(e){}
- const sel=getSelection&&getSelection(); const n=sel&&sel.anchorNode; const p=n&&n.nodeType===1?n.closest?.('.page'):n?.parentElement?.closest?.('.page'); if(p) return p;
- const ps=currentPages(); if(!ps.length)return null; const y=innerHeight*.42; let best=ps[0],dist=1e9; for(const x of ps){const r=x.getBoundingClientRect(),c=Math.abs((r.top+r.bottom)/2-y);if(c<dist){dist=c;best=x;}}return best;}
-function selectedPageIndexes(){if(cfg.pageMode==='current'){const p=currentPage(); return p?[pageNum(p)]:[];} if(cfg.pageMode==='selected'&&cfg.pages.length)return cfg.pages.slice(); return currentPages().map((_,i)=>i+1);}
-function selectedPageEls(){const nums=new Set(selectedPageIndexes());return currentPages().filter((p,i)=>nums.has(i+1));}
-function get(id){return q(id)?.value??q(id)?.textContent??null;}
-function bool(id){return !!q(id)?.checked;}
-function call(name,...args){try{if(typeof window[name]==='function')return window[name](...args);}catch(e){throw e;}throw new Error('Editor function not available: '+name);}
-function updateWith(fnName,id,val){const el=q(id);if(!el)throw new Error('Control not found: '+id);el.value=val;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true})); if(typeof window[fnName]==='function')window[fnName](val);}
-function normColor(v){let s=String(v||'').trim();if(!s)return '#000000'; if(/^#[0-9a-f]{6}$/i.test(s))return s; const raw=s.replace(/[^0-9a-f]/gi,''); if(raw.length>=6)return '#'+raw.slice(0,6); if(raw.length===3)return '#'+raw.split('').map(c=>c+c).join(''); throw new Error('Invalid color: '+v);}
+  // Click-session budget. Deliberately NOT persisted to localStorage — every
+  // fresh page load starts at 0, so a new session always needs a confirmation
+  // before the AI can click anything.
+  let clickBudget = 0;
+  const CLICK_BATCH = 30;
 
-function pageData(p, detailed){
- const n=pageNum(p), pc=p.querySelector('.page-content'), h=p.querySelector('.page-header-area'), f=p.querySelector('.page-footer-area'), wm=p.querySelector('.watermark');
- const cs=getComputedStyle(p); const obj={page:n,content:cfg.scopes.pageContent?pc?.innerText||'':undefined,html:cfg.scopes.rawHtml?p.innerHTML:undefined,header:cfg.scopes.header?h?.innerText||'':undefined,footer:cfg.scopes.footer?f?.innerText||'':undefined,watermark:cfg.scopes.watermark?wm?.textContent||'':undefined};
- if(cfg.scopes.pageBackground)obj.background={inline:p.style.background||'',computed:cs.background||'',type:get('bgType'),color:get('bgColor'),color2:get('bgColor2'),angle:get('gradientAngle')};
- if(cfg.scopes.pageMargins)obj.margins={top:(cs.paddingTop||''),right:(cs.paddingRight||''),bottom:(cs.paddingBottom||''),left:(cs.paddingLeft||''),inputs:{all:get('pageMargin'),top:get('marginTop'),bottom:get('marginBottom'),left:get('marginLeft'),right:get('marginRight')}};
- if(cfg.scopes.watermarkOptions)obj.watermarkOptions={color:get('wmColor'),fontSize:get('wmFontSize'),position:get('wmPosition'),bold:bool('wmBold'),font:get('wmFont')};
- if(cfg.scopes.typography)obj.typography={font:get('fontChooserToolbarBtn')||window.S?.font,lineSpacing:get('lineSpacing'),wordSpacing:get('wordSpacing'),zoom:window.S?.zoom};
- if(cfg.scopes.tables)obj.tables=[...p.querySelectorAll('table')].map((t,i)=>({index:i+1,html:t.outerHTML,rows:[...t.rows].map(r=>[...r.cells].map(c=>c.innerText))}));
- if(cfg.scopes.images)obj.images=[...p.querySelectorAll('img')].map((img,i)=>({index:i+1,src:img.src,alt:img.alt,width:img.width,height:img.height,locked:!!window.S?.lockedImgs?.has?.(img)}));
- if(cfg.scopes.links)obj.links=[...p.querySelectorAll('a')].map((a,i)=>({index:i+1,text:a.innerText,href:a.href,title:a.title||''}));
- if(cfg.scopes.banners)obj.banners=[...p.querySelectorAll('.sc-banner,.insert-banner,.banner')].map((b,i)=>({index:i+1,text:b.innerText,html:b.outerHTML}));
- if(cfg.scopes.shapes)obj.shapes=[...p.querySelectorAll('svg,canvas,.shape,.chart')].map((x,i)=>({index:i+1,tag:x.tagName,html:x.outerHTML?.slice(0,6000)||''}));
- return obj;
-}
-function documentContext(){
- const out={title:cfg.scopes.documentTitle?(q('docTitle')?.value||''):'',pageCount:currentPages().length};
- if(cfg.scopes.pageNumbering)out.pageNumbering={enabled:window.PN?.enabled??false,pages:get('pnPages'),start:get('pnStart'),position:window.PN?.position,size:get('pnSize'),color:get('pnColor'),highlight:get('pnHighlight')};
- out.pages=selectedPageEls().map(p=>pageData(p));
- if(cfg.scopes.selection){const s=getSelection?.();out.selection={text:s?.toString?.()||'',html:s&&s.rangeCount?(()=>{const r=s.getRangeAt(0),d=document.createElement('div');try{d.appendChild(r.cloneContents());return d.innerHTML;}catch(e){return '';}})():''};}
- if(cfg.scopes.documentTitle)out.documentUI={zoom:window.S?.zoom??null,hasContent:window.S?.hasContent??null};
- if(cfg.scopes.rawHtml)out.editorHTML=[...document.querySelectorAll('#editorArea .page')].map(p=>p.outerHTML);
- return out;
-}
+  let cfg = loadCfg();
+  function loadCfg(){
+    try {
+      const saved = JSON.parse(localStorage.getItem(CFG_KEY) || '{}');
+      return Object.assign({}, defaults, saved, {
+        elements: Object.assign({}, defaults.elements, saved.elements || {}),
+        explore: Object.assign({}, defaults.explore, saved.explore || {})
+      });
+    } catch(e){ return JSON.parse(JSON.stringify(defaults)); }
+  }
+  function saveCfg(){ try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e){} }
 
-function countForPages(){let text=selectedPageEls().map(p=>p.querySelector('.page-content')?.innerText||'').join('\n');let words=text.trim()?text.trim().split(/\s+/).filter(Boolean):[];return {words:words.length,charactersNoSpaces:text.replace(/\s/g,'').length,characters:text.length,sentences:text.split(/[.!?]+/).filter(x=>x.trim().length>2).length,paragraphs:selectedPageEls().reduce((n,p)=>n+p.querySelectorAll('.page-content p,.page-content li,.page-content h1,.page-content h2,.page-content h3,.page-content h4,.page-content h5,.page-content h6').length,0)};}
+  let chat = loadChat();
+  function loadChat(){ try { return JSON.parse(localStorage.getItem(CHAT_KEY) || '[]'); } catch(e){ return []; } }
+  function saveChat(){ try { localStorage.setItem(CHAT_KEY, JSON.stringify(chat.slice(-60))); } catch(e){} }
 
-function queryCommand(cmd){const m=cmd.trim().match(/^\/(\S+)(.*)$/);if(!m)throw new Error('Bad query command');const name=m[1].toLowerCase(),rest=m[2].trim();
- if(name==='help')return {command:'/help',commands:COMMAND_DOCS.map(x=>x.cmd+' — '+x.desc),actions:discoverActions().slice(0,500)};
- if(name==='pagecount')return {pageCount:currentPages().length};
- if(name==='wordcount')return countForPages();
- if(name==='pagebg')return selectedPageEls().map(pageData).map(x=>({page:x.page,background:x.background}));
- if(name==='pagewatermark')return selectedPageEls().map(p=>{const d=pageData(p);return {page:d.page,watermark:d.watermark,options:d.watermarkOptions};});
- if(name==='pagemargins')return selectedPageEls().map(p=>pageData(p).margins);
- const pm=name.match(/^pagemargin(\d+)$/); if(pm){const idx=+pm[1],p=currentPages()[idx-1];if(!p)throw new Error('Page '+idx+' not found');return pageData(p,true);}
- if(name==='pagemarginborder')return selectedPageEls().map(p=>{const r=p.getBoundingClientRect(),cs=getComputedStyle(p);return {page:pageNum(p),width:r.width,height:r.height,border:{top:cs.borderTopWidth+' '+cs.borderTopStyle+' '+cs.borderTopColor,right:cs.borderRightWidth+' '+cs.borderRightStyle+' '+cs.borderRightColor,bottom:cs.borderBottomWidth+' '+cs.borderBottomStyle+' '+cs.borderBottomColor,left:cs.borderLeftWidth+' '+cs.borderLeftStyle+' '+cs.borderLeftColor}}});
- if(name==='selection')return {selection:getSelection?.()?.toString?.()||''};
- if(name==='selectionhtml')return {html:(()=>{const s=getSelection?.();if(!s||!s.rangeCount)return '';const d=document.createElement('div');try{d.appendChild(s.getRangeAt(0).cloneContents());return d.innerHTML;}catch(e){return '';}})()};
- if(name==='tabledata')return documentContext().pages.flatMap(p=>p.tables||[]);
- if(name==='pagedata'){const n=parseInt(rest,10)||pageNum(currentPage()||currentPages()[0]);const p=currentPages()[n-1];if(!p)throw new Error('Page not found');return pageData(p,true);}
- if(name==='get'){if(!rest)throw new Error('Use /get <elementId>');const el=q(rest);if(!el)throw new Error('Element not found: '+rest);return {id:rest,value:el.value??null,text:el.innerText??el.textContent??'',checked:el.checked??null};}
- return {unknown:true,message:'Unknown query command '+name,known:COMMAND_DOCS.map(x=>x.cmd)};
-}
+  // ── Editor helpers ───────────────────────────────────────────────────
+  function activePage(){
+    return document.querySelector('.page-content:focus') || document.querySelector('#editorArea .page-content');
+  }
+  function pageNumFromEl(el){
+    const m = el && el.id && el.id.match(/pageContent(\d+)/);
+    return m ? parseInt(m[1], 10) : 1;
+  }
+  function allowedPages(){
+    if(cfg.scopePages === 'all') return null; // null = no restriction
+    if(cfg.scopePages === 'current'){
+      const p = activePage();
+      return [pageNumFromEl(p)];
+    }
+    return cfg.scopePages.split(',').map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n));
+  }
+  function pageAllowed(n){
+    const allowed = allowedPages();
+    return allowed === null || allowed.includes(n);
+  }
+  function elAllowed(name){ return !!cfg.elements[name]; }
+  function denyMsg(what){ return 'Permission denied: ' + what + ' access is currently off in Bytez Configuration.'; }
 
-function setPageMargins(n,vals){const p=currentPages()[n-1];if(!p)throw new Error('Page '+n+' not found');const t=vals.t??vals.top??parseFloat(get('marginTop')||2),b=vals.b??vals.bottom??parseFloat(get('marginBottom')||2),l=vals.l??vals.left??parseFloat(get('marginLeft')||2),r=vals.r??vals.right??parseFloat(get('marginRight')||2);p.style.padding=`${t}cm ${r}cm ${b}cm ${l}cm`;return {page:n,top:t,bottom:b,left:l,right:r};}
-function allPageText(){return currentPages().map((p,i)=>({page:i+1,text:p.querySelector('.page-content')?.innerText||'',words:(p.querySelector('.page-content')?.innerText||'').trim().split(/\s+/).filter(Boolean).length}));}
-function replaceText(oldText,newText,all){if(!oldText)throw new Error('Missing find text');const pages=selectedPageEls();let count=0;for(const p of pages){const root=p.querySelector('.page-content');if(!root)continue;const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);for(const n of nodes){if(!n.nodeValue.includes(oldText))continue;const hits=n.nodeValue.split(oldText).length-1;n.nodeValue=n.nodeValue.split(oldText).join(newText);count+=hits;if(!all)break;}if(count&&!all)break;}try{if(typeof updateWordCountDetailed==='function')updateWordCountDetailed();}catch(e){}return {replaced:count,find:oldText,replace:newText,all};}
-function findText(text,startAfter){if(!text)throw new Error('Missing search text');const hits=[];for(const p of selectedPageEls()){const root=p.querySelector('.page-content');if(!root)continue;const s=root.innerText||'';let at=0;while((at=s.toLowerCase().indexOf(text.toLowerCase(),at))>=0){hits.push({page:pageNum(p),index:at,match:s.slice(at,at+text.length)});at+=Math.max(1,text.length);if(hits.length>=200)break;}}return {text,matches:hits,count:hits.length};}
-function nativeExec(cmd,a=false,b=null){document.execCommand(cmd,a,b);return {command:cmd};}
-function setZoom(v){const n=Math.max(25,Math.min(400,parseFloat(v)||100));if(typeof window.setZoom==='function' && window.setZoom!==setZoom){window.setZoom(n);}else{try{if(window.S)S.zoom=n;}catch(e){} document.documentElement.style.setProperty('--sc-bytez-zoom',n/100); }return {zoom:n};}
-function setPageTextPart(n,part,text){const p=currentPages()[n-1];if(!p)throw new Error('Page '+n+' not found');const el=p.querySelector(part==='header'?'.page-header-area':'.page-footer-area');if(!el)throw new Error('Page '+part+' unavailable');el.textContent=text;return {page:n,part,text};}
-function exportKind(fmt){if(fmt==='PDF')return call('exportPDF');if(fmt==='DOCX')return call('exportDOCX');if(fmt==='TXT')return call('exportTXTWithOpts');if(fmt==='JPG')return call('exportImgWithOpts');if(fmt==='SCD')return call('exportSCDWithOpts');throw new Error('Unsupported export format');}
-function exploreCatalog(){return {pages:currentPages().map((p,i)=>({page:i+1,visible:!!(p.getBoundingClientRect().width),textPreview:(p.querySelector('.page-content')?.innerText||'').slice(0,1200),wordCount:(p.querySelector('.page-content')?.innerText||'').trim().split(/\s+/).filter(Boolean).length})),clickable:discoverActions(),functions:functionCatalog(),selection:documentContext().selection||null};}
-function executeSemantic(cmd){const raw=cmd.trim();
-  let m2;
-  if(/^\/documentinfo$/i.test(raw))return {title:q('docTitle')?.value||'',pages:currentPages().length,zoom:window.S?.zoom??get('zoomDisplay'),wordCount:countForPages()};
-  m2=raw.match(/^\/pageinfo\s*(\d+)?$/i);if(m2){const n=+(m2[1]||pageNum(currentPage()||currentPages()[0]));const p=currentPages()[n-1];if(!p)throw new Error('Page not found');return pageData(p,true);}
-  m2=raw.match(/^\/(?:replaceall|replace)\s+([\s\S]+?)\s*=>\s*([\s\S]*)$/i);if(m2)return replaceText(m2[1],m2[2],/^\/replaceall/i.test(raw));
-  m2=raw.match(/^\/(?:find|findnext)\s+([\s\S]+)$/i);if(m2)return findText(m2[1]);
-  if(/^\/wordfreq$/i.test(raw)){const f={};for(const x of allPageText().flatMap(x=>x.text.toLowerCase().match(/[\\p{L}\\p{N}']+/gu)||[]))f[x]=(f[x]||0)+1;return Object.entries(f).sort((a,b)=>b[1]-a[1]).slice(0,100);}
-  if(/^\/(?:superscript)$/i.test(raw))return nativeExec('superscript');if(/^\/(?:subscript)$/i.test(raw))return nativeExec('subscript');
-  if(/^\/indent$/i.test(raw))return nativeExec('indent');if(/^\/outdent$/i.test(raw))return nativeExec('outdent');if(/^\/blockquote$/i.test(raw))return nativeExec('formatBlock',false,'blockquote');if(/^\/orderedlist$/i.test(raw))return nativeExec('insertOrderedList');if(/^\/unorderedlist$/i.test(raw))return nativeExec('insertUnorderedList');
-  m2=raw.match(/^\/inserttext\s+([\s\S]+)$/i);if(m2)return nativeExec('insertText',false,m2[1]);
-  m2=raw.match(/^\/insertlink\s+([\s\S]+?)\s*\|\s*(https?:\/\/\S+)$/i);if(m2){nativeExec('createLink',false,m2[2]);return {text:m2[1],url:m2[2]};}
-  m2=raw.match(/^\/insertimage\s+(https?:\/\/\S+)$/i);if(m2){nativeExec('insertImage',false,m2[1]);return {url:m2[1]};}
-  m2=raw.match(/^\/inserttable\s+(\d+)\s+(\d+)$/i);if(m2){if(typeof window.insertTable==='function'){call('insertTable');return {rows:+m2[1],cols:+m2[2]};}throw new Error('Table insertion unavailable');}
-  if(/^\/tableattrs$/i.test(raw))return call('openEditTableAttrs');
-  m2=raw.match(/^\/goto\s+(\d+)$/i);if(m2){const p=currentPages()[+m2[1]-1];if(!p)throw new Error('Page not found');p.scrollIntoView({behavior:'smooth',block:'center'});return {page:+m2[1]};}
-  m2=raw.match(/^\/zoom\s+(\d+(?:\.\d+)?)$/i);if(m2)return setZoom(m2[1]);
-  m2=raw.match(/^\/lineheight\s+(.+)$/i);if(m2){if(q('lineSpacing'))return updateWith('updateLineSpacing','lineSpacing',m2[1]);return nativeExec('formatBlock',false,'p');}
-  m2=raw.match(/^\/wordspacing\s+(.+)$/i);if(m2){if(q('wordSpacing'))return updateWith('updateWordSpacing','wordSpacing',m2[1]);throw new Error('Word spacing control unavailable');}
-  if(/^\/togglewatermark$/i.test(raw)){if(q('watermarkText')&&typeof window.updateWatermark==='function'){q('watermarkText').value=q('watermarkText').value?'':' ';call('updateWatermark');return {watermark:q('watermarkText').value};}return nativeExec('insertText',false,'');}
-  if(/^\/togglepagenumbers$/i.test(raw))return call('togglePageNumbering');
-  m2=raw.match(/^\/pageheader\s+([\s\S]+)$/i);if(m2)return setPageTextPart(pageNum(currentPage()||currentPages()[0]),'header',m2[1]);
-  m2=raw.match(/^\/pagefooter\s+([\s\S]+)$/i);if(m2)return setPageTextPart(pageNum(currentPage()||currentPages()[0]),'footer',m2[1]);
-  if(/^\/selectall$/i.test(raw))return nativeExec('selectAll');if(/^\/copy$/i.test(raw))return nativeExec('copy');if(/^\/cut$/i.test(raw))return nativeExec('cut');
-  m2=raw.match(/^\/paste\s+([\s\S]+)$/i);if(m2)return nativeExec('insertText',false,m2[1]);
-  if(/^\/print$/i.test(raw))return call('printDoc');m2=raw.match(/^\/export\s+(PDF|DOCX|TXT|JPG|SCD)$/i);if(m2)return exportKind(m2[1].toUpperCase());
-  if(/^\/(?:rawhtml)$/i.test(raw))return [...document.querySelectorAll('#editorArea .page')].map(p=>p.outerHTML);
-  if(/^\/explore$/i.test(raw))return exploreCatalog();
-  m2=raw.match(/^\/explorepages\s+([\d,\s]+)$/i);if(m2){cfg.pageMode='selected';cfg.pages=[...new Set(m2[1].split(',').map(x=>+x.trim()).filter(n=>n>0&&n<=currentPages().length))];saveCfg();renderConfig();return {pageMode:cfg.pageMode,pages:cfg.pages};}
-  if(/^\/context$/i.test(raw))return documentContext();if(/^\/clearselection$/i.test(raw)){const s=getSelection?.();s?.removeAllRanges?.();return {cleared:true};}
-  if(/^\/removeformat$/i.test(raw))return execFormat('removeFormat');if(/^\/justify$/i.test(raw))return execFormat('justifyFull');if(/^\/center$/i.test(raw))return execFormat('justifyCenter');if(/^\/left$/i.test(raw))return execFormat('justifyLeft');if(/^\/right$/i.test(raw))return execFormat('justifyRight');
+  function textOf(id){ const el = document.getElementById(id); return el ? el.textContent.trim() : ''; }
 
-  let m=raw.match(/^\/pagemargin(\d+)setall(-?\d+(?:\.\d+)?)$/i); if(m)return setPageMargins(+m[1],{t:+m[2],b:+m[2],l:+m[2],r:+m[2]});
- m=raw.match(/^\/pagemargin(\d+)set([TBLR])(-?\d+(?:\.\d+)?)$/i);if(m){const n=+m[1],key={T:'t',B:'b',L:'l',R:'r'}[m[2].toUpperCase()],p=currentPages()[n-1],cs=getComputedStyle(p),base={t:parseFloat(cs.paddingTop)/37.8,b:parseFloat(cs.paddingBottom)/37.8,l:parseFloat(cs.paddingLeft)/37.8,r:parseFloat(cs.paddingRight)/37.8};base[key]=+m[3];return setPageMargins(n,base);}
- m=raw.match(/^\/pagemargin(\d+)color(.+)$/i);if(m){const n=+m[1],c=normColor(m[2]),p=currentPages()[n-1];if(!p)throw new Error('Page '+n+' not found');p.style.outlineColor=c;p.dataset.bytezMarginColor=c;try{if(typeof applyPageMarginDesigns==='function')applyPageMarginDesigns();}catch(e){}return {page:n,marginColor:c};}
- m=raw.match(/^\/pagemarginborder([TRBL])(-?\d+(?:\.\d+)?)$/i);if(m){const side={T:'Top',R:'Right',B:'Bottom',L:'Left'}[m[1].toUpperCase()];const v=m[2];selectedPageEls().forEach(p=>p.style['border'+side]=`${v}cm solid ${p.dataset.bytezMarginBorderColor||'#888888'}`);return {side:side,value:v+'cm',pages:selectedPageIndexes()};}
- m=raw.match(/^\/pagemarginbordercolor(.+)$/i);if(m){const c=normColor(m[1]);selectedPageEls().forEach(p=>{p.dataset.bytezMarginBorderColor=c;const cs=getComputedStyle(p);['Top','Right','Bottom','Left'].forEach(s=>{const w=parseFloat(cs['border'+s+'Width']);if(w>0)p.style['border'+s]=`${w}px solid ${c}`;});});return {borderColor:c,pages:selectedPageIndexes()};}
- m=raw.match(/^\/pagebg(?:set)?(\d+)(?:color)?(.+)$/i);if(m){const n=+m[1],c=normColor(m[2]),p=currentPages()[n-1];if(!p)throw new Error('Page '+n+' not found');p.style.background=c;if(q('bgType'))q('bgType').value='solid';if(q('bgColor'))q('bgColor').value=c;return {page:n,background:c};}
- m=raw.match(/^\/pagewatermark(\d+)text(.+)$/i);if(m){const n=+m[1],t=m[2],p=currentPages()[n-1];if(!p)throw new Error('Page '+n+' not found');const w=p.querySelector('.watermark');if(w)w.textContent=t;if(q('watermarkText'))q('watermarkText').value=t;return {page:n,text:t};}
- m=raw.match(/^\/pagewatermark(\d+)color(.+)$/i);if(m){const n=+m[1],c=normColor(m[2]),p=currentPages()[n-1];if(!p)throw new Error('Page '+n+' not found');if(q('wmColor'))q('wmColor').value=c;try{call('updateWatermark');}catch(e){}return {page:n,color:c};}
- if(/^\/bold$/i.test(raw))return execFormat('bold');if(/^\/italic$/i.test(raw))return execFormat('italic');if(/^\/underline$/i.test(raw))return execFormat('underline');if(/^\/strike$/i.test(raw))return execFormat('strikeThrough');
- if(/^\/delete$/i.test(raw))return execFormat('delete');if(/^\/clearformat$/i.test(raw))return execFormat('removeFormat');if(/^\/unlink$/i.test(raw))return execFormat('unlink');
- m=raw.match(/^\/font(?:name)?\s+(.+)$/i);if(m)return applyFont(m[1]);
- m=raw.match(/^\/fontsize\s+(.+)$/i);if(m)return applyFontSize(m[1]);
- m=raw.match(/^\/forecolor\s+(.+)$/i);if(m){const c=normColor(m[1]);return execFormat('foreColor',false,c);}
- m=raw.match(/^\/highlight\s+(.+)$/i);if(m){const c=normColor(m[1]);return execFormat('hiliteColor',false,c);}
- m=raw.match(/^\/(?:align|alignment)\s+(left|center|right|justify)$/i);if(m)return execFormat('justify'+m[1][0].toUpperCase()+m[1].slice(1));
- if(/^\/undo$/i.test(raw))return call('undo');if(/^\/redo$/i.test(raw))return call('redo');
- if(/^\/createpage$/i.test(raw)||/^\/addpage$/i.test(raw))return call('addNewPage');
- m=raw.match(/^\/deletepage(?:\s+)?(\d+)$/i);if(m){const p=currentPages()[+m[1]-1];if(!p)throw new Error('Page not found');if(typeof window.deletePage==='function')return window.deletePage(p);p.closest('.page-outer')?.remove();return {deleted:+m[1]};}
- m=raw.match(/^\/insertmarkdown\s+([\s\S]+)$/i);if(m)return insertTextMarkdown(m[1]);
- m=raw.match(/^\/set#([^=]+)=(.*)$/i);if(m){const el=q(m[1].trim());if(!el)throw new Error('Element not found: '+m[1]);el.value=m[2];el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}));return {set:m[1].trim(),value:m[2]};}
- m=raw.match(/^\/toggle#(.+)$/i);if(m){const el=q(m[1].trim());if(!el)throw new Error('Element not found: '+m[1]);if('checked'in el){el.checked=!el.checked;el.dispatchEvent(new Event('change',{bubbles:true}));}else{el.click();}return {toggled:m[1].trim()};}
- m=raw.match(/^\/click#(.+)$/i);if(m){const el=q(m[1].trim());if(!el)throw new Error('Element not found: '+m[1]);el.click();return {clicked:m[1].trim()};}
- m=raw.match(/^\/call#([A-Za-z_$][\w$]*)\s*(.*)$/i);if(m){const name=m[1];if(!isCallableEditorFunction(name))throw new Error('Function not allowlisted: '+name);const args=m[2]?JSON.parse(m[2]):[];return {function:name,result:call(name,...args)}}
- return null;
-}
-function execFormat(cmd,a,b){const s=getSelection?.();if(!s||!s.rangeCount)throw new Error('No text selection');document.execCommand(cmd,a,b);return {command:cmd,selection:s.toString()};}
-function applyFont(font){if(q('fontChooserToolbarBtn')&&typeof openFontChooser==='function'){q('fontChooserToolbarBtn').click();setTimeout(()=>{},0);} document.execCommand('fontName',false,font);try{if(window.S)S.font=font;}catch(e){}return {font};}
-function applyFontSize(size){document.execCommand('fontSize',false,String(Math.max(1,Math.min(96,parseInt(size,10)||16))));return {size};}
-function insertTextMarkdown(md){const text=md.replace(/\*\*(.+?)\*\*/g,'$1').replace(/__(.+?)__/g,'$1').replace(/`([^`]+)`/g,'$1');document.execCommand('insertText',false,text);return {inserted:text};}
-function isCallableEditorFunction(name){if(['eval','Function','setTimeout','setInterval','fetch','alert','confirm','prompt'].includes(name))return false;const src=String(window[name]||'');return typeof window[name]==='function'&&src&&(!/native code/i.test(src));}
+  // Minimal markdown → HTML (bold/italic/headers/lists/links) for /insertmarkdown
+  function mdToHtml(md){
+    let h = md
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/^### (.*)$/gm,'<h3>$1</h3>')
+      .replace(/^## (.*)$/gm,'<h2>$1</h2>')
+      .replace(/^# (.*)$/gm,'<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
+      .replace(/\*(.+?)\*/g,'<i>$1</i>')
+      .replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2">$1</a>')
+      .replace(/^- (.*)$/gm,'<li>$1</li>');
+    h = h.replace(/(<li>.*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>');
+    return h.split('\n').map(l => (/^<(h1|h2|h3|ul|li)/.test(l) ? l : (l.trim() ? '<p>'+l+'</p>' : ''))).join('');
+  }
 
-function extractCommands(text){const out=[];const lines=String(text||'').split(/\r?\n/);for(const line of lines){const matches=line.match(/\/(?:[A-Za-z][\w-]*)(?:[^\n]*)/g)||[];for(let raw of matches){raw=raw.trim().replace(/\]\s*$/,'');if(/^\/(?:https?:\/\/)/i.test(raw))continue;const first=raw.split(/\s+/)[0].toLowerCase();const known=['/help','/pagecount','/wordcount','/pageinfo','/documentinfo','/pagebg','/pagewatermark','/pagemargins','/pagemargin','/pagemarginborder','/selection','/selectionhtml','/replace','/replaceall','/find','/findnext','/wordfreq','/bold','/italic','/underline','/strike','/superscript','/subscript','/delete','/clearformat','/unlink','/font','/fontname','/fontsize','/forecolor','/highlight','/align','/alignment','/indent','/outdent','/blockquote','/orderedlist','/unorderedlist','/inserttext','/insertmarkdown','/insertlink','/insertimage','/inserttable','/tabledata','/tableattrs','/undo','/redo','/createpage','/addpage','/deletepage','/goto','/zoom','/lineheight','/wordspacing','/togglewatermark','/togglepagenumbers','/pageheader','/pagefooter','/selectall','/copy','/cut','/paste','/print','/export','/rawhtml','/get','/set#','/toggle#','/click#','/call#','/explore','/explorepages','/context','/clearselection','/removeformat','/justify','/center','/left','/right'];if(known.some(k=>first===k||raw.toLowerCase().startsWith(k)))if(!out.includes(raw))out.push(raw);}}return out;}
+  // ── Command registry ─────────────────────────────────────────────────
+  // argMode: 'none' | 'words' (space-split args) | 'rest' (remaining text as one string)
+  const CMDS = {};
+  function reg(name, argMode, kind, help, run){ CMDS[name] = {argMode, kind, help, run}; }
 
-const COMMAND_DOCS=[
- {cmd:'/help',desc:'List all available commands and dynamic editor actions.'},
- {cmd:'/pagecount',desc:'Return total page count.'},
- {cmd:'/wordcount',desc:'Return word/character/sentence/paragraph counts.'},
- {cmd:'/pageinfo N',desc:'Return detailed page information.'},
- {cmd:'/documentinfo',desc:'Return document metadata and high-level state.'},
- {cmd:'/pagebg',desc:'Read page background settings.'},
- {cmd:'/pagebgsetN#RRGGBB',desc:'Set page N background color.'},
- {cmd:'/pagebgtypeN solid|gradient',desc:'Set page N background type.'},
- {cmd:'/pagewatermark',desc:'Read watermark settings.'},
- {cmd:'/pagewatermarkNtextTEXT',desc:'Set page N watermark text.'},
- {cmd:'/pagewatermarkNcolor#RRGGBB',desc:'Set page N watermark color.'},
- {cmd:'/pagewatermarkNsizeN',desc:'Set watermark font size.'},
- {cmd:'/pagewatermarkNpositionPOS',desc:'Set watermark position.'},
- {cmd:'/pagemargins',desc:'Read all visible page margins.'},
- {cmd:'/pagemarginN',desc:'Read page N margins and design.'},
- {cmd:'/pagemarginNsetallX',desc:'Set all page N margins in cm.'},
- {cmd:'/pagemarginNsetTX',desc:'Set top page N margin in cm.'},
- {cmd:'/pagemarginNsetBX',desc:'Set bottom page N margin in cm.'},
- {cmd:'/pagemarginNsetLX',desc:'Set left page N margin in cm.'},
- {cmd:'/pagemarginNsetRX',desc:'Set right page N margin in cm.'},
- {cmd:'/pagemarginNcolor#RRGGBB',desc:'Set page N margin design color.'},
- {cmd:'/pagemarginborder',desc:'Read page border data.'},
- {cmd:'/pagemarginborderTX',desc:'Set top page border width.'},
- {cmd:'/pagemarginborderborderX',desc:'Set border width on all sides.'},
- {cmd:'/pagemarginbordercolor#RRGGBB',desc:'Set page border color.'},
- {cmd:'/selection',desc:'Read current text selection.'},
- {cmd:'/selectionhtml',desc:'Read current selection as HTML.'},
- {cmd:'/replace OLD => NEW',desc:'Replace matching text in allowed pages.'},
- {cmd:'/replaceall OLD => NEW',desc:'Replace all matching text in allowed pages.'},
- {cmd:'/find TEXT',desc:'Find text and return matches.'},
- {cmd:'/findnext TEXT',desc:'Find next occurrence.'},
- {cmd:'/wordfreq',desc:'Return word frequency information.'},
- {cmd:'/bold',desc:'Bold selection.'},
- {cmd:'/italic',desc:'Italicize selection.'},
- {cmd:'/underline',desc:'Underline selection.'},
- {cmd:'/strike',desc:'Strike selection.'},
- {cmd:'/superscript',desc:'Superscript selection.'},
- {cmd:'/subscript',desc:'Subscript selection.'},
- {cmd:'/delete',desc:'Delete selection.'},
- {cmd:'/clearformat',desc:'Remove selection formatting.'},
- {cmd:'/unlink',desc:'Remove link from selection.'},
- {cmd:'/font NAME',desc:'Apply font.'},
- {cmd:'/fontsize N',desc:'Apply font size.'},
- {cmd:'/forecolor #RRGGBB',desc:'Set text color.'},
- {cmd:'/highlight #RRGGBB',desc:'Set highlight color.'},
- {cmd:'/align left|center|right|justify',desc:'Set alignment.'},
- {cmd:'/indent',desc:'Indent paragraph.'},
- {cmd:'/outdent',desc:'Outdent paragraph.'},
- {cmd:'/blockquote',desc:'Toggle block quote.'},
- {cmd:'/orderedlist',desc:'Create ordered list.'},
- {cmd:'/unorderedlist',desc:'Create unordered list.'},
- {cmd:'/inserttext TEXT',desc:'Insert text at selection.'},
- {cmd:'/insertmarkdown TEXT',desc:'Insert text derived from markdown.'},
- {cmd:'/insertlink TEXT | URL',desc:'Insert a link.'},
- {cmd:'/insertimage URL',desc:'Insert an image URL.'},
- {cmd:'/inserttable ROWS COLS',desc:'Open/insert table.'},
- {cmd:'/tabledata',desc:'Read table data.'},
- {cmd:'/tableattrs',desc:'Open table attributes editor.'},
- {cmd:'/undo',desc:'Undo.'},
- {cmd:'/redo',desc:'Redo.'},
- {cmd:'/createpage',desc:'Add page.'},
- {cmd:'/addpage',desc:'Add page.'},
- {cmd:'/deletepage N',desc:'Delete page N.'},
- {cmd:'/goto N',desc:'Scroll to page N.'},
- {cmd:'/zoom N',desc:'Set editor zoom.'},
- {cmd:'/lineheight N',desc:'Set line spacing.'},
- {cmd:'/wordspacing N',desc:'Set word spacing.'},
- {cmd:'/togglewatermark',desc:'Toggle watermark.'},
- {cmd:'/togglepagenumbers',desc:'Toggle page numbering.'},
- {cmd:'/pageheader TEXT',desc:'Set current page header text.'},
- {cmd:'/pagefooter TEXT',desc:'Set current page footer text.'},
- {cmd:'/selectall',desc:'Select editor content.'},
- {cmd:'/copy',desc:'Copy selection.'},
- {cmd:'/cut',desc:'Cut selection.'},
- {cmd:'/paste TEXT',desc:'Paste/insert text.'},
- {cmd:'/print',desc:'Open print workflow.'},
- {cmd:'/export PDF|DOCX|TXT|JPG|SCD',desc:'Export document.'},
- {cmd:'/rawhtml',desc:'Read current editor HTML.'},
- {cmd:'/get elementId',desc:'Read a native control.'},
- {cmd:'/set#elementId=value',desc:'Set a native control value.'},
- {cmd:'/toggle#elementId',desc:'Toggle a native control.'},
- {cmd:'/click#elementId',desc:'Click a native editor control.'},
- {cmd:'/call#function [args]',desc:'Call a discovered allowlisted native function.'},
- {cmd:'/explore',desc:'Return the live editor exploration catalog.'},
- {cmd:'/explorepages N,N',desc:'Set temporary AI-visible page selection.'},
- {cmd:'/context',desc:'Return current AI context.'},
- {cmd:'/clearselection',desc:'Clear selection.'},
- {cmd:'/removeformat',desc:'Alias for clearformat.'},
- {cmd:'/justify',desc:'Justify paragraph.'},
- {cmd:'/center',desc:'Center paragraph.'},
- {cmd:'/left',desc:'Left-align paragraph.'},
- {cmd:'/right',desc:'Right-align paragraph.'},
- ];
+  reg('help', 'none', 'info', 'List every available command.', () => {
+    return Object.keys(CMDS).sort().map(k => '/' + k + ' — ' + CMDS[k].help).join('\n');
+  });
 
-function discoverActions(){const root=document.querySelector('#editorContainer');if(!root)return [];const arr=[];const els=[...root.querySelectorAll('button,input,select,textarea,[role="button"]')];for(const el of els){if(el.id?.startsWith('bytez'))continue;const txt=(el.innerText||el.textContent||el.getAttribute('aria-label')||el.title||el.value||'').replace(/\s+/g,' ').trim();if(!txt&&!el.id)continue;arr.push({id:el.id||null,tag:el.tagName.toLowerCase(),label:txt.slice(0,120),title:el.title||'',type:el.type||'',selector:el.id?'#'+el.id:null});}return arr;}
-function functionCatalog(){const names=new Set();for(const el of document.querySelectorAll('#editorContainer [onclick]')){const s=el.getAttribute('onclick')||'';for(const m of s.matchAll(/\b([A-Za-z_$][\w$]*)\s*\(/g)){if(isCallableEditorFunction(m[1]))names.add(m[1]);}}return [...names].sort();}
+  reg('pagecount', 'none', 'info', 'Number of pages in the document.', () => {
+    if(!elAllowed('counts')) return denyMsg('page count');
+    return String(document.querySelectorAll('#editorArea .page').length);
+  });
 
-function renderConfig(){
- const root=q('bytezAddonRoot');if(!root)return;root.style.display='block';q('bytezApiKey').value=cfg.apiKey;q('bytezModel').value=cfg.model;q('bytezEndpoint').value=cfg.endpoint;q('bytezAutoExecute').checked=cfg.autoExecute;if(q('bytezExploreMode'))q('bytezExploreMode').checked=!!cfg.exploreMode;q('bytezChatModel').textContent=cfg.model||'';
- document.querySelectorAll('[data-page-mode]').forEach(b=>b.classList.toggle('active',b.dataset.pageMode===cfg.pageMode));
- const pages=q('bytezPageList'); if(pages){pages.innerHTML='';currentPages().forEach((p,i)=>{const row=document.createElement('label');row.className='bxz-check';row.innerHTML='<input type="checkbox" data-bxz-page="'+(i+1)+'" '+(cfg.pages.includes(i+1)?'checked':'')+'> Page '+(i+1);row.querySelector('input').onchange=e=>{const n=+e.target.dataset.bxzPage;if(e.target.checked){if(!cfg.pages.includes(n))cfg.pages.push(n);}else{cfg.pages=cfg.pages.filter(x=>x!==n);}saveCfg();};pages.appendChild(row);});if(!currentPages().length)pages.innerHTML='<div class="bxz-sub">No pages yet.</div>';}
- const scopes=q('bytezScopeList');if(scopes){scopes.innerHTML='';SCOPE_DEFS.forEach(([id,label])=>{const row=document.createElement('label');row.className='bxz-check';row.innerHTML='<input type="checkbox" data-bxz-scope="'+id+'" '+(cfg.scopes[id]?'checked':'')+'> '+esc(label);row.querySelector('input').onchange=e=>{cfg.scopes[id]=e.target.checked;saveCfg();};scopes.appendChild(row);});}
-}
-function openChat(){q('bytezChatDock').classList.add('open');q('bytezFab').classList.remove('open');if(!q('bytezChatMessages').children.length)addMessage('system','Bytez is ready. Ask it to inspect or edit the document.');}
-function closeChat(){q('bytezChatDock').classList.remove('open');q('bytezFab').classList.add('open');}
-function addMessage(role,text,commands){const box=q('bytezChatMessages');const d=document.createElement('div');d.className='bxz-msg '+role;d.textContent=text;if(commands?.length){const wrap=document.createElement('div');wrap.style.marginTop='6px';commands.forEach(c=>{const x=document.createElement('span');x.className='bxz-command';x.textContent=c;wrap.appendChild(x);wrap.appendChild(document.createElement('br'));});d.appendChild(wrap);}box.appendChild(d);box.scrollTop=box.scrollHeight;chat.push({role,content:text});}
-function renderPending(){const box=q('bytezPending');box.innerHTML='';box.classList.toggle('open',pending.length>0);pending.forEach((p,i)=>{const row=document.createElement('div');row.className='bxz-pending-item';const c=document.createElement('div');c.className='bxz-pending-code';c.textContent=p.cmd;const y=document.createElement('button');y.className='bxz-pending-btn bxz-pending-yes';y.textContent='Approve';y.onclick=()=>{runPending(i,true);};const n=document.createElement('button');n.className='bxz-pending-btn bxz-pending-no';n.textContent='Reject';n.onclick=()=>{runPending(i,false);};row.append(c,y,n);box.appendChild(row);});}
-function queueCommand(cmd){pending.push({cmd});renderPending();}
-function runPending(i,ok){const p=pending.splice(i,1)[0];renderPending();if(ok)runCommand(p.cmd).catch(e=>addMessage('system','Command failed: '+e.message));else addMessage('system','Rejected '+p.cmd);}
-async function runCommand(cmd){let result=null;try{result=executeSemantic(cmd);if(result===null){result=queryCommand(cmd);}return result;}catch(e){throw e;}finally{renderConfig();}}
-function autoOrQueue(cmd){if(cfg.autoExecute)runCommand(cmd).then(r=>addMessage('system',cmd+' ✓'+(r!==undefined?'\n'+JSON.stringify(r).slice(0,900):''))).catch(e=>addMessage('system',cmd+' ✕ '+e.message));else queueCommand(cmd);}
+  reg('wordcount', 'none', 'info', 'Current word count.', () => {
+    if(!elAllowed('counts')) return denyMsg('word count');
+    return textOf('wordCount') || '0 words';
+  });
 
-function buildSendContext(){const base=documentContext();if(!cfg.exploreMode)return base;const catalog=exploreCatalog();if(cfg.pageMode==='all')return {...base,exploreMode:true,exploreCatalog:catalog};if(cfg.pageMode==='current')return {...base,exploreMode:true,exploreCatalog:{...catalog,pages:catalog.pages.filter(x=>x.page===pageNum(currentPage()||currentPages()[0]))}};if(cfg.pageMode==='selected')return {...base,exploreMode:true,exploreCatalog:{...catalog,pages:catalog.pages.filter(x=>cfg.pages.includes(x.page))}};return {...base,exploreMode:true,exploreSelection:'ai',pageCandidates:catalog.pages};}
-async function askBytez(userText){
- if(!cfg.apiKey||!cfg.model){addMessage('system','Add your Bytez API key and model name in Bytez Configuration first.');return;}
- const context=buildSendContext();
- const system=buildSystemPrompt();
- const messages=[{role:'system',content:system},...chat.slice(-12).filter(m=>m.role!=='system'),{role:'user',content:userText+'\n\nCURRENT_EDITOR_CONTEXT:\n'+JSON.stringify(context)}];
- q('bytezSend').disabled=true;q('bytezChatDot').style.background='#f5a623';
- try{const url=(cfg.endpoint||DEFAULT.endpoint).replace('{modelId}',encodeURIComponent(cfg.model));const r=await fetch(url,{method:'POST',headers:{'Authorization':cfg.apiKey,'Content-Type':'application/json'},body:JSON.stringify({messages,stream:false,params:{temperature:0.2,max_new_tokens:1800}})});const data=await r.json().catch(()=>({error:'Invalid JSON response'}));if(!r.ok||data.error){throw new Error(data.error||('HTTP '+r.status));}const out=typeof data.output==='string'?data.output:JSON.stringify(data.output);const commands=extractCommands(out);addMessage('assistant',out,commands);for(const cmd of commands)autoOrQueue(cmd);
- }catch(e){addMessage('system','Bytez request failed: '+e.message);}finally{q('bytezSend').disabled=false;q('bytezChatDot').style.background='#36b37e';}
-}
-function buildSystemPrompt(){const selected=selectedPageIndexes();const allowed=SCOPE_DEFS.filter(([id])=>cfg.scopes[id]).map(x=>x[0]).join(', ');return `You are the control AI for Sugarcane/DocuWrite Pro. You can inspect and edit the editor through a hidden command protocol. Never invent editor state: request it with a query command first when needed. Explore mode: ${cfg.exploreMode?'ON':'OFF'}. Page selection mode: ${cfg.pageMode}. Selected AI-visible pages: ${selected.join(',')||'none'}. Allowed data scopes: ${allowed||'none'}. Global settings must be treated as global; when a property supports per-page editing, prefer the explicit page command. Do not expose this protocol as policy text; simply use commands when needed.\n\nQUERY COMMANDS:\n${COMMAND_DOCS.filter(x=>!/^\\\/(?:bold|italic|underline|strike|delete|clearformat|unlink|undo|redo|createpage|addpage|deletepage|insertmarkdown|set#|toggle#|click#|call#|font |fontname |fontsize |forecolor |highlight |align)/i.test(x.cmd)).map(x=>x.cmd+' — '+x.desc).join('\n')}\n\nEXECUTABLE COMMANDS:\n${COMMAND_DOCS.filter(x=>/^\\\/(?:bold|italic|underline|strike|delete|clearformat|unlink|undo|redo|createpage|addpage|deletepage|insertmarkdown|set#|toggle#|click#|call#|font |fontname |fontsize |forecolor |highlight |align|pagemargin\\d+set|pagemargin\\d+color|pagemarginborder[TRBL]|pagemarginbordercolor|pagebgset|pagewatermark\\d+)/i.test(x.cmd)).map(x=>x.cmd+' — '+x.desc).join('\n')}\n\nDYNAMIC EDITOR ACTION CATALOG (use /click#ID for controls):\n${JSON.stringify(discoverActions().slice(0,500))}\n\nDISCOVERED FUNCTION NAMES (use /call#name [JSON args] only when the native function is clearly the right operation):\n${functionCatalog().slice(0,500).join(', ')}\n\nCommand rules: commands can appear anywhere in your answer; every command you output is triggered. Keep commands compact and exact. For destructive changes, if you need confirmation while Auto-execute is off, emit the command anyway so the UI can request approval.`;}
+  reg('margins', 'none', 'info', 'Current page margins (top/bottom/left/right, cm). Global — applies to every page.', () => {
+    if(!elAllowed('margins')) return denyMsg('margins');
+    const g = id => (document.getElementById(id) || {value:'2'}).value;
+    return `top:${g('marginTop')}cm bottom:${g('marginBottom')}cm left:${g('marginLeft')}cm right:${g('marginRight')}cm`;
+  });
 
-function init(){
- if(!document.body||!q('sidebar')){setTimeout(init,200);return;}
- const sidebar=q('sidebar'), collapse=sidebar.querySelector('.collapse-btn');if(!collapse){setTimeout(init,300);return;}
- const root=q('bytezAddonRoot');if(root.parentElement!==sidebar){sidebar.insertBefore(root,collapse);} // exact bottom position above Collapse
- renderConfig();
- q('bytezConfigHeader').onclick=()=>q('bytezAddonRoot').classList.toggle('open');
- q('bytezSaveBtn').onclick=()=>{cfg.apiKey=q('bytezApiKey').value.trim();cfg.model=q('bytezModel').value.trim()||DEFAULT.model;cfg.endpoint=q('bytezEndpoint').value.trim()||DEFAULT.endpoint;saveCfg();q('bytezChatModel').textContent=cfg.model;status('Saved.');};
- q('bytezAutoExecute').onchange=e=>{cfg.autoExecute=e.target.checked;saveCfg();status(e.target.checked?'Auto-execute enabled.':'Approval required for each command.');};if(q('bytezExploreMode'))q('bytezExploreMode').onchange=e=>{cfg.exploreMode=e.target.checked;saveCfg();status(e.target.checked?'Explore mode enabled.':'Explore mode disabled.');};
- q('bytezOpenBtn').onclick=openChat;q('bytezFab').onclick=openChat;q('bytezCloseBtn').onclick=closeChat;
- q('bytezDockBtn').onclick=()=>{q('bytezChatDock').classList.toggle('bxz-docked');};
- q('bytezTestBtn').onclick=async()=>{cfg.apiKey=q('bytezApiKey').value.trim();cfg.model=q('bytezModel').value.trim()||DEFAULT.model;cfg.endpoint=q('bytezEndpoint').value.trim()||DEFAULT.endpoint;saveCfg();status('Testing…');try{const url=cfg.endpoint.replace('{modelId}',encodeURIComponent(cfg.model));const r=await fetch(url,{method:'POST',headers:{'Authorization':cfg.apiKey,'Content-Type':'application/json'},body:JSON.stringify({messages:[{role:'user',content:'Reply with the single word OK.'}],stream:false,params:{max_new_tokens:8,temperature:0}})});const d=await r.json();if(!r.ok||d.error)throw new Error(d.error||'HTTP '+r.status);status('Bytez connection works.');}catch(e){status('Test failed: '+e.message,true);}};
- document.querySelectorAll('[data-page-mode]').forEach(b=>b.onclick=()=>{cfg.pageMode=b.dataset.pageMode;saveCfg();renderConfig();});
- q('bytezSend').onclick=()=>{const v=q('bytezChatInput').value.trim();if(!v)return;q('bytezChatInput').value='';addMessage('user',v);if(/^\//.test(v)){if(cfg.autoExecute)runCommand(v).then(r=>addMessage('system',JSON.stringify(r))).catch(e=>addMessage('system','Command failed: '+e.message));else queueCommand(v);}else askBytez(v);};
- q('bytezChatInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();q('bytezSend').click();}});
- q('bytezChatHead').addEventListener('mousedown',e=>{if(e.target.closest('button'))return;dragging=true;const r=q('bytezChatDock').getBoundingClientRect();dragOffset={x:e.clientX-r.left,y:e.clientY-r.top};});window.addEventListener('mousemove',e=>{if(!dragging)return;const d=q('bytezChatDock');d.style.left=Math.max(5,Math.min(innerWidth-d.offsetWidth-5,e.clientX-dragOffset.x))+'px';d.style.top=Math.max(5,Math.min(innerHeight-d.offsetHeight-5,e.clientY-dragOffset.y))+'px';d.style.right='auto';d.style.bottom='auto';});window.addEventListener('mouseup',()=>dragging=false);
- const mo=new MutationObserver(()=>{if(!q('bytezAddonRoot'))return;renderConfig();});mo.observe(q('editorArea'),{childList:true,subtree:true});
- window.BytezAddon={open:openChat,close:closeChat,query:queryCommand,execute:runCommand,context:documentContext,config:()=>cfg};
- q('bytezFab').classList.add('open');
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
-})();  m2=raw.match(/^\/pagebgtype(\d+)\s+(solid|gradient)$/i);if(m2){const p=currentPages()[+m2[1]-1];if(!p)throw new Error('Page not found');if(q('bgType'))q('bgType').value=m2[2];try{if(typeof updateBackground==='function')call('updateBackground');}catch(e){}return {page:+m2[1],type:m2[2]};}
-  m2=raw.match(/^\/pagewatermark(\d+)size(\d+(?:\.\d+)?)$/i);if(m2){if(q('wmFontSize')){q('wmFontSize').value=m2[2];q('wmFontSize').dispatchEvent(new Event('change',{bubbles:true}));}try{call('updateWatermark');}catch(e){}return {page:+m2[1],size:+m2[2]};}
-  m2=raw.match(/^\/pagewatermark(\d+)position(.+)$/i);if(m2){if(q('wmPosition')){q('wmPosition').value=m2[2];q('wmPosition').dispatchEvent(new Event('change',{bubbles:true}));}try{call('updateWatermark');}catch(e){}return {page:+m2[1],position:m2[2]};}
-  m2=raw.match(/^\/pagemarginborderborder(-?\d+(?:\.\d+)?)$/i);if(m2){const v=m2[1];selectedPageEls().forEach(p=>p.style.border=`${v}cm solid ${p.dataset.bytezMarginBorderColor||'#888888'}`);return {width:v+'cm',pages:selectedPageIndexes()};}
+  reg('pagebg', 'none', 'info', 'Current page background color(s).', () => {
+    if(!elAllowed('background')) return denyMsg('page background');
+    const g = id => (document.getElementById(id) || {value:''}).value;
+    return `primary:${g('bgColor')} secondary:${g('bgColor2')}`;
+  });
 
+  reg('watermark', 'none', 'info', 'Current watermark text (empty if none). Global — applies to every page.', () => {
+    if(!elAllowed('watermark')) return denyMsg('watermark');
+    return (document.getElementById('watermarkText')||{value:''}).value || '(none)';
+  });
+
+  reg('header', 'words', 'info', 'header <n> — text of page n\'s header.', (n) => {
+    if(!elAllowed('header')) return denyMsg('page header');
+    const num = parseInt(n,10) || 1;
+    if(!pageAllowed(num)) return denyMsg('page ' + num);
+    return textOf('pageHeader' + num) || '(empty)';
+  });
+
+  reg('footer', 'words', 'info', 'footer <n> — text of page n\'s footer.', (n) => {
+    if(!elAllowed('footer')) return denyMsg('page footer');
+    const num = parseInt(n,10) || 1;
+    if(!pageAllowed(num)) return denyMsg('page ' + num);
+    return textOf('pageFooter' + num) || '(empty)';
+  });
+
+  reg('pagetext', 'words', 'info', 'pagetext <n> — plain text content of page n.', (n) => {
+    if(!elAllowed('content')) return denyMsg('page content');
+    const num = parseInt(n,10) || 1;
+    if(!pageAllowed(num)) return denyMsg('page ' + num);
+    return textOf('pageContent' + num) || '(empty)';
+  });
+
+  reg('selection', 'none', 'info', 'Currently selected text, if any.', () => {
+    if(!elAllowed('selection')) return denyMsg('selection');
+    const s = window.getSelection ? window.getSelection().toString() : '';
+    return s || '(no selection)';
+  });
+
+  reg('bold', 'none', 'action', 'Toggle bold on the current selection.', () => { document.execCommand('bold'); return 'Toggled bold.'; });
+  reg('italic', 'none', 'action', 'Toggle italic on the current selection.', () => { document.execCommand('italic'); return 'Toggled italic.'; });
+  reg('underline', 'none', 'action', 'Toggle underline on the current selection.', () => { document.execCommand('underline'); return 'Toggled underline.'; });
+  reg('strikethrough', 'none', 'action', 'Toggle strikethrough on the current selection.', () => { document.execCommand('strikeThrough'); return 'Toggled strikethrough.'; });
+  reg('undo', 'none', 'action', 'Undo the last edit.', () => { document.execCommand('undo'); return 'Undid last edit.'; });
+  reg('redo', 'none', 'action', 'Redo the last undone edit.', () => { document.execCommand('redo'); return 'Redid edit.'; });
+  reg('clearformatting', 'none', 'action', 'Clear formatting on the current selection.', () => { document.execCommand('removeFormat'); return 'Cleared formatting.'; });
+  reg('deleteselection', 'none', 'action', 'Delete the currently selected text.', () => { document.execCommand('delete'); return 'Deleted selection.'; });
+
+  reg('alignleft', 'none', 'action', 'Left-align the current paragraph.', () => { document.execCommand('justifyLeft'); return 'Aligned left.'; });
+  reg('aligncenter', 'none', 'action', 'Center the current paragraph.', () => { document.execCommand('justifyCenter'); return 'Centered.'; });
+  reg('alignright', 'none', 'action', 'Right-align the current paragraph.', () => { document.execCommand('justifyRight'); return 'Aligned right.'; });
+  reg('alignjustify', 'none', 'action', 'Justify the current paragraph.', () => { document.execCommand('justifyFull'); return 'Justified.'; });
+
+  reg('fontfamily', 'rest', 'action', 'fontfamily <name> — set font family on selection.', (name) => {
+    if(!name) return 'Missing font name.';
+    document.execCommand('fontName', false, name); return 'Font set to ' + name + '.';
+  });
+  reg('fontsize', 'words', 'action', 'fontsize <1-7> — set HTML font size on selection (execCommand scale, 1–7).', (n) => {
+    document.execCommand('fontSize', false, String(Math.min(7, Math.max(1, parseInt(n,10)||3))));
+    return 'Font size set.';
+  });
+  reg('textcolor', 'words', 'action', 'textcolor <#hex> — set text color on selection.', (hex) => {
+    document.execCommand('foreColor', false, hex); return 'Text color set to ' + hex + '.';
+  });
+  reg('highlightcolor', 'words', 'action', 'highlightcolor <#hex> — highlight the selection.', (hex) => {
+    document.execCommand('hiliteColor', false, hex); return 'Highlight set to ' + hex + '.';
+  });
+
+  reg('marginsetall', 'words', 'action', 'marginsetall <cm> — set all four page margins (global).', (v) => {
+    if(!elAllowed('margins')) return denyMsg('margins');
+    const el = document.getElementById('pageMargin'); if(!el) return 'Margin control not found.';
+    el.value = v; if(typeof updateMargins === 'function') updateMargins(v);
+    return 'All margins set to ' + v + 'cm.';
+  });
+  reg('marginset', 'words', 'action', 'marginset <top|bottom|left|right> <cm> — set one margin (global).', (side, v) => {
+    if(!elAllowed('margins')) return denyMsg('margins');
+    const map = {top:'marginTop', bottom:'marginBottom', left:'marginLeft', right:'marginRight'};
+    const id = map[(side||'').toLowerCase()];
+    if(!id) return 'Unknown side "' + side + '" (use top/bottom/left/right).';
+    const el = document.getElementById(id); if(!el) return 'Margin control not found.';
+    el.value = v; if(typeof updateIndividualMargins === 'function') updateIndividualMargins();
+    return side + ' margin set to ' + v + 'cm.';
+  });
+
+  reg('bgset', 'words', 'action', 'bgset <#hex> [#hex2] — set page background color(s) (global).', (hex1, hex2) => {
+    if(!elAllowed('background')) return denyMsg('page background');
+    const a = document.getElementById('bgColor'), b = document.getElementById('bgColor2');
+    if(a && hex1) a.value = hex1; if(b && hex2) b.value = hex2;
+    if(typeof updateBackground === 'function') updateBackground();
+    return 'Page background updated.';
+  });
+
+  reg('watermarkset', 'rest', 'action', 'watermarkset <text> — set the watermark text (global; empty text clears it).', (text) => {
+    if(!elAllowed('watermark')) return denyMsg('watermark');
+    const el = document.getElementById('watermarkText'); if(!el) return 'Watermark control not found.';
+    el.value = text || ''; if(typeof updateWatermark === 'function') updateWatermark();
+    return text ? ('Watermark set to "' + text + '".') : 'Watermark cleared.';
+  });
+
+  reg('headerset', 'words', 'action', 'headerset <n> <text...> — set page n\'s header text.', (n, ...rest) => {
+    if(!elAllowed('header')) return denyMsg('page header');
+    const num = parseInt(n,10) || 1;
+    if(!pageAllowed(num)) return denyMsg('page ' + num);
+    const el = document.getElementById('pageHeader' + num); if(!el) return 'Page ' + num + ' not found.';
+    el.textContent = rest.join(' '); return 'Header on page ' + num + ' updated.';
+  });
+  reg('footerset', 'words', 'action', 'footerset <n> <text...> — set page n\'s footer text.', (n, ...rest) => {
+    if(!elAllowed('footer')) return denyMsg('page footer');
+    const num = parseInt(n,10) || 1;
+    if(!pageAllowed(num)) return denyMsg('page ' + num);
+    const el = document.getElementById('pageFooter' + num); if(!el) return 'Page ' + num + ' not found.';
+    el.textContent = rest.join(' '); return 'Footer on page ' + num + ' updated.';
+  });
+
+  reg('addpage', 'none', 'action', 'Add a new page at the end of the document.', () => {
+    if(typeof addPage === 'function'){ addPage(); return 'Page added.'; }
+    return 'Add-page function not available.';
+  });
+  reg('removepage', 'words', 'action', 'removepage <n> — delete page n.', (n) => {
+    if(typeof deletePage === 'function'){ deletePage(parseInt(n,10)||1); return 'Page ' + n + ' removed.'; }
+    return 'Delete-page function not available.';
+  });
+
+  reg('inserttext', 'rest', 'action', 'inserttext <text> — insert plain text at the cursor.', (text) => {
+    if(!text) return 'Nothing to insert.';
+    document.execCommand('insertText', false, text); return 'Inserted text.';
+  });
+  reg('insertmarkdown', 'rest', 'action', 'insertmarkdown <markdown> — convert basic markdown (bold/italic/headers/lists/links) and insert at the cursor.', (md) => {
+    if(!md) return 'Nothing to insert.';
+    document.execCommand('insertHTML', false, mdToHtml(md)); return 'Inserted formatted content.';
+  });
+  reg('inserttable', 'words', 'action', 'inserttable <rows> <cols> — insert a simple table at the cursor.', (r, c) => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const rows = Math.max(1, parseInt(r,10)||2), cols = Math.max(1, parseInt(c,10)||2);
+    let h = '<table style="border-collapse:collapse;width:100%;margin:10px 0;"><tbody>';
+    for(let i=0;i<rows;i++){ h += '<tr>'; for(let j=0;j<cols;j++) h += '<td style="border:1px solid #ccc;padding:6px 8px;min-width:40px;">&nbsp;</td>'; h += '</tr>'; }
+    h += '</tbody></table>';
+    document.execCommand('insertHTML', false, h);
+    return 'Inserted a ' + rows + '×' + cols + ' table.';
+  });
+
+  // ── Find / replace (scope-aware, own implementation — the host's
+  //    find/replace is wired to modal inputs rather than being standalone) ──
+  function eachAllowedPage(cb){
+    document.querySelectorAll('#editorArea .page-content').forEach((pc, idx) => {
+      const n = idx + 1;
+      if(pageAllowed(n)) cb(pc, n);
+    });
+  }
+  reg('find', 'rest', 'info', 'find <text> — count occurrences of text across pages the AI can see.', (term) => {
+    if(!elAllowed('content')) return denyMsg('page content');
+    if(!term) return 'Missing search text.';
+    let total = 0; const hitPages = [];
+    eachAllowedPage((pc, n) => {
+      const text = pc.textContent; let idx = 0, count = 0;
+      while((idx = text.indexOf(term, idx)) !== -1){ count++; idx += term.length; }
+      if(count){ total += count; hitPages.push(n); }
+    });
+    return total ? ('Found ' + total + ' occurrence(s) on page(s) ' + hitPages.join(', ') + '.') : 'Not found.';
+  });
+  reg('findreplace', 'rest', 'action', 'findreplace <find>|<replace> — replace all occurrences across pages the AI can see (separate find/replace with a "|").', (arg) => {
+    if(!elAllowed('content')) return denyMsg('page content');
+    const parts = arg.split('|');
+    const find = (parts[0]||'').trim(), replace = (parts[1]||'').trim();
+    if(!find) return 'Missing search text (use: /findreplace find|replace).';
+    let total = 0;
+    eachAllowedPage((pc) => {
+      const text = pc.textContent; let idx = 0, count = 0;
+      while((idx = text.indexOf(find, idx)) !== -1){ count++; idx += find.length; }
+      if(count){ total += count; pc.innerHTML = pc.innerHTML.split(esc(find)).join(esc(replace)); }
+    });
+    if(typeof checkContent === 'function') checkContent();
+    return 'Replaced ' + total + ' occurrence(s).';
+  });
+
+  // ── Formatting extras ────────────────────────────────────────────────
+  reg('indent', 'none', 'action', 'Indent the current paragraph.', () => { document.execCommand('indent'); return 'Indented.'; });
+  reg('outdent', 'none', 'action', 'Outdent the current paragraph.', () => { document.execCommand('outdent'); return 'Outdented.'; });
+  reg('superscript', 'none', 'action', 'Toggle superscript on the selection.', () => { document.execCommand('superscript'); return 'Toggled superscript.'; });
+  reg('subscript', 'none', 'action', 'Toggle subscript on the selection.', () => { document.execCommand('subscript'); return 'Toggled subscript.'; });
+  reg('orderedlist', 'none', 'action', 'Toggle a numbered list on the current selection.', () => { document.execCommand('insertOrderedList'); return 'Toggled numbered list.'; });
+  reg('unorderedlist', 'none', 'action', 'Toggle a bulleted list on the current selection.', () => { document.execCommand('insertUnorderedList'); return 'Toggled bulleted list.'; });
+  reg('blockquote', 'none', 'action', 'Turn the current paragraph into a blockquote.', () => { document.execCommand('formatBlock', false, 'blockquote'); return 'Applied blockquote.'; });
+  reg('codeblock', 'none', 'action', 'Turn the current paragraph into a code block.', () => { document.execCommand('formatBlock', false, 'pre'); return 'Applied code block.'; });
+  reg('normaltext', 'none', 'action', 'Reset the current paragraph to normal text.', () => { document.execCommand('formatBlock', false, 'p'); return 'Reset to normal text.'; });
+  reg('heading', 'words', 'action', 'heading <1-6> — turn the current paragraph into a heading.', (n) => {
+    const lvl = Math.min(6, Math.max(1, parseInt(n,10)||1));
+    document.execCommand('formatBlock', false, 'h' + lvl); return 'Applied heading ' + lvl + '.';
+  });
+
+  function transformSelection(fn){
+    const sel = window.getSelection();
+    if(!sel || !sel.rangeCount || sel.isCollapsed) return false;
+    const text = sel.toString();
+    document.execCommand('insertText', false, fn(text));
+    return true;
+  }
+  reg('uppercase', 'none', 'action', 'Convert the selected text to UPPERCASE.', () => transformSelection(t => t.toUpperCase()) ? 'Converted to uppercase.' : 'No text selected.');
+  reg('lowercase', 'none', 'action', 'Convert the selected text to lowercase.', () => transformSelection(t => t.toLowerCase()) ? 'Converted to lowercase.' : 'No text selected.');
+  reg('titlecase', 'none', 'action', 'Convert the selected text to Title Case.', () => transformSelection(t => t.replace(/\w\S*/g, w => w[0].toUpperCase()+w.slice(1).toLowerCase())) ? 'Converted to title case.' : 'No text selected.');
+
+  reg('inserthr', 'none', 'action', 'Insert a horizontal divider at the cursor.', () => {
+    if(typeof _doInsertHR === 'function'){ _doInsertHR(); return 'Inserted a divider.'; }
+    return 'Divider function not available.';
+  });
+  reg('insertimage', 'rest', 'action', 'insertimage <url> — insert an image at the cursor.', (url) => {
+    if(!url) return 'Missing image URL.';
+    document.execCommand('insertImage', false, url.trim()); return 'Inserted image.';
+  });
+  reg('insertlink', 'words', 'action', 'insertlink <url> <text...> — insert a hyperlink at the cursor.', (url, ...rest) => {
+    if(!url) return 'Missing link URL.';
+    const label = rest.join(' ') || url;
+    document.execCommand('insertHTML', false, '<a href="' + esc(url) + '">' + esc(label) + '</a>');
+    return 'Inserted link.';
+  });
+
+  // ── Document-wide settings ───────────────────────────────────────────
+  reg('linespacing', 'words', 'action', 'linespacing <value> — set line spacing (e.g. 1, 1.5, 2) across the document.', (v) => {
+    if(typeof updateLineSpacing === 'function'){ updateLineSpacing(v); return 'Line spacing set to ' + v + '.'; }
+    return 'Line spacing function not available.';
+  });
+  reg('spellcheck', 'words', 'action', 'spellcheck <on|off> — toggle spellcheck.', (v) => {
+    if(typeof toggleSpellCheck === 'function'){ toggleSpellCheck((v||'').toLowerCase() === 'on'); return 'Spellcheck ' + ((v||'').toLowerCase()==='on'?'enabled':'disabled') + '.'; }
+    return 'Spellcheck function not available.';
+  });
+  reg('pagenumbering', 'words', 'action', 'pagenumbering <on|off> — toggle page numbers.', (v) => {
+    if(typeof togglePageNumbering === 'function'){ togglePageNumbering((v||'').toLowerCase() === 'on'); return 'Page numbering ' + ((v||'').toLowerCase()==='on'?'enabled':'disabled') + '.'; }
+    return 'Page numbering function not available.';
+  });
+  reg('darkmode', 'words', 'action', 'darkmode <on|off|toggle> — switch the editor theme.', (v) => {
+    v = (v||'toggle').toLowerCase();
+    const want = v === 'toggle' ? !document.body.classList.contains('dark') : v === 'on';
+    document.body.classList.toggle('dark', want);
+    document.documentElement.classList.toggle('dark', want);
+    document.cookie = 'toolsuite_theme=' + (want ? 'dark' : 'light') + ';path=/;max-age=31536000;SameSite=Lax';
+    return 'Dark mode ' + (want ? 'on' : 'off') + '.';
+  });
+
+  // ── Zoom / navigation ────────────────────────────────────────────────
+  reg('zoomin', 'none', 'action', 'Zoom the document in by 10%.', () => { if(typeof adjustZoom==='function'){ adjustZoom(10); return 'Zoomed in.'; } return 'Zoom function not available.'; });
+  reg('zoomout', 'none', 'action', 'Zoom the document out by 10%.', () => { if(typeof adjustZoom==='function'){ adjustZoom(-10); return 'Zoomed out.'; } return 'Zoom function not available.'; });
+  reg('zoomset', 'words', 'action', 'zoomset <percent> — set zoom level (30–200).', (n) => {
+    if(typeof window.S === 'undefined' || typeof applyZoom !== 'function') return 'Zoom function not available.';
+    window.S.zoom = Math.max(30, Math.min(200, parseInt(n,10)||100)); applyZoom();
+    return 'Zoom set to ' + window.S.zoom + '%.';
+  });
+  reg('zoomreset', 'none', 'action', 'Reset zoom to 100%.', () => { if(typeof resetZoom==='function'){ resetZoom(); return 'Zoom reset.'; } return 'Zoom function not available.'; });
+  reg('gotopage', 'words', 'info', 'gotopage <n> — scroll page n into view.', (n) => {
+    const num = parseInt(n,10)||1;
+    if(!pageAllowed(num)) return denyMsg('page ' + num);
+    const el = document.getElementById('page' + num);
+    if(!el) return 'Page ' + num + ' not found.';
+    el.scrollIntoView({behavior:'smooth', block:'start'});
+    return 'Scrolled to page ' + num + '.';
+  });
+
+  // ── Stats ────────────────────────────────────────────────────────────
+  function allowedText(){
+    let out = '';
+    eachAllowedPage(pc => { out += pc.textContent + ' '; });
+    return out;
+  }
+  reg('charcount', 'none', 'info', 'Character count (no spaces) across pages the AI can see.', () => {
+    if(!elAllowed('counts')) return denyMsg('counts');
+    return String(allowedText().replace(/\s/g,'').length) + ' characters';
+  });
+  reg('charcountspaces', 'none', 'info', 'Character count (with spaces) across pages the AI can see.', () => {
+    if(!elAllowed('counts')) return denyMsg('counts');
+    return String(allowedText().length) + ' characters (incl. spaces)';
+  });
+  reg('sentencecount', 'none', 'info', 'Sentence count across pages the AI can see.', () => {
+    if(!elAllowed('counts')) return denyMsg('counts');
+    return String(allowedText().split(/[.!?]+/).filter(s => s.trim().length > 2).length) + ' sentences';
+  });
+  reg('paragraphcount', 'none', 'info', 'Paragraph count across pages the AI can see.', () => {
+    if(!elAllowed('counts')) return denyMsg('counts');
+    let count = 0;
+    eachAllowedPage(pc => { count += pc.querySelectorAll('p,div,li,h1,h2,h3,h4,h5,h6').length || 1; });
+    return String(count) + ' paragraphs';
+  });
+  reg('readingtime', 'none', 'info', 'Estimated reading time across pages the AI can see.', () => {
+    if(!elAllowed('counts')) return denyMsg('counts');
+    const words = allowedText().trim().split(/\s+/).filter(Boolean).length;
+    return '~' + Math.max(1, Math.round(words / 200)) + ' min';
+  });
+
+  // ── Document title ───────────────────────────────────────────────────
+  reg('doctitle', 'none', 'info', 'Current document title.', () => {
+    return typeof getTitle === 'function' ? getTitle() : ((document.getElementById('docTitle')||{value:''}).value || 'Untitled');
+  });
+  reg('doctitleset', 'rest', 'action', 'doctitleset <text> — rename the document.', (text) => {
+    const el = document.getElementById('docTitle');
+    if(!el || !text) return 'Title field not found or text missing.';
+    el.value = text; el.dispatchEvent(new Event('change', {bubbles:true}));
+    return 'Title set to "' + text + '".';
+  });
+
+  // ── Export / print ───────────────────────────────────────────────────
+  reg('print', 'none', 'action', 'Open the print dialog for this document.', () => {
+    if(typeof printDoc === 'function'){ printDoc(); return 'Opened print dialog.'; }
+    return 'Print function not available.';
+  });
+  reg('exporttxt', 'none', 'action', 'Export the document as a .txt file.', () => {
+    if(typeof exportTXT === 'function'){ exportTXT(); return 'Exported as .txt.'; }
+    return 'Export function not available.';
+  });
+  reg('exportscd', 'none', 'action', 'Export the document in Sugarcane\'s native .scd format.', () => {
+    if(typeof exportSCD === 'function'){ exportSCD(); return 'Exported as .scd.'; }
+    return 'Export function not available.';
+  });
+
+  // ── Tables (row/column ops on the table nearest the cursor) ──────────
+  function nearestTable(){
+    const sel = window.getSelection();
+    let node = sel && sel.anchorNode;
+    while(node && node.nodeType !== 1) node = node.parentNode;
+    let table = node && node.closest ? node.closest('table') : null;
+    if(!table){ const p = activePage(); table = p ? p.querySelector('table') : null; }
+    return table;
+  }
+  function nearestCell(){
+    const sel = window.getSelection();
+    let node = sel && sel.anchorNode;
+    while(node && node.nodeType !== 1) node = node.parentNode;
+    return node && node.closest ? node.closest('td,th') : null;
+  }
+  function makeCell(){ const c = document.createElement('td'); c.style.cssText = 'border:1px solid #ccc;padding:6px 8px;min-width:40px'; c.innerHTML = '&nbsp;'; return c; }
+  reg('tableaddrowabove', 'none', 'action', 'Add a table row above the cursor\'s current row.', () => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const table = nearestTable(), cell = nearestCell(); if(!table || !cell) return 'Place the cursor in a table first.';
+    const row = cell.closest('tr'); const cols = row.querySelectorAll('td,th').length;
+    const tr = document.createElement('tr'); for(let i=0;i<cols;i++) tr.appendChild(makeCell());
+    row.parentNode.insertBefore(tr, row); return 'Row added above.';
+  });
+  reg('tableaddrowbelow', 'none', 'action', 'Add a table row below the cursor\'s current row.', () => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const table = nearestTable(), cell = nearestCell(); if(!table || !cell) return 'Place the cursor in a table first.';
+    const row = cell.closest('tr'); const cols = row.querySelectorAll('td,th').length;
+    const tr = document.createElement('tr'); for(let i=0;i<cols;i++) tr.appendChild(makeCell());
+    row.after(tr); return 'Row added below.';
+  });
+  reg('tableaddcolleft', 'none', 'action', 'Add a table column to the left of the cursor\'s current column.', () => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const table = nearestTable(), cell = nearestCell(); if(!table || !cell) return 'Place the cursor in a table first.';
+    const row = cell.closest('tr'); const cells = [...row.querySelectorAll('td,th')]; const idx = cells.indexOf(cell);
+    table.querySelectorAll('tr').forEach(r => { const cs = [...r.querySelectorAll('td,th')]; r.insertBefore(makeCell(), cs[idx] || null); });
+    return 'Column added to the left.';
+  });
+  reg('tableaddcolright', 'none', 'action', 'Add a table column to the right of the cursor\'s current column.', () => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const table = nearestTable(), cell = nearestCell(); if(!table || !cell) return 'Place the cursor in a table first.';
+    const row = cell.closest('tr'); const cells = [...row.querySelectorAll('td,th')]; const idx = cells.indexOf(cell);
+    table.querySelectorAll('tr').forEach(r => { const cs = [...r.querySelectorAll('td,th')]; const ref = cs[idx]; if(ref) ref.after(makeCell()); else r.appendChild(makeCell()); });
+    return 'Column added to the right.';
+  });
+  reg('tabledeleterow', 'none', 'action', 'Delete the table row the cursor is in.', () => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const table = nearestTable(), cell = nearestCell(); if(!table || !cell) return 'Place the cursor in a table first.';
+    const rows = table.querySelectorAll('tr'); if(rows.length <= 1) return 'Cannot delete the only row.';
+    cell.closest('tr').remove(); return 'Row deleted.';
+  });
+  reg('tabledeletecol', 'none', 'action', 'Delete the table column the cursor is in.', () => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const table = nearestTable(), cell = nearestCell(); if(!table || !cell) return 'Place the cursor in a table first.';
+    const row = cell.closest('tr'); const cells = [...row.querySelectorAll('td,th')];
+    if(cells.length <= 1) return 'Cannot delete the only column.';
+    const idx = cells.indexOf(cell);
+    table.querySelectorAll('tr').forEach(r => { const cs = [...r.querySelectorAll('td,th')]; if(cs[idx]) cs[idx].remove(); });
+    return 'Column deleted.';
+  });
+  reg('tabledeletetable', 'none', 'action', 'Delete the table the cursor is in.', () => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const table = nearestTable(); if(!table) return 'Place the cursor in a table first.';
+    table.remove(); return 'Table deleted.';
+  });
+
+  // ── Page management ──────────────────────────────────────────────────
+  reg('duplicatepage', 'words', 'action', 'duplicatepage <n> — duplicate page n and insert the copy right after it.', (n) => {
+    const num = parseInt(n,10) || 1;
+    if(!pageAllowed(num)) return denyMsg('page ' + num);
+    const src = document.getElementById('pageContent' + num);
+    const outer = src && src.closest('.page-outer, .page');
+    if(!src || !outer) return 'Page ' + num + ' not found.';
+    if(typeof addPageAfter === 'function'){
+      const before = document.querySelectorAll('#editorArea .page').length;
+      outer.dataset.tcClonePending = '1';
+      addPageAfter();
+      const after = document.querySelectorAll('#editorArea .page').length;
+      if(after > before){
+        const newPc = document.querySelectorAll('#editorArea .page-content')[num]; // 0-indexed, new page sits right after n
+        if(newPc) newPc.innerHTML = src.innerHTML;
+      }
+      return 'Page ' + num + ' duplicated.';
+    }
+    return 'Page duplication function not available.';
+  });
+
+  // ── Click anything (gated: batches of CLICK_BATCH need user confirmation) ──
+  function findClickable(label){
+    const norm = s => (s||'').trim().toLowerCase().replace(/\s+/g,' ');
+    const target = norm(label);
+    if(!target) return null;
+    const nodes = document.querySelectorAll(
+      'button, [onclick], a[href], input[type="checkbox"], input[type="radio"], select, .tbtn, .mbtn, .aw-header, .sb-title'
+    );
+    let exact = null, partial = null;
+    nodes.forEach(n => {
+      if(exact) return;
+      const l = norm(n.getAttribute('title') || n.getAttribute('aria-label') || n.textContent);
+      if(!l) return;
+      if(l === target) exact = n;
+      else if(!partial && l.includes(target)) partial = n;
+    });
+    return exact || partial;
+  }
+  function doClick(el){
+    el.scrollIntoView({block:'center', behavior:'smooth'});
+    el.dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true}));
+    el.dispatchEvent(new MouseEvent('mouseup', {bubbles:true, cancelable:true}));
+    el.click();
+  }
+  reg('click', 'rest', 'action',
+    'click <element label> — click any labeled UI control by its visible text/title/aria-label (must be turned on in Bytez Configuration; every ' + CLICK_BATCH + ' clicks needs your confirmation).',
+    (label) => {
+      if(!cfg.allowClicks) return 'Clicking is off — enable "Allow UI Clicks" in Bytez Configuration.';
+      if(clickBudget <= 0) return 'Click budget exhausted — waiting on a new confirmation from the user.';
+      if(!label) return 'Missing element label.';
+      const el = findClickable(label);
+      if(!el) return 'No clickable element found matching "' + label + '".';
+      doClick(el);
+      clickBudget--;
+      return 'Clicked "' + label + '" (' + clickBudget + ' of ' + CLICK_BATCH + ' left before the next confirmation).';
+    }
+  );
+  // Splits a parsed command list at the point (if any) where a /click would
+  // exceed the remaining budget, so everything from there needs a fresh
+  // confirmation before any of it — including later non-click commands in
+  // the same reply, to keep execution order intact — runs.
+  function splitForClickGate(cmds){
+    let sim = clickBudget;
+    for(let i = 0; i < cmds.length; i++){
+      if(cmds[i].name === 'click' && cfg.allowClicks){
+        if(sim <= 0) return {ready: cmds.slice(0, i), gated: cmds.slice(i)};
+        sim--;
+      }
+    }
+    return {ready: cmds, gated: []};
+  }
+
+  // ── System prompt ────────────────────────────────────────────────────
+  function scopeSummary(){
+    const pages = cfg.scopePages === 'all' ? 'all pages' : cfg.scopePages === 'current' ? 'the currently focused page only' : 'pages ' + cfg.scopePages;
+    const on = Object.keys(cfg.elements).filter(k => cfg.elements[k]);
+    const off = Object.keys(cfg.elements).filter(k => !cfg.elements[k]);
+    return 'Page scope: ' + pages + '.\nAllowed element types: ' + (on.join(', ') || 'none') + '.' + (off.length ? ('\nBlocked element types: ' + off.join(', ') + ' (any command touching these will fail).') : '');
+  }
+
+  function systemPrompt(){
+    const ref = Object.keys(CMDS).sort().map(k => {
+      const c = CMDS[k];
+      return '/' + k + (c.argMode === 'none' ? '' : c.argMode === 'words' ? ' <args>' : ' <text>') + ' [' + c.kind + '] — ' + c.help;
+    }).join('\n');
+    const exploreNote = cfg.explore.enabled
+      ? '\nExplore Mode is ON: a live "EDITOR CONTEXT" snapshot (UI overview + document text, per the current page setting) is attached fresh before your next reply on every turn. Treat it as ground truth for that turn; it is not saved to history.'
+      + (cfg.explore.pages === 'aichoice' ? ' Page text is NOT included automatically in this mode — ask for specific pages with /pagetext <n> when you need them.' : '')
+      : '';
+    return [
+      'You are Bytez, an AI assistant embedded in the Sugarcane document editor.',
+      'You can read and control the editor ONLY through slash commands. Put each command on its own line, exactly as documented, e.g.:',
+      '/wordcount',
+      '/marginset left 2.5',
+      'Any line beginning with "/" in your reply is parsed and run automatically — info commands return data to you (you may need to ask again in a follow-up turn to see the result and continue), action commands change the document. Do not use slash commands for anything except the documented ones below. Never invent commands.',
+      'You cannot click UI elements directly by intent — the only way to interact with one is the /click command, which looks it up by its visible label/title/aria-label. It is gated: it only works when the user has turned on "Allow UI Clicks", and every ' + CLICK_BATCH + ' clicks needs a fresh confirmation from the user before more can happen — if you get "waiting on a new confirmation", stop and wait rather than repeating the command. Any other "clickable elements" list you see is descriptive context, not something you can trigger some other way.',
+      'You have NO knowledge of the document\'s actual current state until you ask via an info command (or read it from an attached EDITOR CONTEXT snapshot) — do not assume values.',
+      exploreNote,
+      '',
+      'COMMAND REFERENCE:',
+      ref,
+      '',
+      scopeSummary(),
+      '',
+      'Keep replies short. When you just want to inform the user, reply in plain text with no commands. When you need to act, issue the command(s) on their own lines.'
+    ].join('\n');
+  }
+
+  // ── Explore Mode: live editor context snapshot ──────────────────────
+  function collectClickableLabels(){
+    const nodes = document.querySelectorAll('button[title], button[aria-label], .tbtn[title], .mbtn, .aw-header-label, .sb-title');
+    const labels = new Set();
+    nodes.forEach(n => {
+      const label = (n.getAttribute('title') || n.getAttribute('aria-label') || n.textContent || '').trim().replace(/\s+/g,' ');
+      if(label && label.length < 40) labels.add(label);
+    });
+    return [...labels].slice(0, 90);
+  }
+
+  function buildExploreContext(){
+    const parts = [];
+    parts.push('UI overview (informational only — not clickable by you, describes what exists in the app):');
+    parts.push(collectClickableLabels().join(', '));
+    if(elAllowed('counts')){
+      parts.push('');
+      parts.push('Pages: ' + document.querySelectorAll('#editorArea .page').length + ' | Words: ' + (textOf('wordCount')||'0'));
+    }
+    const mode = cfg.explore.pages;
+    if(mode === 'aichoice'){
+      parts.push('');
+      parts.push('Page text: not attached — call /pagetext <n> for whichever page(s) you need.');
+    } else if(elAllowed('content')){
+      const pages = mode === 'all' ? null : allowedPages();
+      parts.push('');
+      parts.push('Document text' + (pages ? (' (pages ' + pages.join(',') + ')') : ' (full document)') + ':');
+      document.querySelectorAll('#editorArea .page-content').forEach((pc, idx) => {
+        const n = idx + 1;
+        if(pages && !pages.includes(n)) return;
+        if(mode !== 'all' && !pageAllowed(n)) return;
+        const text = pc.textContent.trim();
+        parts.push('--- Page ' + n + ' ---\n' + (text ? text.slice(0, 2000) : '(empty)'));
+      });
+    }
+    return parts.join('\n');
+  }
+
+  // ── Command parsing / execution ──────────────────────────────────────
+  function parseCommands(text){
+    const found = [];
+    text.split('\n').forEach(line => {
+      const m = line.match(/^\s*\/([a-zA-Z]+)\s*(.*)$/);
+      if(!m) return;
+      const name = m[1].toLowerCase(), argsRaw = m[2].trim();
+      if(!CMDS[name]) return;
+      const c = CMDS[name];
+      let args = [];
+      if(c.argMode === 'words') args = argsRaw.length ? argsRaw.split(/\s+/) : [];
+      else if(c.argMode === 'rest') args = [argsRaw];
+      found.push({name, args, raw: line.trim()});
+    });
+    return found;
+  }
+  function runCommand(cmd){
+    try { return CMDS[cmd.name].run.apply(null, cmd.args); }
+    catch(e){ return 'Error running /' + cmd.name + ': ' + e.message; }
+  }
+
+  // ── Bytez API call ───────────────────────────────────────────────────
+  async function callBytez(messages){
+    if(!cfg.apiKey) throw new Error('No Bytez API key set. Add one in Bytez Configuration.');
+    if(!cfg.model) throw new Error('No model name set. Add one in Bytez Configuration.');
+    const res = await fetch('https://api.bytez.com/models/v2/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json', 'Authorization': cfg.apiKey},
+      body: JSON.stringify({model: cfg.model, messages})
+    });
+    if(!res.ok){
+      let detail = '';
+      try { detail = (await res.json()).error || ''; } catch(e){}
+      throw new Error('Bytez request failed (' + res.status + ')' + (detail ? ': ' + detail : ''));
+    }
+    const data = await res.json();
+    const msg = data && data.choices && data.choices[0] && data.choices[0].message;
+    return (msg && msg.content) || '(empty response)';
+  }
+
+  // ── Chat panel UI ─────────────────────────────────────────────────────
+  let panelEl, msgsEl, inputEl, sendBtn, dockBtn;
+  let pendingApproval = null; // {cmds, resolveNode}
+
+  function buildPanel(){
+    panelEl = document.createElement('div');
+    panelEl.id = 'bytezPanel';
+    panelEl.className = 'bz-panel bz-' + cfg.dockMode;
+    panelEl.dataset.sugarcaneAddon = 'connect-with-bytez';
+    panelEl.innerHTML =
+      '<div class="bz-header" id="bzHeader">' +
+        '<span class="material-symbols-outlined bz-header-ic">smart_toy</span>' +
+        '<span class="bz-header-title">Bytez</span>' +
+        '<div class="bz-header-actions">' +
+          '<button type="button" class="bz-icon-btn" id="bzDockBtn" title="Dock/undock"><span class="material-symbols-outlined">picture_in_picture</span></button>' +
+          '<button type="button" class="bz-icon-btn" id="bzCloseBtn" title="Close"><span class="material-symbols-outlined">close</span></button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bz-messages" id="bzMessages"></div>' +
+      '<div class="bz-inputrow">' +
+        '<textarea id="bzInput" class="bz-input" placeholder="Message Bytez…" rows="1"></textarea>' +
+        '<button type="button" class="bz-send-btn" id="bzSendBtn"><span class="material-symbols-outlined">send</span></button>' +
+      '</div>';
+    document.body.appendChild(panelEl);
+    msgsEl = panelEl.querySelector('#bzMessages');
+    inputEl = panelEl.querySelector('#bzInput');
+    sendBtn = panelEl.querySelector('#bzSendBtn');
+    dockBtn = panelEl.querySelector('#bzDockBtn');
+
+    panelEl.querySelector('#bzCloseBtn').addEventListener('click', () => togglePanel(false));
+    dockBtn.addEventListener('click', toggleDock);
+    sendBtn.addEventListener('click', onSend);
+    inputEl.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); onSend(); }
+    });
+    wireDrag();
+    renderHistory();
+  }
+
+  function toggleDock(){
+    cfg.dockMode = cfg.dockMode === 'docked' ? 'floating' : 'docked';
+    saveCfg();
+    panelEl.classList.remove('bz-docked','bz-floating');
+    panelEl.classList.add('bz-' + cfg.dockMode);
+    if(cfg.dockMode === 'floating'){ panelEl.style.right='auto'; panelEl.style.bottom='auto'; panelEl.style.top='90px'; panelEl.style.left='90px'; }
+    else { panelEl.style.top='auto'; panelEl.style.left='auto'; panelEl.style.right='18px'; panelEl.style.bottom='18px'; }
+  }
+
+  function wireDrag(){
+    const header = panelEl.querySelector('#bzHeader');
+    let dragging = false, sx=0, sy=0, ox=0, oy=0;
+    header.addEventListener('pointerdown', (e) => {
+      if(cfg.dockMode !== 'floating') return;
+      dragging = true; sx = e.clientX; sy = e.clientY;
+      const r = panelEl.getBoundingClientRect(); ox = r.left; oy = r.top;
+      header.setPointerCapture(e.pointerId);
+    });
+    header.addEventListener('pointermove', (e) => {
+      if(!dragging) return;
+      panelEl.style.left = Math.max(4, ox + (e.clientX - sx)) + 'px';
+      panelEl.style.top = Math.max(4, oy + (e.clientY - sy)) + 'px';
+    });
+    header.addEventListener('pointerup', () => { dragging = false; });
+  }
+
+  function togglePanel(show){
+    if(!panelEl) buildPanel();
+    panelEl.style.display = show ? 'flex' : 'none';
+    if(show) inputEl.focus();
+  }
+
+  function addMsg(role, text){
+    chat.push({role, text, t: Date.now()}); saveChat();
+    renderMsg(role, text);
+  }
+  function renderMsg(role, text){
+    const div = document.createElement('div');
+    div.className = 'bz-msg bz-msg-' + role;
+    div.textContent = text;
+    msgsEl.appendChild(div);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return div;
+  }
+  function renderHistory(){
+    msgsEl.innerHTML = '';
+    chat.forEach(m => renderMsg(m.role, m.text));
+  }
+
+  function renderCommandBlock(cmds, results){
+    const box = document.createElement('div');
+    box.className = 'bz-cmdblock';
+    cmds.forEach((c, i) => {
+      const row = document.createElement('div');
+      row.className = 'bz-cmdrow';
+      row.innerHTML = '<code>' + c.raw.replace(/</g,'&lt;') + '</code><span class="bz-cmdresult"></span>';
+      if(results){ row.querySelector('.bz-cmdresult').textContent = results[i]; row.classList.add('bz-cmdrow-done'); }
+      box.appendChild(row);
+    });
+    msgsEl.appendChild(box);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    return box;
+  }
+
+  function renderApproval(cmds, onDecision){
+    const box = renderCommandBlock(cmds, null);
+    box.classList.add('bz-cmdblock-pending');
+    const actions = document.createElement('div');
+    actions.className = 'bz-approve-row';
+    actions.innerHTML =
+      '<button type="button" class="bz-approve-btn bz-approve-all">Approve all</button>' +
+      '<button type="button" class="bz-approve-btn bz-deny-all">Deny all</button>';
+    box.appendChild(actions);
+    actions.querySelector('.bz-approve-all').addEventListener('click', () => { box.classList.remove('bz-cmdblock-pending'); actions.remove(); onDecision(true); });
+    actions.querySelector('.bz-deny-all').addEventListener('click', () => { box.classList.remove('bz-cmdblock-pending'); actions.remove(); onDecision(false); box.classList.add('bz-cmdblock-denied'); });
+    return box;
+  }
+
+  function renderClickGate(cmds, onDecision){
+    const box = document.createElement('div');
+    box.className = 'bz-cmdblock bz-clickgate';
+    const notice = document.createElement('div');
+    notice.className = 'bz-clickgate-notice';
+    notice.innerHTML = '<span class="material-symbols-outlined">ads_click</span>Bytez wants to click around the UI — approve a new batch of ' + CLICK_BATCH + ' clicks?';
+    box.appendChild(notice);
+    cmds.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'bz-cmdrow';
+      row.innerHTML = '<code>' + c.raw.replace(/</g,'&lt;') + '</code><span class="bz-cmdresult"></span>';
+      box.appendChild(row);
+    });
+    const actions = document.createElement('div');
+    actions.className = 'bz-approve-row';
+    actions.innerHTML =
+      '<button type="button" class="bz-approve-btn bz-approve-clicks">Approve ' + CLICK_BATCH + ' clicks</button>' +
+      '<button type="button" class="bz-approve-btn bz-deny-all">Deny</button>';
+    box.appendChild(actions);
+    msgsEl.appendChild(box);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+    actions.querySelector('.bz-approve-clicks').addEventListener('click', () => { box.classList.remove('bz-clickgate'); actions.remove(); onDecision(true); });
+    actions.querySelector('.bz-deny-all').addEventListener('click', () => { actions.remove(); onDecision(false); box.classList.add('bz-cmdblock-denied'); });
+    return box;
+  }
+
+  // ── Conversation loop ────────────────────────────────────────────────
+  let looping = false;
+  async function onSend(){
+    const text = inputEl.value.trim();
+    if(!text || looping) return;
+    inputEl.value = '';
+    addMsg('user', text);
+    await converse();
+  }
+
+  async function converse(round){
+    round = round || 1;
+    looping = true;
+    sendBtn.disabled = true;
+    const thinking = renderMsg('assistant', 'Thinking…');
+    thinking.classList.add('bz-thinking');
+    let reply;
+    try {
+      const messages = [{role:'system', content: systemPrompt()}]
+        .concat(chat.map(m => ({role: m.role === 'assistant' ? 'assistant' : (m.role === 'tool' ? 'user' : 'user'), content: m.text})));
+      if(cfg.explore.enabled){
+        // Freshly rebuilt every call, never persisted to chat/localStorage.
+        messages.push({role:'system', content: 'EDITOR CONTEXT (live, this turn only):\n' + buildExploreContext()});
+      }
+      reply = await callBytez(messages);
+    } catch(e){
+      thinking.remove();
+      addMsg('assistant', 'Error: ' + e.message);
+      looping = false; sendBtn.disabled = false;
+      return;
+    }
+    thinking.remove();
+    chat.push({role:'assistant', text: reply, t: Date.now()}); saveChat();
+    renderMsg('assistant', reply);
+
+    const parsedCmds = parseCommands(reply);
+    if(!parsedCmds.length){ looping = false; sendBtn.disabled = false; return; }
+    const {ready: cmds, gated} = splitForClickGate(parsedCmds);
+
+    let shouldContinue = false;
+    if(cmds.length){
+      if(cfg.autoExecute){
+        const results = cmds.map(runCommand);
+        renderCommandBlock(cmds, results);
+        const summary = cmds.map((c,i) => c.raw + ' → ' + results[i]).join('\n');
+        chat.push({role:'tool', text: 'Command results:\n' + summary, t: Date.now()}); saveChat();
+        shouldContinue = true;
+      } else {
+        shouldContinue = await new Promise(resolve => {
+          renderApproval(cmds, (approved) => {
+            if(!approved){
+              chat.push({role:'tool', text: 'The user denied the pending command(s). Do not repeat them without being asked.', t: Date.now()}); saveChat();
+              resolve(false); return;
+            }
+            const results = cmds.map(runCommand);
+            const blocks = msgsEl.querySelectorAll('.bz-cmdblock');
+            const block = blocks[blocks.length-1];
+            if(block) cmds.forEach((c,i) => { block.children[i].querySelector('.bz-cmdresult').textContent = results[i]; block.children[i].classList.add('bz-cmdrow-done'); });
+            const summary = cmds.map((c,i) => c.raw + ' → ' + results[i]).join('\n');
+            chat.push({role:'tool', text: 'Command results:\n' + summary, t: Date.now()}); saveChat();
+            resolve(true);
+          });
+        });
+      }
+    }
+
+    if(gated.length){
+      looping = false; sendBtn.disabled = false;
+      renderClickGate(gated, (approved) => {
+        if(!approved){
+          chat.push({role:'tool', text: 'The user denied the click session. Do not attempt further /click commands without being asked.', t: Date.now()}); saveChat();
+          return;
+        }
+        clickBudget = CLICK_BATCH;
+        const results = gated.map(runCommand);
+        const blocks = msgsEl.querySelectorAll('.bz-cmdblock');
+        const block = blocks[blocks.length-1];
+        if(block) gated.forEach((c,i) => { block.children[i].querySelector('.bz-cmdresult').textContent = results[i]; block.children[i].classList.add('bz-cmdrow-done'); });
+        const summary = gated.map((c,i) => c.raw + ' → ' + results[i]).join('\n');
+        chat.push({role:'tool', text: 'Command results:\n' + summary, t: Date.now()}); saveChat();
+        converse(round + 1);
+      });
+      return;
+    }
+
+    if(shouldContinue && round < 5){ looping = false; await converse(round + 1); return; }
+    looping = false;
+    sendBtn.disabled = false;
+  }
+
+  // ── Sidebar section ──────────────────────────────────────────────────
+  function buildSidebarSection(){
+    const sidebar = document.getElementById('sidebar');
+    if(!sidebar) return;
+    const section = document.createElement('div');
+    section.className = 'sb-section';
+    section.id = 'bzSbSection';
+    section.dataset.sugarcaneAddon = 'connect-with-bytez';
+    section.innerHTML =
+      '<div class="aw-header" id="bzHeaderToggle">' +
+        '<span class="aw-header-label aw-label-blue">Bytez Configuration</span>' +
+        '<div class="aw-header-right"><span class="material-symbols-outlined aw-chevron" id="bzChevron">expand_more</span></div>' +
+      '</div>' +
+      '<div class="aw-dropdown" id="bzDropdown">' +
+        '<div class="aw-inner">' +
+
+          '<label class="bz-cfg-label">API Key</label>' +
+          '<input type="password" class="bz-cfg-input" id="bzApiKeyInput" placeholder="Bytez API key" autocomplete="off">' +
+
+          '<label class="bz-cfg-label">Model name</label>' +
+          '<input type="text" class="bz-cfg-input" id="bzModelInput" placeholder="e.g. google/gemma-3-4b-it">' +
+
+          '<div class="aw-row">' +
+            '<div><div class="aw-row-label">Auto-execute</div><div class="aw-row-sub">Run commands the AI issues without asking</div></div>' +
+            '<label class="toggle-switch"><input type="checkbox" id="bzAutoExecToggle"><span class="toggle-slider"></span></label>' +
+          '</div>' +
+
+          '<label class="bz-cfg-label">Pages the AI can see</label>' +
+          '<div class="bz-seg" id="bzScopeSeg">' +
+            '<button type="button" data-v="all">All</button>' +
+            '<button type="button" data-v="current">Current</button>' +
+            '<button type="button" data-v="custom">Custom</button>' +
+          '</div>' +
+          '<input type="text" class="bz-cfg-input" id="bzScopeCustomInput" placeholder="e.g. 1,3,4" style="display:none">' +
+
+          '<label class="bz-cfg-label">Elements the AI can see / edit</label>' +
+          '<div class="bz-elgrid" id="bzElGrid"></div>' +
+
+          '<div class="aw-row">' +
+            '<div><div class="aw-row-label">Explore Mode</div><div class="aw-row-sub">Send a live editor snapshot with every message</div></div>' +
+            '<label class="toggle-switch"><input type="checkbox" id="bzExploreToggle"><span class="toggle-slider"></span></label>' +
+          '</div>' +
+          '<label class="bz-cfg-label">Document text sent in Explore Mode</label>' +
+          '<div class="bz-seg" id="bzExploreSeg">' +
+            '<button type="button" data-v="all">Full document</button>' +
+            '<button type="button" data-v="selected">Selected pages</button>' +
+            '<button type="button" data-v="aichoice">Let AI choose</button>' +
+          '</div>' +
+
+          '<div class="aw-row bz-risky-row">' +
+            '<div><div class="aw-row-label">Allow UI Clicks</div><div class="aw-row-sub">Lets the AI click any labeled control via /click. Every ' + CLICK_BATCH + ' clicks needs your confirmation.</div></div>' +
+            '<label class="toggle-switch"><input type="checkbox" id="bzAllowClicksToggle"><span class="toggle-slider"></span></label>' +
+          '</div>' +
+
+          '<button type="button" class="tc-mod-btn" id="bzOpenChatBtn"><span class="material-symbols-outlined">chat</span>Open Bytez Chat</button>' +
+
+        '</div>' +
+      '</div>';
+    // Insert right before the collapse button so it reads as a native section.
+    const collapseBtn = sidebar.querySelector('.collapse-btn');
+    if(collapseBtn) sidebar.insertBefore(section, collapseBtn);
+    else sidebar.appendChild(section);
+
+    document.getElementById('bzHeaderToggle').addEventListener('click', () => {
+      const open = document.getElementById('bzDropdown').classList.toggle('open');
+      document.getElementById('bzChevron').classList.toggle('open', open);
+    });
+
+    const apiKeyInput = document.getElementById('bzApiKeyInput');
+    apiKeyInput.value = cfg.apiKey;
+    apiKeyInput.addEventListener('change', () => { cfg.apiKey = apiKeyInput.value.trim(); saveCfg(); });
+
+    const modelInput = document.getElementById('bzModelInput');
+    modelInput.value = cfg.model;
+    modelInput.addEventListener('change', () => { cfg.model = modelInput.value.trim(); saveCfg(); });
+
+    const autoToggle = document.getElementById('bzAutoExecToggle');
+    autoToggle.checked = cfg.autoExecute;
+    autoToggle.addEventListener('change', () => { cfg.autoExecute = autoToggle.checked; saveCfg(); });
+
+    const scopeSeg = document.getElementById('bzScopeSeg');
+    const customInput = document.getElementById('bzScopeCustomInput');
+    function syncScopeUI(){
+      const isCustom = !['all','current'].includes(cfg.scopePages);
+      scopeSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active',
+        (b.dataset.v === 'custom' && isCustom) || b.dataset.v === cfg.scopePages));
+      customInput.style.display = isCustom ? 'block' : 'none';
+      if(isCustom) customInput.value = cfg.scopePages;
+    }
+    scopeSeg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      if(b.dataset.v === 'custom'){ cfg.scopePages = customInput.value || '1'; }
+      else cfg.scopePages = b.dataset.v;
+      saveCfg(); syncScopeUI();
+    }));
+    customInput.addEventListener('change', () => { cfg.scopePages = customInput.value.trim() || 'all'; saveCfg(); });
+    syncScopeUI();
+
+    const elGrid = document.getElementById('bzElGrid');
+    const elLabels = {header:'Header', footer:'Footer', watermark:'Watermark', background:'Page background', margins:'Margins', counts:'Word/page counts', content:'Page text', selection:'Selection', tables:'Tables'};
+    Object.keys(elLabels).forEach(key => {
+      const row = document.createElement('label');
+      row.className = 'bz-el-item';
+      row.innerHTML = '<input type="checkbox" data-el="' + key + '"' + (cfg.elements[key] ? ' checked' : '') + '><span>' + elLabels[key] + '</span>';
+      row.querySelector('input').addEventListener('change', (e) => { cfg.elements[key] = e.target.checked; saveCfg(); });
+      elGrid.appendChild(row);
+    });
+
+    const exploreToggle = document.getElementById('bzExploreToggle');
+    exploreToggle.checked = cfg.explore.enabled;
+    exploreToggle.addEventListener('change', () => { cfg.explore.enabled = exploreToggle.checked; saveCfg(); });
+
+    const exploreSeg = document.getElementById('bzExploreSeg');
+    function syncExploreSeg(){
+      exploreSeg.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.v === cfg.explore.pages));
+    }
+    exploreSeg.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      cfg.explore.pages = b.dataset.v; saveCfg(); syncExploreSeg();
+    }));
+    syncExploreSeg();
+
+    const allowClicksToggle = document.getElementById('bzAllowClicksToggle');
+    allowClicksToggle.checked = cfg.allowClicks;
+    allowClicksToggle.addEventListener('change', () => {
+      cfg.allowClicks = allowClicksToggle.checked;
+      clickBudget = 0; // always start a fresh session — off→on or on→off, either way needs a new confirmation
+      saveCfg();
+    });
+
+    document.getElementById('bzOpenChatBtn').addEventListener('click', () => togglePanel(true));
+  }
+
+  function init(){
+    buildSidebarSection();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
+  else init();
+})();

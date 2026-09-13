@@ -16,7 +16,38 @@
 (function(){
   'use strict';
   const CFG_KEY = 'sugarcane_addon_pollinations_config';
-  const CHAT_KEY = 'sugarcane_addon_pollinations_chat';
+  const CHAT_KEY_PREFIX = 'sugarcane_addon_pollinations_chat_';
+  // Chat history is scoped to the document actually open in the editor —
+  // not a single shared bucket — so switching documents starts a fresh
+  // thread instead of the AI carrying over another document's context.
+  // Prefer the Drive file ID when the doc is Drive-backed, else the host's
+  // local doc ID; both are top-level `let`s in sceditor.html's own script,
+  // so they're readable here as plain identifiers once that script has run.
+  function currentDocKey(){
+    try {
+      if(typeof _currentDocDriveId !== 'undefined' && _currentDocDriveId) return 'drive_' + _currentDocDriveId;
+      if(typeof _currentDocId !== 'undefined' && _currentDocId) return 'local_' + _currentDocId;
+    } catch(e){}
+    return 'untitled'; // brand-new, not-yet-saved documents share this bucket until the host assigns a real ID
+  }
+  function chatKeyForDoc(){ return CHAT_KEY_PREFIX + currentDocKey(); }
+  let loadedDocKey = null;
+  let chat = loadChat();
+  loadedDocKey = chatKeyForDoc();
+  function loadChat(){ try { return JSON.parse(localStorage.getItem(chatKeyForDoc()) || '[]'); } catch(e){ return []; } }
+  function saveChat(){ try { localStorage.setItem(chatKeyForDoc(), JSON.stringify(chat.slice(-60))); } catch(e){} }
+  // Switching documents happens in-place (no page reload) in this editor,
+  // so the addon's own script instance stays alive across the switch —
+  // this is what re-syncs the in-memory chat + rendered panel to whichever
+  // document is actually open right now.
+  function ensureCurrentDocChat(){
+    const key = chatKeyForDoc();
+    if(key !== loadedDocKey){
+      loadedDocKey = key;
+      chat = loadChat();
+      if(msgsEl) renderHistory();
+    }
+  }
 
   const defaults = {
     apiKey: '',
@@ -45,6 +76,7 @@
   let clickBudget = 0;
   const CLICK_BATCH = 30;
   const COOLDOWN_MS = 2000; // pause between commands in a multi-command reply, when Click Cooldown is on
+  const AUTO_HISTORY = 10;  // messages sent to the AI automatically each turn — older ones need /recall
   function delay(ms){ return new Promise(r => setTimeout(r, ms)); }
 
   let cfg = loadCfg();
@@ -58,10 +90,6 @@
     } catch(e){ return JSON.parse(JSON.stringify(defaults)); }
   }
   function saveCfg(){ try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch(e){} }
-
-  let chat = loadChat();
-  function loadChat(){ try { return JSON.parse(localStorage.getItem(CHAT_KEY) || '[]'); } catch(e){ return []; } }
-  function saveChat(){ try { localStorage.setItem(CHAT_KEY, JSON.stringify(chat.slice(-60))); } catch(e){} }
 
   // ── Editor helpers ───────────────────────────────────────────────────
   function activePage(){
@@ -243,11 +271,44 @@
     }
   );
 
+  reg('placecursor', 'words', 'action',
+    'placecursor <n> <pos> — place the cursor at character position pos on page n (from /lookup — e.g. use a match\'s "end" to land right after it), so a following insert command (/inserttext, /insertmarkdown, /inserttable, /insertimage, /insertlink, /inserthr) lands exactly there instead of wherever the cursor happened to be.',
+    (n, pos) => {
+      if(!elAllowed('content')) return denyMsg('page content');
+      const num = parseInt(n,10) || 1;
+      if(!pageAllowed(num)) return denyMsg('page ' + num);
+      const p = parseInt(pos,10);
+      if(isNaN(p) || p < 0) return 'Invalid position — use /placecursor <page> <pos> with a position from /lookup.';
+      const pc = pageContentByNum(num);
+      if(!pc) return 'Page ' + num + ' not found.';
+      const total = pc.textContent.length;
+      if(p > total) return 'Position exceeds page ' + num + '\'s length (' + total + ' characters).';
+      const range = charOffsetToRange(pc, p, p);
+      if(!range) return 'Could not resolve that position.';
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      pc.focus();
+      return 'Cursor placed at position ' + p + ' on page ' + num + ' — the next insert command lands there.';
+    }
+  );
+
   reg('selection', 'none', 'info', 'Currently selected text, if any.', () => {
     if(!elAllowed('selection')) return denyMsg('selection');
     const s = window.getSelection ? window.getSelection().toString() : '';
     return s || '(no selection)';
   });
+
+  reg('recall', 'words', 'info',
+    'recall <count?> — show the last <count> messages of this document\'s chat history (default 5, max 200). Only the most recent ' + AUTO_HISTORY + ' are sent to you automatically each turn — use this to reach further back in a long session.',
+    (n) => {
+      const count = Math.min(200, Math.max(1, n ? (parseInt(n,10) || 5) : 5));
+      if(!chat.length) return 'No prior history for this document.';
+      const slice = chat.slice(-count);
+      const label = m => m.role === 'assistant' ? 'AI' : (m.role === 'tool' ? 'Command result' : 'User');
+      return 'Last ' + slice.length + ' of ' + chat.length + ' message(s):\n' + slice.map(m => label(m) + ': ' + m.text).join('\n---\n');
+    }
+  );
 
   reg('bold', 'none', 'action', 'Toggle bold on the current selection.', () => { document.execCommand('bold'); return 'Toggled bold.'; });
   reg('italic', 'none', 'action', 'Toggle italic on the current selection.', () => { document.execCommand('italic'); return 'Toggled italic.'; });
@@ -315,7 +376,9 @@
     if(!pageAllowed(num)) return denyMsg('page ' + num);
     const p = pageByNum(num); if(!p) return 'Page ' + num + ' not found.';
     const el = p.querySelector('.page-header-area'); if(!el) return 'Page ' + num + ' not found.';
-    el.textContent = rest.join(' '); return 'Header on page ' + num + ' updated.';
+    el.textContent = rest.join(' ');
+    notifyContentChanged(p.querySelector('.page-content'));
+    return 'Header on page ' + num + ' updated.';
   });
   reg('footerset', 'words', 'action', 'footerset <n> <text...> — set page n\'s footer text.', (n, ...rest) => {
     if(!elAllowed('footer')) return denyMsg('page footer');
@@ -323,7 +386,9 @@
     if(!pageAllowed(num)) return denyMsg('page ' + num);
     const p = pageByNum(num); if(!p) return 'Page ' + num + ' not found.';
     const el = p.querySelector('.page-footer-area'); if(!el) return 'Page ' + num + ' not found.';
-    el.textContent = rest.join(' '); return 'Footer on page ' + num + ' updated.';
+    el.textContent = rest.join(' ');
+    notifyContentChanged(p.querySelector('.page-content'));
+    return 'Footer on page ' + num + ' updated.';
   });
 
   reg('addpage', 'none', 'action', 'Add a new page at the end of the document.', () => {
@@ -595,6 +660,156 @@
     table.remove(); return 'Table deleted.';
   });
 
+  // Direct DOM edits (textContent assignment, appendChild, etc. — as opposed
+  // to document.execCommand, which dispatches this on its own) don't fire an
+  // 'input' event by themselves, so the host's word-count/autosave listeners
+  // (bound to 'input' on page-content) never see them. Call this after any
+  // such edit so the document actually saves and stats stay accurate.
+  function notifyContentChanged(pc){
+    if(!pc) return;
+    pc.dispatchEvent(new Event('input', {bubbles:true}));
+    if(typeof scheduleAutoSave === 'function') scheduleAutoSave();
+  }
+
+  // ── Tables by ID ─────────────────────────────────────────────────────
+  // Sugarcane tables have no built-in ID/name of their own, so the addon
+  // assigns one the first time a table is seen — a short lowercase letter
+  // code (a, b, c, ... z, aa, ab, ...), stamped onto the element itself so
+  // it stays stable across calls for as long as that table exists.
+  function allTables(){ return [...document.querySelectorAll('#editorArea table')]; }
+  function idToLetters(num){
+    let s = '', n = num + 1;
+    while(n > 0){ n--; s = String.fromCharCode(97 + (n % 26)) + s; n = Math.floor(n / 26); }
+    return s;
+  }
+  function ensureTableIds(){
+    const used = new Set(allTables().map(t => t.getAttribute('data-pl-tid')).filter(Boolean));
+    let n = 0;
+    allTables().forEach(t => {
+      if(t.getAttribute('data-pl-tid')) return;
+      let id;
+      do { id = idToLetters(n); n++; } while(used.has(id));
+      t.setAttribute('data-pl-tid', id);
+      used.add(id);
+    });
+  }
+  function tableById(id){
+    ensureTableIds();
+    const target = String(id || '').toLowerCase().trim();
+    return allTables().find(t => t.getAttribute('data-pl-tid') === target) || null;
+  }
+  function tableDims(t){
+    const rows = t.querySelectorAll('tr');
+    return {rows: rows.length, cols: rows.length ? rows[0].querySelectorAll('td,th').length : 0};
+  }
+  function tableName(t){
+    const cell = t.querySelector('td,th');
+    const text = cell ? cell.textContent.trim() : '';
+    return text ? (text.length > 30 ? text.slice(0,30) + '…' : text) : '(unnamed)';
+  }
+  function tablePageOf(t){
+    const pc = t.closest('.page-content');
+    return pc ? pageNumFromEl(pc) : 1;
+  }
+
+  reg('tables', 'none', 'info', 'List every table in the document with its letter ID, dimensions, page, and an auto-derived name (its first cell\'s text) — use the ID with /tabledata, /tablecell, /tablecellset, /tableaddrow, /tableaddcol.', () => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    ensureTableIds();
+    const list = allTables();
+    if(!list.length) return 'No tables in the document.';
+    return list.map(t => {
+      const id = t.getAttribute('data-pl-tid');
+      const {rows, cols} = tableDims(t);
+      return id + ': ' + rows + '×' + cols + ' table on page ' + tablePageOf(t) + ' — "' + tableName(t) + '"';
+    }).join('\n');
+  });
+
+  reg('tablesearch', 'rest', 'info', 'tablesearch <keyword...> — search every table\'s cell text for a keyword; reports the best-matching table\'s letter ID (by number of matching cells) plus any others that also matched.', (kw) => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    if(!kw) return 'Missing search keyword.';
+    ensureTableIds();
+    const term = kw.toLowerCase();
+    const scored = allTables().map(t => {
+      let score = 0, snippet = '';
+      t.querySelectorAll('td,th').forEach(c => {
+        const txt = c.textContent;
+        if(txt.toLowerCase().includes(term)){ score++; if(!snippet) snippet = txt.trim().slice(0,40); }
+      });
+      return {t, score, snippet};
+    }).filter(x => x.score > 0).sort((a,b) => b.score - a.score);
+    if(!scored.length) return 'No table contains "' + kw + '".';
+    const best = scored[0];
+    const id = best.t.getAttribute('data-pl-tid');
+    const {rows, cols} = tableDims(best.t);
+    let out = 'Best match: table ' + id + ' (' + rows + '×' + cols + ' on page ' + tablePageOf(best.t) + ', ' + best.score + ' matching cell(s)) — e.g. "' + best.snippet + '".';
+    if(scored.length > 1) out += ' Also matched: ' + scored.slice(1,5).map(x => x.t.getAttribute('data-pl-tid')).join(', ') + '.';
+    return out;
+  });
+
+  reg('tabledata', 'words', 'info', 'tabledata <table id> — dump every cell of a table as a grid (one row per line, cells separated by " | ").', (id) => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const t = tableById(id);
+    if(!t) return 'No table with ID "' + id + '".';
+    const rows = [...t.querySelectorAll('tr')].map(tr => [...tr.querySelectorAll('td,th')].map(c => c.textContent.trim() || '(empty)').join(' | '));
+    return 'Table ' + id.toLowerCase() + ':\n' + rows.join('\n');
+  });
+
+  reg('tablecell', 'words', 'info', 'tablecell <table id> <row> <col> — read one cell\'s text (row/col 1-indexed).', (id, r, c) => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const t = tableById(id);
+    if(!t) return 'No table with ID "' + id + '".';
+    const tr = t.querySelectorAll('tr')[parseInt(r,10) - 1];
+    if(!tr) return 'Table ' + id.toLowerCase() + ' has no row ' + r + '.';
+    const cell = tr.querySelectorAll('td,th')[parseInt(c,10) - 1];
+    if(!cell) return 'Table ' + id.toLowerCase() + ' row ' + r + ' has no column ' + c + '.';
+    return cell.textContent.trim() || '(empty)';
+  });
+
+  reg('tablecellset', 'words', 'action', 'tablecellset <table id> <row> <col> <text...> — set one cell\'s text (row/col 1-indexed).', (id, r, c, ...rest) => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const t = tableById(id);
+    if(!t) return 'No table with ID "' + id + '".';
+    const tr = t.querySelectorAll('tr')[parseInt(r,10) - 1];
+    if(!tr) return 'Table ' + id.toLowerCase() + ' has no row ' + r + '.';
+    const cell = tr.querySelectorAll('td,th')[parseInt(c,10) - 1];
+    if(!cell) return 'Table ' + id.toLowerCase() + ' row ' + r + ' has no column ' + c + '.';
+    cell.textContent = rest.join(' ');
+    notifyContentChanged(t.closest('.page-content'));
+    return 'Set table ' + id.toLowerCase() + ' row ' + r + ', col ' + c + '.';
+  });
+
+  reg('tableaddrow', 'words', 'action', 'tableaddrow <table id> <top|bottom> — add a row to a specific side of a specific table (no cursor needed).', (id, side) => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const t = tableById(id);
+    if(!t) return 'No table with ID "' + id + '".';
+    const trs = t.querySelectorAll('tr');
+    if(!trs.length) return 'Table ' + id.toLowerCase() + ' has no rows to measure from.';
+    const cols = trs[0].querySelectorAll('td,th').length;
+    const tr = document.createElement('tr');
+    for(let i = 0; i < cols; i++) tr.appendChild(makeCell());
+    const s = (side || 'bottom').toLowerCase();
+    if(s === 'top') trs[0].parentNode.insertBefore(tr, trs[0]);
+    else trs[trs.length - 1].after(tr);
+    notifyContentChanged(t.closest('.page-content'));
+    return 'Added a row to the ' + (s === 'top' ? 'top' : 'bottom') + ' of table ' + id.toLowerCase() + '.';
+  });
+
+  reg('tableaddcol', 'words', 'action', 'tableaddcol <table id> <left|right> — add a column to a specific side of a specific table (no cursor needed).', (id, side) => {
+    if(!elAllowed('tables')) return denyMsg('tables');
+    const t = tableById(id);
+    if(!t) return 'No table with ID "' + id + '".';
+    const trs = t.querySelectorAll('tr');
+    if(!trs.length) return 'Table ' + id.toLowerCase() + ' has no rows.';
+    const s = (side || 'right').toLowerCase();
+    trs.forEach(tr => {
+      const cells = tr.querySelectorAll('td,th');
+      if(s === 'left') tr.insertBefore(makeCell(), cells[0] || null);
+      else tr.appendChild(makeCell());
+    });
+    notifyContentChanged(t.closest('.page-content'));
+    return 'Added a column to the ' + (s === 'left' ? 'left' : 'right') + ' of table ' + id.toLowerCase() + '.';
+  });
+
   // ── Page management ──────────────────────────────────────────────────
   reg('duplicatepage', 'words', 'action', 'duplicatepage <n> — duplicate page n and insert the copy right after it.', (n) => {
     const num = parseInt(n,10) || 1;
@@ -735,6 +950,7 @@
         ? ' It is unlimited right now (Allow Screen Share is on) — no confirmation batches, click as many things in a row as you need.'
         : ' It is gated: it only works when the user has turned on "Allow UI Clicks", and every ' + CLICK_BATCH + ' clicks needs a fresh confirmation from the user before more can happen' + (cfg.autoApproveClicks ? ' — that confirmation is auto-approved right now, so batches just continue without visibly pausing' : ' — if you get "waiting on a new confirmation", stop and wait rather than repeating the command')) + '. Any other "clickable elements" list you see is descriptive context, not something you can trigger some other way.',
       'You have NO knowledge of the document\'s actual current state until you ask via an info command (or read it from an attached EDITOR CONTEXT / SCREEN SHARE snapshot) — do not assume values.',
+      'Only the most recent ' + AUTO_HISTORY + ' messages of this document\'s chat are sent to you automatically each turn. In a long session, something from earlier may no longer be visible to you — use /recall <count> (default 5) to pull older messages back in if the user references something you don\'t see.',
       'To format a specific word or phrase (bold/italic/underline/etc.) rather than whatever happens to be selected: first run /lookup <page> <phrase> to get its character position(s), wait for that result, then run /select <page> <start> <end> with one of the reported pairs, then the formatting command — /select and the formatting command CAN be on the same line/turn together, but /lookup\'s result must come back first since you need its numbers.',
       exploreNote,
       screenShareNote,
@@ -848,6 +1064,7 @@
         '<span class="material-symbols-outlined pl-header-ic">smart_toy</span>' +
         '<span class="pl-header-title">Pollinations</span>' +
         '<div class="pl-header-actions">' +
+          '<button type="button" class="pl-icon-btn" id="plClearBtn" title="Clear this document\'s chat history"><span class="material-symbols-outlined">delete_sweep</span></button>' +
           '<button type="button" class="pl-icon-btn" id="plDockBtn" title="Dock/undock"><span class="material-symbols-outlined">picture_in_picture</span></button>' +
           '<button type="button" class="pl-icon-btn" id="plCloseBtn" title="Close"><span class="material-symbols-outlined">close</span></button>' +
         '</div>' +
@@ -864,6 +1081,12 @@
     dockBtn = panelEl.querySelector('#plDockBtn');
 
     panelEl.querySelector('#plCloseBtn').addEventListener('click', () => togglePanel(false));
+    panelEl.querySelector('#plClearBtn').addEventListener('click', () => {
+      if(!confirm('Clear this document\'s AI chat history? This cannot be undone.')) return;
+      chat = [];
+      saveChat();
+      renderHistory();
+    });
     dockBtn.addEventListener('click', toggleDock);
     sendBtn.addEventListener('click', onSend);
     inputEl.addEventListener('keydown', (e) => {
@@ -921,6 +1144,7 @@
 
   function togglePanel(show){
     if(!panelEl) buildPanel();
+    if(show) ensureCurrentDocChat(); // catch a document switch that happened while the panel was closed
     panelEl.style.display = show ? 'flex' : 'none';
     if(show){ inputEl.focus(); clampPanelToViewport(); }
   }
@@ -1038,7 +1262,7 @@
     let reply;
     try {
       const messages = [{role:'system', content: systemPrompt()}]
-        .concat(chat.map(m => ({role: m.role === 'assistant' ? 'assistant' : (m.role === 'tool' ? 'user' : 'user'), content: m.text})));
+        .concat(chat.slice(-AUTO_HISTORY).map(m => ({role: m.role === 'assistant' ? 'assistant' : (m.role === 'tool' ? 'user' : 'user'), content: m.text})));
       if(cfg.explore.enabled){
         // Freshly rebuilt every call, never persisted to chat/localStorage.
         messages.push({role:'system', content: 'EDITOR CONTEXT (live, this turn only):\n' + buildExploreContext()});
@@ -1313,6 +1537,9 @@
 
   function init(){
     buildSidebarSection();
+    // Documents are switched in-place in this editor (no page reload), so
+    // watch for that while the panel is open and re-sync chat if it happens.
+    setInterval(() => { if(panelEl && panelEl.style.display !== 'none') ensureCurrentDocChat(); }, 1500);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
   else init();

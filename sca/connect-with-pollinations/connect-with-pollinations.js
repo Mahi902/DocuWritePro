@@ -127,19 +127,51 @@
 
   function textOf(id){ const el = document.getElementById(id); return el ? el.textContent.trim() : ''; }
 
-  // Minimal markdown → HTML (bold/italic/headers/lists/links) for /insertmarkdown
-  function mdToHtml(md){
-    let h = md
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/^### (.*)$/gm,'<h3>$1</h3>')
-      .replace(/^## (.*)$/gm,'<h2>$1</h2>')
-      .replace(/^# (.*)$/gm,'<h1>$1</h1>')
+  // Markdown → HTML for /insertmarkdown, /insertmarkdownat, and rendering the
+  // AI's chat replies (which are themselves written in markdown). Covers
+  // headers, bold/italic/bold+italic, strikethrough, inline code, fenced
+  // code blocks, blockquotes, ordered/unordered lists, links and hr.
+  function mdInline(s){
+    return s
+      .replace(/`([^`]+)`/g,'<code>$1</code>')
+      .replace(/\*\*\*(.+?)\*\*\*/g,'<b><i>$1</i></b>')
       .replace(/\*\*(.+?)\*\*/g,'<b>$1</b>')
-      .replace(/\*(.+?)\*/g,'<i>$1</i>')
-      .replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2">$1</a>')
-      .replace(/^- (.*)$/gm,'<li>$1</li>');
-    h = h.replace(/(<li>.*<\/li>\n?)+/g, m => '<ul>' + m + '</ul>');
-    return h.split('\n').map(l => (/^<(h1|h2|h3|ul|li)/.test(l) ? l : (l.trim() ? '<p>'+l+'</p>' : ''))).join('');
+      .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,'$1<i>$2</i>')
+      .replace(/~~(.+?)~~/g,'<s>$1</s>')
+      .replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+  }
+  function mdToHtml(md){
+    let src = String(md)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    // Pull fenced code blocks out first so nothing inside them gets touched
+    // by the line-by-line passes below.
+    const blocks = [];
+    src = src.replace(/```([\s\S]*?)```/g, (m, code) => {
+      blocks.push('<pre><code>' + code.replace(/^\n/,'').replace(/\n$/,'') + '</code></pre>');
+      return '\u0000B' + (blocks.length - 1) + '\u0000';
+    });
+    const out = [];
+    let listType = null, quoting = false;
+    const closeList = () => { if(listType){ out.push('</' + listType + '>'); listType = null; } };
+    const closeQuote = () => { if(quoting){ out.push('</blockquote>'); quoting = false; } };
+    src.split('\n').forEach(line => {
+      const ph = line.match(/^\u0000B(\d+)\u0000$/);
+      if(ph){ closeList(); closeQuote(); out.push(blocks[+ph[1]]); return; }
+      if(/^\s*(---|\*\*\*|___)\s*$/.test(line)){ closeList(); closeQuote(); out.push('<hr>'); return; }
+      const h = line.match(/^(#{1,3})\s+(.*)$/);
+      if(h){ closeList(); closeQuote(); const lvl = h[1].length; out.push('<h'+lvl+'>'+mdInline(h[2])+'</h'+lvl+'>'); return; }
+      const bq = line.match(/^>\s?(.*)$/);
+      if(bq){ closeList(); if(!quoting){ out.push('<blockquote>'); quoting = true; } if(bq[1].trim()) out.push('<p>'+mdInline(bq[1])+'</p>'); return; }
+      closeQuote();
+      const ol = line.match(/^\s*\d+\.\s+(.*)$/);
+      if(ol){ if(listType !== 'ol'){ closeList(); out.push('<ol>'); listType = 'ol'; } out.push('<li>'+mdInline(ol[1])+'</li>'); return; }
+      const ul = line.match(/^\s*[-*]\s+(.*)$/);
+      if(ul){ if(listType !== 'ul'){ closeList(); out.push('<ul>'); listType = 'ul'; } out.push('<li>'+mdInline(ul[1])+'</li>'); return; }
+      closeList();
+      if(line.trim()) out.push('<p>'+mdInline(line)+'</p>');
+    });
+    closeList(); closeQuote();
+    return out.join('');
   }
 
   // ── Command registry ─────────────────────────────────────────────────
@@ -226,27 +258,161 @@
     return range;
   }
 
+  // Search text is easy to get subtly wrong versus what's actually in a
+  // contenteditable page: the AI (or a user) may wrap the phrase in quotes,
+  // and the page's real text may contain non-breaking spaces (inserted
+  // automatically by the browser for repeated spaces) where the search
+  // phrase has plain ones. Normalize both sides the same way before
+  // comparing so /lookup doesn't fail on cosmetic mismatches like these —
+  // this was the root cause of it reporting "not found" almost every time.
+  function stripWrappingQuotes(s){
+    return s.replace(/^["'“”‘’]+/, '').replace(/["'“”‘’]+$/, '');
+  }
+  function normalizeForSearch(s){
+    return s.replace(/\u00A0/g, ' ').replace(/[ \t]+/g, ' ');
+  }
+
   reg('lookup', 'words', 'info',
-    'lookup <n> <phrase...> — find every occurrence of a phrase on page n and report its character position(s), e.g. "15-27". Every character, including spaces, counts as one position. Feed a start-end pair into /select.',
+    'lookup <n> <phrase...> — find every occurrence of a phrase on page n and report its character position(s), e.g. "15-27". Quotes around the phrase are optional and stripped automatically. Every character, including spaces, counts as one position. Feed a start-end pair into /select or /placecursor.',
     (n, ...rest) => {
       if(!elAllowed('content')) return denyMsg('page content');
       const num = parseInt(n,10) || 1;
       if(!pageAllowed(num)) return denyMsg('page ' + num);
-      const phrase = rest.join(' ');
+      let phrase = stripWrappingQuotes(rest.join(' '));
       if(!phrase) return 'Missing search phrase — use /lookup <page> <phrase>.';
       const pc = pageContentByNum(num);
       if(!pc) return 'Page ' + num + ' not found.';
-      const text = pc.textContent;
+      // Normalized copies are only used to LOCATE the match; reported
+      // positions still index into the real (un-normalized) text, and since
+      // normalization never changes string length here, offsets line up.
+      const text = normalizeForSearch(pc.textContent);
+      const needle = normalizeForSearch(phrase);
       const hits = [];
       let idx = 0;
-      while(hits.length < 20 && (idx = text.indexOf(phrase, idx)) !== -1){
-        hits.push(idx + '-' + (idx + phrase.length));
-        idx += phrase.length;
+      while(hits.length < 20 && (idx = text.indexOf(needle, idx)) !== -1){
+        hits.push(idx + '-' + (idx + needle.length));
+        idx += needle.length;
       }
-      if(!hits.length) return 'Phrase "' + phrase + '" not found on page ' + num + '.';
-      return 'Page ' + num + ': ' + hits.length + ' occurrence(s) of "' + phrase + '" (' + phrase.length + ' chars). Position(s) [start-end]: ' + hits.join(', ') + '. Use /select ' + num + ' <start> <end> with one of these pairs.';
+      if(!hits.length){
+        // Fall back to a case-insensitive pass before giving up, since a
+        // near-miss on case is another common false "not found".
+        const idxCI = text.toLowerCase().indexOf(needle.toLowerCase());
+        if(idxCI !== -1) return 'Exact case not found, but a case-insensitive match exists at ' + idxCI + '-' + (idxCI + needle.length) + ' on page ' + num + '. Use /select ' + num + ' ' + idxCI + ' ' + (idxCI + needle.length) + ' if that\'s the right spot.';
+        return 'Phrase "' + phrase + '" not found on page ' + num + '.';
+      }
+      return 'Page ' + num + ': ' + hits.length + ' occurrence(s) of "' + phrase + '" (' + needle.length + ' chars). Position(s) [start-end]: ' + hits.join(', ') + '. Use /select ' + num + ' <start> <end>, or /placecursor ' + num + ' <end> to insert right after a match.';
     }
   );
+
+  // ── Insert-target resolution ─────────────────────────────────────────
+  // Every insert command (/inserttext, /insertmarkdown, /inserttable,
+  // /insertimage, /insertlink, /inserthr) goes through this before touching
+  // the document, instead of blindly trusting document.execCommand to land
+  // wherever the browser's ambient selection happens to be — that's what
+  // made insertion "break" sometimes (nothing focused, or focus stolen by
+  // the chat input, silently drops or misplaces the insert).
+  //
+  // Priority: 1) an explicit page:<n> override on the command  2) a
+  // one-shot position set by the most recent /placecursor  3) the page
+  // currently the user is actually looking at (scrolled into view),
+  // inserting at its end.
+  let pendingCursor = null; // {pageNum, pos} — set by /placecursor, consumed by the next insert
+
+  function mostVisiblePageContent(){
+    const pages = [...document.querySelectorAll('#editorArea .page-content')];
+    if(!pages.length) return null;
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    let best = null, bestVisible = -Infinity;
+    pages.forEach(pc => {
+      const r = pc.getBoundingClientRect();
+      const visible = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+      if(visible > bestVisible){ bestVisible = visible; best = pc; }
+    });
+    return best;
+  }
+  function placeCaretAtEnd(pc){
+    const range = document.createRange();
+    range.selectNodeContents(pc);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    pc.focus();
+  }
+  // Strips an optional leading "page:<n> " directive off a raw arg string,
+  // e.g. "page:2 Hello there" → {pageNum:2, rest:"Hello there"}.
+  function extractPageDirective(text){
+    const m = (text || '').match(/^page:(\d+)\s+/i);
+    if(m) return {pageNum: parseInt(m[1],10), rest: text.slice(m[0].length)};
+    return {pageNum: null, rest: text || ''};
+  }
+  function resolveInsertTarget(explicitPageNum){
+    if(explicitPageNum){
+      if(!pageAllowed(explicitPageNum)) return {error: denyMsg('page ' + explicitPageNum)};
+      const pc = pageContentByNum(explicitPageNum);
+      if(!pc) return {error: 'Page ' + explicitPageNum + ' not found.'};
+      placeCaretAtEnd(pc);
+      pendingCursor = null;
+      return {pc};
+    }
+    if(pendingCursor){
+      const {pageNum, pos} = pendingCursor;
+      pendingCursor = null; // one-shot regardless of outcome below
+      if(pageAllowed(pageNum)){
+        const pc = pageContentByNum(pageNum);
+        if(pc){
+          const total = pc.textContent.length;
+          const range = charOffsetToRange(pc, Math.min(pos, total), Math.min(pos, total));
+          if(range){
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            pc.focus();
+            return {pc};
+          }
+        }
+      }
+      // fall through to the other strategies if the stored position went stale
+    }
+    // If the live selection is genuinely, currently sitting inside an
+    // allowed page, trust it (covers a human having just clicked/typed).
+    const sel = window.getSelection();
+    if(sel && sel.rangeCount){
+      const anchor = sel.getRangeAt(0).startContainer;
+      const inPage = anchor && (anchor.nodeType === 1 ? anchor.closest('.page-content') : (anchor.parentElement && anchor.parentElement.closest('.page-content')));
+      if(inPage && document.body.contains(inPage) && pageAllowed(pageNumFromEl(inPage))){
+        inPage.focus();
+        return {pc: inPage};
+      }
+    }
+    const pc = mostVisiblePageContent();
+    if(!pc) return {error: 'No page found to insert into.'};
+    const num = pageNumFromEl(pc);
+    if(!pageAllowed(num)) return {error: denyMsg('page ' + num)};
+    placeCaretAtEnd(pc);
+    return {pc};
+  }
+
+  // ── "Insert via Pollinations" markers ────────────────────────────────
+  // Right-click/hold → Insert → "Insert via Pollinations" drops one of
+  // these (invisible) at the exact caret position, then opens the chat
+  // pre-filled with its id so a later /insertat <id> lands exactly there —
+  // more robust than a character offset since it's a real DOM node that
+  // moves naturally with the document instead of going stale on edits.
+  function findInsertMarker(id){
+    return document.querySelector('.pl-insert-marker[data-pl-insert-id="' + String(id).replace(/"/g,'') + '"]');
+  }
+  function placeCaretAtMarker(marker){
+    const range = document.createRange();
+    range.setStartBefore(marker);
+    range.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    const pc = marker.closest('.page-content');
+    if(pc) pc.focus();
+    return pc;
+  }
 
   reg('select', 'words', 'action',
     'select <n> <start> <end> — select page n\'s characters from start up to (not including) end, using positions from /lookup, so a following command like /bold acts on exactly that text.',
@@ -272,16 +438,31 @@
   );
 
   reg('placecursor', 'words', 'action',
-    'placecursor <n> <pos> — place the cursor at character position pos on page n (from /lookup — e.g. use a match\'s "end" to land right after it), so a following insert command (/inserttext, /insertmarkdown, /inserttable, /insertimage, /insertlink, /inserthr) lands exactly there instead of wherever the cursor happened to be.',
-    (n, pos) => {
+    'placecursor <n> <pos> — place the cursor at character position pos on page n (from /lookup). OR placecursor <n> before <text...> / placecursor <n> after <text...> — find the first occurrence of text (a word, a single character, or any phrase) on page n and place the cursor immediately before or after it in one step, no /lookup needed. Either form makes the next insert command (/inserttext, /insertmarkdown, /inserttable, /insertimage, /insertlink, /inserthr) land exactly there instead of wherever the cursor happened to be.',
+    (n, ...rest) => {
       if(!elAllowed('content')) return denyMsg('page content');
       const num = parseInt(n,10) || 1;
       if(!pageAllowed(num)) return denyMsg('page ' + num);
-      const p = parseInt(pos,10);
-      if(isNaN(p) || p < 0) return 'Invalid position — use /placecursor <page> <pos> with a position from /lookup.';
       const pc = pageContentByNum(num);
       if(!pc) return 'Page ' + num + ' not found.';
       const total = pc.textContent.length;
+
+      const mode = (rest[0] || '').toLowerCase();
+      let p, describe;
+      if(mode === 'before' || mode === 'after'){
+        const phrase = stripWrappingQuotes(rest.slice(1).join(' '));
+        if(!phrase) return 'Missing text — use /placecursor <page> ' + mode + ' <text>.';
+        const text = normalizeForSearch(pc.textContent);
+        const needle = normalizeForSearch(phrase);
+        const idx = text.indexOf(needle);
+        if(idx === -1) return 'Text "' + phrase + '" not found on page ' + num + '.';
+        p = mode === 'before' ? idx : idx + needle.length;
+        describe = mode + ' "' + phrase + '"';
+      } else {
+        p = parseInt(rest[0], 10);
+        if(isNaN(p) || p < 0) return 'Invalid position — use /placecursor <page> <pos> (from /lookup), or /placecursor <page> before|after <text>.';
+        describe = 'at position ' + p;
+      }
       if(p > total) return 'Position exceeds page ' + num + '\'s length (' + total + ' characters).';
       const range = charOffsetToRange(pc, p, p);
       if(!range) return 'Could not resolve that position.';
@@ -289,7 +470,12 @@
       sel.removeAllRanges();
       sel.addRange(range);
       pc.focus();
-      return 'Cursor placed at position ' + p + ' on page ' + num + ' — the next insert command lands there.';
+      // Also remember it independently of the live browser selection, and
+      // re-applied by the next insert command right before it runs — a
+      // plain Selection/Range can get silently cleared or moved (e.g. focus
+      // shifting to the chat input) in the gap before that command executes.
+      pendingCursor = {pageNum: num, pos: p};
+      return 'Cursor placed ' + describe + ' on page ' + num + ' — the next insert command lands there.';
     }
   );
 
@@ -407,22 +593,77 @@
     return 'Page ' + num + ' removed.';
   });
 
-  reg('inserttext', 'rest', 'action', 'inserttext <text> — insert plain text at the cursor.', (text) => {
-    if(!text) return 'Nothing to insert.';
-    document.execCommand('insertText', false, text); return 'Inserted text.';
-  });
-  reg('insertmarkdown', 'rest', 'action', 'insertmarkdown <markdown> — convert basic markdown (bold/italic/headers/lists/links) and insert at the cursor.', (md) => {
-    if(!md) return 'Nothing to insert.';
-    document.execCommand('insertHTML', false, mdToHtml(md)); return 'Inserted formatted content.';
-  });
-  reg('inserttable', 'words', 'action', 'inserttable <rows> <cols> — insert a simple table at the cursor.', (r, c) => {
+  reg('inserttext', 'rest', 'action',
+    'inserttext [page:<n>] <text> — insert plain text. Lands at a pending /placecursor position if one was just set, otherwise at the end of the page the user is currently viewing (or the given page, if you pass page:<n>). Use /insertmarkdown instead if the text has any markdown formatting in it.',
+    (raw) => {
+      const {pageNum, rest} = extractPageDirective(raw);
+      if(!rest) return 'Nothing to insert.';
+      const target = resolveInsertTarget(pageNum);
+      if(target.error) return target.error;
+      document.execCommand('insertText', false, rest);
+      return 'Inserted text on page ' + pageNumFromEl(target.pc) + '.';
+    }
+  );
+  reg('insertmarkdown', 'rest', 'action',
+    'insertmarkdown [page:<n>] <markdown> — convert markdown (bold/italic/headers/lists/links/code/quotes) to formatted content and insert it — the raw markdown characters are stripped and never appear in the document. Same placement rules as /inserttext.',
+    (raw) => {
+      const {pageNum, rest} = extractPageDirective(raw);
+      if(!rest) return 'Nothing to insert.';
+      const target = resolveInsertTarget(pageNum);
+      if(target.error) return target.error;
+      document.execCommand('insertHTML', false, mdToHtml(rest));
+      return 'Inserted formatted content on page ' + pageNumFromEl(target.pc) + '.';
+    }
+  );
+  reg('insertat', 'rest', 'action',
+    'insertat <id> <text> — insert plain text at the point the user marked via "Insert via Pollinations" in the right-click/hold Insert menu (the id was given to you in the prompt that opened this chat).',
+    (raw) => {
+      const sp = raw.indexOf(' ');
+      const id = sp === -1 ? raw : raw.slice(0, sp);
+      const text = sp === -1 ? '' : raw.slice(sp + 1);
+      if(!id) return 'Missing marker id — use /insertat <id> <text>.';
+      if(!text) return 'Nothing to insert.';
+      const marker = findInsertMarker(id);
+      if(!marker) return 'No pending insert point with id "' + id + '" — it may already have been used, or the user didn\'t open this chat via "Insert via Pollinations".';
+      const num = pageNumFromEl(marker);
+      if(!pageAllowed(num)) return denyMsg('page ' + num);
+      placeCaretAtMarker(marker);
+      document.execCommand('insertText', false, text);
+      marker.remove();
+      return 'Inserted text at the marked point on page ' + num + '.';
+    }
+  );
+  reg('insertmarkdownat', 'rest', 'action',
+    'insertmarkdownat <id> <markdown> — like /insertat but converts markdown formatting first, same as /insertmarkdown.',
+    (raw) => {
+      const sp = raw.indexOf(' ');
+      const id = sp === -1 ? raw : raw.slice(0, sp);
+      const md = sp === -1 ? '' : raw.slice(sp + 1);
+      if(!id) return 'Missing marker id — use /insertmarkdownat <id> <markdown>.';
+      if(!md) return 'Nothing to insert.';
+      const marker = findInsertMarker(id);
+      if(!marker) return 'No pending insert point with id "' + id + '" — it may already have been used, or the user didn\'t open this chat via "Insert via Pollinations".';
+      const num = pageNumFromEl(marker);
+      if(!pageAllowed(num)) return denyMsg('page ' + num);
+      placeCaretAtMarker(marker);
+      document.execCommand('insertHTML', false, mdToHtml(md));
+      marker.remove();
+      return 'Inserted formatted content at the marked point on page ' + num + '.';
+    }
+  );
+  reg('inserttable', 'words', 'action', 'inserttable [page:<n>] <rows> <cols> — insert a simple table. Same placement rules as /inserttext.', (a, b, c) => {
     if(!elAllowed('tables')) return denyMsg('tables');
-    const rows = Math.max(1, parseInt(r,10)||2), cols = Math.max(1, parseInt(c,10)||2);
+    let pageNum = null, r = a, cc = b;
+    const pm = (a||'').match(/^page:(\d+)$/i);
+    if(pm){ pageNum = parseInt(pm[1],10); r = b; cc = c; }
+    const target = resolveInsertTarget(pageNum);
+    if(target.error) return target.error;
+    const rows = Math.max(1, parseInt(r,10)||2), cols = Math.max(1, parseInt(cc,10)||2);
     let h = '<table style="border-collapse:collapse;width:100%;margin:10px 0;"><tbody>';
     for(let i=0;i<rows;i++){ h += '<tr>'; for(let j=0;j<cols;j++) h += '<td style="border:1px solid #ccc;padding:6px 8px;min-width:40px;">&nbsp;</td>'; h += '</tr>'; }
     h += '</tbody></table>';
     document.execCommand('insertHTML', false, h);
-    return 'Inserted a ' + rows + '×' + cols + ' table.';
+    return 'Inserted a ' + rows + '×' + cols + ' table on page ' + pageNumFromEl(target.pc) + '.';
   });
 
   // ── Find / replace (scope-aware, own implementation — the host's
@@ -485,19 +726,31 @@
   reg('lowercase', 'none', 'action', 'Convert the selected text to lowercase.', () => transformSelection(t => t.toLowerCase()) ? 'Converted to lowercase.' : 'No text selected.');
   reg('titlecase', 'none', 'action', 'Convert the selected text to Title Case.', () => transformSelection(t => t.replace(/\w\S*/g, w => w[0].toUpperCase()+w.slice(1).toLowerCase())) ? 'Converted to title case.' : 'No text selected.');
 
-  reg('inserthr', 'none', 'action', 'Insert a horizontal divider at the cursor.', () => {
-    if(typeof _doInsertHR === 'function'){ _doInsertHR(); return 'Inserted a divider.'; }
+  reg('inserthr', 'words', 'action', 'inserthr [page:<n>] — insert a horizontal divider. Same placement rules as /inserttext.', (a) => {
+    const pm = (a||'').match(/^page:(\d+)$/i);
+    const target = resolveInsertTarget(pm ? parseInt(pm[1],10) : null);
+    if(target.error) return target.error;
+    if(typeof _doInsertHR === 'function'){ _doInsertHR(); return 'Inserted a divider on page ' + pageNumFromEl(target.pc) + '.'; }
     return 'Divider function not available.';
   });
-  reg('insertimage', 'rest', 'action', 'insertimage <url> — insert an image at the cursor.', (url) => {
+  reg('insertimage', 'rest', 'action', 'insertimage [page:<n>] <url> — insert an image. Same placement rules as /inserttext.', (raw) => {
+    const {pageNum, rest: url} = extractPageDirective(raw);
     if(!url) return 'Missing image URL.';
-    document.execCommand('insertImage', false, url.trim()); return 'Inserted image.';
+    const target = resolveInsertTarget(pageNum);
+    if(target.error) return target.error;
+    document.execCommand('insertImage', false, url.trim());
+    return 'Inserted image on page ' + pageNumFromEl(target.pc) + '.';
   });
-  reg('insertlink', 'words', 'action', 'insertlink <url> <text...> — insert a hyperlink at the cursor.', (url, ...rest) => {
+  reg('insertlink', 'words', 'action', 'insertlink [page:<n>] <url> <text...> — insert a hyperlink. Same placement rules as /inserttext.', (a, ...rest) => {
+    let pageNum = null, url = a;
+    const pm = (a||'').match(/^page:(\d+)$/i);
+    if(pm){ pageNum = parseInt(pm[1],10); url = rest.shift(); }
     if(!url) return 'Missing link URL.';
+    const target = resolveInsertTarget(pageNum);
+    if(target.error) return target.error;
     const label = rest.join(' ') || url;
     document.execCommand('insertHTML', false, '<a href="' + esc(url) + '">' + esc(label) + '</a>');
-    return 'Inserted link.';
+    return 'Inserted link on page ' + pageNumFromEl(target.pc) + '.';
   });
 
   // ── Document-wide settings ───────────────────────────────────────────
@@ -952,6 +1205,10 @@
       'You have NO knowledge of the document\'s actual current state until you ask via an info command (or read it from an attached EDITOR CONTEXT / SCREEN SHARE snapshot) — do not assume values.',
       'Only the most recent ' + AUTO_HISTORY + ' messages of this document\'s chat are sent to you automatically each turn. In a long session, something from earlier may no longer be visible to you — use /recall <count> (default 5) to pull older messages back in if the user references something you don\'t see.',
       'To format a specific word or phrase (bold/italic/underline/etc.) rather than whatever happens to be selected: first run /lookup <page> <phrase> to get its character position(s), wait for that result, then run /select <page> <start> <end> with one of the reported pairs, then the formatting command — /select and the formatting command CAN be on the same line/turn together, but /lookup\'s result must come back first since you need its numbers.',
+      'To position the cursor for an insert, prefer the one-step /placecursor <page> before|after <text> over the two-step /lookup+/placecursor combo — it finds the text and places the cursor immediately before or after it (works for a single letter, a word, or any phrase) without a round trip.',
+      'Insert commands (/inserttext, /insertmarkdown, /inserttable, /insertimage, /insertlink, /inserthr) land, in order of priority: (1) at a position from a /placecursor you just ran, (2) on the page named by an optional leading "page:<n>" argument, e.g. "/inserttext page:2 Hello", or (3) at the end of whichever page the user is currently scrolled to. If you don\'t know or care which page, just omit page:<n> and it goes to the page the user is looking at right now.',
+      'If the user opened this chat via "Insert via Pollinations" from the right-click/hold Insert menu, your very first user message will say "If something needs to be inserted, insert here: <id>" — when that happens, use /insertat <id> <text> or /insertmarkdownat <id> <markdown> instead of /inserttext/insertmarkdown, so it lands exactly where they pointed. That id is one-shot; don\'t reuse it after the insert succeeds.',
+      'Whenever what you\'re inserting has ANY markdown in it (bold, italic, headers, lists, links, code, quotes), use /insertmarkdown or /insertmarkdownat rather than /inserttext/insertat — those convert the markdown into real formatting instead of dropping literal **/##/etc. characters into the document.',
       exploreNote,
       screenShareNote,
       '',
@@ -1153,10 +1410,27 @@
     chat.push({role, text, t: Date.now()}); saveChat();
     renderMsg(role, text);
   }
+  // Wraps standalone "/command …" lines in backticks before markdown
+  // conversion, so they render as inline code in the chat bubble instead of
+  // plain text — easier to tell apart from the AI's prose at a glance.
+  function markCommandLines(text){
+    return text.split('\n').map(line => {
+      const t = line.trim();
+      return /^\/[a-zA-Z]+(\s|$)/.test(t) ? ('`' + t + '`') : line;
+    }).join('\n');
+  }
   function renderMsg(role, text){
     const div = document.createElement('div');
     div.className = 'pl-msg pl-msg-' + role;
-    div.textContent = text;
+    // The AI always replies in markdown, so render assistant (and tip)
+    // bubbles as formatted HTML instead of raw asterisks/hashes. User and
+    // tool-result text stays plain — a user's message shouldn't be
+    // reinterpreted as markdown, and command-result summaries read fine as-is.
+    if(role === 'assistant'){
+      div.innerHTML = mdToHtml(markCommandLines(text));
+    } else {
+      div.textContent = text;
+    }
     msgsEl.appendChild(div);
     msgsEl.scrollTop = msgsEl.scrollHeight;
     return div;
@@ -1164,6 +1438,23 @@
   function renderHistory(){
     msgsEl.innerHTML = '';
     chat.forEach(m => renderMsg(m.role, m.text));
+  }
+
+  // ── Periodic AI reminder ─────────────────────────────────────────────
+  // The AI itself tends to forget its own command set over a long chat (it
+  // only sees the full COMMAND REFERENCE in the system prompt on the FIRST
+  // turn's context — after that it's just prior messages). So every 4 user
+  // messages, slip an extra system reminder into that turn's API call
+  // nudging it to run /help if it's unsure what it can do. This is NOT
+  // shown to the user and NOT saved to chat history — purely a live nudge
+  // to the model, same treatment as the EDITOR CONTEXT/SCREEN SHARE blocks.
+  const AI_TIP_EVERY = 4;
+  function maybeAiTipReminder(){
+    const userCount = chat.filter(m => m.role === 'user').length;
+    if(userCount > 0 && userCount % AI_TIP_EVERY === 0){
+      return 'Reminder (not from the user): you have a full slash-command reference available. If you\'re unsure what you can currently do, or haven\'t run /help recently in this conversation, run /help now to re-list every available command before guessing at one.';
+    }
+    return null;
   }
 
   function renderCommandBlock(cmds, results){
@@ -1271,6 +1562,8 @@
         // Independent of Explore Mode — this is UI state, not document text.
         messages.push({role:'system', content: 'SCREEN SHARE (live, this turn only):\n' + buildScreenShareContext()});
       }
+      const tip = maybeAiTipReminder();
+      if(tip) messages.push({role:'system', content: tip});
       reply = await callPollinations(messages);
     } catch(e){
       thinking.remove();
@@ -1535,8 +1828,67 @@
     document.getElementById('plOpenChatBtn').addEventListener('click', () => togglePanel(true));
   }
 
+  // ── "Insert via Pollinations" right-click/hold menu entry ─────────────
+  // Adds an entry to the host's existing Insert menu (both the desktop
+  // hover submenu and the mobile inline panel — same markup, two ids) that
+  // drops an invisible marker at the caret and opens the chat pre-filled
+  // so the AI knows exactly where to insert its reply.
+  let insertMarkerSeq = 0;
+  function onInsertViaPollinationsClick(){
+    // S.savedPasteRange is the host's own snapshot of the caret/selection
+    // taken the moment the right-click/hold menu opened (see the host's
+    // context-menu handler) — more reliable than re-reading the live
+    // selection now, since opening this menu itself doesn't move the caret
+    // but clicking around in it could have.
+    const saved = (typeof S !== 'undefined' && S.savedPasteRange) ? S.savedPasteRange : null;
+    if(typeof closeWinMenu === 'function') closeWinMenu();
+    if(!saved || !document.body.contains(saved.startContainer)){
+      togglePanel(true);
+      return;
+    }
+    // Only one pending insert point makes sense at a time — drop any
+    // earlier, unused one so stray invisible markers don't pile up in the
+    // document (they're a single zero-width character each, but no reason
+    // to leave old ones around).
+    document.querySelectorAll('.pl-insert-marker').forEach(m => m.remove());
+    const id = 'ins' + (++insertMarkerSeq) + '_' + Date.now().toString(36);
+    const marker = document.createElement('span');
+    marker.className = 'pl-insert-marker';
+    marker.dataset.plInsertId = id;
+    marker.style.cssText = 'font-size:0;line-height:0;';
+    marker.textContent = '\u200B';
+    try {
+      const range = saved.cloneRange();
+      range.collapse(true);
+      range.insertNode(marker);
+    } catch(e){
+      togglePanel(true);
+      return;
+    }
+    togglePanel(true);
+    inputEl.value = 'If something needs to be inserted, insert here: ' + id;
+    inputEl.focus();
+    inputEl.selectionStart = inputEl.selectionEnd = inputEl.value.length;
+  }
+  function injectInsertMenuEntry(){
+    ['panelInsert','submenuInsert'].forEach(id => {
+      const container = document.getElementById(id);
+      if(!container || container.querySelector('[data-pl-insert-entry]')) return;
+      const sep = document.createElement('div');
+      sep.className = 'wcm-sep';
+      const item = document.createElement('div');
+      item.className = 'wcm-sub-item';
+      item.setAttribute('data-pl-insert-entry', '1');
+      item.innerHTML = '<span class="material-symbols-outlined">smart_toy</span>Insert via Pollinations';
+      item.addEventListener('click', onInsertViaPollinationsClick);
+      container.appendChild(sep);
+      container.appendChild(item);
+    });
+  }
+
   function init(){
     buildSidebarSection();
+    injectInsertMenuEntry();
     // Documents are switched in-place in this editor (no page reload), so
     // watch for that while the panel is open and re-sync chat if it happens.
     setInterval(() => { if(panelEl && panelEl.style.display !== 'none') ensureCurrentDocChat(); }, 1500);

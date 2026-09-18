@@ -3,43 +3,47 @@
    Connects the editor to a Vurminal terminal receiver over PeerJS.
    The receiver sends slash commands, this add-on executes them and sends
    back results — you ARE the AI in this loop, just typing manually.
-   All command execution and editor access lives here in the add-on.
 
-   Version 1.5.0 — matches the Pollinations command set.
+   v1.5.0 — full Pollinations command set + PeerJS transport.
 
-   Special receiver-only commands (no leading slash, handled in the
-   Vurminal receiver HTML, never reach this add-on):
-     status      — show connection status
-     disconnect  — drop the peer connection
-     vurver      — print the Vurminal version
-     theme       — toggle the receiver theme
+   AUTO-RECONNECT
+   --------------
+   If the connection drops unexpectedly (WebRTC drop, receiver tab closed,
+   network blip), the add-on will automatically try to reconnect. This is
+   governed by an "Auto-connect" toggle in the sidebar (on by default).
 
-   HONEST SCOPE NOTE
-   -----------------
-   This is a peer-to-peer transport. Anything the receiver can ask for,
-   the add-on will execute, because there is no AI middle layer making
-   judgement calls. Clicking is unlimited by design (the user said so).
-   Scope/element permissions and Explore Mode are still respected — the
-   receiver sends a config block that gates what commands are allowed to
-   touch. Everything else is copy-pasted straight from the Pollinations
-   add-on's command registry.
+   The distinction between "deliberate" and "accidental" disconnect:
+
+     - Deliberate: the user clicks Disconnect in the add-on, the receiver
+       sends a {type:'bye'} message, or the page is being unloaded. Sets
+       _deliberateDisconnect = true, and no retry happens.
+     - Accidental: any other 'close' event. Triggers the retry logic.
+
+   RETRY POLICY
+   ------------
+   After 3 failed attempts in a row, retrying stops. Backoff is
+   2s → 4s → 8s. Any success resets the counter to 0. Any manual connect
+   also resets the counter, so the user always gets 3 fresh tries.
 ═══════════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
 
   const CFG_KEY = 'sugarcane_addon_vurminal_config';
   const VURMINAL_VERSION = '1.5.0';
+  const MAX_AUTO_RETRIES = 3;
+  const RETRY_DELAYS_MS = [2000, 4000, 8000]; // attempt 1, 2, 3
 
   const defaults = {
     peerCode: '',
-    scopePages: 'all',              // 'all' | 'current' | comma list e.g. "1,3"
+    autoConnect: true,
+    scopePages: 'all',
     elements: {
       header:true, footer:true, watermark:true, background:true,
       margins:true, counts:true, content:true, selection:true, tables:true
     },
     explore: {
       enabled: false,
-      pages: 'all'                 // 'all' | 'selected' | 'aichoice'
+      pages: 'all'
     }
   };
 
@@ -85,7 +89,7 @@
   function textOf(id){ const el = document.getElementById(id); return el ? el.textContent.trim() : ''; }
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-  // ── Markdown renderer (used by /help-style output and /insertmarkdown) ──
+  // ── Markdown renderer ────────────────────────────────────────────────
   function mdInline(s){
     return s
       .replace(/`([^`]+)`/g,'<code>$1</code>')
@@ -127,7 +131,7 @@
     return out.join('');
   }
 
-  // ── Character-offset → DOM Range ────────────────────────────────────
+  // ── Character-offset → DOM Range ─────────────────────────────────────
   function charOffsetToRange(containerEl, start, end){
     const walker = document.createTreeWalker(containerEl, NodeFilter.SHOW_TEXT, null);
     let node, pos = 0, startNode = null, startOffset = 0, endNode = null, endOffset = 0;
@@ -174,7 +178,7 @@
     return textOf('wordCount') || '0 words';
   });
 
-  reg('margins', 'none', 'info', 'Current page margins (top/bottom/left/right, cm). Global — applies to every page.', () => {
+  reg('margins', 'none', 'info', 'Current page margins (top/bottom/left/right, cm).', () => {
     if(!elAllowed('margins')) return denyMsg('margins');
     const g = id => (document.getElementById(id) || {value:'2'}).value;
     return `top:${g('marginTop')}cm bottom:${g('marginBottom')}cm left:${g('marginLeft')}cm right:${g('marginRight')}cm`;
@@ -186,7 +190,7 @@
     return `primary:${g('bgColor')} secondary:${g('bgColor2')}`;
   });
 
-  reg('watermark', 'none', 'info', 'Current watermark text (empty if none). Global — applies to every page.', () => {
+  reg('watermark', 'none', 'info', 'Current watermark text.', () => {
     if(!elAllowed('watermark')) return denyMsg('watermark');
     return (document.getElementById('watermarkText')||{value:''}).value || '(none)';
   });
@@ -218,7 +222,7 @@
   });
 
   reg('lookup', 'words', 'info',
-    'lookup <n> <phrase...> — find every occurrence of a phrase on page n and report its character position(s), e.g. "15-27". Quotes around the phrase are optional and stripped automatically.',
+    'lookup <n> <phrase...> — find every occurrence of a phrase on page n and report its character position(s).',
     (n, ...rest) => {
       if(!elAllowed('content')) return denyMsg('page content');
       const num = parseInt(n,10) || 1;
@@ -244,7 +248,7 @@
     }
   );
 
-  // ── Insert-target resolution ────────────────────────────────────────
+  // ── Insert-target resolution ─────────────────────────────────────────
   let pendingCursor = null;
 
   function mostVisiblePageContent(){
@@ -317,7 +321,6 @@
     return {pc};
   }
 
-  // ── Insert markers ──────────────────────────────────────────────────
   function findInsertMarker(id){
     return document.querySelector('.vm-insert-marker[data-vm-insert-id="' + String(id).replace(/"/g,'') + '"]');
   }
@@ -333,9 +336,6 @@
     return pc;
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  //  SELECTION / CURSOR
-  // ═══════════════════════════════════════════════════════════════════════
   reg('select', 'words', 'action',
     'select <n> <start> <end> — select page n\'s characters from start up to (not including) end.',
     (n, start, end) => {
@@ -402,9 +402,6 @@
     return s || '(no selection)';
   });
 
-  // ═══════════════════════════════════════════════════════════════════════
-  //  FORMATTING
-  // ═══════════════════════════════════════════════════════════════════════
   reg('bold', 'none', 'action', 'Toggle bold on the current selection.', () => { document.execCommand('bold'); return 'Toggled bold.'; });
   reg('italic', 'none', 'action', 'Toggle italic on the current selection.', () => { document.execCommand('italic'); return 'Toggled italic.'; });
   reg('underline', 'none', 'action', 'Toggle underline on the current selection.', () => { document.execCommand('underline'); return 'Toggled underline.'; });
@@ -434,7 +431,6 @@
     document.execCommand('hiliteColor', false, hex); return 'Highlight set to ' + hex + '.';
   });
 
-  // ── Global page settings ────────────────────────────────────────────
   reg('marginsetall', 'words', 'action', 'marginsetall <cm> — set all four page margins (global).', (v) => {
     if(!elAllowed('margins')) return denyMsg('margins');
     const el = document.getElementById('pageMargin'); if(!el) return 'Margin control not found.';
@@ -457,7 +453,7 @@
     if(typeof updateBackground === 'function') updateBackground();
     return 'Page background updated.';
   });
-  reg('watermarkset', 'rest', 'action', 'watermarkset <text> — set the watermark text (global; empty text clears it).', (text) => {
+  reg('watermarkset', 'rest', 'action', 'watermarkset <text> — set the watermark text.', (text) => {
     if(!elAllowed('watermark')) return denyMsg('watermark');
     const el = document.getElementById('watermarkText'); if(!el) return 'Watermark control not found.';
     el.value = text || ''; if(typeof updateWatermark === 'function') updateWatermark();
@@ -484,7 +480,6 @@
     return 'Footer on page ' + num + ' updated.';
   });
 
-  // ── Page management ────────────────────────────────────────────────
   reg('addpage', 'none', 'action', 'Add a new page at the end of the document.', () => {
     if(typeof addNewPage === 'function'){ addNewPage(); return 'Page added.'; }
     return 'Add-page function not available.';
@@ -526,7 +521,6 @@
     return 'Page ' + num + ' duplicated.';
   });
 
-  // ── Insert commands ─────────────────────────────────────────────────
   reg('inserttext', 'rest', 'action',
     'inserttext [page:<n>] <text> — insert plain text.',
     (raw) => {
@@ -626,7 +620,6 @@
     return 'Inserted link on page ' + pageNumFromEl(target.pc) + '.';
   });
 
-  // ── Find / replace ─────────────────────────────────────────────────
   function eachAllowedPage(cb){
     document.querySelectorAll('#editorArea .page-content').forEach((pc, idx) => {
       const n = idx + 1;
@@ -659,7 +652,6 @@
     return 'Replaced ' + total + ' occurrence(s).';
   });
 
-  // ── Formatting extras ──────────────────────────────────────────────
   reg('indent', 'none', 'action', 'Indent the current paragraph.', () => { document.execCommand('indent'); return 'Indented.'; });
   reg('outdent', 'none', 'action', 'Outdent the current paragraph.', () => { document.execCommand('outdent'); return 'Outdented.'; });
   reg('superscript', 'none', 'action', 'Toggle superscript on the selection.', () => { document.execCommand('superscript'); return 'Toggled superscript.'; });
@@ -685,7 +677,6 @@
   reg('lowercase', 'none', 'action', 'Convert the selected text to lowercase.', () => transformSelection(t => t.toLowerCase()) ? 'Converted to lowercase.' : 'No text selected.');
   reg('titlecase', 'none', 'action', 'Convert the selected text to Title Case.', () => transformSelection(t => t.replace(/\w\S*/g, w => w[0].toUpperCase()+w.slice(1).toLowerCase())) ? 'Converted to title case.' : 'No text selected.');
 
-  // ── Document-wide settings ─────────────────────────────────────────
   reg('linespacing', 'words', 'action', 'linespacing <value> — set line spacing across the document.', (v) => {
     if(typeof updateLineSpacing === 'function'){ updateLineSpacing(v); return 'Line spacing set to ' + v + '.'; }
     return 'Line spacing function not available.';
@@ -707,7 +698,6 @@
     return 'Dark mode ' + (want ? 'on' : 'off') + '.';
   });
 
-  // ── Zoom / navigation ──────────────────────────────────────────────
   reg('zoomin', 'none', 'action', 'Zoom the document in by 10%.', () => { if(typeof adjustZoom==='function'){ adjustZoom(10); return 'Zoomed in.'; } return 'Zoom function not available.'; });
   reg('zoomout', 'none', 'action', 'Zoom the document out by 10%.', () => { if(typeof adjustZoom==='function'){ adjustZoom(-10); return 'Zoomed out.'; } return 'Zoom function not available.'; });
   reg('zoomset', 'words', 'action', 'zoomset <percent> — set zoom level (30–200).', (n) => {
@@ -725,7 +715,6 @@
     return 'Scrolled to page ' + num + '.';
   });
 
-  // ── Stats ──────────────────────────────────────────────────────────
   function allowedText(){
     let out = '';
     eachAllowedPage(pc => { out += pc.textContent + ' '; });
@@ -755,7 +744,6 @@
     return '~' + Math.max(1, Math.round(words / 200)) + ' min';
   });
 
-  // ── Document title ─────────────────────────────────────────────────
   reg('doctitle', 'none', 'info', 'Current document title.', () => {
     return typeof getTitle === 'function' ? getTitle() : ((document.getElementById('docTitle')||{value:''}).value || 'Untitled');
   });
@@ -766,7 +754,6 @@
     return 'Title set to "' + text + '".';
   });
 
-  // ── Export / print ─────────────────────────────────────────────────
   reg('print', 'none', 'action', 'Open the print dialog for this document.', () => {
     if(typeof printDoc === 'function'){ printDoc(); return 'Opened print dialog.'; }
     return 'Print function not available.';
@@ -780,7 +767,6 @@
     return 'Export function not available.';
   });
 
-  // ── Table ops (cursor-relative) ────────────────────────────────────
   function nearestTable(){
     const sel = window.getSelection();
     let node = sel && sel.anchorNode;
@@ -852,7 +838,6 @@
     if(typeof scheduleAutoSave === 'function') scheduleAutoSave();
   }
 
-  // ── Tables by ID ───────────────────────────────────────────────────
   function allTables(){ return [...document.querySelectorAll('#editorArea table')]; }
   function idToLetters(num){
     let s = '', n = num + 1;
@@ -988,7 +973,7 @@
   });
 
   // ═══════════════════════════════════════════════════════════════════════
-  //  /click — LIMITLESS. No budget, no gating. The receiver is the user.
+  //  /click — LIMITLESS
   // ═══════════════════════════════════════════════════════════════════════
   function collectClickTargets(){
     const nodes = document.querySelectorAll(
@@ -1045,7 +1030,7 @@
   });
 
   // ═══════════════════════════════════════════════════════════════════════
-  //  EXPLORE MODE — snapshot the editor's current state
+  //  EXPLORE MODE
   // ═══════════════════════════════════════════════════════════════════════
   function collectClickableLabels(){
     const nodes = document.querySelectorAll('button[title], button[aria-label], .tbtn[title], .mbtn, .aw-header-label, .sb-title');
@@ -1085,7 +1070,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  //  COMMAND PARSING / RUNNING
+  //  COMMAND PARSING
   // ═══════════════════════════════════════════════════════════════════════
   function parseCommands(text){
     const found = [];
@@ -1108,11 +1093,18 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════
-  //  PEERJS CONNECTION — the receiver is the host, we connect to it.
+  //  PEERJS CONNECTION + AUTO-RECONNECT
   // ═══════════════════════════════════════════════════════════════════════
   let peer = null;
   let conn = null;
-  let connState = 'disconnected'; // 'disconnected' | 'connecting' | 'connected' | 'error'
+  let connState = 'disconnected';   // 'disconnected' | 'connecting' | 'connected' | 'error'
+
+  // Auto-reconnect bookkeeping
+  let _deliberateDisconnect = false; // set true when we close the link on purpose
+  let _autoRetryCount = 0;           // 0..MAX_AUTO_RETRIES
+  let _autoRetryTimer = null;        // setTimeout handle
+  let _isAutoRetrying = false;       // true while an auto-retry attempt is in flight
+  let _connectingCode = null;        // the peer code the current attempt is for
 
   function ensurePeerJS(){
     if(window.Peer) return Promise.resolve();
@@ -1126,22 +1118,77 @@
     });
   }
 
-  async function connect(code){
-    code = (code || '').trim().toUpperCase();
-    if(!code) { logLine('sys', 'Enter a peer code first.'); return; }
+  function clearAutoRetryTimer(){
+    if(_autoRetryTimer){ clearTimeout(_autoRetryTimer); _autoRetryTimer = null; }
+  }
 
+  // A "user-initiated" connect resets the retry budget — so if the user
+  // manually clicks Connect, they always get 3 fresh tries.
+  function resetRetryBudget(){
+    _autoRetryCount = 0;
+    _isAutoRetrying = false;
+    clearAutoRetryTimer();
+  }
+
+  function scheduleAutoRetry(reason){
+    if(!cfg.autoConnect) return;
+    if(_autoRetryCount >= MAX_AUTO_RETRIES){
+      logLine('err', 'auto-connect gave up after ' + MAX_AUTO_RETRIES + ' failed attempts. Click Connect to try again.');
+      setConnState('error', 'Auto-connect stopped');
+      return;
+    }
+    const delayMs = RETRY_DELAYS_MS[Math.min(_autoRetryCount, RETRY_DELAYS_MS.length - 1)];
+    _autoRetryCount++;
+    _isAutoRetrying = true;
+    clearAutoRetryTimer();
+
+    const attempt = _autoRetryCount;
+    logLine('sys', 'auto-connect attempt ' + attempt + '/' + MAX_AUTO_RETRIES + ' in ' + (delayMs/1000) + 's (' + reason + ')');
+    setConnState('connecting', 'auto-reconnect ' + attempt + '/' + MAX_AUTO_RETRIES + '…');
+
+    _autoRetryTimer = setTimeout(() => {
+      _autoRetryTimer = null;
+      if(_deliberateDisconnect) return;
+      if(connState === 'connected') return;
+      connect(cfg.peerCode, { isAuto: true });
+    }, delayMs);
+  }
+
+  async function connect(code, opts){
+    opts = opts || {};
+    code = (code || '').trim().toUpperCase();
+    if(!code){
+      logLine('sys', 'Enter a peer code first.');
+      return;
+    }
+
+    // A user-initiated connect resets the retry budget; auto-retry does not
+    if(!opts.isAuto) resetRetryBudget();
+
+    // Remember for auto-reconnect
     cfg.peerCode = code;
     saveCfg();
     const input = document.getElementById('vmPeerCodeInput');
     if(input) input.value = code;
+    _connectingCode = code;
 
-    disconnect(false);
+    // Tear down any previous peer, but mark the close as deliberate
+    // so its 'close' handler doesn't try to auto-reconnect.
+    _deliberateDisconnect = true;
+    disconnectInternal();
+    _deliberateDisconnect = false;
 
-    setConnState('connecting', 'Connecting to vurminal-' + code + '…');
-    logLine('sys', 'Connecting to vurminal-' + code + '…');
+    setConnState('connecting', (opts.isAuto ? 'auto-reconnecting to ' : 'Connecting to ') + 'vurminal-' + code + '…');
+    logLine('sys', (opts.isAuto ? 'auto-reconnecting to ' : 'Connecting to ') + 'vurminal-' + code + '…');
 
     try { await ensurePeerJS(); }
-    catch(e){ setConnState('error', 'PeerJS failed to load'); logLine('err', e.message); return; }
+    catch(e){
+      setConnState('error', 'PeerJS failed to load');
+      logLine('err', e.message);
+      _isAutoRetrying = false;
+      scheduleAutoRetry('PeerJS load failed');
+      return;
+    }
 
     peer = new Peer({ debug: 1 });
 
@@ -1149,9 +1196,12 @@
       conn = peer.connect('vurminal-' + code, { reliable: true });
 
       conn.on('open', () => {
+        // Success — reset retry budget and go green
+        _autoRetryCount = 0;
+        _isAutoRetrying = false;
+        clearAutoRetryTimer();
         setConnState('connected', 'Connected to vurminal-' + code);
         logLine('sys', 'Connected.');
-        // Hello — send version, command list, current config
         const commands = Object.keys(CMDS).sort().map(k => ({
           name: k, argMode: CMDS[k].argMode, kind: CMDS[k].kind, help: CMDS[k].help
         }));
@@ -1162,15 +1212,26 @@
           commands: commands,
           config: cfg
         });
-        // Auto-push context if explore mode is on
         if(cfg.explore.enabled) sendContext();
       });
 
       conn.on('data', handleIncoming);
 
       conn.on('close', () => {
+        const wasConnected = connState === 'connected';
         setConnState('disconnected', 'Disconnected');
         logLine('sys', 'Disconnected.');
+        if(_deliberateDisconnect){
+          // The user, the receiver, or page unload asked for this — done.
+          _isAutoRetrying = false;
+          return;
+        }
+        if(!wasConnected) return;    // didn't get far enough to matter
+        if(!cfg.autoConnect){
+          logLine('sys', 'auto-connect is off. Click Connect to try again.');
+          return;
+        }
+        scheduleAutoRetry('connection closed');
       });
 
       conn.on('error', (err) => {
@@ -1183,18 +1244,41 @@
       const msg = (err && err.message) || '';
       setConnState('error', 'PeerJS error: ' + t + (msg ? ' — ' + msg : ''));
       logLine('err', 'PeerJS error: ' + t + (msg ? ' — ' + msg : ''));
+
+      // 'peer-unavailable' means the receiver isn't there yet — a common
+      // case for auto-retry: the receiver may have restarted and the
+      // peer ID isn't registered. Treat as a failed attempt.
+      if(!opts.isAuto && t !== 'peer-unavailable'){
+        // A fresh user-initiated failure: still counts as one failed attempt
+        // only if auto-connect is on. If off, we just stop.
+      }
+      _isAutoRetrying = false;
+      if(!_deliberateDisconnect){
+        scheduleAutoRetry(t === 'peer-unavailable' ? 'receiver not registered' : 'peer error');
+      }
     });
   }
 
-  function disconnect(announce = true){
+  function disconnectInternal(){
     if(conn){ try { conn.close(); } catch(e){} conn = null; }
     if(peer){ try { peer.destroy(); } catch(e){} peer = null; }
+  }
+
+  // Public disconnect — called by the Disconnect button and the receiver's
+  // 'bye' message. Sets the deliberate flag so no auto-retry is scheduled.
+  function disconnect(announce = true){
+    _deliberateDisconnect = true;
+    resetRetryBudget();
+    disconnectInternal();
     if(connState === 'connected' || connState === 'connecting'){
       setConnState('disconnected', 'Disconnected');
       if(announce) logLine('sys', 'Disconnected.');
     } else {
       setConnState('disconnected', 'Disconnected');
     }
+    // Re-enable the connect button for the next attempt
+    setConnState('disconnected', 'Disconnected');
+    setTimeout(() => { _deliberateDisconnect = false; }, 100);
   }
 
   function send(obj){
@@ -1210,7 +1294,6 @@
         if(!raw) { send({ type:'response', id: data.id, ok:false, result:'Empty command.' }); return; }
         const cmds = parseCommands(raw);
         if(!cmds.length){
-          // Could be a bare command name (no slash). Try once with slash.
           const parsed = parseCommands('/' + raw);
           if(parsed.length) { runParsed(parsed, data, raw); return; }
           send({ type:'response', id: data.id, ok:false, result:'Unrecognised command: ' + raw });
@@ -1231,16 +1314,17 @@
         }
         break;
       }
-      case 'getContext': {
-        sendContext();
+      case 'getContext': { sendContext(); break; }
+      case 'ping': { send({ type:'pong', ts: Date.now() }); break; }
+
+      // A clean "I'm going away" from the receiver. Treat as deliberate
+      // so the add-on doesn't try to auto-reconnect into a void.
+      case 'bye': {
+        logLine('sys', 'Receiver said goodbye.');
+        disconnect(false);
         break;
       }
-      case 'ping': {
-        send({ type:'pong', ts: Date.now() });
-        break;
-      }
-      default:
-        break;
+      default: break;
     }
   }
 
@@ -1274,10 +1358,8 @@
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  //  DOWNLOAD HOOK — when the editor downloads a file, tell the receiver.
-  // ═══════════════════════════════════════════════════════════════════════
-  const DOWNLOAD_SIZE_LIMIT = 6 * 1024 * 1024; // 6 MB — send data inline under this
+  // ── Download hook ────────────────────────────────────────────────────
+  const DOWNLOAD_SIZE_LIMIT = 6 * 1024 * 1024;
   function hookDownloads(){
     if(typeof window.dlBlob !== 'function'){ setTimeout(hookDownloads, 200); return; }
     if(window.dlBlob.__vurminalHooked) return;
@@ -1308,9 +1390,7 @@
     return (b/(1024*1024)).toFixed(2) + ' MB';
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  //  SIDEBAR UI
-  // ═══════════════════════════════════════════════════════════════════════
+  // ── Sidebar UI ───────────────────────────────────────────────────────
   let vmLogEl = null;
   function logLine(kind, text){
     if(!vmLogEl) vmLogEl = document.getElementById('vmLog');
@@ -1329,16 +1409,27 @@
     const box = document.getElementById('vmStatus');
     const txt = document.getElementById('vmStatusText');
     const btn = document.getElementById('vmConnectBtn');
-    if(box){
-      box.className = 'vm-status vm-' + state;
-    }
+    if(box) box.className = 'vm-status vm-' + state;
     if(txt) txt.textContent = text || state;
     if(btn){
-      if(state === 'connected' || state === 'connecting'){
+      if(state === 'connected'){
         btn.className = 'vm-btn vm-btn-disconnect';
         btn.innerHTML = '<span class="material-symbols-outlined">link_off</span>Disconnect';
         btn.disabled = false;
         btn.onclick = () => disconnect(true);
+      } else if(state === 'connecting'){
+        btn.className = 'vm-btn vm-btn-connect';
+        btn.innerHTML = '<span class="material-symbols-outlined">sync</span>' + (text || 'Connecting…');
+        btn.disabled = true;
+        btn.onclick = null;
+      } else if(state === 'error'){
+        btn.className = 'vm-btn vm-btn-connect';
+        btn.innerHTML = '<span class="material-symbols-outlined">link</span>Retry';
+        btn.disabled = false;
+        btn.onclick = () => {
+          const inp = document.getElementById('vmPeerCodeInput');
+          connect(inp ? inp.value : cfg.peerCode);
+        };
       } else {
         btn.className = 'vm-btn vm-btn-connect';
         btn.innerHTML = '<span class="material-symbols-outlined">link</span>Connect';
@@ -1370,6 +1461,18 @@
           <label class="vm-cfg-label">Peer code</label>
           <input type="text" class="vm-cfg-input" id="vmPeerCodeInput" placeholder="ABCDE" maxlength="12" value="${esc(cfg.peerCode||'')}" autocomplete="off"/>
           <div class="vm-hint">Open <strong>vurminal.html</strong>, copy its code, paste it here, and Connect.</div>
+
+          <div class="aw-row" style="margin-top:8px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div>
+              <div class="aw-row-label" style="font-size:12px;color:#333;">Auto-connect</div>
+              <div class="aw-row-sub" style="font-size:11px;color:#999;margin-top:1px;">Reconnect automatically if the link drops</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="vmAutoConnectToggle" ${cfg.autoConnect ? 'checked' : ''}/>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
           <button class="vm-btn vm-btn-connect" id="vmConnectBtn" type="button">
             <span class="material-symbols-outlined">link</span>Connect
           </button>
@@ -1401,34 +1504,71 @@
     const btn = document.getElementById('vmConnectBtn');
     btn.onclick = () => connect(input.value);
 
+    const autoToggle = document.getElementById('vmAutoConnectToggle');
+    autoToggle.checked = !!cfg.autoConnect;
+    autoToggle.addEventListener('change', () => {
+      cfg.autoConnect = autoToggle.checked;
+      saveCfg();
+      if(cfg.autoConnect){
+        logLine('sys', 'Auto-connect enabled.');
+        // If we're currently down and have a code, kick off a retry
+        if(connState !== 'connected' && cfg.peerCode){
+          resetRetryBudget();
+          scheduleAutoRetry('auto-connect enabled');
+        }
+      } else {
+        logLine('sys', 'Auto-connect disabled.');
+        clearAutoRetryTimer();
+        _isAutoRetrying = false;
+      }
+    });
+
     vmLogEl = document.getElementById('vmLog');
     logLine('sys', 'Vurminal ' + VURMINAL_VERSION + ' ready.');
-    logLine('sys', 'Awaiting peer code.');
-
-    // Auto-reconnect if we have a saved code and the page is already set up
     if(cfg.peerCode){
-      setTimeout(() => { connect(cfg.peerCode); }, 1500);
+      logLine('sys', 'Saved peer code: ' + cfg.peerCode);
+      // Auto-connect on load (but only once, and only if the toggle is on)
+      if(cfg.autoConnect){
+        setTimeout(() => {
+          if(_deliberateDisconnect) return;
+          if(connState === 'connected') return;
+          resetRetryBudget();
+          connect(cfg.peerCode, { isAuto: true });
+        }, 1500);
+      }
+    } else {
+      logLine('sys', 'Awaiting peer code.');
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════════
-  //  INIT
-  // ═══════════════════════════════════════════════════════════════════════
+  // ── Page unload — mark as deliberate so no retry fires during teardown ──
+  window.addEventListener('beforeunload', () => {
+    _deliberateDisconnect = true;
+    clearAutoRetryTimer();
+    if(conn) try { conn.send({ type:'leaving' }); } catch(e){}
+  });
+
+  // ── INIT ─────────────────────────────────────────────────────────────
   function init(){
     buildSidebarSection();
     hookDownloads();
-    // Late-load in case dlBlob wasn't ready yet
     setTimeout(hookDownloads, 2000);
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, {once:true});
   else init();
 
-  // Expose for the receiver's debug / future tools
   window.VurminalAddon = {
     VERSION: VURMINAL_VERSION,
     connect, disconnect, sendContext,
     getConfig: () => cfg,
     setConfig: (c) => { cfg = Object.assign({}, cfg, c); saveCfg(); },
-    listCommands: () => Object.keys(CMDS).sort()
+    listCommands: () => Object.keys(CMDS).sort(),
+    getRetryState: () => ({
+      autoConnect: !!cfg.autoConnect,
+      attempt: _autoRetryCount,
+      max: MAX_AUTO_RETRIES,
+      isAutoRetrying: _isAutoRetrying,
+      deliberateDisconnect: _deliberateDisconnect
+    })
   };
 })();

@@ -1460,7 +1460,7 @@
         <div class="aw-inner">
           <label class="vm-cfg-label">Peer code</label>
           <input type="text" class="vm-cfg-input" id="vmPeerCodeInput" placeholder="ABCDE" maxlength="12" value="${esc(cfg.peerCode||'')}" autocomplete="off"/>
-          <div class="vm-hint">Open <strong>vurminal.html</strong>, copy its code, paste it here, and Connect.</div>
+          <div class="vm-hint">Open <strong>https://mahi902.github.io/DocuWritePro/Vurminal.html</strong>, copy its code, paste it here, and Connect.</div>
 
           <div class="aw-row" style="margin-top:8px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
             <div>

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Vurminal — Info & Download</title>
+<meta name="description" content="Vurminal — a terminal receiver for DocuWrite Pro. Download the Android app and connect to the editor over PeerJS."/>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0b0c;
+  --panel:#111112;
+  --border:#1f1f21;
+  --fg:#d0d0d0;
+  --fg-dim:#808080;
+  --fg-faint:#4a4a4a;
+  --input:#7cc7d8;
+  --ok:#8ec07c;
+  --warn:#d7a45b;
+  --err:#e05c5c;
+  --accent:#8ec07c;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  font-family:'JetBrains Mono','Consolas','Menlo',monospace;
+  background:var(--bg);color:var(--fg);
+  font-size:14px;line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  font-variant-ligatures:none;
+}
+.wrap{max-width:760px;margin:0 auto;padding:28px 22px 60px;}
+
+/* ── Terminal header ─────────────────────────────────────────────── */
+.term{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:4px;
+  overflow:hidden;
+  margin-bottom:28px;
+}
+.term-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 12px;
+  border-bottom:1px solid var(--border);
+  background:#0a0a0b;
+}
+.term-bar .dot{width:9px;height:9px;border-radius:50%;background:#3a3a3c;}
+.term-bar .dot.r{background:#e05c5c;}
+.term-bar .dot.y{background:#d7a45b;}
+.term-bar .dot.g{background:#8ec07c;}
+.term-bar .title{
+  flex:1;text-align:center;
+  font-size:11.5px;color:var(--fg-faint);
+  letter-spacing:.5px;
+}
+.term-body{padding:16px 18px;}
+.prompt{color:var(--accent);font-weight:700;}
+.cmd{color:var(--fg);}
+.out{color:var(--fg-dim);white-space:pre-wrap;}
+.out strong{color:var(--fg);font-weight:500;}
+.out .ok{color:var(--ok);}
+.out .warn{color:var(--warn);}
+.out .link{color:var(--input);text-decoration:underline;text-underline-offset:2px;}
+.out .link:hover{text-decoration-style:solid;}
+
+/* ── Typing blink ────────────────────────────────────────────────── */
+.cursor{display:inline-block;width:7px;height:15px;background:var(--fg);
+  vertical-align:-2px;margin-left:3px;animation:blink 1s step-end infinite;}
+@keyframes blink{50%{opacity:0;}}
+
+/* ── Section blocks ──────────────────────────────────────────────── */
+h1{
+  font-size:26px;font-weight:700;color:var(--fg);
+  margin:0 0 6px;letter-spacing:-.3px;
+}
+h1 .ver{
+  font-size:13px;color:var(--fg-faint);font-weight:400;
+  letter-spacing:1px;margin-left:8px;
+}
+.tagline{color:var(--fg-dim);font-size:13.5px;margin-bottom:26px;}
+
+h2{
+  font-size:12px;font-weight:700;color:var(--fg-faint);
+  text-transform:uppercase;letter-spacing:1.4px;
+  margin:32px 0 12px;
+  display:flex;align-items:center;gap:8px;
+}
+h2::before{content:'##';color:var(--accent);font-weight:700;letter-spacing:0;}
+
+h3{
+  font-size:13.5px;font-weight:700;color:var(--fg);
+  margin:18px 0 6px;
+}
+
+p{color:var(--fg-dim);margin-bottom:12px;}
+p strong{color:var(--fg);font-weight:500;}
+p code, li code{
+  background:#181819;border:1px solid var(--border);
+  padding:1px 6px;border-radius:3px;color:var(--input);
+  font-size:12.5px;
+}
+
+ul{list-style:none;padding-left:0;}
+ul li{
+  color:var(--fg-dim);margin-bottom:7px;padding-left:20px;position:relative;
+}
+ul li::before{
+  content:'>';position:absolute;left:4px;color:var(--fg-faint);
+  font-weight:700;
+}
+ul li strong{color:var(--fg);font-weight:500;}
+
+/* ══════════════════════════════════════════════════════════════════
+   BIG APK DOWNLOAD CARD — the main event
+══════════════════════════════════════════════════════════════════ */
+.apk-card{
+  position:relative;
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(142,192,124,.06) 0%, transparent 60%),
+    var(--panel);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:36px 24px 30px;
+  margin:18px 0 26px;
+  text-align:center;
+  overflow:hidden;
+}
+/* terminal scanline on the card */
+.apk-card::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg,transparent 0 2px,rgba(255,255,255,.012) 2px 3px);
+  mix-blend-mode:multiply;
+}
+
+.apk-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:10.5px;color:var(--fg-faint);
+  letter-spacing:1.5px;text-transform:uppercase;
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:3px 12px;
+  margin-bottom:16px;
+}
+.apk-badge::before{content:'●';color:var(--accent);font-size:8px;}
+
+.apk-icon{
+  display:block;
+  margin:0 auto 4px;
+  font-size:56px;line-height:1;
+  color:var(--accent);
+  font-weight:700;
+  letter-spacing:0;
+}
+.apk-icon .caret{
+  display:inline-block;
+  animation:caretSlide 1.4s ease-in-out infinite;
+}
+@keyframes caretSlide{
+  0%,100%{transform:translateX(0);}
+  50%{transform:translateX(4px);}
+}
+
+.apk-name{
+  font-size:40px;font-weight:700;color:var(--fg);
+  letter-spacing:-.5px;line-height:1.1;
+  margin-top:12px;
+}
+.apk-name .ext{color:var(--accent);}
+
+.apk-version{
+  font-size:13px;color:var(--fg-faint);
+  margin-top:6px;
+  letter-spacing:2px;
+  text-transform:uppercase;
+}
+
+.apk-size{
+  display:inline-flex;align-items:center;gap:14px;
+  margin:18px 0 6px;
+  font-size:12px;color:var(--fg-dim);
+  flex-wrap:wrap;justify-content:center;
+}
+.apk-size span{white-space:nowrap;}
+.apk-size span::before{
+  content:'·';color:var(--fg-faint);margin-right:12px;
+}
+.apk-size span:first-child::before{display:none;}
+
+.apk-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:12px;
+  background:var(--accent);color:#0b0b0c;
+  padding:18px 44px;border-radius:4px;
+  font-family:inherit;font-size:16px;font-weight:700;
+  text-decoration:none;letter-spacing:.5px;
+  margin-top:22px;
+  min-width:min(320px, 100%);
+  transition:background .12s,transform .08s,box-shadow .15s;
+  box-shadow:0 0 0 0 rgba(142,192,124,0);
+  position:relative;z-index:1;
+}
+.apk-btn:hover{
+  background:#a6d894;
+  box-shadow:0 0 24px -4px rgba(142,192,124,.55);
+}
+.apk-btn:active{transform:translateY(1px);}
+.apk-btn .icon{
+  display:inline-block;
+  font-size:20px;
+  animation:bob 1.6s ease-in-out infinite;
+}
+@keyframes bob{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(3px);}
+}
+.apk-btn .arrow{
+  display:inline-block;
+  font-size:18px;
+  transition:transform .15s;
+}
+.apk-btn:hover .arrow{transform:translateX(4px);}
+
+.apk-url{
+  display:block;
+  margin-top:20px;padding-top:20px;
+  border-top:1px dashed var(--border);
+  font-size:11.5px;color:var(--fg-faint);
+  word-break:break-all;
+  font-family:inherit;
+}
+.apk-url .u{color:var(--input);}
+.apk-url a{
+  color:var(--input);text-decoration:none;
+  border-bottom:1px dotted var(--fg-faint);
+}
+.apk-url a:hover{border-bottom-style:solid;}
+
+.apk-hint{
+  margin-top:10px;
+  font-size:11.5px;
+  color:var(--fg-faint);
+  font-style:italic;
+}
+
+.apk-alt{
+  margin-top:22px;
+  text-align:center;
+  font-size:12.5px;
+  color:var(--fg-faint);
+}
+.apk-alt a{
+  color:var(--input);text-decoration:underline;
+  text-underline-offset:2px;
+}
+
+/* ── Setup steps ─────────────────────────────────────────────────── */
+.steps{
+  counter-reset:step;
+  margin:14px 0 6px;
+}
+.step{
+  display:flex;gap:14px;margin-bottom:12px;align-items:flex-start;
+}
+.step-num{
+  counter-increment:step;
+  flex-shrink:0;
+  width:26px;height:26px;
+  border:1px solid var(--border);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11.5px;color:var(--fg-faint);
+  font-weight:700;
+}
+.step-num::before{content:counter(step);}
+.step-body{flex:1;min-width:0;padding-top:2px;}
+.step-title{color:var(--fg);font-size:13.5px;font-weight:500;}
+.step-sub{color:var(--fg-faint);font-size:12px;margin-top:2px;line-height:1.5;}
+
+/* ── Command table ───────────────────────────────────────────────── */
+.cmds{
+  border:1px solid var(--border);border-radius:3px;
+  overflow:hidden;background:var(--panel);
+}
+.cmd-row{
+  display:flex;gap:12px;padding:8px 14px;
+  border-bottom:1px solid var(--border);
+  font-size:12.5px;
+}
+.cmd-row:last-child{border-bottom:none;}
+.cmd-name{color:var(--input);flex-shrink:0;min-width:92px;}
+.cmd-desc{color:var(--fg-dim);}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+footer{
+  margin-top:44px;padding-top:18px;
+  border-top:1px solid var(--border);
+  font-size:11.5px;color:var(--fg-faint);
+  text-align:center;line-height:1.9;
+}
+footer a{color:var(--fg-dim);text-decoration:none;border-bottom:1px dotted var(--fg-faint);}
+footer a:hover{color:var(--fg);}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media(max-width:520px){
+  .wrap{padding:18px 14px 44px;}
+  h1{font-size:22px;}
+  .apk-card{padding:28px 16px 24px;}
+  .apk-name{font-size:32px;}
+  .apk-icon{font-size:44px;}
+  .apk-btn{padding:16px 28px;font-size:15px;min-width:100%;width:100%;}
+  .cmd-row{flex-direction:column;gap:3px;}
+  .cmd-name{min-width:0;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Terminal header with a fake typing line -->
+  <div class="term">
+    <div class="term-bar">
+      <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+      <span class="title">Vurminal — info</span>
+    </div>
+    <div class="term-body">
+      <div class="out"><span class="prompt">$</span> <span class="cmd">Vurminal --about</span></div>
+      <div class="out" style="margin-top:10px;">A terminal receiver for <strong>DocuWrite Pro</strong>.<br/>
+Pair the editor with a live terminal session, type slash commands,<br/>
+and watch them execute in your document over PeerJS.</div>
+      <div class="out" style="margin-top:10px;"><span class="prompt">$</span> <span class="cmd">Vurminal --version</span> <span class="cursor"></span></div>
+    </div>
+  </div>
+
+  <!-- Hero -->
+  <h1>Vurminal <span class="ver">v1.5.0</span></h1>
+  <p class="tagline">You are the AI. Type a command, it runs in the editor.</p>
+
+  <!-- ══ BIG APK DOWNLOAD ══ -->
+  <h2>download</h2>
+  <div class="apk-card">
+    <span class="apk-badge">android · apk</span>
+
+    <div class="apk-icon">▷<span class="caret">_</span></div>
+
+    <div class="apk-name">Vurminal<span class="ext">.apk</span></div>
+    <div class="apk-version">Version 1.5.0</div>
+
+    <div class="apk-size">
+      <span>Android 6.0+</span>
+      <span>~4 MB</span>
+      <span>No ads</span>
+      <span>PeerJS built in</span>
+    </div>
+
+    <a class="apk-btn" href="https://github.com/Mahi902/DocuWritePro/blob/main/Vurminal.apk" download>
+      <span class="icon">⬇</span>
+      Download Vurminal.apk
+      <span class="arrow">→</span>
+    </a>
+
+    <div class="apk-url">
+      direct link: <a href="https://mahi902.github.io/DocuWritePro/vurminal.apk">mahi902.github.io/DocuWritePro/vurminal.apk</a>
+    </div>
+
+    <div class="apk-hint">
+      On Android you may need to allow "install from unknown sources" for your browser.
+    </div>
+  </div>
+
+  <p class="apk-alt">
+    Prefer the browser? The web receiver is a single HTML file and works
+    anywhere a modern browser runs — no install required.
+  </p>
+
+  <!-- What it is -->
+  <h2>what it is</h2>
+  <p>
+    Vurminal is a <strong>terminal receiver</strong> that pairs with the Vurminal
+    add-on inside <strong>DocuWrite Pro</strong>. Instead of an AI deciding what
+    to do, <em>you</em> type slash commands like <code>/wordcount</code>,
+    <code>/inserttext</code>, or <code>/bold</code>, and the add-on runs them
+    against the open document — then sends the results back to the terminal.
+  </p>
+  <p>
+    Think of it as a shell prompt for your editor. Every command the add-on
+    supports is available, over a peer-to-peer link that needs no server.
+  </p>
+
+  <!-- Setup -->
+  <h2>setup</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <div class="step-title">Open DocuWrite Pro</div>
+        <div class="step-sub">Web or installed — either works.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <div class="step-title">Make sure Add-ons are turned ON</div>
+        <div class="step-sub">Without this, Vurminal can't load at all.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <div class="step-title">Open the Add-on Store → find Vurminal</div>
+        <div class="step-sub">Click <strong>Get</strong> to install it.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <div class="step-title">Go to the Library → toggle Vurminal ON</div>
+        <div class="step-sub">Then launch the editor.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <div class="step-title">Open the Vurminal receiver</div>
+        <div class="step-sub">It shows a 6-character peer code at the top.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <div class="step-title">Paste the code into the sidebar</div>
+        <div class="step-sub">In the editor, open the "Vurminal" section, paste the code, click <strong>Connect</strong>.</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num"></div>
+      <div class="step-body">
+        <div class="step-title">Type commands</div>
+        <div class="step-sub">Start with <code>/help</code> to list everything.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <h2>features</h2>
+  <ul>
+    <li><strong>Limitless /click</strong> — click any labeled UI control by name. No batches, no cooldown.</li>
+    <li><strong>Peer-to-peer</strong> — no server, no account, just a peer code over WebRTC.</li>
+    <li><strong>Full command set</strong> — formatting, insert, tables, find/replace, export, page management, and more.</li>
+    <li><strong>Auto-reconnect</strong> — if the link drops, the add-on retries up to 3 times.</li>
+    <li><strong>Explore Mode</strong> — optionally push a live snapshot of the document into the terminal on each turn.</li>
+    <li><strong>Scope controls</strong> — restrict the add-on to specific pages or element types.</li>
+    <li><strong>Download mirror</strong> — files exported from the editor appear in the terminal with a save button.</li>
+    <li><strong>Interactive toggles</strong> — flip scope, elements, and output options straight from the prompt.</li>
+  </ul>
+
+  <!-- Receiver commands -->
+  <h2>receiver commands</h2>
+  <p style="font-size:12.5px;margin-bottom:10px;">
+    These are typed into the terminal itself, no leading slash:
+  </p>
+  <div class="cmds">
+    <div class="cmd-row"><span class="cmd-name">status</span><span class="cmd-desc">Connection info and current settings.</span></div>
+    <div class="cmd-row"><span class="cmd-name">disconnect</span><span class="cmd-desc">Drop the peer link.</span></div>
+    <div class="cmd-row"><span class="cmd-name">vurver</span><span class="cmd-desc">Show the Vurminal version.</span></div>
+    <div class="cmd-row"><span class="cmd-name">theme</span><span class="cmd-desc">Toggle light / dark.</span></div>
+    <div class="cmd-row"><span class="cmd-name">clear</span><span class="cmd-desc">Abort the running command and clear the screen.</span></div>
+    <div class="cmd-row"><span class="cmd-name">stop</span><span class="cmd-desc">Abort the running command.</span></div>
+    <div class="cmd-row"><span class="cmd-name">toggle</span><span class="cmd-desc">Interactive panel of on/off switches.</span></div>
+    <div class="cmd-row"><span class="cmd-name">menu</span><span class="cmd-desc">Open / close the full settings panel.</span></div>
+    <div class="cmd-row"><span class="cmd-name">howto</span><span class="cmd-desc">Step-by-step setup walkthrough.</span></div>
+  </div>
+
+  <p style="margin-top:16px;font-size:12.5px;">
+    Add-on commands use a slash: <code>/help</code>, <code>/wordcount</code>,
+    <code>/inserttext</code>, <code>/bold</code>, <code>/click</code>, and
+    about seventy more. The terminal lists everything with <code>/help</code>.
+  </p>
+
+  <footer>
+    Vurminal v1.5.0 · by Mohtadi Azad Mahi<br/>
+    <a href="https://mahi902.github.io/DocuWritePro/vurminal.apk" download>download Vurminal.apk</a>
+  </footer>
+
+</div>
+</body>
+</html>

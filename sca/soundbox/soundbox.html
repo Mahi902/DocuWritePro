@@ -1,0 +1,193 @@
+<!-- SOUNDBOX add-on markup — appended to <body> by the Sugarcane add-on runtime,
+     then reparented into place by soundbox.js -->
+
+<div id="sbNowBar">
+  <img class="sb-now-thumb" id="sbNowBarThumb" alt=""/>
+  <span class="material-symbols-outlined" style="display:none" id="sbNowBarIconFallback">music_note</span>
+  <span id="sbNowBarText">Now playing: <b id="sbNowBarName">—</b></span>
+  <button class="sb-nowbar-btn" id="sbNowBarPlayBtn" title="Play/Pause"><span class="material-symbols-outlined">pause</span></button>
+  <button class="sb-nowbar-btn" id="sbNowBarOpenBtn" title="Open Soundbox"><span class="material-symbols-outlined">open_in_full</span></button>
+  <button class="sb-nowbar-btn" id="sbNowBarCloseBtn" title="Hide"><span class="material-symbols-outlined">close</span></button>
+</div>
+
+<div id="sbPanel">
+  <div class="sb-panel-head">
+    <span class="material-symbols-outlined">graphic_eq</span>
+    <span class="sb-panel-title">Soundbox</span>
+    <button class="sb-icon-btn" id="sbCustomizeQuickBtn" title="Customize"><span class="material-symbols-outlined">tune</span></button>
+    <button class="sb-icon-btn" id="sbPanelCloseBtn" title="Hide Soundbox"><span class="material-symbols-outlined">close</span></button>
+  </div>
+
+  <div class="sb-panel-body" id="sbPanelBody">
+    <div class="sb-playlist-topbar">
+      <div class="sb-mini-now">
+        <button class="sb-icon-btn" id="sbPlaylistBackBtn" title="Back" style="width:26px;height:26px;"><span class="material-symbols-outlined" style="font-size:18px">arrow_back</span></button>
+        <img id="sbMiniThumb" alt=""/>
+        <span id="sbMiniName">—</span>
+      </div>
+      <div class="sb-search-row">
+        <span class="material-symbols-outlined">search</span>
+        <input type="text" id="sbPlaylistSearch" placeholder="Search playlist…"/>
+      </div>
+    </div>
+
+    <div class="sb-hero" id="sbHero">
+      <div class="sb-disc-wrap">
+        <canvas id="sbVizCanvas" width="280" height="280"></canvas>
+        <img class="sb-disc" id="sbDisc" alt=""/>
+      </div>
+      <div class="sb-track-name" id="sbTrackName">No track selected</div>
+      <div class="sb-track-artist" id="sbTrackArtist"></div>
+      <div class="sb-empty-hint" id="sbEmptyHint">Add a track from the sidebar → Soundbox → Soundbox Tracks.</div>
+
+      <div class="sb-progress-row" id="sbProgressRow" style="display:none">
+        <span class="sb-time" id="sbTimeCur">0:00</span>
+        <input type="range" id="sbSeek" min="0" max="1000" value="0"/>
+        <span class="sb-time sb-time-end" id="sbTimeDur">0:00</span>
+      </div>
+
+      <div class="sb-controls-row" id="sbControlsRow" style="display:none">
+        <button class="sb-ctrl-btn" id="sbPrevBtn" title="Previous"><span class="material-symbols-outlined">skip_previous</span></button>
+        <button class="sb-ctrl-btn" id="sbRewBtn" title="Rewind 10s"><span class="material-symbols-outlined">replay_10</span></button>
+        <button class="sb-ctrl-btn sb-play" id="sbPlayBtn" title="Play/Pause"><span class="material-symbols-outlined">play_arrow</span></button>
+        <button class="sb-ctrl-btn" id="sbFwdBtn" title="Forward 10s"><span class="material-symbols-outlined">forward_10</span></button>
+        <button class="sb-ctrl-btn" id="sbNextBtn" title="Next"><span class="material-symbols-outlined">skip_next</span></button>
+      </div>
+
+      <div class="sb-speed-row" id="sbSpeedRow" style="display:none">
+        <span style="font-size:10.5px;color:#999;font-weight:600;">Speed</span>
+        <button class="sb-speed-btn" data-speed="0.5">0.5×</button>
+        <button class="sb-speed-btn" data-speed="0.75">0.75×</button>
+        <button class="sb-speed-btn active" data-speed="1">1×</button>
+        <button class="sb-speed-btn" data-speed="1.5">1.5×</button>
+        <button class="sb-speed-btn" data-speed="2">2×</button>
+      </div>
+
+      <div class="sb-scroll-cue" id="sbScrollCue">
+        <span>Playlist</span>
+        <span class="material-symbols-outlined">expand_more</span>
+      </div>
+    </div>
+
+    <div class="sb-playlist-wrap">
+      <div class="sb-playlist-divider">Playlist</div>
+      <div id="sbPlaylistList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden players -->
+<audio id="sbAudioEl" crossorigin="anonymous" style="display:none"></audio>
+<div id="sbYtHolder" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden"></div>
+<video id="sbHiddenVideo" style="display:none" muted playsinline crossorigin="anonymous"></video>
+<canvas id="sbFrameCanvas" style="display:none"></canvas>
+<canvas id="sbAmbCanvas" width="16" height="16" style="display:none"></canvas>
+
+<!-- ═══ Customize modal ═══ -->
+<div class="sb-modal-bg" id="sbCustomizeModalBg">
+  <div class="sb-modal">
+    <div class="sb-modal-head">
+      <span class="material-symbols-outlined">tune</span>
+      <h3>Customize Soundbox</h3>
+      <button class="sb-icon-btn" onclick="Soundbox.closeCustomize()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="sb-modal-body">
+      <div class="sb-row">
+        <label class="sb-lbl">Opens from</label>
+        <div class="sb-seg">
+          <button id="sbSideLeftBtn" class="active">Left</button>
+          <button id="sbSideRightBtn">Right</button>
+        </div>
+      </div>
+      <div class="sb-row">
+        <label class="sb-lbl">Screen coverage</label>
+        <div class="sb-range-row">
+          <input type="range" id="sbSizeRange" min="20" max="50" value="40"/>
+          <span class="sb-range-val" id="sbSizeVal">40%</span>
+        </div>
+      </div>
+      <div class="sb-row">
+        <label class="sb-lbl">Theme</label>
+        <div class="sb-theme-grid" id="sbThemeGrid"></div>
+      </div>
+      <div class="sb-row">
+        <div class="sb-toggle-row2">
+          <div>
+            <label class="sb-lbl" style="margin:0">Ambient lighting</label>
+            <small>Tints the disc glow and, optionally, the whole editor to match the album art.</small>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="sbAmbientToggle"/><span class="sb-switch-track"></span></label>
+        </div>
+      </div>
+      <div class="sb-row" id="sbAmbientEditorRow">
+        <div class="sb-toggle-row2">
+          <div>
+            <label class="sb-lbl" style="margin:0">Extend to editor</label>
+            <small>Also tints the title bar, toolbar, sidebar and outlines — never the page itself.</small>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="sbAmbientEditorToggle"/><span class="sb-switch-track"></span></label>
+        </div>
+      </div>
+      <div class="sb-row" style="margin-bottom:0">
+        <div class="sb-toggle-row2">
+          <div><label class="sb-lbl" style="margin:0">Spinning disc</label></div>
+          <label class="toggle-switch"><input type="checkbox" id="sbSpinToggle" checked/><span class="sb-switch-track"></span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Tracks modal ═══ -->
+<div class="sb-modal-bg" id="sbTracksModalBg">
+  <div class="sb-modal">
+    <div class="sb-modal-head">
+      <span class="material-symbols-outlined">queue_music</span>
+      <h3>Soundbox Tracks</h3>
+      <button class="sb-icon-btn" onclick="Soundbox.closeTracks()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="sb-modal-body">
+      <div class="sb-add-tabs">
+        <button class="sb-add-tab active" data-pane="sbPaneLink">Music link</button>
+        <button class="sb-add-tab" data-pane="sbPaneYt">YouTube</button>
+        <button class="sb-add-tab" data-pane="sbPaneUpload">Upload</button>
+      </div>
+
+      <div class="sb-add-pane active" id="sbPaneLink">
+        <input class="sb-input" id="sbLinkUrl" placeholder="Direct audio/video link (mp3, mp4…)"/>
+        <input class="sb-input" id="sbLinkName" placeholder="Title (optional)"/>
+        <input class="sb-input" id="sbLinkArtist" placeholder="Artist (optional)"/>
+        <button class="sb-primary-btn" id="sbLinkAddBtn">Add track</button>
+        <div class="sb-status" id="sbLinkStatus"></div>
+      </div>
+
+      <div class="sb-add-pane" id="sbPaneYt">
+        <input class="sb-input" id="sbYtUrl" placeholder="YouTube video link"/>
+        <button class="sb-primary-btn" id="sbYtAddBtn">Add track</button>
+        <div class="sb-status" id="sbYtStatus"></div>
+      </div>
+
+      <div class="sb-add-pane" id="sbPaneUpload">
+        <input type="file" id="sbUploadInput" accept="audio/*,video/mp4" style="display:none"/>
+        <div class="sb-upload-zone" id="sbUploadZone">
+          <span class="material-symbols-outlined">upload_file</span>
+          Tap to choose an MP3 or MP4 file
+        </div>
+        <div id="sbUploadCoverChoiceWrap" style="display:none;margin-top:10px">
+          <label class="sb-lbl">Cover art</label>
+          <div class="sb-cover-choice">
+            <button id="sbCoverNoneBtn" class="active">No cover</button>
+            <button id="sbCoverUploadBtn">Upload image</button>
+          </div>
+          <input type="file" id="sbCoverInput" accept="image/*" style="display:none"/>
+        </div>
+        <div class="sb-status" id="sbUploadStatus"></div>
+      </div>
+
+      <div class="sb-row" style="margin-top:16px;margin-bottom:6px">
+        <label class="sb-lbl">Your tracks</label>
+        <div id="sbManageList"></div>
+      </div>
+    </div>
+  </div>
+</div>

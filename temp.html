@@ -857,14 +857,19 @@ scd= https://mahi902.github.io/DocuWritePro/archive/wid.scd`;
         // Open button action
         document.getElementById('openBtn').addEventListener('click', () => {
             if (currentScdLink) {
-                let scdUrl = currentScdLink;
+                let scdUrl = currentScdLink.trim();
                 if (!scdUrl.startsWith('http://') && !scdUrl.startsWith('https://')) {
                     scdUrl = 'https://' + scdUrl;
                 }
-                const editorUrl = `https://mahi902.github.io/DocuWritePro/sceditor.html#SRC=${encodeURIComponent(scdUrl)}`;
+                // Pass the raw SCD URL directly without encoding slashes into %2F
+                const editorUrl = `https://mahi902.github.io/DocuWritePro/sceditor.html#SRC=${scdUrl}`;
                 window.location.href = editorUrl;
             } else {
-                alert("No SCD editor link available for this template.");
+                const notice = document.getElementById('fallbackNotice');
+                if (notice) {
+                    notice.classList.remove('hidden');
+                    notice.querySelector('span').textContent = 'No SCD editor link available for this template.';
+                }
             }
         });
 

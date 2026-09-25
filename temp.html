@@ -4,305 +4,883 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DocuWritePro Templates</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Marked.js for markdown rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- PDF.js for previewing template PDF documents -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        light: {
+                            bg: '#f4f5f9',
+                            surface: '#ffffff',
+                            text: '#1c1c1e',
+                            textMuted: '#6c6c70',
+                            primary: '#007aff',
+                            border: '#e5e5ea'
+                        },
+                        dark: {
+                            bg: '#000000',
+                            surface: '#1c1c1e',
+                            text: '#f2f2f7',
+                            textMuted: '#8e8e93',
+                            primary: '#0a84ff',
+                            border: '#2c2c2e'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --text-color: #333333;
-            --card-bg: #ffffff;
-            --card-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            --card-border: 1px solid #e0e0e0;
-            --accent-color: #007bff;
-            --overlay-bg: #ffffff;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-        /* Pure Black Dark Theme */
-        body.dark-theme {
-            --bg-color: #000000;
-            --text-color: #ffffff;
-            --card-bg: #111111;
-            --card-shadow: 0 4px 6px rgba(255,255,255,0.1);
-            --card-border: 1px solid #333333;
-            --accent-color: #4da3ff;
-            --overlay-bg: #000000;
-        }
-
-        body {
+        html, body {
+            height: 100%;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color 0.3s ease, color 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.2s ease, color 0.2s ease;
         }
 
-        /* Header */
-        header {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid var(--card-border);
-        }
-
-        h1 {
-            margin: 0;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        /* Main Grid */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
-        }
-
-        /* Template Card */
-        .card {
-            background-color: var(--card-bg);
-            border: var(--card-border);
-            border-radius: 12px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--card-shadow);
-        }
-
-        .card-image-container {
+        /* High quality sharp PDF preview viewport */
+        .pdf-container {
             width: 100%;
-            height: 250px; /* Portrait aspect ratio for document feel */
-            overflow: hidden;
-            background-color: #eee;
+            min-height: 380px;
+            max-height: 70vh;
+            overflow-y: auto;
+            overflow-x: auto;
+            border-radius: 1rem;
             position: relative;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .card-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: opacity 0.3s ease;
+        canvas {
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
         }
 
-        .card-content {
-            padding: 15px;
-            text-align: center;
+        .loader {
+            border: 3px solid rgba(120, 120, 128, 0.2);
+            border-top: 3px solid #007aff;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 0.8s linear infinite;
         }
 
-        .card-title {
-            font-size: 1rem;
-            font-weight: 500;
-            margin: 0;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        /* Loading State */
-        .loading {
-            text-align: center;
-            padding: 40px;
-            font-size: 1.2rem;
-            opacity: 0.6;
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+            font-weight: 700;
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .markdown-content p {
+            margin-bottom: 0.35rem;
+        }
+        .markdown-content ul {
+            list-style-type: disc;
+            padding-left: 1.25rem;
+            margin-bottom: 0.35rem;
         }
 
-        /* Iframe Overlay (Slide Up Animation) */
-        .overlay-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--overlay-bg);
-            z-index: 1000;
-            transform: translateY(100%); /* Start off-screen (bottom) */
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); /* iOS-style slide */
-            display: flex;
-            flex-direction: column;
-        }
-
-        .overlay-container.active {
-            transform: translateY(0);
-        }
-
-        /* Overlay Header */
-        .overlay-header {
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            border-bottom: 1px solid var(--card-border);
-            background-color: var(--bg-color);
-        }
-
-        .close-btn {
-            background: none;
-            border: none;
-            color: var(--text-color);
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            padding: 8px 16px;
-            border-radius: 20px;
-            background-color: rgba(128, 128, 128, 0.2);
-        }
-
-        .close-btn:hover {
-            opacity: 0.8;
-        }
-
-        iframe {
-            flex-grow: 1;
-            width: 100%;
-            border: none;
-        }
-
-        /* Hide Scrollbar for clean look but allow scrolling */
+        /* Custom scrollbars */
         ::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
+            height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: var(--bg-color);
+            background: transparent;
         }
         ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
+            background-color: rgba(120, 120, 128, 0.3);
+            border-radius: 9999px;
         }
 
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
     </style>
 </head>
-<body>
 
-    <header>
-        <h1>Templates</h1>
-    </header>
+<body class="bg-light-bg text-light-text dark:bg-dark-bg dark:text-dark-text min-h-screen flex flex-col relative overflow-y-auto">
 
-    <div class="container">
-        <div id="loading" class="loading">Loading templates...</div>
-        <div id="grid" class="grid"></div>
-    </div>
+    <!-- Main Container -->
+    <main id="mainContainer" class="flex-1 w-full max-w-6xl mx-auto px-4 pt-6 pb-32">
+        
+        <!-- Search Bar and Category Chips -->
+        <div class="mb-6 space-y-4">
+            <!-- Search Input -->
+            <div class="relative max-w-xl mx-auto">
+                <i class="ph ph-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-light-textMuted dark:text-dark-textMuted text-lg"></i>
+                <input type="text" id="searchInput" placeholder="Search templates..." class="w-full bg-light-surface dark:bg-dark-surface border border-light-border/60 dark:border-dark-border/60 rounded-2xl py-3 pl-11 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-light-primary dark:focus:ring-dark-primary transition-all">
+            </div>
 
-    <!-- Slide Up Overlay -->
-    <div id="overlay" class="overlay-container">
-        <div class="overlay-header">
-            <span id="overlay-title" style="font-weight: bold;">Preview</span>
-            <button class="close-btn" onclick="closeOverlay()">Close ✕</button>
+            <!-- Category Pills Filter -->
+            <div class="flex overflow-x-auto py-1 gap-2 hide-scrollbar justify-start sm:justify-center items-center" id="categoryContainer">
+                <!-- Categories populated dynamically -->
+            </div>
         </div>
-        <iframe id="preview-frame" src=""></iframe>
+
+        <!-- Offline / Fallback Data Banner Notice -->
+        <div id="fallbackNotice" class="hidden mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-600 dark:text-amber-400 flex items-center justify-between">
+            <span class="flex items-center gap-2">
+                <i class="ph ph-info text-base"></i> Loaded default template set (Network fetch restricted in preview)
+            </span>
+            <button onclick="fetchTemplates()" class="underline font-semibold hover:opacity-80">Retry Network</button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="flex flex-col items-center justify-center py-24">
+            <div class="loader mb-3"></div>
+            <p class="text-xs text-light-textMuted dark:text-dark-textMuted font-medium">Fetching templates archive...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden flex flex-col items-center justify-center py-20 text-center">
+            <i class="ph ph-warning-circle text-4xl text-red-500 mb-2"></i>
+            <p class="text-base font-semibold text-red-500 mb-1">Unable to load templates</p>
+            <p id="errorMessage" class="text-xs text-light-textMuted dark:text-dark-textMuted mb-4">Failed to reach repository.</p>
+            <button onclick="fetchTemplates()" class="px-5 py-2 bg-light-primary dark:bg-dark-primary text-white dark:text-black rounded-full text-xs font-semibold hover:opacity-90 transition-opacity">
+                Retry Fetching
+            </button>
+        </div>
+
+        <!-- Templates Grid Container -->
+        <div id="templatesGrid" class="template-grid hidden">
+            <!-- Template cards injected here -->
+        </div>
+
+        <!-- Empty Results State -->
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 text-center">
+            <i class="ph ph-magnifying-glass text-4xl text-light-textMuted dark:text-dark-textMuted mb-2"></i>
+            <p class="text-base font-medium">No matching templates found</p>
+            <p class="text-xs text-light-textMuted dark:text-dark-textMuted">Try a different search query or category.</p>
+        </div>
+
+    </main>
+
+    <!-- Detailed View Screen -->
+    <div id="detailedView" class="hidden fixed inset-0 z-50 bg-light-bg dark:bg-dark-bg overflow-y-auto flex-col">
+        <!-- Sticky top header for detail view -->
+        <div class="sticky top-0 z-40 bg-light-bg/90 dark:bg-dark-bg/90 backdrop-blur-md border-b border-light-border/60 dark:border-dark-border/60 px-4 py-3 flex items-center justify-between">
+            <button onclick="closeDetailedView()" class="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-full transition-colors flex items-center gap-1.5 text-xs font-semibold">
+                <i class="ph ph-arrow-left text-lg"></i> Back
+            </button>
+            <div class="text-xs font-semibold truncate max-w-xs" id="detailNavTitle"></div>
+            <div class="w-8"></div>
+        </div>
+        
+        <!-- Scrollable detail view content body with generous bottom padding -->
+        <div class="flex-1 w-full max-w-3xl mx-auto p-4 md:p-6 pb-48 space-y-6">
+            
+            <!-- 1. PDF Preview or Cover Image Container -->
+            <div class="bg-light-surface dark:bg-dark-surface rounded-2xl border border-light-border/60 dark:border-dark-border/60 shadow-sm overflow-hidden">
+                <div class="p-3 border-b border-light-border dark:border-dark-border bg-black/5 dark:bg-white/5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <span class="font-semibold flex items-center gap-1.5"><i class="ph ph-file-pdf text-red-500 text-base"></i> Document Preview</span>
+                    
+                    <!-- PDF Controls (Pages + High-DPI Zooming) -->
+                    <div id="pdfControls" class="hidden flex items-center gap-3">
+                        <div class="flex items-center gap-1 bg-black/5 dark:bg-white/10 px-2 py-1 rounded-lg">
+                            <button id="prevPage" class="p-1 hover:bg-black/10 dark:hover:bg-white/20 rounded"><i class="ph ph-caret-left"></i></button>
+                            <span class="px-1"><span id="pageNum">1</span> / <span id="pageCount">?</span></span>
+                            <button id="nextPage" class="p-1 hover:bg-black/10 dark:hover:bg-white/20 rounded"><i class="ph ph-caret-right"></i></button>
+                        </div>
+                        <div class="flex items-center gap-1 bg-black/5 dark:bg-white/10 px-2 py-1 rounded-lg">
+                            <button id="zoomOut" class="p-1 hover:bg-black/10 dark:hover:bg-white/20 rounded" title="Zoom Out"><i class="ph ph-minus"></i></button>
+                            <button id="zoomReset" class="p-1 text-[11px] font-bold hover:bg-black/10 dark:hover:bg-white/20 rounded px-1.5" title="Reset Zoom">Fit</button>
+                            <button id="zoomIn" class="p-1 hover:bg-black/10 dark:hover:bg-white/20 rounded" title="Zoom In"><i class="ph ph-plus"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pdf-container flex items-center justify-center p-4 bg-black/5 dark:bg-white/5 relative" id="pdfContainer">
+                    <div id="pdfLoader" class="loader"></div>
+                    <canvas id="pdfCanvas"></canvas>
+                </div>
+            </div>
+
+            <!-- 2. Template Title -->
+            <div>
+                <h1 id="detailTitle" class="text-xl md:text-2xl font-bold markdown-content"></h1>
+            </div>
+
+            <!-- 3. Author -->
+            <div class="flex items-center gap-2 text-xs text-light-textMuted dark:text-dark-textMuted">
+                <i class="ph ph-user text-sm"></i>
+                <span class="font-medium" id="detailAuthor"></span>
+            </div>
+
+            <!-- 4. Description -->
+            <div class="bg-light-surface dark:bg-dark-surface p-4 rounded-2xl border border-light-border/60 dark:border-dark-border/60 shadow-sm">
+                <h3 class="text-[10px] uppercase tracking-wider text-light-textMuted dark:text-dark-textMuted font-bold mb-2">Description</h3>
+                <div id="detailDescription" class="text-xs markdown-content text-light-text dark:text-dark-text leading-relaxed"></div>
+            </div>
+
+            <!-- 5. Page Count and Word Count -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-light-surface dark:bg-dark-surface p-3.5 rounded-2xl border border-light-border/60 dark:border-dark-border/60 shadow-sm flex items-center gap-3">
+                    <div class="p-2 rounded-xl bg-blue-500/10 text-blue-500"><i class="ph ph-file-text text-lg"></i></div>
+                    <div>
+                        <div class="text-[10px] text-light-textMuted dark:text-dark-textMuted">Page Count</div>
+                        <div class="text-sm font-bold" id="detailPageCount">-</div>
+                    </div>
+                </div>
+                <div class="bg-light-surface dark:bg-dark-surface p-3.5 rounded-2xl border border-light-border/60 dark:border-dark-border/60 shadow-sm flex items-center gap-3">
+                    <div class="p-2 rounded-xl bg-purple-500/10 text-purple-500"><i class="ph ph-text-aa text-lg"></i></div>
+                    <div>
+                        <div class="text-[10px] text-light-textMuted dark:text-dark-textMuted">Word Count</div>
+                        <div class="text-sm font-bold" id="detailWordCount">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Bottom Empty Spacer to prevent floating button occlusion -->
+            <div class="h-28 w-full pointer-events-none" aria-hidden="true"></div>
+        </div>
+
+        <!-- 7. Floating Bottom "Open" Button -->
+        <div class="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-light-bg via-light-bg/95 to-transparent dark:from-dark-bg dark:via-dark-bg/95 backdrop-blur-sm flex justify-center z-50">
+            <button id="openBtn" class="w-full max-w-xs flex items-center justify-center gap-2 bg-light-primary dark:bg-dark-primary text-white dark:text-black py-3 px-6 rounded-full font-semibold shadow-xl hover:opacity-90 transform active:scale-95 transition-all text-sm">
+                <i class="ph ph-pencil-simple text-base"></i> Open Template
+            </button>
+        </div>
     </div>
 
     <script>
-        const API_URL = "https://mahi902.github.io/DocuWritePro/temp.json";
-        const gridElement = document.getElementById('grid');
-        const loadingElement = document.getElementById('loading');
-        const overlay = document.getElementById('overlay');
-        const iframe = document.getElementById('preview-frame');
-        const overlayTitle = document.getElementById('overlay-title');
+        // Application State
+        let allTemplates = [];
+        let currentTemplates = [];
+        let categories = new Set(['All']);
+        
+        // High Quality PDF.js state variables
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pdfZoom = 1.0;
+        let pageRendering = false;
+        let pageNumPending = null;
+        let currentRenderTask = null;
+        
+        let canvas = document.getElementById('pdfCanvas');
+        let ctx = canvas.getContext('2d', { alpha: false });
+        let currentScdLink = '';
 
-        // 1. Theme Handling
-        function applyTheme() {
+        // DOM References
+        const mainContainer = document.getElementById('mainContainer');
+        const detailedView = document.getElementById('detailedView');
+        const templatesGrid = document.getElementById('templatesGrid');
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const errorMessage = document.getElementById('errorMessage');
+        const emptyState = document.getElementById('emptyState');
+        const searchInput = document.getElementById('searchInput');
+        const categoryContainer = document.getElementById('categoryContainer');
+        const fallbackNotice = document.getElementById('fallbackNotice');
+
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        // Theme initialization based strictly on URL Hash (#l or #d)
+        function initThemeFromHash() {
             const hash = window.location.hash;
-            if (hash === '#dark') {
-                document.body.classList.add('dark-theme');
+            if (hash === '#d') {
+                document.documentElement.classList.add('dark');
+                document.body.style.backgroundColor = '#000000';
+            } else if (hash === '#l') {
+                document.documentElement.classList.remove('dark');
+                document.body.style.backgroundColor = '#f4f5f9';
             } else {
-                document.body.classList.remove('dark-theme');
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                    document.body.style.backgroundColor = '#000000';
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    document.body.style.backgroundColor = '#f4f5f9';
+                }
             }
         }
 
-        // Listen for hash changes and initial load
-        window.addEventListener('hashchange', applyTheme);
-        window.addEventListener('DOMContentLoaded', () => {
-            applyTheme();
-            fetchTemplates();
-        });
+        window.addEventListener('hashchange', initThemeFromHash);
+        initThemeFromHash();
 
-        // 2. Fetch Data
+        function getTodayFormattedDate() {
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            const match = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            if (match) {
+                const day = parseInt(match[1], 10);
+                const month = parseInt(match[2], 10) - 1;
+                const year = parseInt(match[3], 10);
+                return new Date(year, month, day);
+            }
+            return null;
+        }
+
+        function isToday(dateObj) {
+            if (!dateObj) return false;
+            const today = new Date();
+            return dateObj.getDate() === today.getDate() &&
+                   dateObj.getMonth() === today.getMonth() &&
+                   dateObj.getFullYear() === today.getFullYear();
+        }
+
+        // Default template fallback data set (supports multiple qualities separated by commas)
+        const FALLBACK_TEMPLATES_TEXT = `title= Project Proposal Template
+author= Alex Morgan
+category= Business
+quality= Featured, ${getTodayFormattedDate()}
+pagecount= 4
+wordcount= 850
+cover= https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=600&q=80
+description= A comprehensive, professional project proposal template suitable for business proposals, grant applications, and client pitches. Includes structured executive summary, budget tables, timeline schedules, and team bios.
+pdf= https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf
+scd= https://mahi902.github.io/DocuWritePro/archive/wid.scd
+
+title= Academic Research Paper
+author= Dr. Elena Vance
+category= Academic
+quality= Standard, Premium
+pagecount= 12
+wordcount= 3400
+description= Designed for IEEE and APA academic standard papers. Features section headings, abstract formatting, citations block, two-column layout support, and figure caption styles.
+pdf= https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf
+scd= https://mahi902.github.io/DocuWritePro/archive/djw.scd
+
+title= Professional Resume & CV
+author= Career Studio
+category= Resume
+quality= Premium, Top Rated
+pagecount= 2
+wordcount= 450
+cover= https://images.unsplash.com/photo-1586281380349-632531db7ed4?auto=format&fit=crop&w=600&q=80
+description= Modern minimalist resume layout tailored for modern professionals, developers, and executives. Clean typography with subtle accents.
+pdf= https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf
+scd= https://mahi902.github.io/DocuWritePro/archive/exe.scd
+
+title= Legal Non-Disclosure Agreement
+author= LegalTech Team
+category= Legal
+quality= Standard
+pagecount= 6
+wordcount= 1900
+description= Standard non-disclosure and service agreement template with standard liability clauses, payment schedules, and sign-off signature blocks.
+pdf= https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/web/compressed.tracemonkey-pldi-09.pdf
+scd= https://mahi902.github.io/DocuWritePro/archive/wid.scd`;
+
         async function fetchTemplates() {
-            try {
-                const response = await fetch(API_URL);
-                if (!response.ok) throw new Error("Failed to fetch data");
-                
-                const data = await response.json();
-                renderTemplates(data.templates);
-            } catch (error) {
-                loadingElement.innerText = "Error loading templates. Please try again later.";
-                console.error(error);
+            showLoading();
+            fallbackNotice.classList.add('hidden');
+
+            const targetUrl = 'https://mahi902.github.io/DocuWritePro/archive/templates.txt';
+            const fetchEndpoints = [
+                targetUrl,
+                'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl),
+                'https://corsproxy.io/?' + encodeURIComponent(targetUrl)
+            ];
+
+            let textContent = null;
+
+            for (const endpoint of fetchEndpoints) {
+                try {
+                    const response = await fetch(endpoint, { cache: 'no-store' });
+                    if (response.ok) {
+                        textContent = await response.text();
+                        if (textContent && textContent.includes('title=')) {
+                            break;
+                        }
+                    }
+                } catch (err) {
+                    console.warn(`Fetch attempt failed for ${endpoint}:`, err);
+                }
             }
+
+            if (textContent) {
+                parseTemplates(textContent);
+            } else {
+                console.info("Using default template archive dataset.");
+                fallbackNotice.classList.remove('hidden');
+                parseTemplates(FALLBACK_TEMPLATES_TEXT);
+            }
+
+            hideLoading();
+            renderCategories();
+            filterAndRender();
         }
 
-        // 3. Render Grid
-        function renderTemplates(templates) {
-            loadingElement.style.display = 'none';
-            
-            templates.forEach(item => {
-                // Filter out empty items based on Name or Link availability
-                if (!item.Name || !item.Link || item.Name.trim() === "") return;
+        function parseTemplates(text) {
+            const blocks = text.split(/\n\s*\n/).filter(b => b.trim() !== '');
+            allTemplates = [];
+            categories = new Set(['All']);
 
-                const card = document.createElement('div');
-                card.className = 'card';
+            blocks.forEach(block => {
+                const lines = block.split(/\r?\n/);
+                let template = { qualities: [] };
                 
-                // Fallback image if link is broken or empty
-                const imageUrl = item.Image ? item.Image : 'https://via.placeholder.com/200x250?text=No+Image';
+                lines.forEach(line => {
+                    const eqIndex = line.indexOf('=');
+                    if (eqIndex !== -1) {
+                        const key = line.substring(0, eqIndex).trim().toLowerCase();
+                        let value = line.substring(eqIndex + 1);
+                        
+                        // Handle space after equal sign in text file
+                        if (value.startsWith(' ')) {
+                            value = value.substring(1);
+                        }
+                        value = value.trim();
+                        template[key] = value;
 
-                card.innerHTML = `
-                    <div class="card-image-container">
-                        <img class="card-image" src="${imageUrl}" alt="${item.Name}" loading="lazy">
-                    </div>
-                    <div class="card-content">
-                        <h3 class="card-title">${item.Name}</h3>
-                    </div>
-                `;
+                        if (key === 'category' && value) {
+                            categories.add(value);
+                        }
+                    }
+                });
 
-                // Add click event to open overlay
-                card.onclick = () => openOverlay(item.Link, item.Name);
+                if (Object.keys(template).length > 0) {
+                    template.isEventExclusiveToday = false;
 
-                gridElement.appendChild(card);
+                    // Parse comma-separated qualities
+                    if (template.quality) {
+                        const qList = template.quality.split(',').map(q => q.trim()).filter(Boolean);
+                        template.qualities = qList;
+
+                        qList.forEach(q => {
+                            const parsedDate = parseDate(q);
+                            if (parsedDate && isToday(parsedDate)) {
+                                template.isEventExclusiveToday = true;
+                            }
+                        });
+                    }
+
+                    allTemplates.push(template);
+                }
+            });
+
+            // Move Event Exclusive today templates to the top
+            allTemplates.sort((a, b) => {
+                if (a.isEventExclusiveToday && !b.isEventExclusiveToday) return -1;
+                if (!a.isEventExclusiveToday && b.isEventExclusiveToday) return 1;
+                return 0;
             });
         }
 
-        // 4. Overlay Interactions
-        function openOverlay(url, title) {
-            // Apply current theme hash to the iframe URL if needed by the target page
-            // (Assuming the target page also supports #dark/#light)
-            let targetUrl = url;
-            if(window.location.hash === '#dark') {
-                 // Check if URL already has a hash
-                 if(targetUrl.includes('#')) {
-                     // Sometimes URLs have complex hashes (like the data in the JSON). 
-                     // We might not want to append #dark if it breaks the data payload.
-                     // However, the prompt asks to pass it. 
-                     // Since the data link is complex, let's just use the link as is 
-                     // unless the target page specifically looks for a separate query param.
-                 } 
+        function showLoading() {
+            loadingState.classList.remove('hidden');
+            templatesGrid.classList.add('hidden');
+            errorState.classList.add('hidden');
+            emptyState.classList.add('hidden');
+        }
+
+        function hideLoading() {
+            loadingState.classList.add('hidden');
+            templatesGrid.classList.remove('hidden');
+        }
+
+        function renderCategories() {
+            categoryContainer.innerHTML = '';
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = `category-btn px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${cat === 'All' ? 'bg-light-primary text-white dark:bg-dark-primary dark:text-black shadow-sm' : 'bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20'}`;
+                btn.dataset.category = cat;
+                btn.textContent = cat;
+                btn.onclick = () => {
+                    document.querySelectorAll('.category-btn').forEach(b => {
+                        b.classList.remove('bg-light-primary', 'text-white', 'dark:bg-dark-primary', 'dark:text-black', 'shadow-sm');
+                        b.classList.add('bg-black/5', 'dark:bg-white/10');
+                    });
+                    btn.classList.add('bg-light-primary', 'text-white', 'dark:bg-dark-primary', 'dark:text-black', 'shadow-sm');
+                    btn.classList.remove('bg-black/5', 'dark:bg-white/10');
+                    
+                    filterAndRender(cat, searchInput.value);
+                };
+                categoryContainer.appendChild(btn);
+            });
+        }
+
+        function filterAndRender(category = 'All', search = '') {
+            currentTemplates = allTemplates.filter(t => {
+                const matchesCat = category === 'All' || (t.category && t.category.toLowerCase() === category.toLowerCase());
+                const searchLower = search.toLowerCase();
+                const matchesSearch = (t.title && t.title.toLowerCase().includes(searchLower)) || 
+                                      (t.description && t.description.toLowerCase().includes(searchLower)) ||
+                                      (t.author && t.author.toLowerCase().includes(searchLower));
+                return matchesCat && matchesSearch;
+            });
+
+            renderGrid();
+        }
+
+        function renderGrid() {
+            templatesGrid.innerHTML = '';
+            
+            if (currentTemplates.length === 0) {
+                templatesGrid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            templatesGrid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            currentTemplates.forEach((template, index) => {
+                const card = document.createElement('div');
+                card.className = 'bg-light-surface dark:bg-dark-surface border border-light-border/60 dark:border-dark-border/60 rounded-2xl overflow-hidden hover:shadow-lg transition-all cursor-pointer flex flex-col relative group';
+                
+                // Multi-Quality Pills Logic
+                let pillsContainerHTML = '';
+                if (template.qualities && template.qualities.length > 0) {
+                    let pillsListHTML = '';
+                    template.qualities.forEach(q => {
+                        const parsedDate = parseDate(q);
+                        if (parsedDate && isToday(parsedDate)) {
+                            pillsListHTML += `<span class="bg-amber-400 text-amber-950 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                                <i class="ph ph-star-fill text-xs"></i> Event Exclusive
+                            </span>`;
+                        } else {
+                            pillsListHTML += `<span class="bg-black/60 backdrop-blur-md text-white text-[10px] font-semibold px-2.5 py-1 rounded-full shadow-sm">
+                                ${q}
+                            </span>`;
+                        }
+                    });
+                    pillsContainerHTML = `<div class="absolute top-3 left-3 z-10 flex flex-wrap gap-1.5 max-w-[85%]">${pillsListHTML}</div>`;
+                }
+
+                // Description 50 words truncation
+                let rawDesc = template.description || 'No description available.';
+                const cleanWords = rawDesc.trim().split(/\s+/);
+                let isTruncated = false;
+                let descToShow = rawDesc;
+
+                if (cleanWords.length > 50) {
+                    descToShow = cleanWords.slice(0, 50).join(' ');
+                    isTruncated = true;
+                }
+
+                const renderedTitle = marked.parseInline(template.title || 'Untitled Template');
+                let renderedDesc = marked.parseInline(descToShow);
+
+                if (isTruncated) {
+                    renderedDesc += `<button class="inline-block ml-1 text-light-primary dark:text-dark-primary font-bold hover:underline focus:outline-none" onclick="event.stopPropagation(); openDetailedViewByTitle('${encodeURIComponent(template.title)}')">...</button>`;
+                }
+
+                // Cover Image vs PDF First Page Fallback vs Default Placeholder
+                let coverHTML = '';
+                const canvasId = `card-pdf-canvas-${index}`;
+
+                if (template.cover) {
+                    coverHTML = `<div class="h-40 bg-black/5 dark:bg-white/5 overflow-hidden relative">
+                        <img src="${template.cover}" alt="Cover" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center\'><i class=\'ph ph-file-text text-4xl opacity-30\'></i></div>';"/>
+                    </div>`;
+                } else if (template.pdf) {
+                    // Generates first page of PDF as card cover
+                    coverHTML = `<div class="h-40 bg-black/5 dark:bg-white/5 overflow-hidden relative flex items-center justify-center">
+                        <canvas id="${canvasId}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"></canvas>
+                        <div id="loader-${canvasId}" class="absolute inset-0 flex items-center justify-center bg-black/5 dark:bg-white/5"><div class="loader scale-50"></div></div>
+                    </div>`;
+                } else {
+                    coverHTML = `<div class="h-40 bg-black/5 dark:bg-white/5 flex items-center justify-center relative overflow-hidden group-hover:bg-black/10 dark:group-hover:bg-white/10 transition-colors">
+                        <i class="ph ph-file-text text-4xl text-light-textMuted/40 dark:text-dark-textMuted/40"></i>
+                    </div>`;
+                }
+
+                card.innerHTML = `
+                    ${pillsContainerHTML}
+                    ${coverHTML}
+
+                    <div class="p-4 flex-1 flex flex-col">
+                        <h3 class="font-bold text-sm mb-1 truncate markdown-content">${renderedTitle}</h3>
+                        <p class="text-[11px] text-light-textMuted dark:text-dark-textMuted mb-2 flex items-center gap-1">
+                            <i class="ph ph-user"></i> ${template.author || 'Unknown'}
+                        </p>
+                        <div class="text-xs text-light-textMuted dark:text-dark-textMuted line-clamp-3 mb-4 flex-1 leading-relaxed markdown-content">
+                            ${renderedDesc}
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-light-textMuted dark:text-dark-textMuted border-t border-light-border/40 dark:border-dark-border/40 pt-2.5 mt-auto">
+                            <span class="flex items-center gap-1"><i class="ph ph-file"></i> ${template.pagecount || '?'} pages</span>
+                            <span class="flex items-center gap-1"><i class="ph ph-text-aa"></i> ${template.wordcount || '?'} words</span>
+                        </div>
+                    </div>
+                `;
+
+                card.onclick = () => openDetailedView(template);
+                templatesGrid.appendChild(card);
+
+                // Render PDF Page 1 as thumbnail cover if cover image absent
+                if (!template.cover && template.pdf) {
+                    renderPdfThumbnail(template.pdf, canvasId, `loader-${canvasId}`);
+                }
+            });
+        }
+
+        // Helper function to render PDF page 1 onto card cover canvas
+        async function renderPdfThumbnail(pdfUrl, canvasId, loaderId) {
+            try {
+                const canvasEl = document.getElementById(canvasId);
+                const loaderEl = document.getElementById(loaderId);
+                if (!canvasEl) return;
+
+                const loadingTask = pdfjsLib.getDocument({
+                    url: pdfUrl,
+                    rangeChunkSize: 65536,
+                    disableAutoFetch: true
+                });
+
+                const pdf = await loadingTask.promise;
+                const page = await pdf.getPage(1);
+
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
+                const targetWidth = canvasEl.parentElement.clientWidth || 300;
+                const scale = targetWidth / unscaledViewport.width;
+                
+                const dpr = Math.max(window.devicePixelRatio || 1, 2);
+                const viewport = page.getViewport({ scale: scale * dpr });
+
+                canvasEl.width = viewport.width;
+                canvasEl.height = viewport.height;
+
+                const context = canvasEl.getContext('2d', { alpha: false });
+                await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+                if (loaderEl) loaderEl.remove();
+            } catch (error) {
+                console.warn(`PDF Thumbnail render failed for ${canvasId}:`, error);
+                const loaderEl = document.getElementById(loaderId);
+                if (loaderEl) {
+                    loaderEl.innerHTML = `<i class="ph ph-file-text text-4xl opacity-30"></i>`;
+                }
+            }
+        }
+
+        function openDetailedViewByTitle(encodedTitle) {
+            const decoded = decodeURIComponent(encodedTitle);
+            const found = allTemplates.find(t => t.title === decoded);
+            if (found) openDetailedView(found);
+        }
+
+        function openDetailedView(template) {
+            mainContainer.classList.add('hidden');
+            detailedView.classList.remove('hidden');
+            detailedView.classList.add('flex');
+            
+            const titleHtml = marked.parseInline(template.title || 'Untitled Document');
+            document.getElementById('detailNavTitle').innerHTML = titleHtml;
+            document.getElementById('detailTitle').innerHTML = titleHtml;
+            document.getElementById('detailAuthor').textContent = template.author || 'Unknown Author';
+            document.getElementById('detailPageCount').textContent = template.pagecount || 'N/A';
+            document.getElementById('detailWordCount').textContent = template.wordcount || 'N/A';
+            document.getElementById('detailDescription').innerHTML = marked.parse(template.description || 'No detailed description provided.');
+
+            currentScdLink = template.scd || '';
+            pdfZoom = 1.0;
+
+            if (template.pdf) {
+                loadPDF(template.pdf);
+            } else if (template.cover) {
+                document.getElementById('pdfContainer').innerHTML = `<img src="${template.cover}" class="max-h-96 rounded-xl object-contain shadow-md" alt="Cover Preview" />`;
+                document.getElementById('pdfControls').classList.add('hidden');
+                document.getElementById('pdfLoader').style.display = 'none';
+            } else {
+                document.getElementById('pdfContainer').innerHTML = '<div class="p-8 text-center text-xs text-light-textMuted dark:text-dark-textMuted">No document preview available</div>';
+                document.getElementById('pdfControls').classList.add('hidden');
+                document.getElementById('pdfLoader').style.display = 'none';
             }
 
-            iframe.src = targetUrl;
-            overlayTitle.innerText = title;
-            overlay.classList.add('active');
-            
-            // Prevent body scrolling behind iframe
-            document.body.style.overflow = 'hidden';
+            // Scroll detailed view modal to top smoothly
+            detailedView.scrollTop = 0;
         }
 
-        function closeOverlay() {
-            overlay.classList.remove('active');
+        function closeDetailedView() {
+            detailedView.classList.add('hidden');
+            detailedView.classList.remove('flex');
+            mainContainer.classList.remove('hidden');
             
-            // Clear src after animation to stop memory usage/media playing
-            setTimeout(() => {
-                iframe.src = "";
-            }, 400); // Match CSS transition time
-
-            // Restore scrolling
-            document.body.style.overflow = 'auto';
+            if (pdfDoc) {
+                pdfDoc.destroy();
+                pdfDoc = null;
+            }
+            if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('pdfControls').classList.add('hidden');
+            document.getElementById('pdfLoader').style.display = 'block';
         }
 
+        async function loadPDF(url) {
+            const loader = document.getElementById('pdfLoader');
+            const controls = document.getElementById('pdfControls');
+            
+            loader.style.display = 'block';
+            controls.classList.add('hidden');
+            pageNum = 1;
+
+            try {
+                const loadingTask = pdfjsLib.getDocument(url);
+                pdfDoc = await loadingTask.promise;
+                
+                document.getElementById('pageCount').textContent = pdfDoc.numPages;
+                loader.style.display = 'none';
+                controls.classList.remove('hidden');
+                
+                renderPage(pageNum);
+            } catch (error) {
+                console.warn('PDF load notice:', error);
+                loader.style.display = 'none';
+                document.getElementById('pdfContainer').innerHTML = '<div class="p-8 text-center text-xs text-red-500 font-medium">Unable to load PDF document</div>';
+            }
+        }
+
+        // HDPI Crisp PDF Rendering Logic for Detailed View
+        async function renderPage(num) {
+            if (!pdfDoc) return;
+            pageRendering = true;
+
+            try {
+                const page = await pdfDoc.getPage(num);
+                const container = document.getElementById('pdfContainer');
+                const containerWidth = Math.max(container.clientWidth - 32, 280);
+                
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
+                const fitScale = (containerWidth / unscaledViewport.width) * pdfZoom;
+
+                // Use High DPI devicePixelRatio for ultra-sharp text rendering
+                const dpr = Math.max(window.devicePixelRatio || 1, 2);
+                const viewport = page.getViewport({ scale: fitScale * dpr });
+
+                canvas.width = Math.floor(viewport.width);
+                canvas.height = Math.floor(viewport.height);
+                canvas.style.width = Math.floor(viewport.width / dpr) + 'px';
+                canvas.style.height = Math.floor(viewport.height / dpr) + 'px';
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+
+                if (currentRenderTask) {
+                    currentRenderTask.cancel();
+                }
+
+                currentRenderTask = page.render(renderContext);
+                await currentRenderTask.promise;
+                pageRendering = false;
+
+                if (pageNumPending !== null) {
+                    renderPage(pageNumPending);
+                    pageNumPending = null;
+                }
+            } catch (err) {
+                if (err.name !== 'RenderingCancelledException') {
+                    console.error('PDF Render Error:', err);
+                }
+            }
+
+            document.getElementById('pageNum').textContent = num;
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
+        }
+
+        document.getElementById('prevPage').addEventListener('click', () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        });
+
+        document.getElementById('nextPage').addEventListener('click', () => {
+            if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        });
+
+        document.getElementById('zoomIn').addEventListener('click', () => {
+            if (pdfZoom < 2.5) {
+                pdfZoom += 0.25;
+                queueRenderPage(pageNum);
+            }
+        });
+
+        document.getElementById('zoomOut').addEventListener('click', () => {
+            if (pdfZoom > 0.5) {
+                pdfZoom -= 0.25;
+                queueRenderPage(pageNum);
+            }
+        });
+
+        document.getElementById('zoomReset').addEventListener('click', () => {
+            pdfZoom = 1.0;
+            queueRenderPage(pageNum);
+        });
+
+        // Search input filter
+        searchInput.addEventListener('input', (e) => {
+            const activeCat = document.querySelector('.category-btn.bg-light-primary, .category-btn.bg-dark-primary')?.dataset.category || 'All';
+            filterAndRender(activeCat, e.target.value);
+        });
+
+        // Open button action
+        document.getElementById('openBtn').addEventListener('click', () => {
+            if (currentScdLink) {
+                let scdUrl = currentScdLink;
+                if (!scdUrl.startsWith('http://') && !scdUrl.startsWith('https://')) {
+                    scdUrl = 'https://' + scdUrl;
+                }
+                const editorUrl = `https://mahi902.github.io/DocuWritePro/sceditor.html#SRC=${encodeURIComponent(scdUrl)}`;
+                window.location.href = editorUrl;
+            } else {
+                alert("No SCD editor link available for this template.");
+            }
+        });
+
+        // Initial setup execution
+        fetchTemplates();
+
+        // Responsive window resize handling
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (detailedView.classList.contains('flex') && pdfDoc) {
+                    renderPage(pageNum);
+                }
+            }, 200);
+        });
     </script>
 </body>
 </html>

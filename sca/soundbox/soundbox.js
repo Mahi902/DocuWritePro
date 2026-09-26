@@ -18,7 +18,7 @@
   const LS_SETTINGS = 'sb_settings_v1';
   const LS_STATE    = 'sb_state_v1';
 
-  const defaultSettings = { side:'left', size:40, theme:0, ambient:false, ambientEditor:false, spin:true, outputDeviceId:'' };
+  const defaultSettings = { side:'left', size:40, theme:0, ambient:false, ambientEditor:false, spin:true, outputDeviceId:'', onEnd:'next' };
 
   let settings = loadJSON(LS_SETTINGS, defaultSettings);
   let tracks   = loadJSON(LS_TRACKS, []);
@@ -399,7 +399,16 @@
     else { const el=activeEl(); if(el) el.playbackRate=v; }
     document.querySelectorAll('.sb-speed-btn').forEach(b=> b.classList.toggle('active', parseFloat(b.dataset.speed)===v));
   }
-  function onTrackEnded(){ next(); }
+  function onTrackEnded(){
+    if(settings.onEnd==='pause'){ playing=false; syncPlayingUi(); return; }
+    if(settings.onEnd==='repeat'){
+      const t = tracks[currentIndex]; if(!t) return;
+      if(t.kind==='youtube'){ if(ytPlayer){ ytPlayer.seekTo(0,true); ytPlayer.playVideo(); } }
+      else { const el=activeEl(); if(el){ el.currentTime=0; resumeAndPlay(el); } }
+      return;
+    }
+    next(); // default: 'next'
+  }
   function syncPlayingUi(){
     $('sbPlayBtn').querySelector('.material-symbols-outlined').textContent = playing ? 'pause' : 'play_arrow';
     refreshNowBar(); refreshSidebarSub();
@@ -438,86 +447,56 @@
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  VISUALIZER — neon streaks radiating from the disc (bass-reactive),
-  //  plus a slow ambient CSS halo behind it. The artwork itself stays put —
-  //  it doesn't spin; it pulses gently on the beat instead.
+  //  VISUALIZER — a layered "vibe aura" glow behind the disc: three soft
+  //  blurred rings (bass / mid / high) that breathe and shimmer with the
+  //  music. The artwork itself stays put; it just pulses gently on the beat.
   // ══════════════════════════════════════════════════════════════════════
-  const RAYS = 16;
-  let smoothed = new Array(RAYS).fill(0);
-  let bassSmoothed = 0;
-  let rayRotation = 0;
+  let bandSmoothed = [0,0,0];   // low, mid, high
+  let idlePhase = 0;
 
-  function drawViz(){
-    requestAnimationFrame(drawViz);
-    const canvas = $('sbVizCanvas'); if(!canvas || !canvas.offsetParent) return;
-    const ctx = canvas.getContext('2d');
-    const w=canvas.width, h=canvas.height, cx=w/2, cy=h/2, baseR=76;
-    ctx.clearRect(0,0,w,h);
-
-    let target = new Array(RAYS).fill(0);
-    let bassTarget = 0;
+  function bandLevels(){
     const hasReal = analyser && playing && (srcNodeAudio||srcNodeVideo);
     if(hasReal){
       analyser.getByteFrequencyData(freqData);
-      for(let i=0;i<RAYS;i++){
-        const bin = Math.floor((i/RAYS) * (freqData.length*0.8));
-        target[i] = (freqData[bin]||0)/255;
-      }
-      let bassSum=0; for(let i=0;i<6;i++) bassSum += (freqData[i]||0)/255;
-      bassTarget = bassSum/6;
-    } else if(playing){
+      const n = freqData.length;
+      const avg = (from,to)=>{ let s=0,c=0; for(let i=from;i<to;i++){ s+=freqData[i]||0; c++; } return c? (s/c)/255 : 0; };
+      return { real:true, low:avg(0,Math.max(1,Math.floor(n*0.12))), mid:avg(Math.floor(n*0.12),Math.floor(n*0.4)), high:avg(Math.floor(n*0.4),Math.floor(n*0.85)) };
+    }
+    if(playing){
       const t = performance.now()/1000;
-      for(let i=0;i<RAYS;i++){
-        target[i] = Math.max(0, 0.16 + 0.14*Math.sin(t*2.2+i*1.3) + 0.09*Math.sin(t*0.9+i*2.1));
-      }
-      bassTarget = 0.14 + 0.08*Math.sin(t*1.8);
+      return { real:false,
+        low:  Math.max(0, 0.22 + 0.16*Math.sin(t*1.7)),
+        mid:  Math.max(0, 0.18 + 0.13*Math.sin(t*2.3+1.1)),
+        high: Math.max(0, 0.14 + 0.11*Math.sin(t*3.1+2.2))
+      };
     }
-    for(let i=0;i<RAYS;i++) smoothed[i] += (target[i]-smoothed[i]) * (hasReal?0.4:0.1);
-    bassSmoothed += (bassTarget-bassSmoothed) * (hasReal?0.25:0.08);
-    rayRotation += 0.0022 + bassSmoothed*0.004;
+    // paused / idle — a faint, slow "resting" breath so it never looks dead
+    idlePhase += 0.006;
+    const b = 0.05 + 0.035*Math.sin(idlePhase);
+    return { real:false, low:b, mid:b*0.8, high:b*0.6 };
+  }
 
-    const rgb = getComputedStyle(document.documentElement).getPropertyValue('--sb-amb-color-rgb').trim() || '25,118,210';
-    ctx.save();
-    ctx.filter = 'blur(3px)';
-    ctx.globalCompositeOperation = 'lighter';
-    for(let i=0;i<RAYS;i++){
-      const amp = smoothed[i];
-      const a = (i/RAYS)*Math.PI*2 + rayRotation;
-      const len = 22 + amp*118;
-      const width = 7 + amp*15;
-      const innerR = baseR - 4;
-      const ix = cx + Math.cos(a)*innerR, iy = cy + Math.sin(a)*innerR;
-      const tipR = innerR + len;
-      const tx = cx + Math.cos(a)*tipR, ty = cy + Math.sin(a)*tipR;
-      const perpX = -Math.sin(a), perpY = Math.cos(a);
+  function drawViz(){
+    requestAnimationFrame(drawViz);
+    const a1=$('sbAura1'), a2=$('sbAura2'), a3=$('sbAura3'), disc=$('sbDisc');
+    if(!a1 || !a1.offsetParent) return;
 
-      ctx.beginPath();
-      ctx.moveTo(ix + perpX*width, iy + perpY*width);
-      ctx.quadraticCurveTo(
-        cx + Math.cos(a)*(innerR+len*0.55) + perpX*width*0.4,
-        cy + Math.sin(a)*(innerR+len*0.55) + perpY*width*0.4,
-        tx, ty
-      );
-      ctx.quadraticCurveTo(
-        cx + Math.cos(a)*(innerR+len*0.55) - perpX*width*0.4,
-        cy + Math.sin(a)*(innerR+len*0.55) - perpY*width*0.4,
-        ix - perpX*width, iy - perpY*width
-      );
-      ctx.closePath();
+    const lv = bandLevels();
+    const rate = lv.real ? [0.5,0.32,0.22] : [0.09,0.07,0.05];
+    bandSmoothed[0] += (lv.low  - bandSmoothed[0]) * rate[0];
+    bandSmoothed[1] += (lv.mid  - bandSmoothed[1]) * rate[1];
+    bandSmoothed[2] += (lv.high - bandSmoothed[2]) * rate[2];
+    const [low, mid, high] = bandSmoothed;
 
-      const grad = ctx.createRadialGradient(ix,iy,0, tx,ty, len);
-      grad.addColorStop(0, 'rgba('+rgb+',.7)');
-      grad.addColorStop(0.55, 'rgba('+rgb+',.32)');
-      grad.addColorStop(1, 'rgba('+rgb+',0)');
-      ctx.fillStyle = grad;
-      ctx.fill();
-    }
-    ctx.restore();
+    a1.style.transform = 'scale('+(0.92 + low*0.55).toFixed(3)+')';
+    a1.style.opacity = (0.5 + low*0.5).toFixed(3);
+    a2.style.transform = 'scale('+(0.88 + mid*0.7).toFixed(3)+')';
+    a2.style.opacity = (0.42 + mid*0.45).toFixed(3);
+    a3.style.transform = 'scale('+(0.82 + high*0.85).toFixed(3)+')';
+    a3.style.opacity = (0.32 + high*0.4).toFixed(3);
 
-    // Bass-driven pulse on the artwork itself — no rotation, just breathing.
-    const disc = $('sbDisc');
     if(disc){
-      const scale = settings.spin ? (1 + bassSmoothed*0.09) : 1;
+      const scale = settings.spin ? (1 + low*0.06) : 1;
       disc.style.transform = 'scale('+scale.toFixed(3)+')';
     }
   }
@@ -608,6 +587,9 @@
   function refreshCustomizeUi(){
     $('sbSideLeftBtn').classList.toggle('active', settings.side==='left');
     $('sbSideRightBtn').classList.toggle('active', settings.side==='right');
+    $('sbEndPauseBtn').classList.toggle('active', settings.onEnd==='pause');
+    $('sbEndNextBtn').classList.toggle('active', settings.onEnd==='next');
+    $('sbEndRepeatBtn').classList.toggle('active', settings.onEnd==='repeat');
     $('sbSizeRange').value = settings.size;
     $('sbSizeVal').textContent = settings.size+'%';
     $('sbAmbientToggle').checked = !!settings.ambient;
@@ -637,6 +619,9 @@
     $('sbCustomizeQuickBtn').addEventListener('click', openCustomize);
     $('sbSideLeftBtn').addEventListener('click', ()=>{ settings.side='left'; saveSettings(); applyPanelPlacement(); refreshCustomizeUi(); });
     $('sbSideRightBtn').addEventListener('click', ()=>{ settings.side='right'; saveSettings(); applyPanelPlacement(); refreshCustomizeUi(); });
+    $('sbEndPauseBtn').addEventListener('click', ()=>{ settings.onEnd='pause'; saveSettings(); refreshCustomizeUi(); });
+    $('sbEndNextBtn').addEventListener('click', ()=>{ settings.onEnd='next'; saveSettings(); refreshCustomizeUi(); });
+    $('sbEndRepeatBtn').addEventListener('click', ()=>{ settings.onEnd='repeat'; saveSettings(); refreshCustomizeUi(); });
     $('sbSizeRange').addEventListener('input', e=>{
       settings.size = Math.max(20, Math.min(50, parseInt(e.target.value,10)));
       $('sbSizeVal').textContent = settings.size+'%';

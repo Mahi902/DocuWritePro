@@ -18,7 +18,7 @@
   const LS_SETTINGS = 'sb_settings_v1';
   const LS_STATE    = 'sb_state_v1';
 
-  const defaultSettings = { side:'left', size:40, theme:0, ambient:false, ambientEditor:false, spin:true };
+  const defaultSettings = { side:'left', size:40, theme:0, ambient:false, ambientEditor:false, spin:true, outputDeviceId:'' };
 
   let settings = loadJSON(LS_SETTINGS, defaultSettings);
   let tracks   = loadJSON(LS_TRACKS, []);
@@ -100,7 +100,11 @@
           '<div class="sb-dd-item" id="sbDdTracks"><span class="material-symbols-outlined">queue_music</span>Soundbox Tracks</div>'+
         '</div>'+
       '</div>';
-    sidebar.insertBefore(section, sidebar.firstChild);
+    // Insert right before the collapse button, like Sugarcane's other add-on
+    // sections, so Soundbox reads as a native part of the sidebar's bottom.
+    const collapseBtn = sidebar.querySelector('.collapse-btn');
+    if(collapseBtn) sidebar.insertBefore(section, collapseBtn);
+    else sidebar.appendChild(section);
 
     $('sbDdHeader').addEventListener('click', toggleSidebarDropdown);
     $('sbDdOpen').addEventListener('click', ()=> togglePanel());
@@ -108,10 +112,8 @@
     $('sbDdTracks').addEventListener('click', openTracks);
   }
   function toggleSidebarDropdown(){
-    const dd = $('sbDdDropdown'), chev = $('sbDdChevron');
-    const open = dd.style.maxHeight && dd.style.maxHeight !== '0px';
-    if(open){ dd.style.maxHeight='0'; dd.style.opacity='0'; dd.style.pointerEvents='none'; chev.classList.remove('open'); }
-    else{ dd.style.maxHeight = dd.scrollHeight+'px'; dd.style.opacity='1'; dd.style.pointerEvents='auto'; chev.classList.add('open'); }
+    const open = $('sbDdDropdown').classList.toggle('open');
+    $('sbDdChevron').classList.toggle('open', open);
   }
   function refreshSidebarSub(){
     const el = $('sbSidebarNowSub'); if(!el) return;
@@ -281,6 +283,51 @@
     });
   }
 
+  async function resumeAndPlay(el){
+    const ctx = ensureAudioCtx();
+    if(ctx && ctx.state==='suspended'){ try{ await ctx.resume(); }catch(e){} }
+    try{ await applyOutputDevice(el); }catch(e){}
+    try{ await el.play(); }catch(e){ toast('Playback was blocked by the browser — tap play again.','error'); }
+  }
+
+  // ── Audio output (speaker) device picker — Audio Output Devices API ────
+  function outputApiSupported(){
+    return !!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) &&
+           typeof HTMLMediaElement!=='undefined' && 'setSinkId' in HTMLMediaElement.prototype;
+  }
+  async function populateOutputDevices(){
+    const row = $('sbOutputRow'), sel = $('sbOutputSelect');
+    if(!row || !sel) return;
+    if(!outputApiSupported()){ row.style.display='none'; return; }
+    try{
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const outputs = devices.filter(d=>d.kind==='audiooutput');
+      if(!outputs.length){ row.style.display='none'; return; }
+      row.style.display='';
+      sel.innerHTML = '<option value="">System default</option>' +
+        outputs.map((d,i)=>'<option value="'+d.deviceId+'">'+escapeHtml(d.label||('Speaker '+(i+1)))+'</option>').join('');
+      sel.value = settings.outputDeviceId || '';
+    }catch(e){ row.style.display='none'; }
+  }
+  async function applyOutputDevice(elArg){
+    if(!outputApiSupported() || !settings.outputDeviceId) return;
+    const els = elArg ? [elArg] : [$('sbAudioEl'), $('sbHiddenVideo')];
+    for(const el of els){
+      if(el && el.setSinkId){ try{ await el.setSinkId(settings.outputDeviceId); }catch(e){ /* device unplugged / no permission — silently keep default */ } }
+    }
+  }
+  function wireOutputPicker(){
+    if(!$('sbOutputSelect')) return;
+    populateOutputDevices();
+    $('sbOutputSelect').addEventListener('change', async e=>{
+      settings.outputDeviceId = e.target.value; saveSettings();
+      await applyOutputDevice();
+    });
+    if(navigator.mediaDevices && navigator.mediaDevices.addEventListener){
+      navigator.mediaDevices.addEventListener('devicechange', populateOutputDevices);
+    }
+  }
+
   async function loadTrack(index, autoplay){
     if(index<0 || index>=tracks.length) return;
     currentIndex = index;
@@ -296,7 +343,6 @@
     $('sbMiniName').textContent = t.name;
     $('sbMiniThumb').src = t.thumb||'';
     $('sbDisc').src = t.thumb||'';
-    $('sbDisc').classList.toggle('sb-spinning', settings.spin);
 
     if(t.kind==='youtube'){
       await ensureYtPlayer(t.src);
@@ -312,7 +358,7 @@
       el.src = src;
       el.playbackRate = speed;
       connectAnalyser(el, t.kind);
-      if(autoplay){ ensureAudioCtx() && audioCtx.state==='suspended' && audioCtx.resume(); el.play().catch(()=>{}); }
+      if(autoplay) await resumeAndPlay(el);
     }
     playing = !!autoplay;
     syncPlayingUi();
@@ -329,7 +375,7 @@
     } else {
       const el = activeEl(); if(!el) return;
       if(playing) el.pause();
-      else { ensureAudioCtx() && audioCtx.state==='suspended' && audioCtx.resume(); el.play().catch(()=>{}); }
+      else resumeAndPlay(el);
       playing = !playing;
       syncPlayingUi();
     }
@@ -356,7 +402,6 @@
   function onTrackEnded(){ next(); }
   function syncPlayingUi(){
     $('sbPlayBtn').querySelector('.material-symbols-outlined').textContent = playing ? 'pause' : 'play_arrow';
-    $('sbDisc').classList.toggle('sb-spinning', settings.spin && playing);
     refreshNowBar(); refreshSidebarSub();
   }
 
@@ -393,50 +438,88 @@
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  VISUALIZER — liquid ring around the disc
+  //  VISUALIZER — neon streaks radiating from the disc (bass-reactive),
+  //  plus a slow ambient CSS halo behind it. The artwork itself stays put —
+  //  it doesn't spin; it pulses gently on the beat instead.
   // ══════════════════════════════════════════════════════════════════════
-  const POINTS = 40;
-  let smoothed = new Array(POINTS).fill(0);
+  const RAYS = 16;
+  let smoothed = new Array(RAYS).fill(0);
+  let bassSmoothed = 0;
+  let rayRotation = 0;
+
   function drawViz(){
     requestAnimationFrame(drawViz);
     const canvas = $('sbVizCanvas'); if(!canvas || !canvas.offsetParent) return;
     const ctx = canvas.getContext('2d');
-    const w=canvas.width, h=canvas.height, cx=w/2, cy=h/2, baseR=78;
+    const w=canvas.width, h=canvas.height, cx=w/2, cy=h/2, baseR=76;
     ctx.clearRect(0,0,w,h);
 
-    let target = new Array(POINTS).fill(0);
+    let target = new Array(RAYS).fill(0);
+    let bassTarget = 0;
     const hasReal = analyser && playing && (srcNodeAudio||srcNodeVideo);
     if(hasReal){
       analyser.getByteFrequencyData(freqData);
-      for(let i=0;i<POINTS;i++){
-        const bin = Math.floor((i/POINTS) * (freqData.length*0.75));
+      for(let i=0;i<RAYS;i++){
+        const bin = Math.floor((i/RAYS) * (freqData.length*0.8));
         target[i] = (freqData[bin]||0)/255;
       }
+      let bassSum=0; for(let i=0;i<6;i++) bassSum += (freqData[i]||0)/255;
+      bassTarget = bassSum/6;
     } else if(playing){
       const t = performance.now()/1000;
-      for(let i=0;i<POINTS;i++){
-        const a=i/POINTS*Math.PI*2;
-        target[i] = 0.18 + 0.16*Math.sin(t*2.4+a*3) + 0.10*Math.sin(t*1.1+a*5);
-        target[i] = Math.max(0, target[i]);
+      for(let i=0;i<RAYS;i++){
+        target[i] = Math.max(0, 0.16 + 0.14*Math.sin(t*2.2+i*1.3) + 0.09*Math.sin(t*0.9+i*2.1));
       }
+      bassTarget = 0.14 + 0.08*Math.sin(t*1.8);
     }
-    for(let i=0;i<POINTS;i++) smoothed[i] += (target[i]-smoothed[i]) * (hasReal?0.35:0.12);
+    for(let i=0;i<RAYS;i++) smoothed[i] += (target[i]-smoothed[i]) * (hasReal?0.4:0.1);
+    bassSmoothed += (bassTarget-bassSmoothed) * (hasReal?0.25:0.08);
+    rayRotation += 0.0022 + bassSmoothed*0.004;
 
     const rgb = getComputedStyle(document.documentElement).getPropertyValue('--sb-amb-color-rgb').trim() || '25,118,210';
-    ctx.beginPath();
-    for(let i=0;i<=POINTS;i++){
-      const idx = i%POINTS;
-      const a = idx/POINTS*Math.PI*2 - Math.PI/2 + performance.now()/9000;
-      const r = baseR + smoothed[idx]*46;
-      const x = cx + Math.cos(a)*r, y = cy + Math.sin(a)*r;
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    ctx.save();
+    ctx.filter = 'blur(3px)';
+    ctx.globalCompositeOperation = 'lighter';
+    for(let i=0;i<RAYS;i++){
+      const amp = smoothed[i];
+      const a = (i/RAYS)*Math.PI*2 + rayRotation;
+      const len = 22 + amp*118;
+      const width = 7 + amp*15;
+      const innerR = baseR - 4;
+      const ix = cx + Math.cos(a)*innerR, iy = cy + Math.sin(a)*innerR;
+      const tipR = innerR + len;
+      const tx = cx + Math.cos(a)*tipR, ty = cy + Math.sin(a)*tipR;
+      const perpX = -Math.sin(a), perpY = Math.cos(a);
+
+      ctx.beginPath();
+      ctx.moveTo(ix + perpX*width, iy + perpY*width);
+      ctx.quadraticCurveTo(
+        cx + Math.cos(a)*(innerR+len*0.55) + perpX*width*0.4,
+        cy + Math.sin(a)*(innerR+len*0.55) + perpY*width*0.4,
+        tx, ty
+      );
+      ctx.quadraticCurveTo(
+        cx + Math.cos(a)*(innerR+len*0.55) - perpX*width*0.4,
+        cy + Math.sin(a)*(innerR+len*0.55) - perpY*width*0.4,
+        ix - perpX*width, iy - perpY*width
+      );
+      ctx.closePath();
+
+      const grad = ctx.createRadialGradient(ix,iy,0, tx,ty, len);
+      grad.addColorStop(0, 'rgba('+rgb+',.7)');
+      grad.addColorStop(0.55, 'rgba('+rgb+',.32)');
+      grad.addColorStop(1, 'rgba('+rgb+',0)');
+      ctx.fillStyle = grad;
+      ctx.fill();
     }
-    ctx.closePath();
-    const grad = ctx.createRadialGradient(cx,cy,baseR*0.4,cx,cy,baseR+46);
-    grad.addColorStop(0, 'rgba('+rgb+',0.55)');
-    grad.addColorStop(1, 'rgba('+rgb+',0)');
-    ctx.fillStyle = grad;
-    ctx.fill();
+    ctx.restore();
+
+    // Bass-driven pulse on the artwork itself — no rotation, just breathing.
+    const disc = $('sbDisc');
+    if(disc){
+      const scale = settings.spin ? (1 + bassSmoothed*0.09) : 1;
+      disc.style.transform = 'scale('+scale.toFixed(3)+')';
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════
@@ -451,11 +534,21 @@
     root.setProperty('--sb-amb-border', 'rgba('+r+','+g+','+b+',.35)');
   }
   function themeColor(){ return THEMES[settings.theme]?.c || THEMES[0].c; }
+  function isDarkMode(){ return document.body.classList.contains('dark'); }
+  // Dark mode needs a lighter tint of whatever colour we've got, the same
+  // way the base app swaps #1976d2 for #90caf9 on dark surfaces — otherwise
+  // a raw extracted/theme colour reads muddy and low-contrast on #181818.
+  function forSurface(r,g,b){
+    if(!isDarkMode()) return [r,g,b];
+    const f = 0.34;
+    return [Math.round(r+(255-r)*f), Math.round(g+(255-g)*f), Math.round(b+(255-b)*f)];
+  }
   function updateAmbientColor(){
     const t = tracks[currentIndex];
     document.body.classList.toggle('sb-amb-on', !!(settings.ambient && settings.ambientEditor));
     if(!settings.ambient || !t || !t.thumb){
-      const [r,g,b] = themeColor().split(',').map(Number);
+      let [r,g,b] = themeColor().split(',').map(Number);
+      [r,g,b] = forSurface(r,g,b);
       setAmbientVars(r,g,b);
       return;
     }
@@ -469,13 +562,15 @@
         let r=0,g=0,b=0,n=0;
         for(let i=0;i<data.length;i+=4){ r+=data[i]; g+=data[i+1]; b+=data[i+2]; n++; }
         r=Math.round(r/n); g=Math.round(g/n); b=Math.round(b/n);
+        [r,g,b] = forSurface(r,g,b);
         setAmbientVars(r,g,b);
       }catch(e){
-        const [r,g,b] = themeColor().split(',').map(Number);
+        let [r,g,b] = themeColor().split(',').map(Number);
+        [r,g,b] = forSurface(r,g,b);
         setAmbientVars(r,g,b);
       }
     };
-    img.onerror = ()=>{ const [r,g,b] = themeColor().split(',').map(Number); setAmbientVars(r,g,b); };
+    img.onerror = ()=>{ let [r,g,b] = themeColor().split(',').map(Number); [r,g,b] = forSurface(r,g,b); setAmbientVars(r,g,b); };
     img.src = t.thumb;
   }
 
@@ -550,7 +645,7 @@
     });
     $('sbAmbientToggle').addEventListener('change', e=>{ settings.ambient = e.target.checked; saveSettings(); refreshCustomizeUi(); updateAmbientColor(); });
     $('sbAmbientEditorToggle').addEventListener('change', e=>{ settings.ambientEditor = e.target.checked; saveSettings(); updateAmbientColor(); });
-    $('sbSpinToggle').addEventListener('change', e=>{ settings.spin = e.target.checked; saveSettings(); $('sbDisc').classList.toggle('sb-spinning', settings.spin && playing); });
+    $('sbSpinToggle').addEventListener('change', e=>{ settings.spin = e.target.checked; saveSettings(); });
   }
 
   // ══════════════════════════════════════════════════════════════════════
@@ -771,6 +866,7 @@
     wireTransport();
     wirePlaylistScroll();
     wireCustomize();
+    wireOutputPicker();
     wireAddTabs();
     wireLinkAdd();
     wireYtAdd();

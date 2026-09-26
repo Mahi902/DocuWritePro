@@ -18,7 +18,7 @@
   const LS_SETTINGS = 'sb_settings_v1';
   const LS_STATE    = 'sb_state_v1';
 
-  const defaultSettings = { side:'left', size:40, theme:0, ambient:false, ambientEditor:false, spin:true, outputDeviceId:'', onEnd:'next' };
+  const defaultSettings = { side:'left', size:40, theme:0, ambient:false, ambientEditor:false, spin:true, outputDeviceId:'', onEnd:'next', vizStyle:'style1' };
 
   let settings = loadJSON(LS_SETTINGS, defaultSettings);
   let tracks   = loadJSON(LS_TRACKS, []);
@@ -223,15 +223,17 @@
   // ══════════════════════════════════════════════════════════════════════
   //  PLAYBACK ENGINE (shared <audio>/<video> + YouTube IFrame API)
   // ══════════════════════════════════════════════════════════════════════
-  let audioCtx=null, analyser=null, freqData=null, srcNodeAudio=null, srcNodeVideo=null;
+  let audioCtx=null, analyser=null, freqData=null, waveData=null, srcNodeAudio=null, srcNodeVideo=null;
   let ytPlayer=null, ytReady=false, ytReadyQueue=[];
 
   function ensureAudioCtx(){
     if(audioCtx) return audioCtx;
     try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 128;
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.75;
     freqData = new Uint8Array(analyser.frequencyBinCount);
+    waveData = new Uint8Array(analyser.fftSize);
     return audioCtx;
   }
   function connectAnalyser(mediaEl, which){
@@ -447,9 +449,12 @@
   }
 
   // ══════════════════════════════════════════════════════════════════════
-  //  VISUALIZER — a layered "vibe aura" glow behind the disc: three soft
-  //  blurred rings (bass / mid / high) that breathe and shimmer with the
-  //  music. The artwork itself stays put; it just pulses gently on the beat.
+  //  VISUALIZER — two selectable styles around the disc:
+  //  Style 1: a layered "vibe aura" glow (three soft blurred rings that
+  //    breathe with bass/mid/high).
+  //  Style 2: a "phonk visualizer" — flying particles, light streaks and
+  //    waveform rings on a small canvas, adapted from a user-supplied demo.
+  //  Either way the artwork stays put; it just pulses gently on the beat.
   // ══════════════════════════════════════════════════════════════════════
   let bandSmoothed = [0,0,0];   // low, mid, high
   let idlePhase = 0;
@@ -476,10 +481,115 @@
     return { real:false, low:b, mid:b*0.8, high:b*0.6 };
   }
 
+  function applyVizStyle(){
+    const isStyle2 = settings.vizStyle === 'style2';
+    const canvas = $('sbVizCanvas');
+    if(canvas) canvas.style.display = isStyle2 ? 'block' : 'none';
+    ['sbAura1','sbAura2','sbAura3'].forEach(id=>{ const el=$(id); if(el) el.style.display = isStyle2 ? 'none' : 'block'; });
+  }
+
+  // ── Style 2 particle/streak state (cheap to keep around unused) ────────
+  const VIZ2_PARTICLES = [], VIZ2_STREAKS = [];
+  (function initViz2(){
+    for(let i=0;i<160;i++){
+      VIZ2_PARTICLES.push({ angle:Math.random()*Math.PI*2, distance:22+Math.random()*95, speed:.0006+Math.random()*.0045, size:.35+Math.random()*1.5, alpha:.25+Math.random()*.75, phase:Math.random()*1000 });
+    }
+    for(let i=0;i<26;i++){
+      VIZ2_STREAKS.push({ angle:Math.random()*Math.PI*2, distance:26+Math.random()*88, length:9+Math.random()*36, width:.6+Math.random()*2, speed:.18+Math.random()*.7, alpha:.12+Math.random()*.45 });
+    }
+  })();
+
+  function getAmbientRgb(){
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--sb-amb-color-rgb').trim();
+    const [r,g,b] = (v||'25,118,210').split(',').map(n=>parseInt(n,10)||0);
+    return [r,g,b];
+  }
+  function getWaveform(hasReal, bass){
+    if(hasReal){ analyser.getByteTimeDomainData(waveData); return waveData; }
+    // Simulated waveform for YouTube / idle / no-analyser tracks
+    const n = 128, t = performance.now()/1000, out = getWaveform._sim || (getWaveform._sim = new Uint8Array(n));
+    for(let i=0;i<n;i++){ out[i] = 128 + Math.round(Math.sin(i*0.4+t*4)*18*(0.3+bass)); }
+    return out;
+  }
+
+  function drawStyle2(low, mid, high, hasReal){
+    const canvas = $('sbVizCanvas'); if(!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W=280, H=280, cx=W/2, cy=H/2, base=78;
+    ctx.clearRect(0,0,W,H);
+    const [r,g,b] = getAmbientRgb();
+    const bass=low, mids=mid, treble=high;
+
+    // background bloom
+    const glowRadius = base*1.05 + bass*base*0.85;
+    const grad = ctx.createRadialGradient(cx,cy,16,cx,cy,glowRadius);
+    grad.addColorStop(0, `rgba(${r},${g},${b},${(.14+bass*.26).toFixed(3)})`);
+    grad.addColorStop(.4, `rgba(${r},${g},${b},${(.07+bass*.12).toFixed(3)})`);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx,cy,glowRadius,0,Math.PI*2); ctx.fill();
+
+    // flying light streaks
+    ctx.save(); ctx.globalCompositeOperation='screen';
+    for(const s of VIZ2_STREAKS){
+      s.distance += s.speed*(1+bass*7);
+      if(s.distance > base*1.7){ s.distance = base*0.3; s.angle = Math.random()*Math.PI*2; }
+      const x1=cx+Math.cos(s.angle)*s.distance, y1=cy+Math.sin(s.angle)*s.distance;
+      const ext = s.distance+s.length*(1+bass*1.6);
+      const x2=cx+Math.cos(s.angle)*ext, y2=cy+Math.sin(s.angle)*ext;
+      const lg = ctx.createLinearGradient(x1,y1,x2,y2);
+      lg.addColorStop(0, `rgba(${r},${g},${b},0)`);
+      lg.addColorStop(.5, `rgba(${Math.min(255,r+60)},${Math.min(255,g+60)},${Math.min(255,b+60)},${s.alpha})`);
+      lg.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = lg;
+      ctx.lineWidth = s.width*(1+bass*3);
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    }
+    ctx.restore();
+
+    // particles
+    ctx.save(); ctx.globalCompositeOperation='screen';
+    for(const p of VIZ2_PARTICLES){
+      p.angle += p.speed*(1+bass*4);
+      const wave = Math.sin(p.angle*3+performance.now()*.001+p.phase)*.5+.5;
+      const dist = p.distance + bass*38 + wave*mids*16;
+      const x = cx+Math.cos(p.angle)*dist, y = cy+Math.sin(p.angle)*dist;
+      const size = p.size + bass*1.6;
+      ctx.beginPath(); ctx.arc(x,y,size,0,Math.PI*2);
+      ctx.fillStyle = `rgba(${Math.min(255,r+treble*140)},${Math.min(255,g+treble*100)},${Math.min(255,b+treble*40)},${(p.alpha*(.3+bass)).toFixed(3)})`;
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // outer waveform ring (just outside the disc)
+    const wave = getWaveform(hasReal, bass);
+    ctx.save(); ctx.globalCompositeOperation='screen';
+    for(let layer=0;layer<2;layer++){
+      ctx.beginPath();
+      const points=96;
+      for(let i=0;i<points;i++){
+        const angle=i/points*Math.PI*2;
+        const idx = Math.floor(i/points*wave.length);
+        const value = (wave[idx]-128)/128;
+        const distortion = value*base*(.16+bass*.6);
+        const noise = Math.sin(angle*11+performance.now()*.0022)*bass*base*.1;
+        const radius = base + distortion + noise;
+        const x=cx+Math.cos(angle)*radius, y=cy+Math.sin(angle)*radius;
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = layer===0 ? `rgba(${r},${g},${b},.9)` : `rgba(${r},${g},${b},.22)`;
+      ctx.lineWidth = layer===0 ? (1.5+bass*3.5) : (7+layer*7);
+      ctx.shadowBlur = 8+layer*12;
+      ctx.shadowColor = `rgb(${r},${g},${b})`;
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function drawViz(){
     requestAnimationFrame(drawViz);
-    const a1=$('sbAura1'), a2=$('sbAura2'), a3=$('sbAura3'), disc=$('sbDisc');
-    if(!a1 || !a1.offsetParent) return;
+    const hero = $('sbHero'); if(!hero || !hero.offsetParent) return;
 
     const lv = bandLevels();
     const rate = lv.real ? [0.5,0.32,0.22] : [0.09,0.07,0.05];
@@ -488,13 +598,19 @@
     bandSmoothed[2] += (lv.high - bandSmoothed[2]) * rate[2];
     const [low, mid, high] = bandSmoothed;
 
-    a1.style.transform = 'scale('+(0.92 + low*0.55).toFixed(3)+')';
-    a1.style.opacity = (0.5 + low*0.5).toFixed(3);
-    a2.style.transform = 'scale('+(0.88 + mid*0.7).toFixed(3)+')';
-    a2.style.opacity = (0.42 + mid*0.45).toFixed(3);
-    a3.style.transform = 'scale('+(0.82 + high*0.85).toFixed(3)+')';
-    a3.style.opacity = (0.32 + high*0.4).toFixed(3);
+    if(settings.vizStyle === 'style2'){
+      drawStyle2(low, mid, high, !!lv.real);
+    } else {
+      const a1=$('sbAura1'), a2=$('sbAura2'), a3=$('sbAura3');
+      a1.style.transform = 'scale('+(0.92 + low*0.55).toFixed(3)+')';
+      a1.style.opacity = (0.5 + low*0.5).toFixed(3);
+      a2.style.transform = 'scale('+(0.88 + mid*0.7).toFixed(3)+')';
+      a2.style.opacity = (0.42 + mid*0.45).toFixed(3);
+      a3.style.transform = 'scale('+(0.82 + high*0.85).toFixed(3)+')';
+      a3.style.opacity = (0.32 + high*0.4).toFixed(3);
+    }
 
+    const disc = $('sbDisc');
     if(disc){
       const scale = settings.spin ? (1 + low*0.06) : 1;
       disc.style.transform = 'scale('+scale.toFixed(3)+')';
@@ -587,6 +703,8 @@
   function refreshCustomizeUi(){
     $('sbSideLeftBtn').classList.toggle('active', settings.side==='left');
     $('sbSideRightBtn').classList.toggle('active', settings.side==='right');
+    $('sbVizStyle1Btn').classList.toggle('active', settings.vizStyle!=='style2');
+    $('sbVizStyle2Btn').classList.toggle('active', settings.vizStyle==='style2');
     $('sbEndPauseBtn').classList.toggle('active', settings.onEnd==='pause');
     $('sbEndNextBtn').classList.toggle('active', settings.onEnd==='next');
     $('sbEndRepeatBtn').classList.toggle('active', settings.onEnd==='repeat');
@@ -619,6 +737,8 @@
     $('sbCustomizeQuickBtn').addEventListener('click', openCustomize);
     $('sbSideLeftBtn').addEventListener('click', ()=>{ settings.side='left'; saveSettings(); applyPanelPlacement(); refreshCustomizeUi(); });
     $('sbSideRightBtn').addEventListener('click', ()=>{ settings.side='right'; saveSettings(); applyPanelPlacement(); refreshCustomizeUi(); });
+    $('sbVizStyle1Btn').addEventListener('click', ()=>{ settings.vizStyle='style1'; saveSettings(); applyVizStyle(); refreshCustomizeUi(); });
+    $('sbVizStyle2Btn').addEventListener('click', ()=>{ settings.vizStyle='style2'; saveSettings(); applyVizStyle(); refreshCustomizeUi(); });
     $('sbEndPauseBtn').addEventListener('click', ()=>{ settings.onEnd='pause'; saveSettings(); refreshCustomizeUi(); });
     $('sbEndNextBtn').addEventListener('click', ()=>{ settings.onEnd='next'; saveSettings(); refreshCustomizeUi(); });
     $('sbEndRepeatBtn').addEventListener('click', ()=>{ settings.onEnd='repeat'; saveSettings(); refreshCustomizeUi(); });
@@ -859,6 +979,7 @@
     wireModalDismiss();
 
     document.documentElement.style.setProperty('--sb-width', settings.size+'%');
+    applyVizStyle();
     updateAmbientColor();
     renderPlaylist();
     renderManageList();

@@ -73,9 +73,21 @@
     els.azChevron.classList.toggle('open', open);
   }
 
-  /* ══════════════════ Host zoom bridge ══════════════════ */
+  /* ══════════════════ Host zoom bridge ══════════════════
+     The host keeps its zoom state in `const S = {...}` at the top
+     level of a classic <script> — top-level let/const never become
+     properties of window (only function declarations, like the
+     host's applyZoom, do that). S is still reachable as a bare
+     identifier though, since classic scripts on the same page share
+     one global lexical scope — so we deliberately read `S` directly
+     here rather than `window.S`, which would silently stay undefined
+     forever. typeof is safe to use on it either way: it only throws
+     on an identifier still in its temporal dead zone, and by the
+     time this add-on runs, the host's own script has long since
+     finished executing and initialized S. */
   function hostReady(){
-    return typeof window.applyZoom === 'function' && window.S && typeof window.S === 'object';
+    try{ return typeof applyZoom === 'function' && typeof S === 'object' && S !== null; }
+    catch(e){ return false; }
   }
   function currentZoom(){ return hostReady() ? (S.zoom || 100) : 100; }
   function setHostZoom(z){

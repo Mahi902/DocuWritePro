@@ -133,9 +133,8 @@
 
   function applyAutoZoomFit(){
     if(!state.autoZoom) return;
-    if(rt.focusActive) return; // don't fight an active writing session — Auto Focus owns zoom while typing
     var z = computeFitZoom(state.fitMode);
-    if(z != null) setHostZoom(z);
+    if(z != null) setHostZoom(z); // setHostZoom already goes either direction — up or down — from whatever zoom is current
   }
 
   function forceFit(){

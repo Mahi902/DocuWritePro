@@ -1,0 +1,112 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     GITHUB TOKEN — add-on markup
+     Sidebar section lives in a <template> so github-token.js can clone
+     it into #sidebar (above Collapse) regardless of add-on load order.
+═══════════════════════════════════════════════════════════════════ -->
+
+<template id="gtSidebarTpl">
+<div class="sb-section" id="gtSbSection">
+  <div class="aw-header" id="gtHeader">
+    <span class="aw-header-label aw-label-blue">GitHub Token</span>
+    <div class="aw-header-right">
+      <span class="gt-pill" id="gtPill" title="GitHub API requests remaining">—</span>
+      <span class="material-symbols-outlined aw-chevron" id="gtChevron">expand_more</span>
+    </div>
+  </div>
+  <div class="aw-dropdown" id="gtDropdown">
+    <div class="aw-inner">
+      <div class="aw-row">
+        <div>
+          <div class="aw-row-label">Route via Token</div>
+          <div class="aw-row-sub" id="gtSbSub">Add a token to lift the rate limit</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="gtEnableToggle" checked/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="gt-mini" id="gtMini"></div>
+      <div style="padding:0 10px 8px">
+        <button class="aw-correct-btn" id="gtOpenBtn" style="background:#546e7a">
+          <span class="material-symbols-outlined" style="font-size:13px">key</span>Token &amp; Live Usage
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</template>
+
+<!-- Token & usage modal -->
+<div class="modal" id="githubTokenMdl">
+  <div class="mbox" style="max-width:600px">
+    <div class="mhdr">
+      <h2 class="mtitle"><span class="material-symbols-outlined" style="font-size:20px;vertical-align:middle;margin-right:6px;color:#1976d2">key</span>GitHub Token</h2>
+      <button class="mclose" onclick="closeMdl('githubTokenMdl')"><span class="material-symbols-outlined">close</span></button>
+    </div>
+
+    <!-- Token -->
+    <div class="sm-section">
+      <div class="sm-label">Personal Access Token</div>
+      <div class="gt-input-row">
+        <input type="password" id="gtTokenInput" class="finput" placeholder="ghp_… or github_pat_…" autocomplete="off" spellcheck="false" autocapitalize="off"/>
+        <button class="gt-icon-btn" id="gtShowBtn" title="Show / hide"><span class="material-symbols-outlined">visibility</span></button>
+      </div>
+      <div class="gt-btn-row">
+        <button class="cmarg-add-btn" id="gtSaveBtn"><span class="material-symbols-outlined" style="font-size:14px">verified_user</span>Save &amp; Verify</button>
+        <button class="gt-danger-btn" id="gtClearBtn"><span class="material-symbols-outlined" style="font-size:14px">delete</span>Remove</button>
+      </div>
+      <div class="gt-status" id="gtStatus"></div>
+      <div class="sc-hint">Stored only in this browser. It is sent only to <b>api.github.com</b> and <b>uploads.github.com</b>. Public repos need no scopes; add <b>repo</b> access only if you use private repos.</div>
+    </div>
+
+    <div class="gt-sep"></div>
+
+    <!-- Live usage -->
+    <div class="sm-section">
+      <div class="sm-label">Live Usage</div>
+      <div class="gt-meter">
+        <div class="gt-meter-top">
+          <div><span class="gt-big" id="gtRemain">—</span><span class="gt-of" id="gtLimit"></span></div>
+          <div class="gt-reset" id="gtReset"></div>
+        </div>
+        <div class="gt-bar"><div class="gt-bar-fill" id="gtBarFill"></div></div>
+        <div class="gt-res-chips" id="gtResChips"></div>
+      </div>
+
+      <div class="gt-grid" id="gtGrid"></div>
+
+      <div class="gt-sub-label">By source</div>
+      <div class="gt-sources" id="gtSources"></div>
+
+      <div class="gt-sub-label">Recent requests</div>
+      <div class="gt-log" id="gtLog"></div>
+      <button class="gt-link-btn" id="gtResetCountersBtn"><span class="material-symbols-outlined">restart_alt</span>Reset counters</button>
+    </div>
+
+    <div class="gt-sep"></div>
+
+    <!-- Options -->
+    <div class="sm-section">
+      <div class="sm-label">Options</div>
+      <div class="aw-row">
+        <div>
+          <div class="aw-row-label">Replace tokens set by other code</div>
+          <div class="aw-row-sub">Add-ons that send their own token get yours instead</div>
+        </div>
+        <label class="toggle-switch"><input type="checkbox" id="gtOverrideToggle" checked/><span class="toggle-slider"></span></label>
+      </div>
+      <div class="aw-row">
+        <div>
+          <div class="aw-row-label">Route raw file URLs via API</div>
+          <div class="aw-row-sub">raw.githubusercontent.com → Contents API (falls back if it fails)</div>
+        </div>
+        <label class="toggle-switch"><input type="checkbox" id="gtRawToggle" checked/><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+
+    <div class="mfooter">
+      <button class="mbtn sec" id="gtResetBtn">Reset to Defaults</button>
+      <button class="mbtn primary" onclick="closeMdl('githubTokenMdl')">Done</button>
+    </div>
+  </div>
+</div>

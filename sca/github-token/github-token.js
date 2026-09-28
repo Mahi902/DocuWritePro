@@ -406,7 +406,7 @@
     var g = function(id){ return document.getElementById(id); };
     els = { header:g('gtHeader'), chevron:g('gtChevron'), dropdown:g('gtDropdown'), pill:g('gtPill'), sbSub:g('gtSbSub'),
       enableToggle:g('gtEnableToggle'), mini:g('gtMini'), openBtn:g('gtOpenBtn'), modal:g('githubTokenMdl'),
-      tokenInput:g('gtTokenInput'), showBtn:g('gtShowBtn'), saveBtn:g('gtSaveBtn'), clearBtn:g('gtClearBtn'), status:g('gtStatus'),
+      tokenInput:g('gtTokenInput'), pasteBtn:g('gtPasteBtn'), showBtn:g('gtShowBtn'), saveBtn:g('gtSaveBtn'), clearBtn:g('gtClearBtn'), status:g('gtStatus'),
       remain:g('gtRemain'), limit:g('gtLimit'), reset:g('gtReset'), barFill:g('gtBarFill'), resChips:g('gtResChips'),
       grid:g('gtGrid'), sources:g('gtSources'), log:g('gtLog'), resetCountersBtn:g('gtResetCountersBtn'),
       overrideToggle:g('gtOverrideToggle'), rawToggle:g('gtRawToggle'), resetBtn:g('gtResetBtn') };
@@ -440,6 +440,20 @@
       var show = els.tokenInput.type === 'password';
       els.tokenInput.type = show ? 'text' : 'password';
       this.querySelector('.material-symbols-outlined').textContent = show ? 'visibility_off' : 'visibility';
+    });
+    els.pasteBtn.addEventListener('click', function(){
+      if(navigator.clipboard && navigator.clipboard.readText){
+        navigator.clipboard.readText().then(function(text){
+          if(!text){ toast('Clipboard is empty', 'error'); return; }
+          els.tokenInput.value = cleanToken(text);
+          els.tokenInput.type = 'text';
+          els.showBtn.querySelector('.material-symbols-outlined').textContent = 'visibility_off';
+          els.tokenInput.focus();
+        }, function(){ toast('Clipboard access was blocked — paste manually (long-press or Ctrl+V)', 'error'); });
+      } else {
+        els.tokenInput.focus();
+        toast('Clipboard access isn\'t available here — paste manually', 'error');
+      }
     });
     els.saveBtn.addEventListener('click', saveToken);
     els.tokenInput.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); saveToken(); } });

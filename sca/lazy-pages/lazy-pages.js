@@ -10,6 +10,8 @@
                    serialized result, so saves/exports never lose them.
    ─ Export, print and find/replace load everything first (optional).
    ─ Lazy loading pauses during live collaboration.
+   ─ Stashed pages keep their real DOM nodes (no re-parse, no lost field state).
+   ─ Pages holding form fields / certificates are never deferred.
 ═══════════════════════════════════════════════════════════════════ */
 (function(){
   'use strict';
@@ -45,7 +47,7 @@
     // what happens when a document opens, per source
     sources:{ scd:'default', drive:'default', local:'default', link:'default' },
     // safety / display
-    loadAllBeforeActions:true, deferHF:false,
+    loadAllBeforeActions:true, deferHF:false, keepFormPages:true,
     showBadge:true, placeholderStyle:'skeleton', showLabel:true, tapToLoad:true
   };
 
@@ -56,7 +58,8 @@
     q:[], raf:0, unT:0, autoT:0, scrollT:0,
     lastScroll:0, holdUntil:0, autoDone:false,
     hint:null, lockedSrcs:{}, globalLock:false,
-    edited:new WeakMap(), stash:new WeakMap(), cur:0
+    edited:new WeakMap(), stash:new WeakMap(), ce:new WeakMap(), cur:0,
+    unq:[], unRaf:0, lastInput:0, extra:0, extraDirty:true, wordT:0
   };
   var els = {};
   var ctrls = [];
@@ -75,6 +78,76 @@
   function hostBodyBlocksLazy(){
     var c = document.body.classList;
     return c.contains('converter-mode') || c.contains('manage-mode');
+  }
+
+  /* Pages holding form fields / certificates are never deferred: the host's form logic
+     (wiring, validation, collecting answers, anti-duplication) needs them in the DOM. */
+  var PIN_SEL = '.fw-field,[data-auth]';
+  var PIN_TOKENS = ['fw-field','data-auth'];
+  function pinHtml(html){
+    if(!state.keepFormPages || !html || typeof html !== 'string') return false;
+    for(var i=0;i<PIN_TOKENS.length;i++) if(html.indexOf(PIN_TOKENS[i]) !== -1) return true;
+    return false;
+  }
+  function pinPage(page){
+    if(!state.keepFormPages) return false;
+    var pc = getPc(page);
+    return !!(pc && pc.querySelector(PIN_SEL));
+  }
+  function stashHasPin(st){
+    if(!state.keepFormPages || !st) return false;
+    return st.frag ? !!st.frag.querySelector(PIN_SEL) : pinHtml(st.c);
+  }
+
+  /* Typed values / ticks / selections live in DOM properties, not attributes — copy them
+     across so they survive being serialised for a save. */
+  function syncControlState(root){
+    try{
+      root.querySelectorAll('input,textarea,select').forEach(function(el){
+        var tag = el.tagName, ty = (el.type || '').toLowerCase();
+        if(tag === 'TEXTAREA'){ if(el.textContent !== el.value) el.textContent = el.value; }
+        else if(tag === 'SELECT'){ Array.prototype.forEach.call(el.options, function(o){ if(o.selected) o.setAttribute('selected',''); else o.removeAttribute('selected'); }); }
+        else if(ty === 'checkbox' || ty === 'radio'){ if(el.checked) el.setAttribute('checked',''); else el.removeAttribute('checked'); }
+        else if(ty !== 'file' && ty !== 'password') el.setAttribute('value', el.value);
+      });
+    }catch(e){}
+  }
+  /* Move a page's real nodes out into a fragment: no serialising, no re-parsing, and
+     listeners + live field state come back exactly as they were. */
+  function takeChildren(pc){
+    syncControlState(pc);
+    try{
+      var r = document.createRange(); r.selectNodeContents(pc);
+      return r.extractContents();
+    }catch(e){
+      var f = document.createDocumentFragment();
+      while(pc.firstChild) f.appendChild(pc.firstChild);
+      return f;
+    }
+  }
+  function stWords(st){
+    if(st.words == null) st.words = st.frag ? countWords(st.frag.textContent) : htmlWords(st.c);
+    return st.words;
+  }
+  function stHtml(st){
+    if(st.c != null) return st.c;
+    if(st.html == null){
+      var d = document.createElement('div');
+      d.appendChild(st.frag.cloneNode(true));
+      st.html = d.innerHTML;
+    }
+    return st.html;
+  }
+  /* contenteditable: remember what the host had and give back exactly that (never force "true"). */
+  function lockPc(page, pc){
+    if(!rt.ce.has(page)) rt.ce.set(page, pc.getAttribute('contenteditable'));
+    pc.setAttribute('contenteditable','false');
+  }
+  function unlockPc(page, pc){
+    if(!rt.ce.has(page)) return;
+    var v = rt.ce.get(page); rt.ce.delete(page);
+    if(!pc) return;
+    if(v == null) pc.removeAttribute('contenteditable'); else pc.setAttribute('contenteditable', v);
   }
 
   function loadState(){
@@ -160,9 +233,9 @@
   /* Register a page as unloaded using a ready-made stash (used on open). */
   function markUnloaded(page, st){
     var pc = getPc(page); if(!pc) return false;
-    rt.stash.set(page, st);
-    pc.innerHTML = '';
-    pc.setAttribute('contenteditable','false');
+    rt.stash.set(page, st); rt.extraDirty = true;
+    pc.textContent = '';
+    lockPc(page, pc);
     page.classList.add('lp-unloaded');
     ensurePlaceholder(page);
     return true;
@@ -175,24 +248,19 @@
     if(page.contains(document.activeElement)) return false;
     var t = rt.edited.get(page);
     if(t && Date.now() - t < 4000) return false;
+    if(pinPage(page)) return false;
 
-    var st = { c: pc.innerHTML, ce: pc.getAttribute('contenteditable') || 'true', words: countWords(pc.textContent) };
+    var st = { frag: takeChildren(pc), words: null };
     if(state.deferHF){
       var h = getHdr(page), f = getFtr(page);
       st.h = h ? h.innerHTML : null; st.f = f ? f.innerHTML : null;
       if(h) h.innerHTML = ''; if(f) f.innerHTML = '';
     }
-    // remember which images were locked (their elements are about to be recreated)
-    if(typeof S !== 'undefined' && S.lockedImgs){
-      pc.querySelectorAll('img').forEach(function(img){
-        if(S.lockedImgs.has(img)){ rt.lockedSrcs[img.src] = 1; S.lockedImgs.delete(img); }
-      });
-    }
-    rt.stash.set(page, st);
-    pc.innerHTML = '';
-    pc.setAttribute('contenteditable','false');
+    rt.stash.set(page, st); rt.extraDirty = true;
+    lockPc(page, pc);
     page.classList.add('lp-unloaded');
     ensurePlaceholder(page);
+    scheduleWords();
     return true;
   }
 
@@ -202,27 +270,33 @@
     var st = rt.stash.get(page), pc = getPc(page);
     page.classList.remove('lp-unloaded');
     var ph = page.querySelector(':scope > .lp-ph'); if(ph) ph.remove();
+    unlockPc(page, pc);                        // always hand editing back, whatever happens below
     if(!st || !pc){ return false; }
-    pc.innerHTML = st.c;
-    pc.setAttribute('contenteditable', st.ce || 'true');
+    rt.stash.delete(page); rt.extraDirty = true;
+
+    if(st.frag){
+      // our own nodes coming home: listeners, locks and field state are all still attached
+      pc.textContent = '';
+      pc.appendChild(st.frag);
+    } else {
+      // first load of a page that was only ever HTML text (stashed on open)
+      pc.innerHTML = st.c;
+      try{
+        if(typeof wireImg === 'function') pc.querySelectorAll('img').forEach(wireImg);
+        if(typeof wireFormField === 'function') pc.querySelectorAll('.fw-field').forEach(wireFormField);
+        if(typeof wireBanner === 'function') pc.querySelectorAll('.sc-banner').forEach(wireBanner);
+        if(typeof S !== 'undefined' && S.lockedImgs){
+          pc.querySelectorAll('img').forEach(function(img){
+            if(rt.globalLock || rt.lockedSrcs[img.src]){
+              S.lockedImgs.add(img); img.classList.add('img-locked');
+              img.title = 'Image locked -- hold to unlock';
+            }
+          });
+        }
+      }catch(e){ console.warn('[Lazy Pages] rewire failed', e); }
+    }
     if(st.h != null){ var h = getHdr(page); if(h) h.innerHTML = st.h; }
     if(st.f != null){ var f = getFtr(page); if(f) f.innerHTML = st.f; }
-    rt.stash.delete(page);
-
-    // re-attach the host's per-element behaviours (same set loadData wires)
-    try{
-      if(typeof wireImg === 'function') pc.querySelectorAll('img').forEach(wireImg);
-      if(typeof wireFormField === 'function') pc.querySelectorAll('.fw-field').forEach(wireFormField);
-      if(typeof wireBanner === 'function') pc.querySelectorAll('.sc-banner').forEach(wireBanner);
-      if(typeof S !== 'undefined' && S.lockedImgs){
-        pc.querySelectorAll('img').forEach(function(img){
-          if(rt.globalLock || rt.lockedSrcs[img.src]){
-            S.lockedImgs.add(img); img.classList.add('img-locked');
-            img.title = 'Image locked -- hold to unlock';
-          }
-        });
-      }
-    }catch(e){ console.warn('[Lazy Pages] rewire failed', e); }
     try{ document.dispatchEvent(new CustomEvent('lazypages:pageloaded', {detail:{page:page}})); }catch(e){}
     return true;
   }
@@ -231,23 +305,54 @@
     getPages().forEach(function(p){
       p.classList.remove('lp-unloaded');
       var ph = p.querySelector(':scope > .lp-ph'); if(ph) ph.remove();
-      var pc = getPc(p);
-      if(pc && pc.getAttribute('contenteditable') === 'false') pc.setAttribute('contenteditable','true');
+      unlockPc(p, getPc(p));
     });
-    rt.stash = new WeakMap();
+    rt.stash = new WeakMap(); rt.ce = new WeakMap(); rt.extraDirty = true; rt.extra = 0;
+  }
+
+  /* Words of stashed pages are counted in idle time (never on the open / scroll path). */
+  function stashedWords(){
+    if(rt.extraDirty){
+      var sum = 0;
+      getPages().forEach(function(p){ var st = rt.stash.get(p); if(st && st.words != null) sum += st.words; });
+      rt.extra = sum; rt.extraDirty = false;
+    }
+    return rt.extra;
+  }
+  function scheduleWords(){
+    if(rt.wordT) return;
+    var go = function(){
+      rt.wordT = 0;
+      var t0 = performance.now(), pages = getPages(), more = false;
+      for(var i=0;i<pages.length;i++){
+        var st = rt.stash.get(pages[i]);
+        if(!st || st.words != null) continue;
+        stWords(st);
+        if(performance.now() - t0 > 8){ more = true; break; }
+      }
+      rt.extraDirty = true;
+      if(more) scheduleWords();
+      else if(typeof window.updateWordCount === 'function') try{ window.updateWordCount(); }catch(e){}
+    };
+    rt.wordT = window.requestIdleCallback ? window.requestIdleCallback(go, {timeout:1000}) : setTimeout(go, 50);
   }
 
   /* ══════════════════ queueing / sync ══════════════════ */
+  /* The queue always mirrors the *current* window — never a backlog of pages you scrolled past. */
   function queueLoad(pages){
-    rt.q = rt.q.concat(pages);
-    if(!rt.raf) rt.raf = requestAnimationFrame(pump);
+    rt.q = pages;
+    if(pages.length && !rt.raf) rt.raf = requestAnimationFrame(pump);
   }
   function pump(){
     rt.raf = 0;
-    var k = Math.max(1, state.perFrame);
-    while(k-- > 0 && rt.q.length){
+    if(!rt.q.length) return;
+    // don't rebuild pages under the user's fingers while they're typing
+    if(Date.now() - rt.lastInput < 350){ rt.raf = setTimeout(pump, 200); return; }
+    var k = Math.max(1, state.perFrame), t0 = performance.now(), did = 0;
+    while(rt.q.length && did < k){
       var p = rt.q.shift();
-      if(p.isConnected && isUnloaded(p)) loadPage(p);
+      if(p.isConnected && isUnloaded(p)){ loadPage(p); did++; }
+      if(did && performance.now() - t0 > 8) break;       // frame budget
     }
     if(rt.q.length) rt.raf = requestAnimationFrame(pump);
     updateBadge();
@@ -276,7 +381,7 @@
       var want = [];
       for(var i=lo;i<=hi;i++) if(isUnloaded(pages[i])) want.push(i);
       want.sort(function(a,b){ return Math.abs(a-cur) - Math.abs(b-cur); });
-      if(want.length) queueLoad(want.map(function(i){ return pages[i]; }));
+      queueLoad(want.map(function(i){ return pages[i]; }));
     }
     if(state.loadOnScroll && state.unloadFar && !state.autoLoad) scheduleUnload();
     updateBadge();
@@ -287,43 +392,75 @@
     rt.unT = setTimeout(doUnload, Math.max(0, state.unloadDelay));
   }
 
+  function keepWindow(force){
+    var pages = getPages(), n = pages.length, cur = indexAtMid(pages);
+    var lo = Math.max(0, cur - state.before), hi = Math.min(n-1, cur + state.after);
+    var m = force ? 0 : state.unloadMargin;
+    return { pages:pages, n:n, cur:cur, lo:lo, hi:hi, keepLo:lo - m, keepHi:hi + m, fi:focusIndex(pages) };
+  }
+  /* Which loaded pages are due to go, farthest first. */
+  function unloadCandidates(force){
+    var w = keepWindow(force), out = [], mark = [], loaded = 0;
+    w.pages.forEach(function(p,i){
+      if(isUnloaded(p)) return;
+      loaded++;
+      if(i >= w.keepLo && i <= w.keepHi) return;
+      if(w.fi >= 0 && Math.abs(i - w.fi) <= 1) return;       // never next to the page being edited
+      out.push({p:p, i:i, cap:false}); mark[i] = 1;
+    });
+    // optional hard cap on loaded pages
+    if(!force && state.maxLoaded > 0){
+      var cap = Math.max(state.maxLoaded, state.before + state.after + 1);
+      var over = (loaded - out.length) - cap;
+      if(over > 0){
+        var extra = [];
+        w.pages.forEach(function(p,i){
+          if(isUnloaded(p) || mark[i]) return;
+          if(i >= w.lo && i <= w.hi) return;
+          if(w.fi >= 0 && Math.abs(i - w.fi) <= 1) return;
+          extra.push({p:p, i:i, cap:true});
+        });
+        extra.sort(function(a,b){ return Math.abs(b.i - w.cur) - Math.abs(a.i - w.cur); });
+        out = out.concat(extra.slice(0, over));
+      }
+    }
+    out.sort(function(a,b){ return Math.abs(b.i - w.cur) - Math.abs(a.i - w.cur); });
+    return out;
+  }
+
   function doUnload(opts){
     opts = opts || {};
     if(!rt.docLazy) return;
     if(!opts.force && Date.now() < rt.holdUntil){ scheduleUnload(); return; }
-    var pages = getPages(), n = pages.length;
-    var cur = indexAtMid(pages);
-    var lo = Math.max(0, cur - state.before), hi = Math.min(n-1, cur + state.after);
-    var m = opts.force ? 0 : state.unloadMargin;
-    var keepLo = lo - m, keepHi = hi + m;
-    var fi = focusIndex(pages);
-    var out = 0;
-
-    pages.forEach(function(p,i){
-      if(isUnloaded(p)) return;
-      if(i >= keepLo && i <= keepHi) return;
-      if(fi >= 0 && Math.abs(i - fi) <= 1) return;          // never next to the page being edited
-      if(unloadPage(p)) out++;
-    });
-
-    // optional hard cap on loaded pages
-    var cap = state.maxLoaded > 0 ? Math.max(state.maxLoaded, state.before + state.after + 1) : 0;
-    if(cap && !opts.force){
-      var loaded = [];
-      pages.forEach(function(p,i){ if(!isUnloaded(p)) loaded.push(i); });
-      if(loaded.length > cap){
-        loaded.sort(function(a,b){ return Math.abs(b-cur) - Math.abs(a-cur); });
-        for(var k=0;k<loaded.length && loaded.length - k > cap;k++){
-          var idx = loaded[k];
-          if(idx >= lo && idx <= hi) continue;
-          if(fi >= 0 && Math.abs(idx - fi) <= 1) continue;
-          if(unloadPage(pages[idx])) out++;
-        }
-      }
+    var list = unloadCandidates(!!opts.force);
+    if(opts.force){                                            // button press: do it now
+      rt.unq = [];
+      var out = 0;
+      list.forEach(function(it){ if(unloadPage(it.p)) out++; });
+      if(out) refreshLabels();
+      updateBadge();
+      return out;
+    }
+    rt.unq = list;                                             // normal path: a few pages per frame
+    if(list.length && !rt.unRaf) rt.unRaf = requestAnimationFrame(unloadPump);
+  }
+  function unloadPump(){
+    rt.unRaf = 0;
+    if(!rt.docLazy){ rt.unq = []; return; }
+    if(!rt.unq.length) return;
+    var w = keepWindow(false), t0 = performance.now(), out = 0;
+    while(rt.unq.length){
+      var it = rt.unq.shift(), i = w.pages.indexOf(it.p);
+      if(i < 0 || isUnloaded(it.p)) continue;
+      var lo = it.cap ? w.lo : w.keepLo, hi = it.cap ? w.hi : w.keepHi;
+      if(i >= lo && i <= hi) continue;                         // scrolled back into range meanwhile
+      if(w.fi >= 0 && Math.abs(i - w.fi) <= 1) continue;
+      if(unloadPage(it.p)) out++;
+      if(performance.now() - t0 > 6) break;
     }
     if(out) refreshLabels();
     updateBadge();
-    return out;
+    if(rt.unq.length) rt.unRaf = requestAnimationFrame(unloadPump);
   }
 
   /* ══════════════════ auto load (background fill) ══════════════════ */
@@ -400,7 +537,7 @@
 
   function resetForNewDoc(){
     clearTimeout(rt.unT); clearTimeout(rt.autoT);
-    rt.q = []; rt.holdUntil = 0; rt.autoDone = false; rt.lockedSrcs = {}; rt.globalLock = false;
+    rt.q = []; rt.unq = []; rt.holdUntil = 0; rt.autoDone = false; rt.lockedSrcs = {}; rt.globalLock = false;
     clearAllLazyState();
   }
 
@@ -421,11 +558,13 @@
         }
 
         // Hand the host a copy where far-away pages are empty strings: they are never parsed.
+        // Pages with form fields / certificates are always handed over in full (see PIN_*).
+        var live = data.pages.map(function(html,i){ return (i >= plan.lo && i <= plan.hi) || pinHtml(html); });
         var d = Object.assign({}, data);
-        d.pages = data.pages.map(function(html,i){ return (i >= plan.lo && i <= plan.hi) ? html : ''; });
+        d.pages = data.pages.map(function(html,i){ return live[i] ? html : ''; });
         if(state.deferHF){
-          if(Array.isArray(data.headers)) d.headers = data.headers.map(function(x,i){ return (i >= plan.lo && i <= plan.hi) ? x : ''; });
-          if(Array.isArray(data.footers)) d.footers = data.footers.map(function(x,i){ return (i >= plan.lo && i <= plan.hi) ? x : ''; });
+          if(Array.isArray(data.headers)) d.headers = data.headers.map(function(x,i){ return live[i] ? x : ''; });
+          if(Array.isArray(data.footers)) d.footers = data.footers.map(function(x,i){ return live[i] ? x : ''; });
         }
         var ret = orig.call(this, d);
 
@@ -435,9 +574,9 @@
         ((data.settings && data.settings.lockedImageSrcs) || []).forEach(function(s){ rt.lockedSrcs[s] = 1; });
         var hidden = 0;
         pages.forEach(function(p,i){
-          if(i >= plan.lo && i <= plan.hi) return;
+          if(live[i]) return;
           if(i >= data.pages.length) return;
-          var st = { c:data.pages[i], ce:'true', words:htmlWords(data.pages[i]) };
+          var st = { c:data.pages[i], words:null };
           if(state.deferHF){
             st.h = data.headers && data.headers[i] != null ? data.headers[i] : null;
             st.f = data.footers && data.footers[i] != null ? data.footers[i] : null;
@@ -447,6 +586,7 @@
         rt.docLazy = true;
         refreshLabels();
         updateBadge();
+        scheduleWords();
         startAuto();
         setTimeout(function(){ sync(); }, 250);
         toast('Lazy Pages: ' + (pages.length - hidden) + ' of ' + pages.length + ' pages loaded', 'info');
@@ -466,7 +606,7 @@
             for(var i=0;i<pcs.length;i++){
               var page = pcs[i].closest('.page'); if(!page) continue;
               var st = rt.stash.get(page); if(!st) continue;
-              d.pages[i] = st.c;
+              d.pages[i] = stHtml(st);
               if(st.h != null && Array.isArray(d.headers)) d.headers[i] = st.h;
               if(st.f != null && Array.isArray(d.footers)) d.footers[i] = st.f;
             }
@@ -486,8 +626,7 @@
           if(rt.docLazy){
             var el = document.getElementById('wordCount'); if(!el) return r;
             var m = /^(\d+)/.exec(el.textContent || ''); if(!m) return r;
-            var extra = 0;
-            getPages().forEach(function(p){ var st = rt.stash.get(p); if(st) extra += st.words || 0; });
+            var extra = stashedWords();
             var total = parseInt(m[1],10) + extra;
             el.textContent = total + ' word' + (total !== 1 ? 's' : '');
           }
@@ -609,8 +748,8 @@
   function onScroll(){
     rt.lastScroll = Date.now();
     if(!rt.docLazy) return;
-    clearTimeout(rt.scrollT);
-    rt.scrollT = setTimeout(function(){ sync(); if(state.autoLoad) startAuto(); }, Math.max(0, state.scrollDelay));
+    if(rt.scrollT) return;                       // throttle (not debounce): keep loading while you scroll
+    rt.scrollT = setTimeout(function(){ rt.scrollT = 0; sync(); if(state.autoLoad) startAuto(); }, Math.max(0, state.scrollDelay));
   }
 
   /* ══════════════════ modal UI ══════════════════ */
@@ -697,6 +836,11 @@
 
     addToggle(saf,'loadAllBeforeActions','Load all before export / print / find','Those tools read every page from the screen, so unloaded pages would be skipped');
     addToggle(saf,'deferHF','Defer headers & footers too','Also stash them (helps if headers hold large images)');
+    addToggle(saf,'keepFormPages','Keep form pages loaded','Pages with form fields or certificates are never deferred, so forms keep working', null, function(){
+      if(!rt.docLazy || !state.keepFormPages) return;
+      getPages().forEach(function(p){ if(isUnloaded(p) && stashHasPin(rt.stash.get(p))) loadPage(p); });
+      updateBadge();
+    });
     addToggle(saf,'showBadge','Status badge','Small “9 / 120 pages loaded” pill while lazy mode is active', null, updateBadge);
     addToggle(saf,'tapToLoad','Tap placeholder to load','Tap an unloaded page to load it immediately', null, visuals);
     addToggle(saf,'showLabel','Placeholder label','Show “Page N · Not loaded yet” on unloaded pages', null, visuals);
@@ -759,7 +903,7 @@
     window.addEventListener('resize', function(){ if(rt.docLazy) sync(); });
     document.addEventListener('input', function(e){
       var t = e.target; var p = t && t.closest ? t.closest('.page') : null;
-      if(p) rt.edited.set(p, Date.now());
+      if(p){ rt.edited.set(p, Date.now()); rt.lastInput = Date.now(); }
     }, true);
 
     updateBadge();

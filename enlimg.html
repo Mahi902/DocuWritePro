@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex">
+<title>Image</title>
+<style>
+  html,body{margin:0;height:100%;background:#fff}
+  @media (prefers-color-scheme:dark){html,body{background:#000}}
+  body{display:flex;align-items:center;justify-content:center;overflow:hidden}
+  img{display:block;max-width:100vw;max-height:100vh;object-fit:contain}
+</style>
+</head>
+<body>
+<script>
+/* enlimg.html — shows one image and nothing else.
+   Fragment formats written by the Sugarcane editor (never sent to a server):
+     #m=<mime>&d=<base64url image bytes>     embedded image
+     #u=<encoded http(s) url>                 remote image                 */
+(function () {
+  try {
+    var p = new URLSearchParams(location.hash.replace(/^#/, ''));
+    var src = '';
+    if (p.get('d')) {
+      var b = p.get('d').replace(/-/g, '+').replace(/_/g, '/');
+      while (b.length % 4) b += '=';
+      var bin = atob(b), n = bin.length, bytes = new Uint8Array(n);
+      for (var i = 0; i < n; i++) bytes[i] = bin.charCodeAt(i);
+      var mime = /^image\/[a-z0-9.+-]+$/i.test(p.get('m') || '') ? p.get('m') : 'image/png';
+      src = URL.createObjectURL(new Blob([bytes], { type: mime }));
+    } else if (/^https?:\/\//i.test(p.get('u') || '')) {
+      src = p.get('u');
+    }
+    if (!src) return;
+    var img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    img.alt = '';
+    img.src = src;
+    document.body.appendChild(img);
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

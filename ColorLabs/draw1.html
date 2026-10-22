@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Draw</title>
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../vendor/fonts/material.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  font-family:'Quicksand',sans-serif;
+  font-size:14px;
+  width:100%;height:100%;
+  overflow:hidden;
+  touch-action:none;
+  overscroll-behavior:none;
+  user-select:none;-webkit-user-select:none;
+}
+
+/* ── Theme variables ── */
+:root{
+  --bg:#ffffff;--bg2:#f4f4f5;--bg3:#e4e4e7;
+  --border:#e4e4e7;
+  --text:#18181b;--text2:#71717a;--text3:#a1a1aa;
+  --accent:#2196f3;--accent-bg:#e3f2fd;--accent-hover:#1976d2;
+  --apply-bg:#2196f3;--apply-hover:#1565c0;
+  --cancel-bg:#f4f4f5;--cancel-text:#52525b;--cancel-hover:#e4e4e7;
+  --shadow:0 2px 16px rgba(0,0,0,.08);
+  --shadow2:0 4px 24px rgba(0,0,0,.13);
+  --canvas-dot:#e5e7eb;
+}
+.dark{
+  --bg:#09090b;--bg2:#18181b;--bg3:#27272a;
+  --border:#27272a;
+  --text:#fafafa;--text2:#a1a1aa;--text3:#52525b;
+  --accent:#42a5f5;--accent-bg:#172035;--accent-hover:#64b5f6;
+  --apply-bg:#1976d2;--apply-hover:#1565c0;
+  --cancel-bg:#27272a;--cancel-text:#a1a1aa;--cancel-hover:#3f3f46;
+  --shadow:0 2px 16px rgba(0,0,0,.4);
+  --shadow2:0 4px 24px rgba(0,0,0,.5);
+  --canvas-dot:#3f3f46;
+}
+
+body{background:var(--bg);color:var(--text);}
+
+/* ── Layout ── */
+.dw-wrap{display:flex;flex-direction:column;height:100dvh;height:100vh;}
+
+/* ── Header ── */
+.dw-header{
+  padding:10px 12px 8px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  animation:slideDown .3s cubic-bezier(.22,.68,0,1.2) both;
+}
+.dw-title{
+  font-size:15px;font-weight:700;color:var(--text);
+  display:flex;align-items:center;gap:6px;
+}
+.dw-title .material-symbols-rounded{
+  font-size:19px;color:var(--accent);
+  animation:spinIn .5s cubic-bezier(.22,.68,0,1.2) both .1s;
+}
+.dw-hdr-btns{display:flex;align-items:center;gap:2px;}
+.dw-icon-btn{
+  width:34px;height:34px;border-radius:50%;
+  border:none;background:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--text2);
+  transition:background .15s,color .15s,transform .12s;
+}
+.dw-icon-btn:hover{background:var(--bg2);color:var(--text);}
+.dw-icon-btn:active{transform:scale(.88);}
+.dw-icon-btn.danger:hover{background:#fee2e2;color:#dc2626;}
+.dw-icon-btn .material-symbols-rounded{font-size:18px;}
+.dw-icon-btn:disabled{opacity:.28;cursor:default;pointer-events:none;}
+
+/* ── Canvas ── */
+.dw-canvas-wrap{
+  flex:1;position:relative;overflow:hidden;
+  background:var(--bg);
+  background-image:radial-gradient(var(--canvas-dot) 1px,transparent 1px);
+  background-size:20px 20px;
+}
+#dwCanvas{
+  position:absolute;inset:0;display:block;
+  touch-action:none;cursor:crosshair;
+}
+#dwCanvas.eraser-mode{cursor:cell;}
+
+/* ── Toast ── */
+.dw-toast{
+  position:absolute;top:12px;left:50%;
+  transform:translateX(-50%) translateY(-8px);
+  background:#18181b;color:#fafafa;
+  padding:5px 14px;border-radius:20px;
+  font-size:12px;font-weight:600;
+  box-shadow:0 4px 16px rgba(0,0,0,.28);
+  opacity:0;pointer-events:none;z-index:100;
+  transition:opacity .22s,transform .22s;
+  white-space:nowrap;
+}
+.dw-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── Size Popover ── */
+.dw-size-pop{
+  position:fixed;
+  bottom:130px;           /* sits above the toolbar */
+  left:50%;
+  transform:translateX(-50%) translateY(8px);
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-radius:16px;
+  box-shadow:var(--shadow2);
+  padding:12px 16px;
+  width:220px;
+  z-index:200;
+  opacity:0;pointer-events:none;
+  transition:opacity .18s,transform .18s;
+}
+.dw-size-pop.open{
+  opacity:1;pointer-events:auto;
+  transform:translateX(-50%) translateY(0);
+}
+.dw-sp-header{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:8px;
+}
+.dw-sp-label{
+  font-size:10px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--text3);
+}
+.dw-sp-val{
+  font-size:11px;font-family:monospace;color:var(--text);
+  background:var(--bg2);padding:1px 7px;border-radius:6px;
+}
+input[type=range].dw-slider{
+  -webkit-appearance:none;width:100%;background:transparent;
+}
+input[type=range].dw-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;height:18px;width:18px;border-radius:50%;
+  background:var(--accent);margin-top:-7px;
+  box-shadow:0 1px 5px rgba(0,0,0,.2);cursor:grab;
+}
+input[type=range].dw-slider::-webkit-slider-runnable-track{
+  width:100%;height:4px;background:var(--border);border-radius:2px;cursor:pointer;
+}
+.dw-sp-preview{
+  margin-top:10px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  border-top:1px solid var(--border);padding-top:10px;
+}
+.dw-sp-dot{border-radius:50%;transition:width .08s,height .08s,background .08s;}
+
+/* ── Bottom toolbar ── */
+.dw-toolbar{
+  flex-shrink:0;
+  border-top:1px solid var(--border);
+  background:var(--bg);
+  animation:slideUp .3s cubic-bezier(.22,.68,0,1.2) both .05s;
+}
+
+/* Gradient fade above markers */
+.dw-toolbar-fade{
+  pointer-events:none;
+  height:40px;
+  background:linear-gradient(to top,var(--bg) 60%,transparent);
+  margin-bottom:-40px;position:relative;z-index:1;
+}
+
+.dw-rack{
+  display:flex;align-items:flex-end;
+  gap:4px;
+  overflow-x:auto;
+  padding:8px 14px 10px;
+  scrollbar-width:none;
+}
+.dw-rack::-webkit-scrollbar{display:none;}
+
+/* Generic marker item */
+.dw-mitem{
+  flex-shrink:0;cursor:pointer;
+  transition:transform .22s cubic-bezier(.34,1.56,.64,1);
+}
+.dw-mitem:not(.active):hover{transform:translateY(-4px);}
+.dw-mitem.active{
+  transform:translateY(-16px) scale(1.12);
+  filter:drop-shadow(0 12px 10px rgba(0,0,0,.18));
+  z-index:10;
+}
+.dw-mitem svg{pointer-events:none;}
+
+.dw-rack-sep{
+  flex-shrink:0;width:1px;height:44px;
+  background:var(--border);
+  margin:0 2px;align-self:flex-end;margin-bottom:12px;
+}
+
+/* Spacer at end */
+.dw-rack-end{flex-shrink:0;width:20px;}
+
+/* ── ColorChooser overlay (colorchooser1.html iframe) ── */
+.dw-cc-overlay{
+  position:fixed;inset:0;z-index:300;
+  display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.45);
+  backdrop-filter:blur(4px);
+}
+.dw-cc-overlay.open{display:flex;animation:ccOvIn .18s ease;}
+@keyframes ccOvIn{from{opacity:0}to{opacity:1}}
+.dw-cc-popup{
+  background:#fff;
+  border-radius:22px;
+  box-shadow:0 8px 40px rgba(0,0,0,.22);
+  overflow:hidden;
+  width:320px;
+  max-width:calc(100vw - 24px);
+  max-height:calc(100dvh - 40px);
+  display:flex;flex-direction:column;
+  animation:ccPopIn .2s cubic-bezier(.34,1.36,.64,1);
+}
+.dark .dw-cc-popup{background:#09090b;box-shadow:0 8px 40px rgba(0,0,0,.6);}
+@keyframes ccPopIn{from{opacity:0;transform:scale(.92) translateY(12px)}to{opacity:1;transform:none}}
+.dw-cc-frame{
+  width:100%;flex:1;border:none;display:block;
+  min-height:480px;max-height:calc(100dvh - 80px);
+}
+
+/* ── Footer ── */
+.dw-footer{
+  flex-shrink:0;
+  padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));
+  border-top:1px solid var(--border);
+  background:var(--bg);
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+}
+.dw-brand{
+  display:flex;align-items:center;gap:5px;
+  text-decoration:none;opacity:.6;
+  transition:opacity .15s,transform .2s;flex-shrink:0;
+}
+.dw-brand:hover{opacity:1;transform:scale(1.05);}
+.dw-brand img{width:70px;height:70px;border-radius:5px;object-fit:contain;}
+.dw-footer-btns{display:flex;align-items:center;gap:8px;}
+.dw-btn{
+  padding:8px 20px;border-radius:12px;border:none;cursor:pointer;
+  font-size:13px;font-weight:700;font-family:inherit;
+  transition:background .15s,transform .12s cubic-bezier(.22,.68,0,1.4),box-shadow .15s;
+}
+.dw-btn:active{transform:scale(.95);}
+.dw-btn-cancel{background:var(--cancel-bg);color:var(--cancel-text);}
+.dw-btn-cancel:hover{background:var(--cancel-hover);}
+.dw-btn-apply{
+  background:var(--apply-bg);color:#fff;
+  box-shadow:0 2px 8px rgba(33,150,243,.25);
+}
+.dw-btn-apply:hover{background:var(--apply-hover);box-shadow:0 4px 16px rgba(33,150,243,.35);}
+
+/* ── Animations ── */
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes spinIn{from{opacity:0;transform:rotate(-90deg) scale(.5)}to{opacity:1;transform:rotate(0) scale(1)}}
+</style>
+</head>
+<body>
+<div class="dw-wrap">
+
+  <!-- Header -->
+  <div class="dw-header">
+    <div class="dw-title">
+      <span class="material-symbols-rounded">draw</span>
+      <span id="dwTitleText">Draw</span>
+    </div>
+    <div class="dw-hdr-btns">
+      <button class="dw-icon-btn" id="btnUndo" onclick="dwUndo()" title="Undo" disabled>
+        <span class="material-symbols-rounded">undo</span>
+      </button>
+      <button class="dw-icon-btn" id="btnRedo" onclick="dwRedo()" title="Redo" disabled>
+        <span class="material-symbols-rounded">redo</span>
+      </button>
+      <button class="dw-icon-btn danger" onclick="dwClear()" title="Clear canvas">
+        <span class="material-symbols-rounded">delete_sweep</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Canvas -->
+  <div class="dw-canvas-wrap" id="dwCanvasWrap">
+    <canvas id="dwCanvas"></canvas>
+    <div class="dw-toast" id="dwToast"></div>
+  </div>
+
+  <!-- Size popover (fixed, above toolbar) -->
+  <div class="dw-size-pop" id="dwSizePop" onclick="event.stopPropagation()">
+    <div class="dw-sp-header">
+      <span class="dw-sp-label">Tool Size</span>
+      <span class="dw-sp-val" id="dwSizeVal">5px</span>
+    </div>
+    <input type="range" class="dw-slider" id="dwSizeSlider" min="1" max="80" value="5"
+           oninput="dwSizeInput(this.value)">
+    <div class="dw-sp-preview">
+      <div class="dw-sp-dot" id="dwSizeDot"
+           style="width:5px;height:5px;background:var(--text);"></div>
+    </div>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="dw-toolbar">
+    <div class="dw-rack" id="dwRack">
+      <!-- Eraser (built by JS) -->
+      <!-- Separator -->
+      <!-- Markers -->
+      <!-- Custom marker -->
+      <!-- End spacer -->
+    </div>
+  </div>
+
+  <!-- ColorChooser overlay -->
+  <div class="dw-cc-overlay" id="dwCcOverlay" onclick="dwCcOutClick(event)">
+    <div class="dw-cc-popup">
+      <iframe class="dw-cc-frame" id="dwCcFrame" src="" allow="same-origin"></iframe>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="dw-footer">
+    <a class="dw-brand" href="https://mahi902.github.io/ColorLabs/" target="_blank" title="Color Labs">
+      <img src="asset/001.png" alt="Color Labs">
+    </a>
+    <div class="dw-footer-btns">
+      <button class="dw-btn dw-btn-cancel" onclick="dwCancel()">Cancel</button>
+      <button class="dw-btn dw-btn-apply" onclick="dwDone()">Insert</button>
+    </div>
+  </div>
+
+</div>
+<script>
+// ═══════════════ Constants ═══════════════
+const MAIN_COLORS  = ['#1e293b','#ef4444','#3b82f6','#22c55e','#eab308'];
+const EXTRA_COLORS = ['#f97316','#a855f7','#ec4899','#06b6d4','#84cc16',
+                      '#6366f1','#14b8a6','#f43f5e','#d946ef','#8b5cf6',
+                      '#334155','#475569','#64748b','#94a3b8','#78350f'];
+const MAX_HIST = 50;
+
+// ═══════════════ State ═══════════════
+let _tool='marker', _color=MAIN_COLORS[0];
+let _penSz=5, _eraserSz=25;
+let _drawing=false, _lx=0, _ly=0;
+let _undo=[], _redo=[];
+let _activeEl=null;
+let _ccPending='#3b82f6';
+
+// ═══════════════ DOM ═══════════════
+const canvas  = document.getElementById('dwCanvas');
+const ctx     = canvas.getContext('2d');
+const wrap    = document.getElementById('dwCanvasWrap');
+const sizePop = document.getElementById('dwSizePop');
+const sizeSlider = document.getElementById('dwSizeSlider');
+const toastEl = document.getElementById('dwToast');
+
+// ═══════════════ Init ═══════════════
+(function init(){
+  parseHash();
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+  buildRack();
+  bindCanvas();
+  // select first marker (after build)
+  setTimeout(()=>{
+    const first = document.querySelector('.dw-mitem[data-color]');
+    if(first) first.click();
+  },30);
+})();
+
+// ═══════════════ Hash ═══════════════
+function parseHash(){
+  const map={};
+  location.hash.replace('#','').split('|').forEach(p=>{
+    const i=p.indexOf('=');
+    if(i>0) map[p.slice(0,i)]=decodeURIComponent(p.slice(i+1));
+  });
+  if(map.theme==='dark') document.body.classList.add('dark');
+  else if(map.theme==='light') document.body.classList.remove('dark');
+  else{
+    try{
+      const m=parent.document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));
+      if(m&&m.split('=')[1]==='dark') document.body.classList.add('dark');
+    }catch(e){}
+  }
+  if(map.title) document.getElementById('dwTitleText').textContent=map.title;
+}
+
+// ═══════════════ Canvas resize ═══════════════
+function resizeCanvas(){
+  const d=canvas.toDataURL();
+  canvas.width=wrap.clientWidth;
+  canvas.height=wrap.clientHeight;
+  const img=new Image();
+  img.onload=()=>ctx.drawImage(img,0,0);
+  img.src=d;
+}
+
+// ═══════════════ Rack builder ═══════════════
+function markerSVG(color){
+  const id = 'mg' + color.replace('#','');
+  return `<svg viewBox="0 0 100 240" style="width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="${id}" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f1f5f9"/>
+      <stop offset="50%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#e2e8f0"/>
+    </linearGradient></defs>
+    <path d="M 25,70 L 25,180 Q 25,190 35,190 L 65,190 Q 75,190 75,180 L 75,70 Z" fill="url(#${id})" stroke="#1e293b" stroke-width="3"/>
+    <path d="M 25,180 L 25,200 Q 25,215 50,215 Q 75,215 75,200 L 75,180 Z" fill="${color}" stroke="#1e293b" stroke-width="3"/>
+    <path d="M 25,70 L 75,70 L 70,55 L 30,55 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="3"/>
+    <path d="M 30,55 L 50,10 L 70,55 Z" fill="${color}" stroke="#1e293b" stroke-width="3"/>
+  </svg>`;
+}
+
+function customSlotSVG(color){
+  if(color){
+    return `<svg viewBox="0 0 100 240" style="width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="mgcustom" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" style="stop-color:#f1f5f9"/>
+        <stop offset="50%" style="stop-color:#ffffff"/>
+        <stop offset="100%" style="stop-color:#e2e8f0"/>
+      </linearGradient></defs>
+      <path d="M 25,70 L 25,180 Q 25,190 35,190 L 65,190 Q 75,190 75,180 L 75,70 Z" fill="url(#mgcustom)" stroke="#1e293b" stroke-width="3"/>
+      <path d="M 25,180 L 25,200 Q 25,215 50,215 Q 75,215 75,200 L 75,180 Z" fill="${color}" stroke="#1e293b" stroke-width="3"/>
+      <path d="M 25,70 L 75,70 L 70,55 L 30,55 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="3"/>
+      <path d="M 30,55 L 50,10 L 70,55 Z" fill="${color}" stroke="#1e293b" stroke-width="3"/>
+    </svg>`;
+  }
+  return `<svg viewBox="0 0 100 240" style="width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 25,70 L 25,180 Q 25,190 35,190 L 65,190 Q 75,190 75,180 L 75,70 Z" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+    <path d="M 25,180 L 25,200 Q 25,215 50,215 Q 75,215 75,200 L 75,180 Z" fill="#f1f5f9" stroke="#1e293b" stroke-width="3"/>
+    <path d="M 25,70 L 75,70 L 70,55 L 30,55 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="3"/>
+    <path d="M 30,55 L 50,10 L 70,55 Z" fill="#ffffff" stroke="#1e293b" stroke-width="3"/>
+    <line x1="50" y1="110" x2="50" y2="150" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round"/>
+    <line x1="30" y1="130" x2="70" y2="130" stroke="#cbd5e1" stroke-width="6" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function buildRack(){
+  const rack=document.getElementById('dwRack');
+  rack.innerHTML='';
+
+  // — Eraser —
+  const eraserWrap=document.createElement('div');
+  eraserWrap.className='dw-mitem';
+  eraserWrap.style.cssText='width:44px;height:100px;';
+  eraserWrap.title='Eraser';
+  // Build SVG inline
+  eraserWrap.innerHTML=`<svg viewBox="0 0 60 140" style="width:100%;height:100%;pointer-events:none;" xmlns="http://www.w3.org/2000/svg">
+    <path d="M 10,40 L 10,10 Q 10,0 20,0 L 40,0 Q 50,0 50,10 L 50,40" fill="#fca5a5" stroke="#1e293b" stroke-width="2.5"/>
+    <rect x="10" y="40" width="40" height="22" fill="#e2e8f0" stroke="#1e293b" stroke-width="2.5"/>
+    <path d="M 10,62 L 10,128 Q 10,136 18,136 L 42,136 Q 50,136 50,128 L 50,62 Z" fill="#fcd34d" stroke="#1e293b" stroke-width="2.5"/>
+  </svg>`;
+  eraserWrap.addEventListener('click',e=>handleItemClick('eraser', null, eraserWrap, e));
+  rack.appendChild(eraserWrap);
+
+  // — Separator —
+  const sep1=document.createElement('div');
+  sep1.className='dw-rack-sep';
+  rack.appendChild(sep1);
+
+  // — Main markers —
+  MAIN_COLORS.forEach(color=>{
+    const el=document.createElement('div');
+    el.className='dw-mitem';
+    el.style.cssText='width:40px;height:90px;';
+    el.dataset.color=color;
+    el.title=color;
+    el.innerHTML=markerSVG(color);
+    el.addEventListener('click',e=>handleItemClick('marker',color,el,e));
+    rack.appendChild(el);
+  });
+
+  // — Extra separator —
+  const sep2=document.createElement('div');
+  sep2.className='dw-rack-sep';
+  rack.appendChild(sep2);
+
+  // — Extra markers —
+  EXTRA_COLORS.forEach(color=>{
+    const el=document.createElement('div');
+    el.className='dw-mitem';
+    el.style.cssText='width:40px;height:90px;';
+    el.dataset.color=color;
+    el.title=color;
+    el.innerHTML=markerSVG(color);
+    el.addEventListener('click',e=>handleItemClick('marker',color,el,e));
+    rack.appendChild(el);
+  });
+
+  // — Custom marker —
+  const sep3=document.createElement('div');
+  sep3.className='dw-rack-sep';
+  rack.appendChild(sep3);
+
+  const customEl=document.createElement('div');
+  customEl.className='dw-mitem';
+  customEl.id='dwCustomSlot';
+  customEl.style.cssText='width:40px;height:90px;';
+  customEl.title='Custom color';
+  customEl.innerHTML=customSlotSVG(null);
+  customEl.addEventListener('click',e=>{
+    e.stopPropagation();
+    if(_activeEl===customEl){
+      dwCcOpen();
+    } else {
+      handleItemClick('marker',_ccPending,customEl,e);
+      dwCcOpen();
+    }
+  });
+  rack.appendChild(customEl);
+
+  // — End spacer —
+  const end=document.createElement('div');
+  end.className='dw-rack-end';
+  rack.appendChild(end);
+}
+
+// ═══════════════ Item selection ═══════════════
+function handleItemClick(tool, color, el, e){
+  if(e) e.stopPropagation();
+  if(_activeEl===el){
+    // Second tap → size popover
+    if(sizePop.classList.contains('open')) hideSizePop();
+    else showSizePop();
+    return;
+  }
+  hideSizePop();
+  if(_activeEl) _activeEl.classList.remove('active');
+  _activeEl=el;
+  el.classList.add('active');
+  _tool=tool;
+  if(color) _color=color;
+  canvas.classList.toggle('eraser-mode', tool==='eraser');
+}
+
+// ═══════════════ Size popover ═══════════════
+function toggleSizePop(){
+  sizePop.classList.contains('open') ? hideSizePop() : showSizePop();
+}
+function showSizePop(){
+  const cur=_tool==='eraser'?_eraserSz:_penSz;
+  sizeSlider.value=cur;
+  dwSizeInput(cur);
+  sizePop.classList.add('open');
+}
+function hideSizePop(){
+  sizePop.classList.remove('open');
+}
+function dwSizeInput(v){
+  v=parseInt(v);
+  if(_tool==='eraser') _eraserSz=v; else _penSz=v;
+  document.getElementById('dwSizeVal').textContent=v+'px';
+  const dot=document.getElementById('dwSizeDot');
+  const vis=Math.min(v,40);
+  dot.style.width=vis+'px';
+  dot.style.height=vis+'px';
+  dot.style.background=_tool==='eraser'?'#fca5a5':_color;
+}
+// Close size pop on outside click — use mousedown so it runs before click handlers
+document.addEventListener('mousedown',e=>{
+  if(!sizePop.contains(e.target) && !_activeEl?.contains(e.target)) hideSizePop();
+});
+
+// ═══════════════ Canvas drawing ═══════════════
+function bindCanvas(){
+  canvas.addEventListener('pointerdown',e=>{e.preventDefault();pushState();_drawing=true;const p=pt(e);_lx=p.x;_ly=p.y;doStroke(p.x,p.y,p.x+.1,p.y+.1);});
+  canvas.addEventListener('pointermove',e=>{e.preventDefault();if(!_drawing)return;const p=pt(e);doStroke(_lx,_ly,p.x,p.y);_lx=p.x;_ly=p.y;});
+  canvas.addEventListener('pointerup',  ()=>{if(_drawing){_drawing=false;saveLocal();updateHist();}});
+  canvas.addEventListener('pointerout', ()=>{if(_drawing){_drawing=false;saveLocal();updateHist();}});
+}
+function pt(e){
+  const r=canvas.getBoundingClientRect();
+  return{x:(e.clientX??e.touches?.[0].clientX??0)-r.left,
+         y:(e.clientY??e.touches?.[0].clientY??0)-r.top};
+}
+function doStroke(x1,y1,x2,y2){
+  ctx.beginPath();ctx.lineCap='round';ctx.lineJoin='round';
+  if(_tool==='eraser'){
+    ctx.globalCompositeOperation='destination-out';
+    ctx.lineWidth=_eraserSz;
+  } else {
+    ctx.globalCompositeOperation='source-over';
+    ctx.strokeStyle=_color;
+    ctx.lineWidth=_penSz;
+  }
+  ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+}
+
+// ═══════════════ Undo / Redo ═══════════════
+function pushState(){
+  _undo.push(canvas.toDataURL());
+  if(_undo.length>MAX_HIST) _undo.shift();
+  _redo=[];
+  updateHist();
+}
+function dwUndo(){
+  if(!_undo.length) return;
+  _redo.push(canvas.toDataURL());
+  restoreState(_undo.pop());
+}
+function dwRedo(){
+  if(!_redo.length) return;
+  _undo.push(canvas.toDataURL());
+  restoreState(_redo.pop());
+}
+function restoreState(url){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const img=new Image();
+  img.onload=()=>{ctx.drawImage(img,0,0);saveLocal();updateHist();};
+  img.src=url;
+}
+function updateHist(){
+  document.getElementById('btnUndo').disabled=_undo.length===0;
+  document.getElementById('btnRedo').disabled=_redo.length===0;
+}
+function dwClear(){
+  pushState();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  saveLocal();
+  showToast('Canvas cleared');
+}
+function saveLocal(){try{localStorage.setItem('clabs-draw1',canvas.toDataURL());}catch(e){}}
+
+// ═══════════════ Toast ═══════════════
+let _toastT=null;
+function showToast(msg){
+  toastEl.textContent=msg;
+  toastEl.classList.add('show');
+  clearTimeout(_toastT);
+  _toastT=setTimeout(()=>toastEl.classList.remove('show'),2500);
+}
+
+// ═══════════════ ColorChooser iframe integration ═══════════════
+const CC_URL = 'colorchooser1.html';
+
+function _ccTheme(){ return document.body.classList.contains('dark') ? 'dark' : 'light'; }
+function _ccBuildUrl(cur){
+  let h = 'theme=' + _ccTheme();
+  if(cur) h += '|currentcolor=' + encodeURIComponent(cur);
+  return CC_URL + '#' + h;
+}
+
+function dwCcOpen(){
+  const frame = document.getElementById('dwCcFrame');
+  frame.src = _ccBuildUrl(_ccPending);
+  document.getElementById('dwCcOverlay').classList.add('open');
+}
+function dwCcClose(){
+  document.getElementById('dwCcOverlay').classList.remove('open');
+  setTimeout(()=>{ document.getElementById('dwCcFrame').src=''; }, 200);
+}
+function dwCcOutClick(e){
+  if(e.target===document.getElementById('dwCcOverlay')) dwCcClose();
+}
+function _dwCcApply(hex){
+  _ccPending = hex;
+  const slot = document.getElementById('dwCustomSlot');
+  slot.innerHTML = customSlotSVG(hex);
+  if(_activeEl) _activeEl.classList.remove('active');
+  _activeEl = slot;
+  slot.classList.add('active');
+  _tool = 'marker';
+  _color = hex;
+  canvas.classList.remove('eraser-mode');
+  dwCcClose();
+}
+
+// Listen for postMessage from colorchooser iframe
+window.addEventListener('message', function(ev){
+  if(!ev.data || typeof ev.data !== 'object') return;
+  if(ev.data.type === 'cc-applied') _dwCcApply(ev.data.color);
+  else if(ev.data.type === 'cc-cancelled') dwCcClose();
+});
+// Hash fallback (same-origin)
+(function(){
+  const frame = document.getElementById('dwCcFrame');
+  if(frame) frame.addEventListener('load', function(){
+    try{
+      const h = frame.contentWindow.location.hash;
+      if(h.startsWith('#applied')){
+        const hex = h.replace('#applied','');
+        if(/^#[0-9a-fA-F]{6}$/.test(hex)) _dwCcApply(hex);
+      } else if(h === '#cancelled'){
+        dwCcClose();
+      }
+    }catch(e){}
+  });
+})();
+// Escape closes CC overlay
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape' && document.getElementById('dwCcOverlay').classList.contains('open')) dwCcClose();
+});
+
+// ═══════════════ Output ═══════════════
+function dwCancel(){
+  history.replaceState(null,'','#draw-cancelled');
+  try{if(parent&&parent!==window)parent.postMessage({type:'draw-cancelled'},'*');}catch(e){}
+}
+function dwDone(){
+  const dataUrl = canvas.toDataURL('image/png');
+  history.replaceState(null,'','#draw-done');
+  try{if(parent&&parent!==window)parent.postMessage({type:'draw-done',dataUrl},'*');}catch(e){}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Chart Maker</title>
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../vendor/fonts/material.css">
+<script src="../vendor/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{font-family:'Quicksand',sans-serif;font-size:14px;width:100%;height:100%;overflow:hidden;}
+
+:root{
+  --bg:#ffffff;--bg2:#f4f4f5;--bg3:#e4e4e7;
+  --border:#e4e4e7;--text:#18181b;--text2:#71717a;--text3:#a1a1aa;
+  --accent:#2196f3;--accent-bg:#e3f2fd;--accent-hover:#1976d2;
+  --apply-bg:#2196f3;--apply-hover:#1565c0;
+  --cancel-bg:#f4f4f5;--cancel-text:#52525b;--cancel-hover:#e4e4e7;
+  --shadow:0 2px 16px rgba(0,0,0,.08);--shadow2:0 4px 24px rgba(0,0,0,.13);
+  --danger:#ef4444;--danger-bg:#fef2f2;
+}
+.dark{
+  --bg:#09090b;--bg2:#18181b;--bg3:#27272a;
+  --border:#27272a;--text:#fafafa;--text2:#a1a1aa;--text3:#52525b;
+  --accent:#42a5f5;--accent-bg:#172035;--accent-hover:#64b5f6;
+  --apply-bg:#1976d2;--apply-hover:#1565c0;
+  --cancel-bg:#27272a;--cancel-text:#a1a1aa;--cancel-hover:#3f3f46;
+  --shadow:0 2px 16px rgba(0,0,0,.4);--shadow2:0 4px 24px rgba(0,0,0,.5);
+  --danger:#f87171;--danger-bg:#2a1515;
+}
+body{background:var(--bg);color:var(--text);}
+
+/* ── Wrap ── */
+.cm-wrap{display:flex;flex-direction:column;height:100dvh;}
+
+/* ── Header ── */
+.cm-header{
+  padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;
+  animation:slideDown .3s cubic-bezier(.22,.68,0,1.2) both;
+}
+.cm-title{font-size:15px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:7px;}
+.cm-title .material-symbols-rounded{font-size:19px;color:var(--accent);animation:spinIn .5s cubic-bezier(.22,.68,0,1.2) both .1s;}
+
+/* ── Progress bar ── */
+.cm-progress-track{height:3px;background:var(--bg3);border-radius:2px;flex-shrink:0;}
+.cm-progress-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .3s ease;}
+
+/* ── Body (single question + options, used on ALL screen sizes) ── */
+.cm-body{
+  flex:1;display:flex;flex-direction:column;align-items:stretch;
+  padding:16px 16px 8px;gap:12px;overflow-y:auto;
+  animation:fadeSlideUp .28s ease both;
+  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
+}
+.cm-body::-webkit-scrollbar{width:4px;}
+.cm-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+
+.cm-wiz-label{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--text3);margin-bottom:2px;
+}
+.cm-wiz-question{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.4;}
+
+/* ── Option grid ── */
+.cm-opt-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.cm-opt-btn{
+  padding:13px 12px;border-radius:12px;border:2px solid var(--border);
+  background:var(--bg2);cursor:pointer;font-size:13px;font-weight:700;
+  font-family:inherit;color:var(--text);display:flex;align-items:center;gap:8px;
+  transition:border-color .15s,background .15s,transform .12s cubic-bezier(.22,.68,0,1.4);
+}
+.cm-opt-btn:hover{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
+.cm-opt-btn:active{transform:scale(.96);}
+.cm-opt-btn.selected{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
+.cm-opt-btn .material-symbols-rounded{font-size:19px;}
+
+/* ── Number / text input ── */
+.cm-wiz-inp{
+  width:100%;border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;
+  font-size:15px;font-family:inherit;font-weight:600;background:var(--bg);color:var(--text);
+  outline:none;transition:border-color .15s,box-shadow .15s;
+}
+.cm-wiz-inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg);}
+
+/* ── Color row ── */
+.cm-color-row{display:flex;align-items:center;gap:10px;}
+.cm-color-swatch{
+  width:46px;height:46px;border-radius:12px;border:2px solid var(--border);
+  cursor:pointer;flex-shrink:0;transition:border-color .15s,transform .12s;overflow:hidden;position:relative;
+}
+.cm-color-swatch:hover{border-color:var(--accent);transform:scale(1.06);}
+.cm-color-from-labs{
+  flex:1;padding:11px 14px;border-radius:10px;border:1.5px solid var(--border);
+  background:var(--bg2);cursor:pointer;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;
+  font-family:inherit;color:var(--text2);display:flex;align-items:center;gap:7px;
+  transition:border-color .15s,background .15s;text-transform:uppercase;
+}
+.cm-color-from-labs:hover{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
+.cm-color-from-labs .material-symbols-rounded{font-size:17px;}
+
+/* ── Pillar dots ── */
+.cm-pillar-dots{display:flex;justify-content:center;gap:6px;padding:8px 0;flex-wrap:wrap;}
+.cm-pillar-dot{
+  width:7px;height:7px;border-radius:50%;background:var(--bg3);cursor:pointer;
+  transition:background .2s,transform .2s;
+}
+.cm-pillar-dot.done{background:var(--accent);}
+.cm-pillar-dot.active{background:var(--accent);transform:scale(1.4);}
+
+/* ── Nav row ── */
+.cm-nav-row{display:flex;gap:8px;margin-top:auto;padding-top:8px;flex-shrink:0;}
+.cm-nav-btn{
+  padding:10px 16px;border-radius:10px;border:1.5px solid var(--border);
+  background:var(--bg2);cursor:pointer;font-size:13px;font-weight:700;
+  font-family:inherit;color:var(--text2);display:flex;align-items:center;gap:5px;
+  transition:border-color .15s,background .15s;
+}
+.cm-nav-btn:hover{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
+.cm-nav-btn:disabled{opacity:.35;pointer-events:none;}
+.cm-nav-btn.cm-nav-next{
+  flex:1;justify-content:center;border-color:var(--accent);background:var(--accent-bg);color:var(--accent);
+}
+.cm-nav-btn .material-symbols-rounded{font-size:17px;}
+
+/* ── Chart preview ── */
+.cm-preview-wrap{
+  flex-shrink:0;padding:10px 16px;border-top:1px solid var(--border);
+  display:flex;flex-direction:column;gap:8px;
+}
+.cm-preview-canvas-wrap{
+  background:var(--bg2);border-radius:12px;border:1px solid var(--border);
+  overflow:hidden;position:relative;min-height:180px;display:flex;align-items:center;justify-content:center;
+}
+.cm-preview-canvas-wrap canvas{max-width:100%;max-height:240px;}
+
+/* ── Footer ── */
+.cm-footer{
+  padding:10px 14px 12px;border-top:1px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:var(--bg);position:sticky;bottom:0;z-index:10;
+  animation:slideUp .3s cubic-bezier(.22,.68,0,1.2) both .05s;
+}
+.cm-brand{display:flex;align-items:center;gap:5px;text-decoration:none;opacity:.6;transition:opacity .15s,transform .2s;flex-shrink:0;}
+.cm-brand:hover{opacity:1;transform:scale(1.05);}
+.cm-brand img{width:80px;height:80px;border-radius:5px;object-fit:contain;}
+.cm-footer-btns{display:flex;align-items:center;gap:8px;}
+.cm-btn{
+  padding:9px 20px;border-radius:12px;border:none;cursor:pointer;
+  font-size:13px;font-weight:700;font-family:inherit;
+  transition:background .15s,transform .12s cubic-bezier(.22,.68,0,1.4),box-shadow .15s;
+}
+.cm-btn:active{transform:scale(.95);}
+.cm-btn-cancel{background:var(--cancel-bg);color:var(--cancel-text);}
+.cm-btn-cancel:hover{background:var(--cancel-hover);}
+.cm-btn-apply{background:var(--apply-bg);color:#fff;box-shadow:0 2px 8px rgba(33,150,243,.25);}
+.cm-btn-apply:hover{background:var(--apply-hover);box-shadow:0 4px 16px rgba(33,150,243,.35);}
+.cm-btn-apply:disabled{background:var(--bg3);color:var(--text3);box-shadow:none;cursor:not-allowed;}
+
+/* ── ColorLabs popup overlay ── */
+.cm-cc-overlay{
+  position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(4px);animation:ccOvIn .18s ease;
+}
+.cm-cc-overlay.open{display:flex;}
+.cm-cc-popup{
+  background:var(--bg);border-radius:20px;box-shadow:0 8px 40px rgba(0,0,0,.28);
+  overflow:hidden;width:min(340px,calc(100vw - 24px));height:min(520px,calc(100dvh - 40px));
+  display:flex;flex-direction:column;animation:ccPopIn .2s cubic-bezier(.34,1.36,.64,1);
+}
+.dark .cm-cc-popup{background:#09090b;box-shadow:0 8px 40px rgba(0,0,0,.7);}
+.cm-cc-frame{width:100%;flex:1;border:none;display:block;}
+
+/* ── Field label ── */
+.cm-field-label{
+  font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;
+  letter-spacing:.5px;margin:8px 0 3px;
+}
+
+/* ── Animations ── */
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes spinIn{from{opacity:0;transform:rotate(-90deg) scale(.5)}to{opacity:1;transform:rotate(0) scale(1)}}
+@keyframes ccOvIn{from{opacity:0}to{opacity:1}}
+@keyframes ccPopIn{from{opacity:0;transform:scale(.93) translateY(12px)}to{opacity:1;transform:none}}
+@keyframes shakeEl{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-6px)}
+  40%{transform:translateX(6px)}
+  60%{transform:translateX(-4px)}
+  80%{transform:translateX(4px)}
+}
+
+/* ── Wider screens get a bit more breathing room, same layout ── */
+@media(min-width:541px){
+  .cm-wrap{max-width:520px;margin:0 auto;}
+}
+</style>
+</head>
+<body>
+<div class="cm-wrap" id="cmWrap">
+
+  <!-- Header -->
+  <div class="cm-header">
+    <div class="cm-title">
+      <span class="material-symbols-rounded">bar_chart</span>
+      Insert Chart
+    </div>
+  </div>
+
+  <div class="cm-progress-track"><div class="cm-progress-fill" id="wizProgress" style="width:0%"></div></div>
+
+  <!-- Single wizard body, used on every screen size -->
+  <div class="cm-body" id="wizBody"></div>
+
+  <!-- Chart preview -->
+  <div class="cm-preview-wrap" id="previewWrap" style="display:none;">
+    <div class="cm-preview-canvas-wrap">
+      <canvas id="previewCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="cm-footer">
+    <a class="cm-brand" href="https://mahi902.github.io/ColorLabs/" target="_blank" title="Color Labs">
+      <img src="asset/001.png" alt="Color Labs">
+    </a>
+    <div class="cm-footer-btns">
+      <button class="cm-btn cm-btn-cancel" onclick="doCancel()">Cancel</button>
+      <button class="cm-btn cm-btn-apply" id="applyBtn" onclick="doApply()" disabled>Insert</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ColorLabs Color Chooser overlay -->
+<div class="cm-cc-overlay" id="ccOverlay" onclick="ccOverlayClick(event)">
+  <div class="cm-cc-popup">
+    <iframe class="cm-cc-frame" id="ccFrame" src="" allow="same-origin"></iframe>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════════════ */
+let _theme = 'light';
+let _chartType = '';
+let _chartTitle = '';
+let _numPillars = 0;
+let _pillars = []; // [{label, value, fillColor, outlineColor}]
+let _currentPillarIdx = 0;
+let _wizStep = 'chartType'; // chartType → numPillars → pillars → title → done
+
+const CHART_TYPES = [
+  {id:'bar',    label:'Bar',        icon:'bar_chart'},
+  {id:'line',   label:'Line',       icon:'show_chart'},
+  {id:'pie',    label:'Pie',        icon:'pie_chart'},
+  {id:'doughnut',label:'Doughnut',  icon:'donut_large'},
+  {id:'radar',  label:'Radar',      icon:'radar'},
+  {id:'polarArea',label:'Polar Area',icon:'scatter_plot'},
+];
+
+const PALETTE = [
+  '#2196f3','#e91e63','#4caf50','#ff9800','#9c27b0',
+  '#00bcd4','#f44336','#ffeb3b','#3f51b5','#009688'
+];
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+(function init(){
+  parseHash();
+  if(_theme === 'dark') document.body.classList.add('dark');
+  initWizard();
+})();
+
+function parseHash(){
+  const parts = location.hash.replace('#','').split('|');
+  const map = {};
+  parts.forEach(p => { const eq = p.indexOf('='); if(eq>0) map[p.slice(0,eq)] = p.slice(eq+1); });
+  if(map.theme === 'dark') _theme = 'dark';
+  else if(map.theme === 'light') _theme = 'light';
+  else {
+    try{ const m = parent.document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme=')); if(m && m.split('=')[1]==='dark') _theme = 'dark'; }catch(e){}
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   WIZARD — single chooser flow, used on all screen sizes
+═══════════════════════════════════════════════════════ */
+function initWizard(){
+  _wizStep = 'chartType'; _currentPillarIdx = 0;
+  _chartType = ''; _numPillars = 0; _pillars = []; _chartTitle = '';
+  document.getElementById('applyBtn').disabled = true;
+  document.getElementById('previewWrap').style.display = 'none';
+  renderWizard();
+}
+
+function renderWizard(){
+  const body = document.getElementById('wizBody');
+  body.innerHTML = '';
+  updateWizProgress();
+
+  if(_wizStep === 'chartType'){
+    addWizLabel(body,'Step 1 of 4');
+    addWizQuestion(body,'What kind of chart?');
+    const grid = document.createElement('div');
+    grid.className = 'cm-opt-grid';
+    CHART_TYPES.forEach(t => {
+      const btn = document.createElement('button');
+      btn.className = 'cm-opt-btn' + (_chartType===t.id?' selected':'');
+      btn.innerHTML = `<span class="material-symbols-rounded">${t.icon}</span>${t.label}`;
+      btn.onclick = () => { _chartType = t.id; _wizStep = 'numPillars'; renderWizard(); };
+      grid.appendChild(btn);
+    });
+    body.appendChild(grid);
+  } else if(_wizStep === 'numPillars'){
+    addWizLabel(body,'Step 2 of 4');
+    addWizQuestion(body,'How many data points?');
+    const inp = mkWizInp('number','e.g. 4'); inp.min=1; inp.max=20;
+    if(_numPillars) inp.value = _numPillars;
+    body.appendChild(inp);
+    addWizNav(body,
+      () => { _wizStep = 'chartType'; renderWizard(); },
+      () => {
+        const n = parseInt(inp.value);
+        if(!n||n<1||n>20){ shake(inp); return; }
+        _numPillars = n;
+        if(!_pillars.length || _pillars.length !== n){
+          _pillars = Array.from({length:n}, (_,i) => ({
+            label:'',value:0,
+            fillColor:PALETTE[i%PALETTE.length],
+            outlineColor:PALETTE[i%PALETTE.length]
+          }));
+        }
+        _currentPillarIdx = 0; _wizStep = 'pillars'; renderWizard();
+      }
+    );
+    inp.focus();
+  } else if(_wizStep === 'pillars'){
+    const p = _pillars[_currentPillarIdx];
+    addWizLabel(body,`Data Point ${_currentPillarIdx+1} of ${_numPillars}`);
+    addWizQuestion(body,`Configure point ${_currentPillarIdx+1}`);
+
+    addFieldLabel(body,'Label');
+    const lInp = mkWizInp('text',`e.g. Category ${_currentPillarIdx+1}`);
+    if(p.label) lInp.value = p.label;
+    body.appendChild(lInp);
+
+    addFieldLabel(body,'Value');
+    const vInp = mkWizInp('number','e.g. 42');
+    if(p.value) vInp.value = p.value;
+    body.appendChild(vInp);
+
+    addFieldLabel(body,'Fill color');
+    body.appendChild(mkWizColorRow(p,'fill'));
+
+    addFieldLabel(body,'Outline color');
+    body.appendChild(mkWizColorRow(p,'outline'));
+
+    addPillarDots(body);
+
+    addWizNav(body,
+      () => {
+        saveWizPillar(lInp,vInp,p);
+        if(_currentPillarIdx > 0){ _currentPillarIdx--; }
+        else { _wizStep = 'numPillars'; }
+        renderWizard();
+      },
+      () => {
+        saveWizPillar(lInp,vInp,p);
+        if(_currentPillarIdx < _numPillars-1){ _currentPillarIdx++; renderWizard(); }
+        else { _wizStep = 'title'; renderWizard(); }
+      },
+      _currentPillarIdx < _numPillars-1 ? 'Next point' : 'Next'
+    );
+  } else if(_wizStep === 'title'){
+    addWizLabel(body,'Step 4 of 4');
+    addWizQuestion(body,'Chart title?');
+    const inp = mkWizInp('text','e.g. My Sales Chart');
+    if(_chartTitle) inp.value = _chartTitle;
+    body.appendChild(inp);
+    addWizNav(body,
+      () => { _wizStep = 'pillars'; _currentPillarIdx = _numPillars-1; renderWizard(); },
+      () => {
+        _chartTitle = inp.value.trim() || 'My Chart';
+        _wizStep = 'done'; renderWizard();
+        document.getElementById('applyBtn').disabled = false;
+      }
+    );
+    inp.focus();
+  } else if(_wizStep === 'done'){
+    addWizLabel(body,'Done!');
+    addWizQuestion(body,'Chart preview below. Tap Insert to add it.');
+    document.getElementById('previewWrap').style.display = '';
+    renderChartOn(document.getElementById('previewCanvas'));
+    const btn = document.createElement('button');
+    btn.className = 'cm-opt-btn'; btn.style.justifyContent='center';
+    btn.innerHTML = '<span class="material-symbols-rounded">restart_alt</span> Start over';
+    btn.onclick = () => initWizard();
+    body.appendChild(btn);
+    addWizNav(body,
+      () => { _wizStep = 'title'; renderWizard(); },
+      null,
+      null,
+      true /* hideNext */
+    );
+  }
+}
+
+function saveWizPillar(lInp,vInp,p){
+  if(lInp.value.trim()) p.label = lInp.value.trim();
+  if(vInp.value) p.value = parseFloat(vInp.value)||0;
+}
+
+function addWizLabel(parent,text){
+  const el = document.createElement('div');
+  el.className = 'cm-wiz-label'; el.textContent = text;
+  parent.appendChild(el);
+}
+function addWizQuestion(parent,text){
+  const el = document.createElement('div');
+  el.className = 'cm-wiz-question'; el.textContent = text;
+  parent.appendChild(el);
+}
+function addFieldLabel(parent,text){
+  const el = document.createElement('div');
+  el.className = 'cm-field-label';
+  el.textContent = text;
+  parent.appendChild(el);
+}
+
+function mkWizInp(type,placeholder){
+  const el = document.createElement('input');
+  el.type=type; el.placeholder=placeholder; el.className='cm-wiz-inp';
+  return el;
+}
+
+function mkWizColorRow(p,field){
+  const row = document.createElement('div');
+  row.className = 'cm-color-row';
+  const current = field==='fill'?p.fillColor:p.outlineColor;
+
+  const swatch = document.createElement('div');
+  swatch.className = 'cm-color-swatch';
+  swatch.style.background = current;
+
+  const labsBtn = document.createElement('button');
+  labsBtn.className = 'cm-color-from-labs';
+  labsBtn.innerHTML = `<span class="material-symbols-rounded">palette</span> ${current}`;
+
+  const openPicker = () => openColorChooser((field==='fill'?p.fillColor:p.outlineColor), (hex) => {
+    swatch.style.background = hex;
+    labsBtn.innerHTML = `<span class="material-symbols-rounded">palette</span> ${hex}`;
+    if(field==='fill') p.fillColor = hex;
+    else p.outlineColor = hex;
+  });
+
+  swatch.onclick = openPicker;
+  labsBtn.onclick = openPicker;
+
+  row.appendChild(swatch); row.appendChild(labsBtn);
+  return row;
+}
+
+function addPillarDots(parent){
+  const wrap = document.createElement('div');
+  wrap.className = 'cm-pillar-dots';
+  _pillars.forEach((_,i) => {
+    const dot = document.createElement('div');
+    dot.className = 'cm-pillar-dot' + (i===_currentPillarIdx?' active':(_pillars[i].label?' done':''));
+    dot.onclick = () => { _currentPillarIdx=i; renderWizard(); };
+    wrap.appendChild(dot);
+  });
+  parent.appendChild(wrap);
+}
+
+function addWizNav(parent, onBack, onNext, nextLabel, hideNext){
+  const row = document.createElement('div');
+  row.className = 'cm-nav-row';
+
+  const back = document.createElement('button');
+  back.className = 'cm-nav-btn';
+  back.innerHTML = '<span class="material-symbols-rounded">arrow_back</span> Back';
+  back.onclick = onBack;
+  row.appendChild(back);
+
+  if(!hideNext){
+    const next = document.createElement('button');
+    next.className = 'cm-nav-btn cm-nav-next';
+    next.innerHTML = `${nextLabel||'Next'} <span class="material-symbols-rounded">arrow_forward</span>`;
+    next.onclick = onNext;
+    row.appendChild(next);
+  }
+
+  parent.appendChild(row);
+}
+
+function updateWizProgress(){
+  const steps = {chartType:0,numPillars:25,pillars:50,title:75,done:100};
+  const pct = steps[_wizStep]||0;
+  document.getElementById('wizProgress').style.width = pct+'%';
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHART RENDERING (preview)
+═══════════════════════════════════════════════════════ */
+function renderChartOn(canvas){
+  if(!_pillars.length || !_chartType) return;
+  const existing = Chart.getChart(canvas);
+  if(existing) existing.destroy();
+
+  const labels = _pillars.map(p => p.label || '?');
+  const values = _pillars.map(p => p.value);
+  const fills = _pillars.map(p => p.fillColor);
+  const outlines = _pillars.map(p => p.outlineColor);
+
+  const isDark = document.body.classList.contains('dark');
+  const textColor = isDark ? '#fafafa' : '#18181b';
+  const gridColor = isDark ? 'rgba(255,255,255,.08)' : 'rgba(0,0,0,.07)';
+
+  let cfg;
+  if(_chartType==='pie'||_chartType==='doughnut'){
+    cfg = {
+      type:_chartType,
+      data:{labels, datasets:[{data:values,backgroundColor:fills,borderColor:outlines,borderWidth:2}]},
+      options:{responsive:true,maintainAspectRatio:true,
+        plugins:{legend:{labels:{color:textColor,font:{family:'Quicksand',weight:'600'}}},
+          title:{display:!!_chartTitle,text:_chartTitle,color:textColor,font:{size:14,family:'Quicksand',weight:'700'}}}}
+    };
+  } else if(_chartType==='radar'||_chartType==='polarArea'){
+    cfg = {
+      type:_chartType,
+      data:{labels, datasets:[{label:'Values',data:values,backgroundColor:fills[0]+'88',borderColor:outlines[0],borderWidth:2,pointBackgroundColor:fills}]},
+      options:{responsive:true,maintainAspectRatio:true,
+        scales:{r:{ticks:{color:textColor,backdropColor:'transparent'},grid:{color:gridColor},pointLabels:{color:textColor,font:{family:'Quicksand'}}}},
+        plugins:{legend:{display:false},title:{display:!!_chartTitle,text:_chartTitle,color:textColor,font:{size:14,family:'Quicksand',weight:'700'}}}}
+    };
+  } else {
+    cfg = {
+      type:_chartType,
+      data:{labels, datasets:[{label:_chartTitle||'Values',data:values,backgroundColor:fills,borderColor:outlines,borderWidth:2,tension:.35,fill:false,pointBackgroundColor:fills}]},
+      options:{responsive:true,maintainAspectRatio:true,
+        scales:{
+          x:{ticks:{color:textColor,font:{family:'Quicksand'}},grid:{color:gridColor}},
+          y:{ticks:{color:textColor,font:{family:'Quicksand'}},grid:{color:gridColor},beginAtZero:true}
+        },
+        plugins:{legend:{display:_chartType==='line',labels:{color:textColor}},
+          title:{display:!!_chartTitle,text:_chartTitle,color:textColor,font:{size:14,family:'Quicksand',weight:'700'}}}}
+    };
+  }
+  new Chart(canvas.getContext('2d'), cfg);
+}
+
+/* ═══════════════════════════════════════════════════════
+   EXPORT — render to offscreen 800×480 canvas → dataURL
+═══════════════════════════════════════════════════════ */
+function buildExportDataUrl(){
+  return new Promise((resolve) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 800; canvas.height = 480;
+    const existing = Chart.getChart(canvas);
+    if(existing) existing.destroy();
+
+    const labels = _pillars.map(p => p.label || '?');
+    const values = _pillars.map(p => p.value);
+    const fills = _pillars.map(p => p.fillColor);
+    const outlines = _pillars.map(p => p.outlineColor);
+
+    let cfg;
+    if(_chartType==='pie'||_chartType==='doughnut'){
+      cfg = {type:_chartType,data:{labels,datasets:[{data:values,backgroundColor:fills,borderColor:outlines,borderWidth:2}]},
+        options:{responsive:false,animation:{onComplete:()=>{ resolve(canvas.toDataURL('image/png')); }},
+          plugins:{legend:{labels:{font:{family:'Quicksand',weight:'600'}}},title:{display:!!_chartTitle,text:_chartTitle,font:{size:18,family:'Quicksand',weight:'700'}}}}};
+    } else if(_chartType==='radar'||_chartType==='polarArea'){
+      cfg = {type:_chartType,data:{labels,datasets:[{label:'Values',data:values,backgroundColor:fills[0]+'88',borderColor:outlines[0],borderWidth:2,pointBackgroundColor:fills}]},
+        options:{responsive:false,animation:{onComplete:()=>{ resolve(canvas.toDataURL('image/png')); }},
+          scales:{r:{ticks:{backdropColor:'transparent'},grid:{}}},
+          plugins:{legend:{display:false},title:{display:!!_chartTitle,text:_chartTitle,font:{size:18,family:'Quicksand',weight:'700'}}}}};
+    } else {
+      cfg = {type:_chartType,data:{labels,datasets:[{label:_chartTitle||'Values',data:values,backgroundColor:fills,borderColor:outlines,borderWidth:2,tension:.35,fill:false,pointBackgroundColor:fills}]},
+        options:{responsive:false,animation:{onComplete:()=>{ resolve(canvas.toDataURL('image/png')); }},
+          scales:{x:{grid:{}},y:{beginAtZero:true}},
+          plugins:{legend:{display:_chartType==='line'},title:{display:!!_chartTitle,text:_chartTitle,font:{size:18,family:'Quicksand',weight:'700'}}}}};
+    }
+    new Chart(canvas.getContext('2d'), cfg);
+  });
+}
+
+/* ═══════════════════════════════════════════════════════
+   COLOR LABS CHOOSER
+═══════════════════════════════════════════════════════ */
+const CC_URL = 'colorchooser1.html';
+let _ccCallback = null;
+
+function openColorChooser(currentHex, callback){
+  _ccCallback = callback;
+  const frame = document.getElementById('ccFrame');
+  frame.src = CC_URL + '#theme='+_theme+'|currentcolor='+encodeURIComponent(currentHex);
+  document.getElementById('ccOverlay').classList.add('open');
+}
+
+function ccOverlayClick(e){
+  if(e.target === document.getElementById('ccOverlay')) closeCc();
+}
+function closeCc(){
+  document.getElementById('ccOverlay').classList.remove('open');
+  setTimeout(()=>{ document.getElementById('ccFrame').src=''; },200);
+}
+
+window.addEventListener('message', e => {
+  if(!e.data||typeof e.data!=='object') return;
+  if(e.data.type==='cc-applied'){
+    if(_ccCallback) _ccCallback(e.data.color);
+    closeCc();
+  } else if(e.data.type==='cc-cancelled'){
+    closeCc();
+  }
+});
+
+/* ═══════════════════════════════════════════════════════
+   ACTIONS
+═══════════════════════════════════════════════════════ */
+function doCancel(){
+  history.replaceState(null,'','#cancelled');
+  try{ if(parent&&parent!==window) parent.postMessage({type:'chart-cancelled'},'*'); }catch(e){}
+}
+
+async function doApply(){
+  document.getElementById('applyBtn').disabled = true;
+  document.getElementById('applyBtn').textContent = 'Rendering…';
+  try {
+    const dataUrl = await buildExportDataUrl();
+    history.replaceState(null,'','#applied');
+    try{ if(parent&&parent!==window) parent.postMessage({type:'chart-done',dataUrl,title:_chartTitle},'*'); }catch(e){}
+  } catch(err){
+    document.getElementById('applyBtn').disabled = false;
+    document.getElementById('applyBtn').textContent = 'Insert';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════ */
+function shake(el){
+  el.style.borderColor = 'var(--danger)';
+  el.style.animation = 'shakeEl .35s ease';
+  setTimeout(()=>{ el.style.borderColor=''; el.style.animation=''; },400);
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape' && document.getElementById('ccOverlay').classList.contains('open')) closeCc();
+});
+</script>
+</body>
+</html>

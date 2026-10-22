@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Confirm Action</title>
+<link rel="stylesheet" href="../vendor/fonts/fonts.css">
+<link rel="stylesheet" href="../vendor/fonts/material.css">
+<script src="../vendor/marked.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{
+  font-family:'Quicksand',sans-serif;
+  font-size:14px;
+  width:100%;
+  min-height:100%;
+  overflow-x:hidden;
+}
+
+/* ── Theme variables ── */
+:root{
+  --bg:#ffffff;
+  --bg2:#f4f4f5;
+  --bg3:#e4e4e7;
+  --border:#e4e4e7;
+  --text:#18181b;
+  --text2:#71717a;
+  --text3:#a1a1aa;
+  --accent:#2196f3;
+  --accent-bg:#e3f2fd;
+  --accent-hover:#1976d2;
+  --danger:#ef4444;
+  --danger-bg:#fef2f2;
+  --danger-hover:#dc2626;
+  --danger-border:#fecaca;
+  --apply-bg:#ef4444;
+  --apply-hover:#dc2626;
+  --cancel-bg:#f4f4f5;
+  --cancel-text:#52525b;
+  --cancel-hover:#e4e4e7;
+  --shadow:0 2px 16px rgba(0,0,0,.08);
+  --shadow2:0 4px 24px rgba(0,0,0,.13);
+  --input-bg:#ffffff;
+  --input-border:#e4e4e7;
+  --input-focus:#2196f3;
+}
+.dark{
+  --bg:#09090b;
+  --bg2:#18181b;
+  --bg3:#27272a;
+  --border:#27272a;
+  --text:#fafafa;
+  --text2:#a1a1aa;
+  --text3:#52525b;
+  --accent:#42a5f5;
+  --accent-bg:#172035;
+  --accent-hover:#64b5f6;
+  --danger:#f87171;
+  --danger-bg:#2d1414;
+  --danger-hover:#ef4444;
+  --danger-border:#7f1d1d;
+  --apply-bg:#dc2626;
+  --apply-hover:#b91c1c;
+  --cancel-bg:#27272a;
+  --cancel-text:#a1a1aa;
+  --cancel-hover:#3f3f46;
+  --shadow:0 2px 16px rgba(0,0,0,.4);
+  --shadow2:0 4px 24px rgba(0,0,0,.5);
+  --input-bg:#18181b;
+  --input-border:#3f3f46;
+  --input-focus:#42a5f5;
+}
+
+body{background:var(--bg);color:var(--text);}
+
+/* ── Main wrapper ── */
+.ac-wrap{
+  display:flex;flex-direction:column;
+  min-height:100dvh;
+}
+
+/* ── Header ── */
+.ac-header{
+  padding:14px 16px 10px;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+  animation:slideDown .3s cubic-bezier(.22,.68,0,1.2) both;
+}
+.ac-title{
+  font-size:15px;font-weight:700;
+  color:var(--text);
+  display:flex;align-items:center;gap:7px;
+}
+.ac-title .material-symbols-rounded{
+  font-size:19px;color:var(--danger);
+  animation:shakeIn .5s cubic-bezier(.22,.68,0,1.2) both .1s;
+}
+
+/* ── Body ── */
+.ac-body{
+  flex:1;
+  overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border) transparent;
+  padding:16px 16px 10px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.ac-body::-webkit-scrollbar{width:4px;}
+.ac-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+.ac-body::-webkit-scrollbar-track{background:transparent;}
+
+/* ── Step view transitions ── */
+.ac-step{display:flex;flex-direction:column;gap:14px;}
+.ac-step.hidden{display:none;}
+.ac-view-enter{animation:fadeSlideUp .2s ease both;}
+.ac-view-leave{animation:fadeLeave .15s ease both;}
+@keyframes fadeLeave{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-4px)}}
+
+/* ── Confirmation message ── */
+.ac-msg-card{
+  background:var(--danger-bg);
+  border:1px solid var(--danger-border);
+  border-radius:14px;
+  padding:14px 16px;
+  animation:fadeSlideUp .3s ease both .08s;
+}
+.ac-msg-card .ac-msg-icon{
+  font-size:26px;
+  color:var(--danger);
+  margin-bottom:8px;
+  display:block;
+  animation:shakeIn .5s cubic-bezier(.22,.68,0,1.2) both .2s;
+}
+.ac-msg-text{
+  font-size:14px;line-height:1.6;
+  color:var(--text);font-weight:500;
+}
+/* markdown rendering inside message */
+.ac-msg-text p{margin-bottom:6px;}
+.ac-msg-text p:last-child{margin-bottom:0;}
+.ac-msg-text strong{font-weight:700;}
+.ac-msg-text em{font-style:italic;}
+.ac-msg-text code{
+  background:var(--bg3);
+  padding:1px 5px;border-radius:4px;
+  font-family:monospace;font-size:12px;
+}
+
+/* ── Requirement box ── */
+.ac-req-card{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:14px 16px;
+  animation:fadeSlideUp .3s ease both .1s;
+}
+.ac-req-label{
+  font-size:11px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.6px;
+  color:var(--text3);margin-bottom:10px;
+}
+.ac-req-text{
+  font-size:13px;line-height:1.6;
+  color:var(--text2);font-weight:500;
+  margin-bottom:12px;
+}
+.ac-req-text p{margin-bottom:4px;}
+.ac-req-text p:last-child{margin-bottom:0;}
+.ac-req-text strong{font-weight:700;color:var(--text);}
+.ac-req-text code{
+  background:var(--bg3);
+  padding:2px 6px;border-radius:5px;
+  font-family:monospace;font-size:12px;
+  font-weight:700;color:var(--text);
+  letter-spacing:.3px;
+}
+.ac-req-inp-wrap{
+  position:relative;
+}
+.ac-req-inp{
+  width:100%;padding:10px 12px;
+  border:1.5px solid var(--input-border);
+  border-radius:10px;
+  background:var(--input-bg);
+  color:var(--text);
+  font-size:13px;font-family:monospace;font-weight:600;
+  outline:none;
+  letter-spacing:.4px;
+  transition:border-color .15s,box-shadow .15s;
+}
+.ac-req-inp:focus{
+  border-color:var(--input-focus);
+  box-shadow:0 0 0 3px var(--accent-bg);
+}
+.ac-req-inp.matched{
+  border-color:var(--danger);
+  box-shadow:0 0 0 3px var(--danger-bg);
+}
+.ac-req-match-icon{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  font-size:18px;color:var(--danger);
+  opacity:0;transition:opacity .2s,transform .2s cubic-bezier(.22,.68,0,1.4);
+  transform:translateY(-50%) scale(.5);
+  pointer-events:none;
+}
+.ac-req-inp.matched ~ .ac-req-match-icon{
+  opacity:1;
+  transform:translateY(-50%) scale(1);
+}
+
+/* ── Footer ── */
+.ac-footer{
+  padding:10px 12px 12px;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;
+  animation:slideUp .3s cubic-bezier(.22,.68,0,1.2) both .05s;
+  position:sticky;bottom:0;
+  background:var(--bg);
+  z-index:10;
+}
+
+.ac-brand{
+  display:flex;align-items:center;gap:5px;
+  text-decoration:none;opacity:.6;transition:opacity .15s,transform .2s;
+  flex-shrink:0;
+}
+.ac-brand:hover{opacity:1;transform:scale(1.05);}
+.ac-brand img{width:100px;height:100px;border-radius:5px;object-fit:contain;}
+
+.ac-footer-btns{
+  display:flex;align-items:center;gap:8px;
+}
+.ac-btn{
+  padding:9px 20px;border-radius:12px;
+  border:none;cursor:pointer;
+  font-size:13px;font-weight:700;font-family:inherit;
+  transition:background .15s,transform .12s cubic-bezier(.22,.68,0,1.4),box-shadow .15s,opacity .15s;
+}
+.ac-btn:active{transform:scale(.95);}
+.ac-btn-cancel{
+  background:var(--cancel-bg);color:var(--cancel-text);
+}
+.ac-btn-cancel:hover{background:var(--cancel-hover);}
+.ac-btn-continue{
+  background:var(--apply-bg);color:#fff;
+  box-shadow:0 2px 8px rgba(239,68,68,.25);
+}
+.ac-btn-continue:hover{background:var(--apply-hover);box-shadow:0 4px 16px rgba(239,68,68,.35);}
+.ac-btn-done{
+  background:var(--apply-bg);color:#fff;
+  box-shadow:0 2px 8px rgba(239,68,68,.25);
+  opacity:.45;cursor:not-allowed;
+}
+.ac-btn-done.enabled{
+  opacity:1;cursor:pointer;
+}
+.ac-btn-done.enabled:hover{background:var(--apply-hover);box-shadow:0 4px 16px rgba(239,68,68,.35);}
+
+/* ── Animations ── */
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes popIn{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+@keyframes shakeIn{
+  0%{opacity:0;transform:rotate(-15deg) scale(.6)}
+  60%{transform:rotate(5deg) scale(1.1)}
+  80%{transform:rotate(-3deg) scale(.97)}
+  100%{opacity:1;transform:rotate(0) scale(1)}
+}
+
+@media(max-width:360px){
+  .ac-btn{padding:9px 14px;font-size:12px;}
+}
+</style>
+</head>
+<body>
+
+<div class="ac-wrap" id="acWrap">
+
+  <!-- Header -->
+  <div class="ac-header">
+    <div class="ac-title">
+      <span class="material-symbols-rounded" id="acHeaderIcon">warning</span>
+      <span id="acHeaderTitle">Confirm Action</span>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="ac-body" id="acBody">
+
+    <!-- Step 1: Initial confirmation -->
+    <div class="ac-step" id="stepConfirm">
+      <div class="ac-msg-card">
+        <span class="material-symbols-rounded ac-msg-icon" id="acMsgIcon">warning</span>
+        <div class="ac-msg-text" id="acMsgText"></div>
+      </div>
+    </div>
+
+    <!-- Step 2: Requirement (type to confirm) -->
+    <div class="ac-step hidden" id="stepRequire">
+      <div class="ac-req-card">
+        <div class="ac-req-label">Verification required</div>
+        <div class="ac-req-text" id="acReqText"></div>
+        <div class="ac-req-inp-wrap">
+          <input class="ac-req-inp" id="acReqInp" type="text" autocomplete="off" spellcheck="false" placeholder="Type here…">
+          <span class="material-symbols-rounded ac-req-match-icon" id="acMatchIcon">check_circle</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="ac-footer" id="acFooter">
+    <a class="ac-brand" href="https://mahi902.github.io/ColorLabs/" target="_blank" title="Color Labs">
+      <img src="asset/001.png" alt="Color Labs">
+    </a>
+    <div class="ac-footer-btns" id="acFooterBtns">
+      <!-- dynamically populated -->
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Parse hash params ── */
+function parseHash() {
+  const raw = location.hash.replace(/^#/, '');
+  const map = {};
+  raw.split('|').forEach(part => {
+    const eq = part.indexOf('=');
+    if (eq > 0) map[part.slice(0, eq)] = decodeURIComponent(part.slice(eq + 1));
+  });
+  return map;
+}
+
+/* ── State ── */
+let _params = {};
+let _step = 'confirm'; // 'confirm' | 'require'
+let _matched = false;
+
+/* ── Apply theme ── */
+function applyTheme(theme) {
+  if (theme === 'dark') document.body.classList.add('dark');
+  else document.body.classList.remove('dark');
+}
+
+/* ── Render markdown safely ── */
+function renderMd(text) {
+  if (!text) return '';
+  try {
+    return marked.parse(text, { breaks: true, gfm: true });
+  } catch(e) {
+    return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+}
+
+/* ── Build UI ── */
+function init() {
+  _params = parseHash();
+
+  // Theme
+  if (_params.theme) applyTheme(_params.theme);
+  else {
+    try {
+      const m = parent.document.cookie.split('; ').find(r=>r.startsWith('toolsuite_theme='));
+      if (m && m.split('=')[1] === 'dark') document.body.classList.add('dark');
+    } catch(e) {}
+  }
+
+  // Step 1 content
+  const msgEl = document.getElementById('acMsgText');
+  msgEl.innerHTML = renderMd(_params.confirmation || 'Are you sure you want to proceed?');
+
+  // Footer step 1
+  renderStep1Footer();
+
+  // If no requirement, step 1 continue goes straight to action
+  // If requirement exists, step 1 continue shows step 2
+}
+
+function renderStep1Footer() {
+  const btns = document.getElementById('acFooterBtns');
+  const continueTxt = _params.continuetxt || 'Continue';
+
+  btns.innerHTML = '';
+
+  const cancel = document.createElement('button');
+  cancel.className = 'ac-btn ac-btn-cancel';
+  cancel.textContent = 'Cancel';
+  cancel.onclick = doCancel;
+
+  const cont = document.createElement('button');
+  cont.className = 'ac-btn ac-btn-continue';
+  cont.textContent = continueTxt;
+  cont.onclick = () => {
+    if (_params.confirmationrequirement) {
+      showStep2();
+    } else {
+      doAction();
+    }
+  };
+
+  btns.appendChild(cancel);
+  btns.appendChild(cont);
+}
+
+function showStep2() {
+  // Animate step 1 out
+  const s1 = document.getElementById('stepConfirm');
+  s1.classList.add('ac-view-leave');
+  setTimeout(() => {
+    s1.classList.add('hidden');
+    s1.classList.remove('ac-view-leave');
+
+    // Populate and show step 2
+    const reqText = document.getElementById('acReqText');
+    reqText.innerHTML = renderMd(_params.confirmationrequirement);
+
+    const s2 = document.getElementById('stepRequire');
+    s2.classList.remove('hidden');
+    s2.classList.add('ac-view-enter');
+    setTimeout(() => s2.classList.remove('ac-view-enter'), 200);
+
+    // Render step 2 footer
+    renderStep2Footer();
+
+    // Focus input
+    setTimeout(() => document.getElementById('acReqInp').focus(), 250);
+  }, 140);
+
+  _step = 'require';
+}
+
+function renderStep2Footer() {
+  const btns = document.getElementById('acFooterBtns');
+  const doneTxt = _params.donebtntxt || 'Confirm';
+
+  btns.innerHTML = '';
+
+  const cancel = document.createElement('button');
+  cancel.className = 'ac-btn ac-btn-cancel';
+  cancel.textContent = 'Cancel';
+  cancel.onclick = doCancel;
+
+  const done = document.createElement('button');
+  done.className = 'ac-btn ac-btn-done';
+  done.id = 'acDoneBtn';
+  done.textContent = doneTxt;
+  done.onclick = () => { if (_matched) doAction(); };
+
+  btns.appendChild(cancel);
+  btns.appendChild(done);
+
+  // Wire input
+  const inp = document.getElementById('acReqInp');
+  inp.oninput = () => checkMatch(inp.value);
+  inp.onkeydown = (e) => { if (e.key === 'Enter' && _matched) doAction(); };
+}
+
+function checkMatch(val) {
+  const required = _params.actioncomplete || '';
+  _matched = val === required;
+
+  const inp = document.getElementById('acReqInp');
+  const doneBtn = document.getElementById('acDoneBtn');
+  const matchIcon = document.getElementById('acMatchIcon');
+
+  if (_matched) {
+    inp.classList.add('matched');
+    if (doneBtn) doneBtn.classList.add('enabled');
+    if (matchIcon) matchIcon.style.cssText = 'opacity:1;transform:translateY(-50%) scale(1);';
+  } else {
+    inp.classList.remove('matched');
+    if (doneBtn) doneBtn.classList.remove('enabled');
+    if (matchIcon) matchIcon.style.cssText = '';
+  }
+}
+
+/* ── Actions ── */
+function doCancel() {
+  history.replaceState(null, '', '#cancel');
+  try {
+    if (parent && parent !== window) parent.postMessage({ type: 'ac-cancelled' }, '*');
+  } catch(e) {}
+}
+
+function doAction() {
+  history.replaceState(null, '', '#action');
+  try {
+    if (parent && parent !== window) parent.postMessage({ type: 'ac-confirmed' }, '*');
+  } catch(e) {}
+}
+
+/* ── Hash change support (theme or params update) ── */
+window.addEventListener('hashchange', () => {
+  // Only re-init if it's not a result hash
+  const h = location.hash;
+  if (h !== '#cancel' && h !== '#action') {
+    _step = 'confirm';
+    _matched = false;
+    document.getElementById('stepConfirm').classList.remove('hidden', 'ac-view-leave');
+    document.getElementById('stepRequire').classList.add('hidden');
+    init();
+  }
+});
+
+/* ── Keyboard: Escape cancels ── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') doCancel();
+});
+
+/* ── Boot ── */
+init();
+</script>
+</body>
+</html>

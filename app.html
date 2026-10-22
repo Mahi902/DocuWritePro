@@ -612,20 +612,6 @@
         /* ── FAB Load Template offline ── */
         body.offline #fab-sub-template, body.offline #goo-sub-template { display: none !important; }
 
-        /* ── Home offline overlay ── */
-        #home-offline-notice {
-            display: none;
-            position: fixed; inset: 0;
-            background: var(--bg-body);
-            z-index: 9998;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 40px;
-            text-align: center;
-        }
-        body.offline #home-offline-notice { display: flex; }
-
         /* ── App-disabled overlay ── */
         #app-disabled-overlay {
             display: none;
@@ -783,8 +769,44 @@
         else document.documentElement.removeAttribute('data-theme');
     })();
     </script>
+<style id="dwp-os-css">
+#dwp-offline-setup{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg-body,#F2F2F7);color:var(--text-primary,#000);font-family:inherit}
+#dwp-offline-setup[hidden]{display:none}
+.dwp-os-card{width:100%;max-width:380px;text-align:center}
+.dwp-os-icon{font-size:56px;color:var(--primary-color,#007AFF);margin-bottom:14px;display:inline-block}
+.dwp-os-icon.spin{animation:dwpOsPulse 1.4s ease-in-out infinite}
+@keyframes dwpOsPulse{0%,100%{opacity:.45;transform:translateY(0)}50%{opacity:1;transform:translateY(3px)}}
+.dwp-os-title{font-size:20px;font-weight:700;margin-bottom:6px}
+.dwp-os-sub{font-size:14px;line-height:1.45;color:var(--text-secondary,#8E8E93);margin-bottom:22px}
+.dwp-os-bar{height:8px;border-radius:99px;background:var(--separator,#E5E5EA);overflow:hidden}
+#dwpOsFill{height:100%;width:0;border-radius:99px;background:var(--primary-color,#007AFF);transition:width .25s ease}
+.dwp-os-stats{display:flex;justify-content:space-between;margin-top:8px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.dwp-os-stats span:last-child{color:var(--text-secondary,#8E8E93);font-weight:500}
+.dwp-os-file{height:18px;margin-top:6px;font-size:12px;color:var(--text-secondary,#8E8E93);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dwp-os-actions{display:flex;gap:10px;justify-content:center;margin-top:22px}
+.dwp-os-actions button{border:0;border-radius:12px;padding:11px 22px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit}
+#dwpOsGo{background:var(--primary-color,#007AFF);color:#fff}
+#dwpOsRetry{background:var(--bg-card,#fff);color:var(--primary-color,#007AFF);border:1.5px solid var(--separator,#E5E5EA)}
+.dwp-os-actions button[hidden]{display:none}
+</style>
 </head>
 <body class="online">
+
+    <!-- ── First-run offline download screen ── -->
+    <div id="dwp-offline-setup" hidden>
+        <div class="dwp-os-card">
+            <span class="material-symbols-rounded dwp-os-icon spin" id="dwpOsIcon">download_for_offline</span>
+            <div class="dwp-os-title" id="dwpOsTitle">Getting DocuWrite Pro ready for offline use</div>
+            <div class="dwp-os-sub" id="dwpOsSub">One-time download. Once it finishes, the editor and its tools work without internet.</div>
+            <div class="dwp-os-bar"><div id="dwpOsFill"></div></div>
+            <div class="dwp-os-stats"><span id="dwpOsPct">0%</span><span id="dwpOsMb">Starting…</span></div>
+            <div class="dwp-os-file" id="dwpOsFile"></div>
+            <div class="dwp-os-actions">
+                <button id="dwpOsRetry" hidden>Retry</button>
+                <button id="dwpOsGo">Continue</button>
+            </div>
+        </div>
+    </div>
 
     <!-- ── In-app toast stack (replaces alert()) ── -->
     <div id="app-toast-stack"></div>
@@ -929,15 +951,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Offline overlay -->
-            <div id="home-offline-notice">
-                <div class="ado-icon-wrap" style="background: var(--search-bg); color: var(--text-secondary);">
-                    <span class="material-symbols-rounded">wifi_off</span>
-                </div>
-                <div class="ado-title">Uh Oh! It seems like you are not on the web!</div>
-                <div class="ado-sub">We use various features from the web, when you are not connected to the internet, we are unable to provide many services. Your data is kept safe.</div>
-            </div>
-
             <div class="quick-actions">
                 <div class="action-btn" id="btn-new-doc"><div class="action-icon-circle"><span class="material-symbols-rounded">note_add</span></div><div class="action-label">New<br>Document</div></div>
                 <div class="action-btn" id="btn-new-img"><div class="action-icon-circle"><span class="material-symbols-rounded">add_photo_alternate</span></div><div class="action-label">Edit<br>Image</div></div>
@@ -4015,17 +4028,81 @@
     </script>
 
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then(reg => {
-          console.log('DocuWrite Pro Service Worker active:', reg.scope);
-        })
-        .catch(err => {
-          console.error('Service Worker registration failed:', err);
-        });
-    });
+/* Service worker + first-run offline download screen */
+(function () {
+  if (!('serviceWorker' in navigator)) return;
+  var KEY = 'dwp_offline_ready';
+  var $ = function (id) { return document.getElementById(id); };
+  var ov = $('dwp-offline-setup');
+  var first = !localStorage.getItem(KEY);      // this device never finished the download
+  var dismissed = false, finished = false, closeTimer = null;
+  function mb(n) { return (n / 1048576).toFixed(1); }
+  function pill(text) {
+    var p = document.createElement('div');
+    p.textContent = text;
+    p.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:100001;padding:10px 18px;border-radius:99px;background:#1c1c1e;color:#fff;font-size:14px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25)';
+    document.body.appendChild(p); setTimeout(function () { p.remove(); }, 3500);
   }
+  function show() { if (first && !dismissed && !finished) ov.hidden = false; }
+  function hide() { ov.hidden = true; }
+  $('dwpOsGo').onclick = function () {
+    dismissed = true; hide();
+    if (!finished) pill('Downloading in the background…');
+  };
+  $('dwpOsRetry').onclick = function () {
+    $('dwpOsRetry').hidden = true;
+    $('dwpOsIcon').textContent = 'download_for_offline'; $('dwpOsIcon').classList.add('spin');
+    $('dwpOsTitle').textContent = 'Getting DocuWrite Pro ready for offline use';
+    $('dwpOsSub').textContent = 'Retrying the files that did not download…';
+    navigator.serviceWorker.ready.then(function (r) { (r.active || navigator.serviceWorker.controller).postMessage({ type: 'RETRY_PRECACHE' }); });
+  };
+  function onProgress(d) {
+    if (!first || finished) return;
+    show();
+    var pct = d.total ? Math.min(100, Math.floor(d.done / d.total * 100)) : 0;
+    $('dwpOsFill').style.width = pct + '%';
+    $('dwpOsPct').textContent = pct + '%';
+    $('dwpOsMb').textContent = mb(d.done) + ' / ' + mb(d.total) + ' MB  ·  ' + d.files + ' of ' + d.fileTotal + ' files';
+    $('dwpOsFile').textContent = d.file || '';
+  }
+  function onDone(d) {
+    if (d.ok) {
+      localStorage.setItem(KEY, d.version || '1');
+      if (!first) return;                         // silent background update
+      finished = true;
+      $('dwpOsFill').style.width = '100%'; $('dwpOsPct').textContent = '100%';
+      $('dwpOsIcon').textContent = 'offline_pin'; $('dwpOsIcon').classList.remove('spin');
+      $('dwpOsTitle').textContent = 'Ready for offline use';
+      $('dwpOsSub').textContent = 'Everything is saved on this device. The editor and its tools now work without internet.';
+      $('dwpOsFile').textContent = ''; $('dwpOsMb').textContent = d.fileTotal + ' files saved';
+      $('dwpOsGo').textContent = 'Done';
+      if (dismissed) { pill('✓ Ready for offline use'); return; }
+      show(); closeTimer = setTimeout(hide, 2500);
+    } else if (first) {
+      $('dwpOsIcon').textContent = 'warning'; $('dwpOsIcon').classList.remove('spin');
+      $('dwpOsTitle').textContent = 'Some files did not download';
+      $('dwpOsSub').textContent = d.failed + ' of ' + d.fileTotal + ' files are missing, so a few features may need internet. Check your connection and retry.';
+      $('dwpOsRetry').hidden = false; show();
+    }
+  }
+  navigator.serviceWorker.addEventListener('message', function (e) {
+    var d = e.data || {};
+    if (d.type === 'PRECACHE_PROGRESS') onProgress(d);
+    else if (d.type === 'PRECACHE_DONE') onDone(d);
+  });
+  if (navigator.serviceWorker.startMessages) navigator.serviceWorker.startMessages();
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').then(function (reg) {
+      console.log('DocuWrite Pro Service Worker active:', reg.scope);
+      // Already installed but this device never confirmed a complete download: check / finish it.
+      if (first && !reg.installing) {
+        navigator.serviceWorker.ready.then(function (r) {
+          var w = r.active; if (w) w.postMessage({ type: 'PRECACHE_STATUS' });
+        });
+      }
+    }).catch(function (err) { console.error('Service Worker registration failed:', err); });
+  });
+})();
 </script>
 
 

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="174">
+<meta name="sceditor-version" content="175">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -4010,7 +4010,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v174…</p>
+    <p class="loading-text">Loading Sugarcane v175…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -8118,7 +8118,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 174; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 175; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -39061,11 +39061,11 @@ body.converter-mode #scDictPanel,body.converter-mode #scDictBar{display:none!imp
   }
 
   /* ── voice commands (English) ── */
-  var PUNCT = { 'period':'.', 'full stop':'.', 'comma':',', 'question mark':'?', 'exclamation mark':'!', 'exclamation point':'!', 'colon':':', 'semicolon':';', 'semi colon':';', 'hyphen':'-', 'ellipsis':'…', 'close parenthesis':')', 'close bracket':')' };
-  var OPEN = { 'open parenthesis':'(', 'open bracket':'(' };
-  var BREAKS = { 'new paragraph':'para', 'new line':'br', 'next line':'br' };
-  var CTRL = { 'scratch that':'scratch', 'delete that':'scratch', 'stop dictation':'stop', 'stop listening':'stop' };
-  function norm(w){ return (w || '').toLowerCase().replace(/[.,!?]/g, ''); }
+  var PUNCT = { 'period':'.', 'full stop':'.', 'comma':',', 'question mark':'?', 'exclamation mark':'!', 'exclamation point':'!', 'colon':':', 'semicolon':';', 'semi colon':';', 'hyphen':'-', 'ellipsis':'…', 'close parenthesis':')', 'close bracket':')', 'fullstop':'.', 'exclamation':'!', 'question':'?', 'dot dot dot':'…', 'closed parenthesis':')', 'close brackets':')', 'right parenthesis':')' };
+  var OPEN = { 'open parenthesis':'(', 'open bracket':'(', 'left parenthesis':'(', 'open brackets':'(' };
+  var BREAKS = { 'new paragraph':'para', 'new line':'br', 'next line':'br', 'newline':'br', 'newparagraph':'para', 'next paragraph':'para', 'line break':'br', 'new lines':'br' };
+  var CTRL = { 'scratch that':'scratch', 'delete that':'scratch', 'undo that':'scratch', 'stop dictation':'stop', 'stop listening':'stop', 'stop dictating':'stop', 'end dictation':'stop' };
+  function norm(w){ return (w || '').toLowerCase().replace(/[.,!?;:"“”]/g, '').replace(/-/g, ' ').trim(); }
   function parse(txt){
     var words = txt.trim().split(/\s+/), ops = [], cur = '', i = 0;
     function flush(){ if (cur) { ops.push({ t: 'text', s: cur }); cur = ''; } }
@@ -39075,6 +39075,7 @@ body.converter-mode #scDictPanel,body.converter-mode #scDictBar{display:none!imp
       if (two && BREAKS[two]) { flush(); ops.push({ t: BREAKS[two] }); i += 2; continue; }
       if (two && PUNCT[two]) { cur = cur.replace(/\s+$/, '') + PUNCT[two]; i += 2; continue; }
       if (two && OPEN[two]) { cur += (cur ? ' ' : '') + OPEN[two]; i += 2; continue; }
+      if (BREAKS[one]) { flush(); ops.push({ t: BREAKS[one] }); i++; continue; }
       if (PUNCT[one]) { cur = cur.replace(/\s+$/, '') + PUNCT[one]; i++; continue; }
       word(words[i]); i++;
     }
@@ -39163,9 +39164,19 @@ body.converter-mode #scDictPanel,body.converter-mode #scDictBar{display:none!imp
     if (viewOnly()) { toast('Switch to Editing mode to dictate.', 'error'); stop(); return; }
     var cmdOn = settings.cmds && isEnglish();
     if (cmdOn) {
-      var c = CTRL[t.toLowerCase().replace(/[.,!?]+$/, '')];
-      if (c === 'scratch') { scratch(); return; }
-      if (c === 'stop') { stop(); return; }
+      /* control phrases ("scratch that", "stop dictation") work anywhere in a phrase, not just alone */
+      var ws = t.split(/\s+/), nw = ws.map(norm);
+      for (var ci = 0; ci < ws.length; ci++) {
+        var ph = ci + 1 < ws.length ? nw[ci] + ' ' + nw[ci + 1] : '', cc = ph && CTRL[ph];
+        if (!cc) continue;
+        var before = ws.slice(0, ci).join(' '), after = ws.slice(ci + 2).join(' ');
+        if (cc === 'stop') { if (before) { histPush(before); applyOps(parse(before)); } stop(); return; }
+        if (cc === 'scratch') {
+          if (!before) scratch();          // nothing earlier in this phrase: undo the last inserted phrase
+          if (after) handleFinal(after);   // anything said after it carries on as normal
+          return;
+        }
+      }
     }
     histPush(t);
     applyOps(cmdOn ? parse(t) : [{ t: 'text', s: t }]);

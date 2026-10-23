@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="172">
+<meta name="sceditor-version" content="173">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -4010,7 +4010,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v172…</p>
+    <p class="loading-text">Loading Sugarcane v173…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -8118,7 +8118,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 172; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 173; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -23571,6 +23571,7 @@ function initTips() {
    TOAST
 ═══════════════════════════════════════════════════════ */
 function showToast(msg, type = 'info') {
+  if (type === 'warning') type = 'info';
   const stack = document.getElementById('toastStack');
   // Max 3 toasts; remove oldest (bottom of stack = index 0 = top visually since flex-col) if over limit
   while (stack.children.length >= 3) stack.removeChild(stack.children[0]);
@@ -28945,12 +28946,12 @@ authInitFromCookie();
 (function(){
   var css=document.createElement('style');
   css.textContent='#scOfflineMsg{position:fixed;left:50%;bottom:22px;transform:translate(-50%,30px);opacity:0;pointer-events:none;z-index:2147483000;padding:11px 20px;border-radius:12px;color:#fff;font:600 14px/1.3 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.3);transition:.3s;max-width:90vw;text-align:center}#scOfflineMsg.show{opacity:1;transform:translate(-50%,0)}#scOfflineMsg.off{background:#b45309}#scOfflineMsg.on{background:#15803d}'
-  +'body.sc-offline #recTabLive,body.sc-offline #recDropLiveItem,body.sc-offline #tbMagicBtn,body.sc-offline #mgStartBtn,body.sc-offline #tbDictateBtn,body.sc-offline #sdStartBtn,body.sc-offline #collabDropdown,body.sc-offline #collabChevron,body.sc-offline #imgSrcDriveTab,body.sc-offline #impSrcDriveTab,body.sc-offline #impSrcUrlTab,body.sc-offline .drive-backup-btn,body.sc-offline [onclick*="openTranslateModal"],body.sc-offline [onclick*="openCollabLanding"],body.sc-offline [onclick*="makeDocLive"]{opacity:.35!important;pointer-events:none!important;filter:grayscale(1)}';
+  +'body.sc-offline #imgSrcSeg [data-src="url"],body.sc-offline [onclick*="bnrStart(\'link\')"],body.sc-offline #fcUrlInp,body.sc-offline #fcUrlInp+.fc-url-btn,body.sc-offline #fcFancyUrlInp,body.sc-offline #fcFancyUrlBtn,body.sc-offline #recTabLive,body.sc-offline #recDropLiveItem,body.sc-offline #tbMagicBtn,body.sc-offline #mgStartBtn,body.sc-offline #tbDictateBtn,body.sc-offline #sdStartBtn,body.sc-offline #collabDropdown,body.sc-offline #collabChevron,body.sc-offline #imgSrcDriveTab,body.sc-offline #impSrcDriveTab,body.sc-offline #impSrcUrlTab,body.sc-offline .drive-backup-btn,body.sc-offline [onclick*="openTranslateModal"],body.sc-offline [onclick*="openCollabLanding"],body.sc-offline [onclick*="makeDocLive"]{opacity:.35!important;pointer-events:none!important;filter:grayscale(1)}';
   document.head.appendChild(css);
   function say(txt){try{showToast(txt,'info');}catch(e){}}
   var NOOP=function(name){return function(){say('Not available in Offline Compatibility Mode','off');};};
   var orig={};
-  ['openCollabLandingScreen','collabLandingCreate','collabLandingJoin','openTranslateModal','doTranslateDocument','makeDocLive'].forEach(function(n){
+  ['imgFetchUrl','craftBanner','loadFcCustomUrl','loadFcFancyCustomUrl','impFetchUrl','openCollabLandingScreen','collabLandingCreate','collabLandingJoin','openTranslateModal','doTranslateDocument','makeDocLive'].forEach(function(n){
     if(typeof window[n]!=='function')return;orig[n]=window[n];
     window[n]=function(){if(!navigator.onLine){say('Not available in Offline Compatibility Mode','off');return;}return orig[n].apply(this,arguments);};
   });

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="170">
+<meta name="sceditor-version" content="171">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -4010,7 +4010,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v170…</p>
+    <p class="loading-text">Loading Sugarcane v171…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -6663,13 +6663,37 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <!-- Import -->
 <div class="modal" id="importMdl">
-  <div class="mbox wide">
+  <div class="mbox scf-box wide" style="width:min(96vw,560px)">
     <div class="mhdr"><h2 class="mtitle">Import .scd file</h2><button class="mclose" onclick="closeMdl('importMdl')"><span class="material-symbols-outlined">close</span></button></div>
-    <div class="drop-zone" id="importDZ">
-      <span class="material-symbols-outlined" style="font-size:44px;color:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1))">upload_file</span>
-      <p style="margin-top:7px;color:hsl(var(--sc-th,0) var(--sc-ts,0%) calc(33.3% + var(--sc-tld,0%) * 0.8 + var(--sc-tll,0%) * 0))">Drag & drop or click to browse</p>
-      <p style="font-size:12px;color:hsl(var(--sc-th,0) var(--sc-ts,0%) calc(60% + var(--sc-tld,0%) * 0 + var(--sc-tll,0%) * 0.5));margin-top:5px">Only .scd and .uscd files accepted</p>
-      <input type="file" id="importFile" accept="" style="display:none" onchange="handleImport(this.files[0])"/>
+    <div id="impSrcWrap">
+    <div class="scf-seg" id="impSrcSeg" style="margin-bottom:12px">
+      <button type="button" class="scf-seg-btn on" data-src="upload" onclick="impSrcTab('upload')"><span class="material-symbols-outlined">upload</span>Upload</button>
+      <button type="button" class="scf-seg-btn" data-src="url" id="impSrcUrlTab" onclick="impSrcTab('url')"><span class="material-symbols-outlined">link</span>URL</button>
+      <button type="button" class="scf-seg-btn" data-src="drive" id="impSrcDriveTab" style="display:none" onclick="impSrcTab('drive')"><span class="material-symbols-outlined">cloud</span>Google Drive</button>
+    </div>
+    <div class="scf-pane on" data-pane="upload">
+    <button type="button" class="scf-drop" id="importDZ">
+      <span class="material-symbols-outlined">upload_file</span>
+      <b>Click or drag a document here</b>
+      <small>.scd and .uscd files</small>
+    </button>
+    <input type="file" id="importFile" accept="" style="display:none" onchange="handleImport(this.files[0])"/>
+    </div>
+    <div class="scf-pane" data-pane="url">
+      <div class="scf-row">
+        <input type="text" class="scf-input" id="impUrlInput" placeholder="Link to a .scd or .uscd file" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();impFetchUrl()}"/>
+        <button type="button" class="scf-btn pri" id="impUrlGo" onclick="impFetchUrl()"><span class="material-symbols-outlined">download</span>Import</button>
+      </div>
+      <div class="scf-status" id="impUrlStatus">Paste a direct link to a Sugarcane document file.</div>
+    </div>
+    <div class="scf-pane" data-pane="drive">
+      <div class="scf-row" style="align-items:center;">
+        <div class="scf-status" id="impDriveStatus" style="flex:1;margin:0;">Loading…</div>
+        <button type="button" class="scf-btn" onclick="impOpenDrivePicker()"><span class="material-symbols-outlined">cloud</span>Browse Drive</button>
+        <button type="button" class="scf-btn" onclick="impLoadDrive(true)"><span class="material-symbols-outlined">refresh</span>Refresh</button>
+      </div>
+      <div id="impDriveList" style="margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto"></div>
+    </div>
     </div>
     <div id="importChoice" style="display:none;padding:6px 2px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -8094,7 +8118,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 170; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 171; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -26798,6 +26822,7 @@ function setAuthenticatingUI(on) {
 /* ── Silent token refresh — deduped, cached ── */
 let _tokenRefreshPromise = null;
 function refreshAccessToken() {
+  if (!navigator.onLine) return Promise.reject(new Error('offline'));
   // Return cached token immediately if still valid
   const cached = tokenCacheRead();
   if (cached) {
@@ -27025,6 +27050,16 @@ function authInitFromCookie() {
       updateUserBtnUI();
       setTimeout(() => driveFetchAll(false), 200);
     } else {
+      // Offline: never try to reauthenticate; wait until we're back online
+      if (!navigator.onLine) {
+        setAuthenticatingUI(false);
+        updateUserBtnUI();
+        window.addEventListener('online', function _scReauthOnce() {
+          window.removeEventListener('online', _scReauthOnce);
+          setTimeout(() => { refreshAccessToken().then(() => { updateUserBtnUI(); driveFetchAll(false); }).catch(() => {}); }, 800);
+        });
+        return;
+      }
       // Silent refresh — GIS may show a tiny invisible iframe, no popup
       setTimeout(() => {
         refreshAccessToken()
@@ -27037,6 +27072,7 @@ function authInitFromCookie() {
             // Silent refresh failed — show One Tap so user can re-auth with one tap
             setAuthenticatingUI(false);
             updateUserBtnUI();
+            if (!navigator.onLine) return;
             // Auto-open the auth modal in the "re-login" state
             _showOneTapOnModalOpen = true;
             openAuthModal();
@@ -28811,6 +28847,139 @@ async function driveSyncLiveDoc(driveFileId) {
 /* ── Init ── */
 document.addEventListener('DOMContentLoaded', () => { authInitFromCookie(); });
 authInitFromCookie();
+
+/* ── Import: Upload / URL / Google Drive sources ── */
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var driveLoaded=false;
+  window.impSrcTab=function(name,silent){
+    document.querySelectorAll('#impSrcSeg .scf-seg-btn').forEach(function(b){b.classList.toggle('on',b.dataset.src===name);});
+    document.querySelectorAll('#impSrcWrap .scf-pane').forEach(function(p){p.classList.toggle('on',p.dataset.pane===name);});
+    if(name==='drive'&&!silent)impLoadDrive();
+    if(name==='url'&&!silent)setTimeout(function(){$('impUrlInput').focus();},60);
+  };
+  function err(msg){var st=$('importStatus');st.style.color='hsl(0 65% 50%)';st.textContent=msg;}
+  function feed(blob,name){
+    var st=$('importStatus');st.textContent='';
+    if(!/\.(scd|uscd)$/i.test(name))name+='.scd';
+    handleImport(new File([blob],name,{type:blob.type||'application/octet-stream'}));
+  }
+  window.impFetchUrl=async function(){
+    var inp=$('impUrlInput'),stat=$('impUrlStatus'),go=$('impUrlGo');
+    var url=(inp.value||'').trim();
+    if(!url){stat.textContent='Paste a link first.';return;}
+    if(!/^https?:\/\//i.test(url))url='https://'+url;
+    var m=url.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/blob\/(.+)$/i);
+    if(m)url='https://raw.githubusercontent.com/'+m[1]+'/'+m[2]+'/'+m[3];
+    go.disabled=true;stat.textContent='Downloading…';
+    try{
+      var r=await fetch(url);
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      var blob=await r.blob();
+      var name=decodeURIComponent((url.split('?')[0].split('#')[0].split('/').pop())||'imported');
+      stat.textContent='Paste a direct link to a Sugarcane document file.';
+      feed(blob,name);
+    }catch(e){
+      stat.textContent='Could not download that link (it may block cross-site access).';
+    }
+    go.disabled=false;
+  };
+  window.impLoadDrive=async function(force){
+    if(driveLoaded&&!force)return;
+    var list=$('impDriveList'),st=$('impDriveStatus');
+    st.textContent='Loading your Drive documents…';list.innerHTML='';
+    try{
+      var q="(name contains '.scd' or name contains '.uscd') and trashed=false";
+      var r=await driveRequest('files?q='+encodeURIComponent(q)+'&fields='+encodeURIComponent('files(id,name)')+'&pageSize=60&orderBy='+encodeURIComponent('modifiedTime desc'));
+      var files=((await r.json()).files||[]).filter(function(f){return /\.(scd|uscd)$/i.test(f.name);});
+      driveLoaded=true;
+      if(!files.length){st.textContent='No documents yet. Tap Browse Drive to pick one.';return;}
+      st.textContent=files.length+' documents — tap one to import it.';
+      files.forEach(function(f){
+        var b=document.createElement('button');b.type='button';b.className='scf-btn wide';b.style.justifyContent='flex-start';
+        var ic=document.createElement('span');ic.className='material-symbols-outlined';ic.textContent='description';
+        b.appendChild(ic);b.appendChild(document.createTextNode(f.name));
+        b.onclick=function(){impImportDriveFile(f);};
+        list.appendChild(b);
+      });
+    }catch(e){st.textContent='Could not load Drive documents.';}
+  };
+  async function impImportDriveFile(f){
+    var st=$('impDriveStatus');
+    st.textContent='Downloading '+f.name+'…';
+    try{
+      var r=await driveRequest('files/'+encodeURIComponent(f.id)+'?alt=media');
+      var blob=await r.blob();
+      st.textContent='';
+      feed(blob,f.name);
+    }catch(e){st.textContent='Could not download that file.';}
+  }
+  window.impOpenDrivePicker=async function(){
+    var st=$('impDriveStatus');
+    try{
+      await _loadPicker();
+      var token=await _getToken();
+      var view=new google.picker.DocsView().setIncludeFolders(true);
+      new google.picker.PickerBuilder().addView(view).setOAuthToken(token).setDeveloperKey(GOOGLE_API_KEY)
+        .setAppId(GOOGLE_CLIENT_ID.split('-')[0]).setOrigin(window.location.protocol+'//'+window.location.host)
+        .setCallback(function(d){
+          if(d.action!==google.picker.Action.PICKED)return;
+          var f=d.docs[0];driveLoaded=false;impImportDriveFile({id:f.id,name:f.name});
+        }).build().setVisible(true);
+    }catch(e){st.textContent='Could not open the Drive picker.';showToast('Could not open the Drive picker','error');}
+  };
+  var _open=window.openImportModal;
+  window.openImportModal=function(){
+    var r=_open.apply(this,arguments);
+    var dt=$('impSrcDriveTab');if(dt)dt.style.display=(typeof _googleUser!=='undefined'&&_googleUser)?'':'none';
+    driveLoaded=false;var u=$('impUrlInput');if(u)u.value='';
+    impSrcTab('upload',true);
+    return r;
+  };
+  /* hide the source switcher whenever the importer swaps to its choice/progress panels */
+  var dz=$('importDZ');
+  if(dz)new MutationObserver(function(){$('impSrcWrap').style.display=dz.style.display==='none'?'none':'';}).observe(dz,{attributes:true,attributeFilter:['style']});
+})();
+
+/* ── Offline Compatibility Mode ── */
+(function(){
+  var css=document.createElement('style');
+  css.textContent='#scOfflineMsg{position:fixed;left:50%;bottom:22px;transform:translate(-50%,30px);opacity:0;pointer-events:none;z-index:2147483000;padding:11px 20px;border-radius:12px;color:#fff;font:600 14px/1.3 system-ui,sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.3);transition:.3s;max-width:90vw;text-align:center}#scOfflineMsg.show{opacity:1;transform:translate(-50%,0)}#scOfflineMsg.off{background:#b45309}#scOfflineMsg.on{background:#15803d}'
+  +'body.sc-offline #recTabLive,body.sc-offline #recDropLiveItem,body.sc-offline #tbMagicBtn,body.sc-offline #mgStartBtn,body.sc-offline #tbDictateBtn,body.sc-offline #sdStartBtn,body.sc-offline #collabDropdown,body.sc-offline #collabChevron,body.sc-offline #imgSrcDriveTab,body.sc-offline #impSrcDriveTab,body.sc-offline #impSrcUrlTab,body.sc-offline .drive-backup-btn,body.sc-offline [onclick*="openTranslateModal"],body.sc-offline [onclick*="openCollabLanding"],body.sc-offline [onclick*="makeDocLive"]{opacity:.35!important;pointer-events:none!important;filter:grayscale(1)}';
+  document.head.appendChild(css);
+  var msg=document.createElement('div');msg.id='scOfflineMsg';msg.setAttribute('role','status');document.body.appendChild(msg);
+  var t;function say(txt,cls){msg.textContent=txt;msg.className=cls+' show';clearTimeout(t);t=setTimeout(function(){msg.classList.remove('show')},5000);}
+  var NOOP=function(name){return function(){say('Not available in Offline Compatibility Mode','off');};};
+  var orig={};
+  ['openCollabLandingScreen','collabLandingCreate','collabLandingJoin','openTranslateModal','doTranslateDocument','makeDocLive'].forEach(function(n){
+    if(typeof window[n]!=='function')return;orig[n]=window[n];
+    window[n]=function(){if(!navigator.onLine){say('Not available in Offline Compatibility Mode','off');return;}return orig[n].apply(this,arguments);};
+  });
+  if(typeof window.recSwitchTab==='function'){var rst=window.recSwitchTab;window.recSwitchTab=function(tab){if(!navigator.onLine&&tab==='live'){say('Drive documents are unavailable offline','off');return;}return rst.apply(this,arguments);};}
+  [['SCMagic',['start','toggle']],['SCDictate',['start','toggle']]].forEach(function(p){
+    var o=window[p[0]];if(!o)return;
+    p[1].forEach(function(m){var f=o[m];if(typeof f!=='function')return;o[m]=function(){if(!navigator.onLine){say('Not available in Offline Compatibility Mode','off');return;}return f.apply(this,arguments);};});
+  });
+  document.addEventListener('click',function(e){
+    if(navigator.onLine)return;
+    var b=e.target.closest&&e.target.closest('#tbMagicBtn,#mgStartBtn,#tbDictateBtn,#sdStartBtn');
+    if(b){e.stopImmediatePropagation();e.preventDefault();say('Not available in Offline Compatibility Mode','off');}
+  },true);
+  function goOffline(){
+    document.body.classList.add('sc-offline');
+    try{if(window.SCMagic&&SCMagic.isActive())SCMagic.stop();}catch(e){}
+    try{if(window.SCDictate&&SCDictate.isActive())SCDictate.stop();}catch(e){}
+    try{if(typeof _recActiveTab!=='undefined'&&_recActiveTab==='live'&&orig.recSwitchTab!==0)rst('local');}catch(e){}
+    say('Offline Compatibility Mode enabled','off');
+  }
+  function goOnline(){
+    document.body.classList.remove('sc-offline');
+    say('Back online and back to the old everything','on');
+  }
+  window.addEventListener('offline',goOffline);
+  window.addEventListener('online',goOnline);
+  if(!navigator.onLine)goOffline();
+})();
 </script>
 
 <!-- ═══════════════════════════════════════════════════
@@ -37352,7 +37521,7 @@ body.dark .mbox.scf-box{--scf-a:hsl(calc(var(--sc-h,210) + -3.3) calc(89% * var(
 .scf-pane{display:none}.scf-pane.on{display:block;animation:scfIn .22s ease}
 /* dropzone */
 .scf-drop{width:100%;padding:40px 16px;border:2px dashed var(--scf-a-line);border-radius:18px;background:var(--scf-a-soft);color:var(--ui-text);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-family:inherit;font-size:14px;cursor:pointer;transition:border-color .15s,background .15s,transform .15s}
-.scf-drop:hover,.scf-drop.drag{border-color:var(--scf-a);transform:translateY(-1px)}
+.scf-drop.dragover,.scf-drop:hover,.scf-drop.drag{border-color:var(--scf-a);transform:translateY(-1px)}
 .scf-drop .material-symbols-outlined{font-size:44px;color:var(--scf-a)}
 .scf-drop small{color:var(--ui-muted);font-size:12px}
 /* fields + buttons */
@@ -39101,7 +39270,16 @@ body.converter-mode #scDictPanel,body.converter-mode #scDictBar{display:none!imp
     r.onerror = function(e){
       var err = e && e.error;
       if (err === 'no-speech' || err === 'aborted') return;
-      if (err === 'not-allowed' || err === 'service-not-allowed') toast('Microphone access is blocked. Use “Request Microphone Permission” in Assistive Writing → Dictation, or allow it in your browser’s site settings.', 'error');
+      if ((err === 'not-allowed' || err === 'service-not-allowed') && !r._retried && navigator.permissions && navigator.permissions.query) {
+        r._retried = true;
+        navigator.permissions.query({ name: 'microphone' }).then(function(p){
+          if (p.state === 'denied') { toast('Microphone access is blocked. Allow it in your browser’s site settings.', 'error'); stop(true); }
+          else if (active && !paused) { rec = makeRec(); rec._retried = true; setTimeout(begin, 250); }
+        }).catch(function(){ toast('Dictation error: ' + err, 'error'); stop(true); });
+        return;
+      }
+      if (err === 'not-allowed') { toast('Dictation couldn’t start. Reload the page and try again.', 'error'); }
+      else if (err === 'service-not-allowed') toast('Microphone access is blocked. Use “Request Microphone Permission” in Assistive Writing → Dictation, or allow it in your browser’s site settings.', 'error');
       else if (err === 'audio-capture') toast('No microphone was found.', 'error');
       else if (err === 'network') toast('Couldn’t reach the browser’s speech service. Check your connection.', 'error');
       else if (err === 'language-not-supported') toast('This browser can’t dictate in the selected language.', 'error');
@@ -39122,6 +39300,7 @@ body.converter-mode #scDictPanel,body.converter-mode #scDictBar{display:none!imp
   }
   function start(){
     if (!settings.enabled) { toast('Dictation is off. Turn it on in the sidebar under Assistive Writing first.', 'error'); return; }
+    if (!navigator.onLine) { toast('Dictation needs an internet connection.', 'error'); return; }
     if (!SR) { toast('Voice dictation isn’t supported in this browser. Try Chrome, Edge or Safari.', 'error'); return; }
     if (active) return;
     if (viewOnly()) { toast('Switch to Editing mode to dictate.', 'error'); return; }

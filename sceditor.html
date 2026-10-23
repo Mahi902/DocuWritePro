@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="176">
+<meta name="sceditor-version" content="177">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -4013,7 +4013,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v176…</p>
+    <p class="loading-text">Loading Sugarcane v177…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -5419,6 +5419,18 @@ function waitForSugarcaneAddons(){
               </div>
               <label class="toggle-switch">
                 <input type="checkbox" id="awOffensive" onchange="toggleOffensiveCheck(this.checked)"/>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <!-- PROMOTIONAL TOASTS -->
+            <div class="aw-row">
+              <div>
+                <div class="aw-row-label">Promotional Toasts</div>
+                <div class="aw-row-sub">Occasional tips and support messages for certain words. Matching happens on your device; nothing you type is sent anywhere</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="awPromoToasts" checked/>
                 <span class="toggle-slider"></span>
               </label>
             </div>
@@ -8121,7 +8133,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 176; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 177; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -23573,7 +23585,7 @@ function initTips() {
 /* ═══════════════════════════════════════════════════════
    TOAST
 ═══════════════════════════════════════════════════════ */
-function showToast(msg, type = 'info') {
+function showToast(msg, type = 'info', ms) {
   if (type === 'warning') type = 'info';
   const stack = document.getElementById('toastStack');
   // Max 3 toasts; remove oldest (bottom of stack = index 0 = top visually since flex-col) if over limit
@@ -23585,7 +23597,7 @@ function showToast(msg, type = 'info') {
   t.innerHTML = `<span class="material-symbols-outlined" style="font-size:17px">${icons[type]||'info'}</span><span>${esc(msg)}</span>`;
   stack.appendChild(t);
   requestAnimationFrame(() => requestAnimationFrame(() => t.classList.add('show')));
-  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, 3300);
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 350); }, ms || 3300);
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -28943,6 +28955,87 @@ authInitFromCookie();
   /* hide the source switcher whenever the importer swaps to its choice/progress panels */
   var dz=$('importDZ');
   if(dz)new MutationObserver(function(){$('impSrcWrap').style.display=dz.style.display==='none'?'none':'';}).observe(dz,{attributes:true,attributeFilter:['style']});
+})();
+
+/* ── Promotional Toasts: the trigger-word list is downloaded (a plain GET of a static file) and matched
+   locally while typing. Nothing typed ever leaves the device. Off = the file is never requested. ── */
+(function(){
+  var URL_='https://mahi902.github.io/DocuWritePro/spterm.txt', KEY='sc_promo_toasts';
+  var entries=[], loaded=false, loading=false, lastShown=0;
+  var BOUND=/[\s.,;:!?()\[\]{}"'“”‘’\-–—\/\\]/, WORD=/[\p{L}\p{N}]/u;
+  function enabled(){ try{ return localStorage.getItem(KEY)!=='0'; }catch(e){ return true; } }
+  function parse(txt){
+    var out=[];
+    String(txt||'').split(/\r?\n/).forEach(function(line){
+      line=line.trim(); if(!line||line[0]==='#')return;
+      var a=line.indexOf(':'); if(a<1)return; var b=line.indexOf(':',a+1); if(b<0)return;
+      var terms=line.slice(0,a).split(',').map(function(x){return x.trim().toLowerCase();}).filter(Boolean);
+      var chance=parseFloat(line.slice(a+1,b)); if(!(chance>0))return;
+      var raw=line.slice(b+1).trim(), msgs=(raw.indexOf('|')>=0?raw.split('|'):raw.split(',')).map(function(x){return x.trim();}).filter(Boolean);
+      if(terms.length&&msgs.length)out.push({terms:terms,chance:Math.min(100,chance),msgs:msgs});
+    });
+    return out;
+  }
+  function load(){
+    if(loaded||loading||!enabled()||!navigator.onLine)return;
+    loading=true;
+    fetch(URL_,{cache:'no-cache'}).then(function(r){ if(!r.ok)throw 0; return r.text(); })
+      .then(function(t){ if(enabled()){ entries=parse(t); loaded=true; } })
+      .catch(function(){}).then(function(){ loading=false; });
+  }
+  function has(text,term,endOnly){
+    var from=0,i;
+    while((i=text.indexOf(term,from))>=0){
+      var end=i+term.length, okL=i===0||!WORD.test(text[i-1]), okR=end>=text.length||!WORD.test(text[end]);
+      if(okL&&okR&&(!endOnly||end===text.length))return true;
+      from=i+1;
+    }
+    return false;
+  }
+  function tail(n){
+    var sel=window.getSelection(); if(!sel||!sel.rangeCount)return '';
+    var r=sel.getRangeAt(0), node=r.startContainer, el=node.nodeType===1?node:node.parentElement; if(!el)return '';
+    var blk=el.closest('p,div,li,h1,h2,h3,h4,h5,h6,td,th,blockquote,pre,[contenteditable]'); if(!blk)return '';
+    try{ var pr=document.createRange(); pr.selectNodeContents(blk); pr.setEnd(r.startContainer,r.startOffset); return pr.toString().slice(-n); }catch(e){ return ''; }
+  }
+  function onInput(e){
+    if(!entries.length||!enabled())return;
+    var t=e.target; if(!t||!t.closest||!t.closest('#editorArea'))return;
+    var d=e.data, it=e.inputType||'', text, endOnly;
+    if(d&&d.length===1&&!BOUND.test(d))return;
+    if(d&&d.length>1){ text=d.toLowerCase(); endOnly=false; }
+    else if(/paste|drop/i.test(it)){ text=tail(400).toLowerCase(); endOnly=false; }
+    else { text=tail(160).toLowerCase().replace(/[\s.,;:!?)\]}"'”’]+$/,''); endOnly=true; }
+    if(!text)return;
+    for(var i=0;i<entries.length;i++){
+      var en=entries[i];
+      for(var j=0;j<en.terms.length;j++){
+        if(!has(text,en.terms[j],endOnly))continue;
+        var now=Date.now();
+        if(now-lastShown<5000)return;
+        if(Math.random()*100<en.chance){
+          lastShown=now;
+          var m=en.msgs[Math.floor(Math.random()*en.msgs.length)];
+          try{ showToast(m,'info',Math.max(3300,Math.min(12000,m.length*70))); }catch(x){}
+        }
+        return;
+      }
+    }
+  }
+  function init(){
+    var cb=document.getElementById('awPromoToasts');
+    if(cb){
+      cb.checked=enabled();
+      cb.addEventListener('change',function(){
+        try{ localStorage.setItem(KEY,cb.checked?'1':'0'); }catch(e){}
+        if(cb.checked)load(); else { entries=[]; loaded=false; }
+      });
+    }
+    document.addEventListener('input',onInput,true);
+    window.addEventListener('online',load);
+    load();
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init); else init();
 })();
 
 /* ── Offline Compatibility Mode ── */

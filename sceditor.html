@@ -25588,15 +25588,16 @@ async function spRemove() {
 }
 function spStartWorker() {
   if (SP.worker) return;
-  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=197', { type: 'module' });
+  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=197b', { type: 'module' });
   w.onmessage = (e) => {
     const m = e.data;
-    if (m.type === 'ready') { SP.ready = true; spStatus('Sentence prediction ready. Keep typing a sentence.'); setTimeout(() => { if (SP.ready) spStatus(''); }, 4000); spSchedule(); }
-    else if (m.type === 'error') { SP.ready = false; console.error('[SP worker]', m); spStatus('Sentence model failed to load: ' + (m.message || m.error || 'unknown error')); spStop(); }
+    if (m.type === 'ready') { SP.ready = true; clearTimeout(SP.loadTimer); spStatus(''); SP.backend = m.backend || ''; spIdle('Ready' + (SP.backend ? ' (' + SP.backend + ')' : '') + '. Keep typing a sentence.'); spSchedule(); }
+    else if (m.type === 'error') { SP.ready = false; console.error('[SP worker]', m); const why = (m.message || m.error || 'unknown error'); spStatus('Sentence model failed to load: ' + why); showToast('Sentence model failed to load: ' + why, 'error'); spStop(); }
     else if (m.type === 'result') spOnResult(m);
   };
-  w.onerror = (ev) => { console.error('[SP worker error]', ev); spStatus('Sentence model failed to start: ' + ((ev && ev.message) || 'worker could not load (check that you opened the page over https from GitHub Pages)')); spStop(); };
-  spStatus('Loading sentence model…');
+  w.onerror = (ev) => { console.error('[SP worker error]', ev); const why = (ev && ev.message) || 'worker could not load (open the page over https from GitHub Pages)'; spStatus('Sentence model failed to start: ' + why); showToast('Sentence model failed to start: ' + why, 'error'); spStop(); };
+  spStatus('Loading sentence model…'); spIdle();
+  clearTimeout(SP.loadTimer); SP.loadTimer = setTimeout(() => { if (SP.on && !SP.ready) spIdle('Still loading the model. This can take a minute on a phone.'); }, 25000);
   w.postMessage({ type: 'init', modelId: AIModel.MODEL_ID });
 }
 function spStatus(t) { const el = document.getElementById('awStatus'); if (!el) return; el.textContent = t; el.style.display = t ? '' : 'none'; }
@@ -25605,7 +25606,7 @@ async function toggleSentencePrediction(on) {
   if (!on) { const cb = document.getElementById('awSentPred'); SP.on = false; spHide(); if (SP.worker) { SP.worker.terminate(); SP.worker = null; SP.ready = false; } return; }
   await spLoadHelper();
   if (!(await AIModel.installed())) { document.getElementById('awSentPred').checked = false; spRefreshUI(); showToast('Download the Sentence Prediction model first', 'info'); return; }
-  SP.on = true; spStartWorker();
+  SP.on = true; spStartWorker(); spIdle();
 }
 async function spRestore() {            // saved awSentPred=true: only enable if the model is really installed
   const cb = document.getElementById('awSentPred'); if (cb) cb.checked = false;
@@ -25672,7 +25673,7 @@ function spHide() {
   clearTimeout(SP.timer); SP.sug = ''; SP.anchor = null; SP.id++; SP.regenBusy = false; SP.regenN = 0;
   if (SP.worker) SP.worker.postMessage({ type: 'cancel' });
   const g = document.getElementById('sentGhost'); if (g) g.style.display = 'none';
-  spPanelsClose();
+  spIdle();
 }
 function spCaret() {
   if (!SP.on) return null;
@@ -25686,15 +25687,25 @@ function spCaret() {
 function spSame(a) {
   const c = spCaret(); return !!(c && a && c.node === a.node && c.offset === a.offset && c.text === a.text) && c;
 }
-function spRender() {
-  const a = SP.anchor, c = a && SP.sug && spSame(a);
-  if (!c) { spPanelsClose(); return; }
+function spUi(text, canAct, busy) {
+  if (!SP.on) return;
   spBuild();
   const $ = (id) => document.getElementById(id);
-  const txt = SP.regenBusy ? 'Thinking of another\u2026' : SP.sug.replace(/^\s+/, '');
-  $('spChipTxt').textContent = txt; $('spRowTxt').textContent = txt;
-  ['spBarRe', 'spPanelRe'].forEach((id) => { const e = $(id); e.classList.toggle('at-max', !!SP.regenBusy); e.disabled = !!SP.regenBusy; });
-  SP.bar.classList.add('open'); SP.panel.classList.add('open'); spSyncLayout();
+  $('spChipTxt').textContent = text; $('spRowTxt').textContent = text;
+  ['spBarRe', 'spPanelRe', 'spBarOk', 'spPanelOk'].forEach((id) => { $(id).style.display = canAct ? '' : 'none'; });
+  ['spBarRe', 'spPanelRe'].forEach((id) => { const e = $(id); e.classList.toggle('at-max', !!busy); e.disabled = !!busy; });
+  SP.bar.classList.add('open');
+  SP.panel.classList.toggle('open', !!canAct);
+  spSyncLayout();
+}
+function spIdle(msg) {
+  if (!SP.on) { spPanelsClose(); return; }
+  spUi(msg || (SP.ready ? 'Keep typing for suggestions' : 'Loading model\u2026'), false, false);
+}
+function spRender() {
+  const a = SP.anchor, c = a && SP.sug && spSame(a);
+  if (!c) { spIdle(); return; }
+  spUi(SP.regenBusy ? 'Thinking of another\u2026' : SP.sug.replace(/^\s+/, ''), true, SP.regenBusy);
 }
 function spAsk(regen) {
   if (!SP.worker || !SP.ready || !SP.lastText) return;
@@ -25709,7 +25720,8 @@ function spRegenerate() {
 }
 function spOnResult(m) {
   if (m.id !== SP.id) return;                                   // stale
-  if (!m.text) { if (SP.regenBusy) { SP.regenBusy = false; spRender(); showToast('No other suggestion found', 'info'); } return; }
+  if (m.error) { SP.regenBusy = false; console.error('[SP predict]', m.error); spIdle('Prediction failed: ' + String(m.error).slice(0, 90)); return; }
+  if (!m.text) { if (SP.regenBusy) { SP.regenBusy = false; spRender(); showToast('No other suggestion found', 'info'); } else spIdle('No suggestion for this text'); return; }
   if (!spSame(SP.anchor) && !spRestoreCaret()) return;
   if (SP.regenBusy && SP.sug && m.text.trim() === SP.sug.trim() && SP.regenTries < 2) { SP.regenTries++; spAsk(true); return; }
   if (SP.regenBusy && SP.sug && m.text.trim() === SP.sug.trim()) showToast('Got the same suggestion again', 'info');
@@ -25729,11 +25741,12 @@ function spSchedule() {
   clearTimeout(SP.timer);
   if (!SP.on || !SP.ready) return;
   SP.timer = setTimeout(() => {
-    const c = spCaret(); if (!c) return;
-    const text = spPromptFor(c).replace(/\u00a0/g, ' '); if (text.replace(/\s/g, '').length < 8) return;
+    const c = spCaret(); if (!c) { spIdle('Put the cursor at the end of a sentence'); return; }
+    const text = spPromptFor(c).replace(/\u00a0/g, ' '); if (text.replace(/\s/g, '').length < 8) { spIdle(); return; }
     SP.anchor = { node: c.node, offset: c.offset, text: c.text };
     SP.lastText = text; SP.regenN = 0; SP.regenBusy = false;
     SP.worker.postMessage({ type: 'predict', id: ++SP.id, text });
+    spUi('Thinking\u2026', false, false);
   }, 150);
 }
 document.addEventListener('input', (e) => {
@@ -25744,7 +25757,8 @@ document.addEventListener('input', (e) => {
 
 function spAccept() {
   if (!SP.sug || SP.regenBusy || (!spSame(SP.anchor) && !spRestoreCaret())) { if (!SP.regenBusy) spHide(); return false; }
-  const t = SP.sug; spHide(); SP.skip = true;
+  let t = SP.sug; if (SP.anchor && /\s$/.test(SP.anchor.text) && /^\s/.test(t)) t = t.replace(/^\s+/, '');
+  spHide(); SP.skip = true;
   if (!document.execCommand('insertText', false, t)) SP.skip = false;
   setTimeout(() => { SP.skip = false; }, 0);
   return true;

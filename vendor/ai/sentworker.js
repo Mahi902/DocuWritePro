@@ -1,6 +1,6 @@
 /* Sentence-prediction worker. Messages in: init | predict {id,text} | cancel | status.
    Out: progress | ready | result {id,text} | error | status. Runtime is self-hosted in this folder. */
-import { pipeline, env } from './transformers.web.min.js';   // pinned build, vendored (see NOTES.md)
+import { pipeline, env } from './transformers.min.js';   // pinned build, vendored (see NOTES.md)
 
 env.allowLocalModels = false;
 env.useBrowserCache = true;

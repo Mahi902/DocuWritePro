@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="180">
+<meta name="sceditor-version" content="195">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -695,7 +695,8 @@ body.dark #viewingDocTitle:focus{color:hsl(calc(var(--sc-h,210) + -3.1) calc(89.
 #wordPredBox.open{display:block;}
 #sentGhost{position:fixed;display:none;z-index:9500;pointer-events:none;white-space:pre;overflow:hidden;color:rgba(128,128,128,.7);margin:0;padding:0;user-select:none;}
 body.dark #sentGhost{color:rgba(170,170,170,.6);}
-.aw-sent-btn{font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;cursor:pointer;}
+.aw-sent-btn{font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(128,128,128,.45);background:transparent;color:hsl(var(--sc-th,0) var(--sc-ts,0%) calc(20% + var(--sc-tld,0%) * 1 + var(--sc-tll,0%) * 0));cursor:pointer;}
+body.dark .aw-sent-btn{color:hsl(var(--sc-th,0) var(--sc-ts,0%) calc(86.7% + var(--sc-tld,0%) * 0 + var(--sc-tll,0%) * 1));border-color:rgba(200,200,200,.4);}
 .aw-sent-btn:disabled{opacity:.5;cursor:default;}
 .wp-item{padding:6px 14px;cursor:pointer;font-size:13px;color:hsl(calc(var(--sc-h,210) + 1.9) calc(80.3% * var(--sc-s,1)) calc(41.8% + var(--sc-l,0%) * 1));transition:background .1s;border-bottom:1px solid hsl(calc(var(--sc-h,210) + 2) calc(100% * var(--sc-s,1)) calc(97.1% + var(--sc-l,0%) * 0));}
 .wp-item:last-child{border-bottom:none;}
@@ -8278,7 +8279,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 180; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 195; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -25515,7 +25516,7 @@ async function spDownload() {
     showToast('Sentence Prediction model installed', 'success');
   } catch (e) {
     SP.dl = false; bar.style.display = 'none';
-    await spRefreshUI('Download failed — nothing was kept. Tap to retry.');
+    await spRefreshUI('Download failed: ' + ((window.AIModel && AIModel.lastError) || 'unknown error') + ' — nothing was kept. Tap to retry.');
     document.getElementById('awSentDl').textContent = 'Retry download (~130 MB)';
     showToast('Model download failed', 'error');
   }

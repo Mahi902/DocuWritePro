@@ -466,6 +466,11 @@ self.addEventListener('fetch', event => {
   // Only handle GET; let POST/PUT pass through untouched
   if (request.method !== 'GET') return;
 
+  // ── Optional on-device AI model: bypass the SW completely ───
+  // ~130 MB of weights are cached by Transformers.js in its own Cache API
+  // store ('transformers-cache'); don't double-cache them in SHELL_CACHE.
+  if (/^https:\/\/([^/]*\.)?(huggingface\.co|hf\.co)\//i.test(url)) return;
+
   // ── Never-cache: live data / auth ──────────────────────────
   if (NEVER_CACHE_PATTERNS.some(re => re.test(url))) {
     event.respondWith(fetch(request));

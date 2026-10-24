@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="195">
+<meta name="sceditor-version" content="197">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -4019,7 +4019,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v195…</p>
+    <p class="loading-text">Loading Sugarcane v197…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -5388,7 +5388,7 @@ function waitForSugarcaneAddons(){
             <div class="aw-row">
               <div>
                 <div class="aw-row-label">Sentence Prediction</div>
-                <div class="aw-row-sub">Gray suggestions as you type &middot; <b>Tab</b> to accept &middot; on-device AI</div>
+                <div class="aw-row-sub">Suggestion bar &middot; tap Insert, or Regenerate for another &middot; <b>Tab</b> also inserts &middot; on-device AI</div>
                 <div class="aw-row-sub" id="awSentMsg" style="margin-top:4px;"></div>
                 <div id="awSentModel" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
                   <button type="button" id="awSentDl" class="aw-sent-btn" onclick="spDownload()">Download model (~130 MB)</button>
@@ -8279,7 +8279,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 195; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 197; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -25485,7 +25485,7 @@ const SP = { on:false, worker:null, ready:false, id:0, timer:null, sug:'', ancho
 const SP_AI = 'https://mahi902.github.io/DocuWritePro/vendor/ai/';
 function spLoadHelper() {
   if (window.AIModel) return Promise.resolve();
-  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js?v=195'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js?v=197'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
 }
 const spMB = n => (n / 1048576).toFixed(0) + ' MB';
 async function spRefreshUI(msg) {
@@ -25521,23 +25521,81 @@ async function spDownload() {
     showToast('Model download failed', 'error');
   }
 }
+/* Removing the model takes three separate verifications:
+   1) confirm the intent, 2) type REMOVE, 3) press-and-hold for 3 seconds. */
+function spVerifyThree() {
+  return new Promise((resolve) => {
+    const dark = document.body.classList.contains('dark');
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    const box = document.createElement('div');
+    box.style.cssText = 'width:100%;max-width:360px;border-radius:16px;padding:18px;font-family:inherit;box-shadow:0 20px 50px rgba(0,0,0,.4);background:' + (dark ? '#1e1e1e' : '#fff') + ';color:' + (dark ? '#eee' : '#222') + ';';
+    ov.appendChild(box);
+    const done = (v) => { try { ov.remove(); } catch (e) {} resolve(v); };
+    const btn = (label, bg, fg) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.style.cssText = 'flex:1;padding:12px 8px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:' + bg + ';color:' + fg + ';'; return b; };
+    const grey = dark ? '#333' : '#eee', greyFg = dark ? '#ddd' : '#333', red = '#d32f2f';
+    const step = (n) => {
+      box.innerHTML = '';
+      const t = document.createElement('div'); t.style.cssText = 'font-size:12px;font-weight:700;opacity:.6;margin-bottom:6px;'; t.textContent = 'Verification ' + n + ' of 3'; box.appendChild(t);
+      const h = document.createElement('div'); h.style.cssText = 'font-size:16px;font-weight:700;margin-bottom:8px;'; box.appendChild(h);
+      const d = document.createElement('div'); d.style.cssText = 'font-size:13px;line-height:1.45;opacity:.85;margin-bottom:14px;'; box.appendChild(d);
+      const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;'; 
+      const cancel = btn('Keep model', grey, greyFg); cancel.onclick = () => done(false);
+      if (n === 1) {
+        h.textContent = 'Remove the Sentence Prediction model?';
+        d.textContent = 'This deletes the ~130 MB on-device model. Sentence Prediction will stop working until you download it again.';
+        const go = btn('Continue', red, '#fff'); go.onclick = () => step(2);
+        row.append(cancel, go); box.appendChild(row);
+      } else if (n === 2) {
+        h.textContent = 'Type REMOVE to continue';
+        d.textContent = 'Type the word exactly as shown, in capital letters.';
+        const inp = document.createElement('input'); inp.type = 'text'; inp.autocapitalize = 'off'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'REMOVE';
+        inp.style.cssText = 'width:100%;box-sizing:border-box;padding:11px;margin-bottom:12px;border-radius:10px;font-size:15px;border:1px solid ' + (dark ? '#555' : '#bbb') + ';background:' + (dark ? '#111' : '#fff') + ';color:inherit;';
+        box.insertBefore(inp, d.nextSibling);
+        const go = btn('Continue', red, '#fff'); go.disabled = true; go.style.opacity = '.4';
+        inp.oninput = () => { const ok = inp.value === 'REMOVE'; go.disabled = !ok; go.style.opacity = ok ? '1' : '.4'; };
+        go.onclick = () => { if (inp.value === 'REMOVE') step(3); };
+        row.append(cancel, go); box.appendChild(row);
+        setTimeout(() => { try { inp.focus(); } catch (e) {} }, 50);
+      } else {
+        h.textContent = 'Final check: press and hold';
+        d.textContent = 'Press and hold the red button for 3 seconds to permanently remove the model. Letting go early cancels.';
+        const hold = btn('Hold to remove', red, '#fff'); hold.style.position = 'relative'; hold.style.overflow = 'hidden'; hold.style.touchAction = 'none'; hold.style.userSelect = 'none';
+        const fill = document.createElement('span'); fill.style.cssText = 'position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(0,0,0,.35);pointer-events:none;'; hold.appendChild(fill);
+        let t0 = 0, raf = 0;
+        const tick = () => { const p = Math.min(1, (performance.now() - t0) / 3000); fill.style.width = (p * 100) + '%'; if (p >= 1) { done(true); return; } raf = requestAnimationFrame(tick); };
+        const start = (e) => { e.preventDefault(); t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); };
+        const stop = () => { cancelAnimationFrame(raf); fill.style.width = '0'; };
+        hold.addEventListener('pointerdown', start); ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => hold.addEventListener(ev, stop));
+        hold.addEventListener('contextmenu', e => e.preventDefault());
+        row.append(cancel, hold); box.appendChild(row);
+      }
+    };
+    document.body.appendChild(ov); step(1);
+  });
+}
 async function spRemove() {
-  if (!confirm('Remove the Sentence Prediction model from this device?')) return;
-  toggleSentencePrediction(false); document.getElementById('awSentPred').checked = false;
-  try { await spLoadHelper(); await AIModel.remove(); } catch (e) {}
-  document.getElementById('awSentDl').textContent = 'Download model (~130 MB)';
-  await spRefreshUI();
+  if (SP.removing) return;
+  SP.removing = true;
+  try {
+    if (!(await spVerifyThree())) return;
+    toggleSentencePrediction(false); document.getElementById('awSentPred').checked = false;
+    try { await spLoadHelper(); await AIModel.remove(); } catch (e) {}
+    document.getElementById('awSentDl').textContent = 'Download model (~130 MB)';
+    await spRefreshUI();
+    showToast('Sentence Prediction model removed', 'info');
+  } finally { SP.removing = false; }
 }
 function spStartWorker() {
   if (SP.worker) return;
-  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=195', { type: 'module' });
+  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=197', { type: 'module' });
   w.onmessage = (e) => {
     const m = e.data;
-    if (m.type === 'ready') { SP.ready = true; spStatus(''); }
-    else if (m.type === 'error') { SP.ready = false; spStatus('Sentence model failed to load'); spStop(); }
+    if (m.type === 'ready') { SP.ready = true; spStatus('Sentence prediction ready. Keep typing a sentence.'); setTimeout(() => { if (SP.ready) spStatus(''); }, 4000); spSchedule(); }
+    else if (m.type === 'error') { SP.ready = false; console.error('[SP worker]', m); spStatus('Sentence model failed to load: ' + (m.message || m.error || 'unknown error')); spStop(); }
     else if (m.type === 'result') spOnResult(m);
   };
-  w.onerror = () => { spStatus('Sentence model failed to load'); spStop(); };
+  w.onerror = (ev) => { console.error('[SP worker error]', ev); spStatus('Sentence model failed to start: ' + ((ev && ev.message) || 'worker could not load (check that you opened the page over https from GitHub Pages)')); spStop(); };
   spStatus('Loading sentence model…');
   w.postMessage({ type: 'init', modelId: AIModel.MODEL_ID });
 }
@@ -25558,13 +25616,66 @@ async function spRestore() {            // saved awSentPred=true: only enable if
 }
 
 /* ghost rendering */
+/* Suggestion banner: built from the same Snippets bar (mobile) and Snippets
+   panel (wide screens) components used by Dictation and Magic Typing. */
+function spIc(name, size) { return '<span class="material-symbols-outlined" data-dwi="' + name + '"' + (size ? ' style="font-size:' + size + 'px"' : '') + '>' + name + '</span>'; }
+function spBuild() {
+  if (SP.bar) return;
+  const $ = (id) => document.getElementById(id);
+  const panel = SP.panel = document.createElement('div');
+  panel.id = 'scSentPanel'; panel.className = 'snippet-panel'; panel.setAttribute('role', 'status'); panel.setAttribute('aria-live', 'polite');
+  panel.innerHTML =
+    '<div class="snippet-panel-head"><span class="snippet-panel-title">Suggestion</span>' +
+    '<button type="button" class="snippet-panel-close" id="spPanelX" title="Dismiss">' + spIc('close') + '</button></div>' +
+    '<div class="snippet-panel-list"><div class="snippet-row" id="spRow" title="Insert suggestion"><span class="snippet-row-num">' + spIc('auto_awesome', 11) + '</span><span class="snippet-row-text" id="spRowTxt" style="unicode-bidi:plaintext"></span></div></div>' +
+    '<div class="snippet-panel-foot"><button type="button" class="snippet-panel-btn" id="spPanelRe">' + spIc('refresh', 15) + '<span>Regenerate</span></button>' +
+    '<button type="button" class="snippet-panel-btn primary" id="spPanelOk">' + spIc('check', 15) + 'Insert</button></div>';
+  document.body.appendChild(panel);
+
+  const bar = SP.bar = document.createElement('div');
+  bar.id = 'scSentBar'; bar.className = 'snippet-toolbar'; bar.setAttribute('role', 'status'); bar.setAttribute('aria-live', 'polite');
+  bar.innerHTML =
+    '<span class="snippet-toolbar-label">Suggestion</span>' +
+    '<div class="snippet-toolbar-chips"><span class="snippet-chip" id="spChip" title="Insert suggestion" style="max-width:none;flex:1;min-width:0"><span class="snippet-chip-num">' + spIc('auto_awesome', 10) + '</span><span class="snippet-chip-text" id="spChipTxt" style="unicode-bidi:plaintext"></span></span></div>' +
+    '<button type="button" class="snippet-toolbar-add" id="spBarRe" title="Regenerate">' + spIc('refresh', 16) + '</button>' +
+    '<button type="button" class="snippet-toolbar-done" id="spBarOk" title="Insert">' + spIc('check', 16) + 'Insert</button>';
+  const anchor = $('scMagicBar') || $('scDictBar') || $('snippetToolbar');
+  if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(bar, anchor.nextSibling);
+  else { const tb = document.querySelector('.toolbar'); if (tb && tb.parentNode) tb.parentNode.insertBefore(bar, tb.nextSibling); else document.body.appendChild(bar); }
+
+  [panel, bar].forEach((el) => {
+    el.addEventListener('mousedown', (e) => { e.preventDefault(); });          // keep the caret in the page
+    el.addEventListener('pointerdown', () => { SP.hold = true; setTimeout(() => { SP.hold = false; }, 600); });
+  });
+  ['spBarRe', 'spPanelRe'].forEach((id) => $(id).addEventListener('click', () => spRegenerate()));
+  ['spBarOk', 'spPanelOk', 'spChip', 'spRow'].forEach((id) => $(id).addEventListener('click', () => spAccept()));
+  $('spPanelX').addEventListener('click', () => spHide());
+  window.addEventListener('resize', spSyncLayout);
+}
+function spSyncLayout() {
+  if (!SP.bar) return;
+  const $ = (id) => document.getElementById(id);
+  let h = 0, on = false;
+  ['snippetToolbar', 'scDictBar', 'scMagicBar', 'scSentBar'].forEach((id) => {
+    const e = $(id); if (e && e.classList.contains('open')) { on = true; h += e.offsetHeight || 0; }
+  });
+  document.body.classList.toggle('sc-snippet-bar-on', on);
+  if (on && h) document.documentElement.style.setProperty('--sc-snippet-h', h + 'px');
+  const sp = $('snippetPanel');
+  SP.panel.style.bottom = (sp && sp.classList.contains('open') && sp.offsetHeight) ? (sp.offsetHeight + 34) + 'px' : '';
+}
+function spPanelsClose() {
+  if (!SP.bar) return;
+  SP.bar.classList.remove('open'); SP.panel.classList.remove('open'); spSyncLayout();
+}
 function spHide() {
-  clearTimeout(SP.timer); SP.sug = ''; SP.anchor = null; SP.id++;
+  clearTimeout(SP.timer); SP.sug = ''; SP.anchor = null; SP.id++; SP.regenBusy = false; SP.regenN = 0;
   if (SP.worker) SP.worker.postMessage({ type: 'cancel' });
   const g = document.getElementById('sentGhost'); if (g) g.style.display = 'none';
+  spPanelsClose();
 }
 function spCaret() {
-  if (!SP.on || SP.composing) return null;
+  if (!SP.on) return null;
   const sel = getSelection(); if (!sel || !sel.rangeCount || !sel.isCollapsed) return null;
   const r = sel.getRangeAt(0), n = r.startContainer;
   if (n.nodeType !== 3 || r.startOffset !== n.nodeValue.length) return null;     // end of text run only
@@ -25576,27 +25687,38 @@ function spSame(a) {
   const c = spCaret(); return !!(c && a && c.node === a.node && c.offset === a.offset && c.text === a.text) && c;
 }
 function spRender() {
-  const g = document.getElementById('sentGhost'), a = SP.anchor;
-  const c = a && SP.sug && spSame(a);
-  if (!c) { g.style.display = 'none'; return; }
-  const rects = c.range.getClientRects();
-  const rc = rects.length ? rects[rects.length - 1] : c.range.getBoundingClientRect();
-  if (!rc || (!rc.height && !rc.width && !rc.top)) { g.style.display = 'none'; return; }
-  const pr = c.pc.getBoundingClientRect(), k = c.pc.offsetWidth ? pr.width / c.pc.offsetWidth : 1;
-  const cs = getComputedStyle(c.node.parentElement);
-  g.style.fontFamily = cs.fontFamily; g.style.fontWeight = cs.fontWeight; g.style.fontStyle = cs.fontStyle;
-  g.style.fontSize = (parseFloat(cs.fontSize) * k) + 'px';
-  g.style.letterSpacing = cs.letterSpacing === 'normal' ? 'normal' : (parseFloat(cs.letterSpacing) * k) + 'px';
-  g.style.lineHeight = rc.height + 'px'; g.style.height = rc.height + 'px';
-  g.textContent = SP.sug;
-  g.style.left = rc.right + 'px'; g.style.top = rc.top + 'px';
-  g.style.maxWidth = Math.max(0, pr.right - rc.right - 4) + 'px';
-  g.style.display = 'block';
+  const a = SP.anchor, c = a && SP.sug && spSame(a);
+  if (!c) { spPanelsClose(); return; }
+  spBuild();
+  const $ = (id) => document.getElementById(id);
+  const txt = SP.regenBusy ? 'Thinking of another\u2026' : SP.sug.replace(/^\s+/, '');
+  $('spChipTxt').textContent = txt; $('spRowTxt').textContent = txt;
+  ['spBarRe', 'spPanelRe'].forEach((id) => { const e = $(id); e.classList.toggle('at-max', !!SP.regenBusy); e.disabled = !!SP.regenBusy; });
+  SP.bar.classList.add('open'); SP.panel.classList.add('open'); spSyncLayout();
+}
+function spAsk(regen) {
+  if (!SP.worker || !SP.ready || !SP.lastText) return;
+  const msg = { type: 'predict', id: ++SP.id, text: SP.lastText };
+  if (regen) { SP.regenN++; Object.assign(msg, { regen: SP.regenN, temperature: Math.min(1.1, 0.6 + 0.2 * SP.regenN), seed: (Date.now() % 100000) + SP.regenN, avoid: SP.sug }); }
+  SP.worker.postMessage(msg);
+}
+function spRegenerate() {
+  if (!SP.anchor || !SP.sug || SP.regenBusy) return;
+  if (!spSame(SP.anchor) && !spRestoreCaret()) { spHide(); return; }
+  SP.regenBusy = true; SP.regenTries = 0; spRender(); spAsk(true);
 }
 function spOnResult(m) {
-  if (m.id !== SP.id || !m.text) return;                      // stale
-  if (!spSame(SP.anchor)) return;
-  SP.sug = m.text; spRender();
+  if (m.id !== SP.id) return;                                   // stale
+  if (!m.text) { if (SP.regenBusy) { SP.regenBusy = false; spRender(); showToast('No other suggestion found', 'info'); } return; }
+  if (!spSame(SP.anchor) && !spRestoreCaret()) return;
+  if (SP.regenBusy && SP.sug && m.text.trim() === SP.sug.trim() && SP.regenTries < 2) { SP.regenTries++; spAsk(true); return; }
+  if (SP.regenBusy && SP.sug && m.text.trim() === SP.sug.trim()) showToast('Got the same suggestion again', 'info');
+  SP.regenBusy = false; SP.sug = m.text; spRender();
+}
+function spRestoreCaret() {            // the tap may have moved the caret; put it back at the anchor
+  const a = SP.anchor; if (!a || !a.node || !a.node.isConnected || a.node.nodeValue !== a.text) return false;
+  try { const r = document.createRange(); r.setStart(a.node, a.offset); r.collapse(true); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); } catch (e) { return false; }
+  return !!spSame(a);
 }
 function spPromptFor(c) {
   const blk = c.node.parentElement.closest('p,li,h1,h2,h3,h4,h5,h6,td,th,blockquote,div') || c.pc;
@@ -25608,39 +25730,37 @@ function spSchedule() {
   if (!SP.on || !SP.ready) return;
   SP.timer = setTimeout(() => {
     const c = spCaret(); if (!c) return;
-    const text = spPromptFor(c); if (text.replace(/\s/g, '').length < 8) return;
+    const text = spPromptFor(c).replace(/\u00a0/g, ' '); if (text.replace(/\s/g, '').length < 8) return;
     SP.anchor = { node: c.node, offset: c.offset, text: c.text };
+    SP.lastText = text; SP.regenN = 0; SP.regenBusy = false;
     SP.worker.postMessage({ type: 'predict', id: ++SP.id, text });
   }, 150);
 }
 document.addEventListener('input', (e) => {
   if (!SP.on || !e.target.closest || !e.target.closest('#editorArea .page-content')) return;
   if (SP.skip) { SP.skip = false; return; }                   // the Tab insertion itself
-  if (e.isComposing) { spHide(); return; }
-  if (SP.sug && e.inputType === 'insertText' && e.data && SP.sug.startsWith(e.data)) {   // type-ahead
-    const c = spCaret();
-    if (c) { SP.sug = SP.sug.slice(e.data.length); SP.anchor = { node: c.node, offset: c.offset, text: c.text };
-      if (SP.sug) { spRender(); return; } }
-  }
   const keep = SP.id; spHide(); SP.id = keep + 1; spSchedule();
 }, true);
-document.addEventListener('compositionstart', () => { SP.composing = true; spHide(); }, true);
-document.addEventListener('compositionend', () => { SP.composing = false; }, true);
+
+function spAccept() {
+  if (!SP.sug || SP.regenBusy || (!spSame(SP.anchor) && !spRestoreCaret())) { if (!SP.regenBusy) spHide(); return false; }
+  const t = SP.sug; spHide(); SP.skip = true;
+  if (!document.execCommand('insertText', false, t)) SP.skip = false;
+  setTimeout(() => { SP.skip = false; }, 0);
+  return true;
+}
+document.addEventListener('compositionend', () => { if (SP.on) setTimeout(() => { spHide(); spSchedule(); }, 0); }, true);
 document.addEventListener('keydown', (e) => {
   if (!SP.on || !SP.sug) return;
   if (e.key === 'Escape') { spHide(); return; }
   if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.isComposing) {
     if (!spSame(SP.anchor)) { spHide(); return; }
-    e.preventDefault(); e.stopImmediatePropagation();
-    const t = SP.sug; spHide(); SP.skip = true;
-    if (!document.execCommand('insertText', false, t)) SP.skip = false;
-    setTimeout(() => { SP.skip = false; }, 0);
+    e.preventDefault(); e.stopImmediatePropagation(); spAccept();
   }
 }, true);
-document.addEventListener('mousedown', () => { if (SP.sug) spHide(); }, true);
-window.addEventListener('scroll', () => { if (SP.sug) spHide(); }, true);
-window.addEventListener('resize', () => { if (SP.sug) spHide(); });
-document.addEventListener('selectionchange', () => { if (SP.sug && !spSame(SP.anchor)) spHide(); });
+document.addEventListener('mousedown', (e) => { if (SP.sug && !(e.target && e.target.closest && e.target.closest('#scSentBar,#scSentPanel'))) spHide(); }, true);
+window.addEventListener('scroll', (e) => { if (SP.sug && !(e.target && e.target.closest && e.target.closest('#scSentBar,#scSentPanel'))) spHide(); }, true);
+document.addEventListener('selectionchange', () => { if (SP.sug && !SP.hold && !SP.regenBusy && !spSame(SP.anchor)) spHide(); });
 document.addEventListener('DOMContentLoaded', () => { if (document.getElementById('awSentPred')) spRefreshUI(); });
 
 function toggleAutoAssist(on) {

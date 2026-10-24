@@ -4019,7 +4019,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v178…</p>
+    <p class="loading-text">Loading Sugarcane v195…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -25485,7 +25485,7 @@ const SP = { on:false, worker:null, ready:false, id:0, timer:null, sug:'', ancho
 const SP_AI = 'https://mahi902.github.io/DocuWritePro/vendor/ai/';
 function spLoadHelper() {
   if (window.AIModel) return Promise.resolve();
-  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js?v=195'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
 }
 const spMB = n => (n / 1048576).toFixed(0) + ' MB';
 async function spRefreshUI(msg) {
@@ -25516,7 +25516,7 @@ async function spDownload() {
     showToast('Sentence Prediction model installed', 'success');
   } catch (e) {
     SP.dl = false; bar.style.display = 'none';
-    await spRefreshUI('Download failed: ' + ((window.AIModel && AIModel.lastError) || 'unknown error') + ' — nothing was kept. Tap to retry.');
+    await spRefreshUI('Download failed: ' + ((e && e.message) || (window.AIModel && AIModel.lastError) || (window.AIModel ? 'unknown error' : 'could not load vendor/ai/aimodel.js')) + ' — nothing was kept. Tap to retry.');
     document.getElementById('awSentDl').textContent = 'Retry download (~130 MB)';
     showToast('Model download failed', 'error');
   }
@@ -25530,7 +25530,7 @@ async function spRemove() {
 }
 function spStartWorker() {
   if (SP.worker) return;
-  const w = SP.worker = new Worker(SP_AI + 'sentworker.js', { type: 'module' });
+  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=195', { type: 'module' });
   w.onmessage = (e) => {
     const m = e.data;
     if (m.type === 'ready') { SP.ready = true; spStatus(''); }

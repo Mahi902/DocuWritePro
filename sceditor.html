@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="200">
+<meta name="sceditor-version" content="201">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -4019,7 +4019,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v200…</p>
+    <p class="loading-text">Loading Sugarcane v201…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -5940,6 +5940,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
         <div class="scf-seg" id="imgSrcSeg">
           <button type="button" class="scf-seg-btn on" data-src="upload" onclick="imgSrcTab('upload')"><span class="material-symbols-outlined">upload</span>Upload</button>
           <button type="button" class="scf-seg-btn" data-src="url" onclick="imgSrcTab('url')"><span class="material-symbols-outlined">link</span>URL</button>
+          <button type="button" class="scf-seg-btn" data-src="gen" id="imgSrcGenTab" style="display:none" onclick="imgSrcTab('gen')"><span class="material-symbols-outlined">auto_awesome</span>Generate</button>
           <button type="button" class="scf-seg-btn" data-src="drive" id="imgSrcDriveTab" style="display:none" onclick="imgSrcTab('drive')"><span class="material-symbols-outlined">cloud</span>Google Drive</button>
         </div>
 
@@ -5959,6 +5960,14 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
           </div>
           <div class="scf-status" id="imgUrlStatus">Paste a direct image link, or a web page to pick from all of its images.</div>
           <div class="scf-grid" id="imgUrlGrid"></div>
+        </div>
+
+        <div class="scf-pane" data-pane="gen">
+          <div class="scf-row">
+            <input type="text" class="scf-input" id="imgGenPrompt" placeholder="Describe a picture, e.g. a cat astronaut on the moon" maxlength="200" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();imgGenStart()}"/>
+            <button type="button" class="scf-btn pri" id="imgGenGo" onclick="imgGenStart()"><span class="material-symbols-outlined">auto_awesome</span><span id="imgGenGoLbl">Generate</span></button>
+          </div>
+          <div class="scf-status" id="imgGenStatus">A fun, low-quality picture made on this device. It can take a while.</div>
         </div>
 
         <div class="scf-pane" data-pane="drive">
@@ -8279,7 +8288,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 200; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 201; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -15577,6 +15586,7 @@ function openImageModal() {
   _imgEl('imgUrlGrid').innerHTML = '';
   _imgEl('imgDriveGrid').innerHTML = '';
   imgUrlStatus('Paste a direct image link, or a web page to pick from all of its images.');
+  imgGenReset();
   imgSetPreview(null);
   imgRenderPicked();
   imgTogglePreview(false);
@@ -15587,6 +15597,7 @@ function openImageModal() {
   SCFlow.go('imageMdl', 'source');
   setupImgDZ();
   openMdl('imageMdl');
+  imgGenCheck();
 }
 
 function imgResetControls() {
@@ -15636,6 +15647,7 @@ function imgSrcTab(name, silent) {
   document.querySelectorAll('#imageMdl .scf-pane').forEach(p => p.classList.toggle('on', p.dataset.pane === name));
   if (name === 'drive' && !silent) imgLoadDrive();
   if (name === 'url' && !silent) setTimeout(() => _imgEl('imgUrlInput').focus(), 60);
+  if (name === 'gen' && !silent) setTimeout(() => _imgEl('imgGenPrompt').focus(), 60);
 }
 
 function setupImgDZ() {
@@ -15652,6 +15664,62 @@ function readImgFile(file) {
   r.onload = e => imgSetImage(e.target.result, file.name || 'Image');
   r.onerror = () => showToast('Could not read that file', 'error');
   r.readAsDataURL(file);
+}
+
+/* ── Generate source: on-device text-to-image (SDXS one-step). Tab appears only when AI Features + Sugarcane are on AND the image model is downloaded. ── */
+let _igWorker = null, _igBusy = false, _igTimer = null, _igId = 0;
+function imgGenStatus(t) { const s = _imgEl('imgGenStatus'); if (s) s.textContent = t; }
+function imgGenLoadHelper() {
+  if (window.AIImage) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aiimage.js?v=201'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
+}
+async function imgGenCheck() {
+  const tab = _imgEl('imgSrcGenTab'); if (tab) tab.style.display = 'none';
+  if (typeof spGatingOk !== 'function' || !spGatingOk()) return;
+  try { await imgGenLoadHelper(); if (await AIImage.installed() && tab) tab.style.display = ''; } catch (e) {}
+}
+function imgGenEnd() {
+  _igBusy = false; clearInterval(_igTimer); _igTimer = null;
+  if (_igWorker) { _igWorker.terminate(); _igWorker = null; }   // frees all model memory
+  const l = _imgEl('imgGenGoLbl'); if (l) l.textContent = 'Generate';
+  const p = _imgEl('imgGenPrompt'); if (p) p.disabled = false;
+}
+function imgGenReset() {
+  if (_igBusy) imgGenEnd();
+  const p = _imgEl('imgGenPrompt'); if (p) p.value = '';
+  imgGenStatus('A fun, low-quality picture made on this device. It can take a while.');
+}
+function imgGenStart() {
+  if (_igBusy) { imgGenEnd(); imgGenStatus('Cancelled.'); return; }
+  const prompt = _imgEl('imgGenPrompt').value.trim();
+  if (!prompt) { imgGenStatus('Type what you want to see.'); return; }
+  _igBusy = true;
+  _imgEl('imgGenGoLbl').textContent = 'Cancel'; _imgEl('imgGenPrompt').disabled = true;
+  const id = ++_igId, t0 = Date.now();
+  let stage = 'Loading the model…';
+  const tick = () => imgGenStatus(stage + ' ' + Math.round((Date.now() - t0) / 1000) + 's');
+  tick(); _igTimer = setInterval(tick, 500);
+  const names = { text: 'Reading your prompt…', draw: 'Drawing…', decode: 'Finishing the picture…' };
+  try {
+    const w = new Worker(SP_AI + 'imgworker.js?v=201', { type: 'module' }); _igWorker = w;
+    w.onmessage = e => {
+      const m = e.data; if (m.id !== id) return;
+      if (m.type === 'stage') { stage = names[m.name] || stage; tick(); }
+      else if (m.type === 'result') {
+        const cv = document.createElement('canvas'); cv.width = m.w; cv.height = m.h;
+        cv.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(m.rgba), m.w, m.h), 0, 0);
+        const secs = Math.round((Date.now() - t0) / 1000);
+        imgGenEnd();
+        imgSetImage(cv.toDataURL('image/png'), 'AI: ' + prompt.slice(0, 40));
+        imgGenStatus('Done in ' + secs + 's. Press Next, or change the prompt and generate again.');
+      } else if (m.type === 'error') {
+        imgGenEnd(); imgGenStatus(m.message === 'Cancelled' ? 'Cancelled.' : 'Could not generate: ' + m.message);
+        if (m.message !== 'Cancelled') showToast('Image generation failed', 'error');
+      }
+    };
+    w.onerror = e => { imgGenEnd(); imgGenStatus('Could not start the image model. Open the app once online to finish setup.'); console.error('[imgGen]', e); };
+    w.postMessage({ type: 'generate', id, prompt });
+  } catch (err) { imgGenEnd(); imgGenStatus('Could not start the image model.'); }
 }
 
 /* ── URL source: direct image link OR a web page whose images are listed ── */

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DocuWrite Pro 5.8.5</title>
+    <title>DocuWrite Pro 5.8.6</title>
     <meta name="description" content="DocuWrite Pro">
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -1348,7 +1348,7 @@
                 </div>
             </div>
 
-            <p id="about-app-version" class="about-version-tap" style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px; cursor:pointer;">Version 5.8.5 • Build 2026</p>
+            <p id="about-app-version" class="about-version-tap" style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px; cursor:pointer;">Version 5.8.6 • Build 2026</p>
             <div style="height: 80px;"></div>
         </div>
     </div>
@@ -1498,6 +1498,22 @@
                 </details>
             </div>
             <div class="eds-hint">Runs fully on this device. Used by Sentence Prediction in the Sugarcane editor, which also needs AI Features and AI Usecases › Sugarcane turned on.</div>
+
+            <div class="aimodel-card" style="margin-top:12px;">
+                <div class="aimodel-top">
+                    <div class="aimodel-icon"><span class="material-symbols-rounded">auto_awesome</span></div>
+                    <div style="min-width:0;">
+                        <div class="aimodel-name">Image Generation model</div>
+                        <div class="aimodel-status" id="ai-img-status">Checking…</div>
+                    </div>
+                </div>
+                <progress class="aimodel-progress" id="ai-img-progress" max="100" value="0"></progress>
+                <div class="aimodel-actions">
+                    <button class="addons-action-btn primary" id="ai-img-dl" onclick="aiImgDownload()" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">download</span>Download (~680 MB)</button>
+                    <button class="addons-action-btn danger" id="ai-img-del" onclick="aiImgDelete()" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">delete</span>Delete</button>
+                </div>
+            </div>
+            <div class="eds-hint">A small, fun picture generator (512×512, low quality, no readable text). Runs fully on this device and adds a Generate tab to Insert Image in the Sugarcane editor. Needs AI Features and AI Usecases › Sugarcane turned on, and works best on a computer or a recent phone with plenty of free memory.</div>
 
             <div class="settings-section-title">External Data Sources</div>
             <div class="eds-add-row">
@@ -3833,12 +3849,12 @@
             if(window.AIModel)return Promise.resolve();
             return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='./vendor/ai/aimodel.js';sc.onload=res;sc.onerror=()=>rej(new Error('Could not load the model helper'));document.head.appendChild(sc);});
         }
-        async function aiCacheRuntime(){      // helper, worker, transformers.js, ONNX wasm (~30 MB) so prediction also works offline
+        async function aiCacheRuntime(extra){      // helper, worker, transformers.js, ONNX wasm (~30 MB) so prediction also works offline
             try{
                 if(!('caches' in window))return false;
                 const base=new URL('./vendor/ai/',location.href).href;
                 const c=await caches.open(AI_RUNTIME_CACHE);
-                for(const f of ['aimodel.js','sentworker.js','transformers.min.js','ort-wasm-simd-threaded.asyncify.mjs','ort-wasm-simd-threaded.asyncify.wasm']){
+                for(const f of ['aimodel.js','sentworker.js','transformers.min.js','ort-wasm-simd-threaded.asyncify.mjs','ort-wasm-simd-threaded.asyncify.wasm'].concat(extra||[])){
                     const u=base+f;
                     if(await c.match(u,{ignoreSearch:true}))continue;
                     const r=await fetch(u);if(!r.ok)return false;
@@ -3847,6 +3863,58 @@
                 return true;
             }catch(e){return false;}
         }
+        /* ── On-device image model manager (Data Sources page): download / delete ── */
+        let _aiImgBusy=false,_aiImgAbort=null;
+        function aiImgLoadHelper(){
+            if(window.AIImage)return Promise.resolve();
+            return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='./vendor/ai/aiimage.js';sc.onload=res;sc.onerror=()=>rej(new Error('Could not load the image model helper'));document.head.appendChild(sc);});
+        }
+        function aiImgSetBusy(on){
+            _aiImgBusy=on;
+            const d=document.getElementById('ai-img-dl'),x=document.getElementById('ai-img-del');
+            if(d)d.disabled=on;if(x)x.disabled=on;
+        }
+        async function aiImgRefresh(msg){
+            const st=document.getElementById('ai-img-status');if(!st)return;
+            let installed=false,size=0,failed=false;
+            try{await aiImgLoadHelper();installed=await AIImage.installed();if(installed)size=await AIImage.size();}catch(e){failed=true;}
+            document.getElementById('ai-img-dl').style.display=installed?'none':'';
+            document.getElementById('ai-img-del').style.display=installed?'':'none';
+            st.textContent=msg||(failed?'Model helper unavailable \u2014 connect to the internet once to set it up.':installed?('Installed \u00b7 '+Math.round(size/1048576)+' MB'):'Not downloaded');
+            aiImgSetBusy(_aiImgBusy);
+        }
+        async function aiImgDownload(){
+            if(_aiImgBusy)return;
+            if(!navigator.onLine){showToast('You need an internet connection to download the model.','error');return;}
+            const cn=navigator.connection;
+            const warn=(cn&&(cn.type==='cellular'||cn.saveData))?'You appear to be on mobile data. ':'';
+            if(!await showAppConfirm(warn+'The image model is about 680 MB. Download it now?','Large download',{icon:'download',confirmLabel:'Download'}))return;
+            const bar=document.getElementById('ai-img-progress'),st=document.getElementById('ai-img-status');
+            aiImgSetBusy(true);bar.value=0;bar.style.display='block';
+            try{
+                await aiImgLoadHelper();
+                try{navigator.storage&&navigator.storage.persist&&await navigator.storage.persist();}catch(e){}
+                _aiImgAbort=new AbortController();
+                await AIImage.download((pct,l,t)=>{bar.value=pct;st.textContent='Downloading\u2026 '+Math.round(l/1048576)+' / '+Math.round(t/1048576)+' MB';},_aiImgAbort.signal);
+                st.textContent='Saving offline runtime\u2026';
+                await aiCacheRuntime(['aiimage.js','imgworker.js','ort.webgpu.min.mjs']);
+                bar.style.display='none';aiImgSetBusy(false);
+                await aiImgRefresh();
+                showToast('Image model downloaded','success');
+            }catch(e){
+                bar.style.display='none';aiImgSetBusy(false);
+                await aiImgRefresh('Download failed'+(e&&e.message?': '+e.message:'')+' \u2014 nothing was kept. Tap Download to retry.');
+                showToast('Image model download failed','error');
+            }
+        }
+        async function aiImgDelete(){
+            if(_aiImgBusy)return;
+            if(!await showAppConfirm('This deletes the on-device image model. The Generate tab in Insert Image will disappear until you download it again.','Delete image model?',{destructive:true,confirmLabel:'Delete'}))return;
+            aiImgSetBusy(true);
+            try{await aiImgLoadHelper();await AIImage.remove();aiImgSetBusy(false);await aiImgRefresh();showToast('Image model deleted','info');}
+            catch(e){aiImgSetBusy(false);await aiImgRefresh();showToast('Could not delete the image model','error');}
+        }
+
         function aiCopyFlag(text){
             const done=()=>showToast('Copied. Paste it into Chrome\u2019s address bar.','success');
             try{
@@ -3914,7 +3982,7 @@
 
         function openDataSourcesPage(){
             const el=document.getElementById('ai-datasources-page');
-            if(el){renderExternalDataSources();aiModelRefresh();el.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('slide-open')));}
+            if(el){renderExternalDataSources();aiModelRefresh();aiImgRefresh();el.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('slide-open')));}
         }
         function closeDataSourcesPage(){const el=document.getElementById('ai-datasources-page');if(el)el.classList.remove('slide-open');}
 

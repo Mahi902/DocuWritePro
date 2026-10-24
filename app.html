@@ -1510,6 +1510,7 @@
                 <progress class="aimodel-progress" id="ai-img-progress" max="100" value="0"></progress>
                 <div class="aimodel-actions">
                     <button class="addons-action-btn primary" id="ai-img-dl" onclick="aiImgDownload()" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">download</span>Download (~680 MB)</button>
+                    <button class="addons-action-btn" id="ai-img-upd" onclick="aiImgDownload(true)" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">sync</span>Update</button>
                     <button class="addons-action-btn danger" id="ai-img-del" onclick="aiImgDelete()" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">delete</span>Delete</button>
                 </div>
             </div>
@@ -3871,36 +3872,38 @@
         }
         function aiImgSetBusy(on){
             _aiImgBusy=on;
-            const d=document.getElementById('ai-img-dl'),x=document.getElementById('ai-img-del');
-            if(d)d.disabled=on;if(x)x.disabled=on;
+            ['ai-img-dl','ai-img-upd','ai-img-del'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=on;});
         }
         async function aiImgRefresh(msg){
             const st=document.getElementById('ai-img-status');if(!st)return;
             let installed=false,size=0,failed=false;
             try{await aiImgLoadHelper();installed=await AIImage.installed();if(installed)size=await AIImage.size();}catch(e){failed=true;}
             document.getElementById('ai-img-dl').style.display=installed?'none':'';
+            document.getElementById('ai-img-upd').style.display=installed?'':'none';
             document.getElementById('ai-img-del').style.display=installed?'':'none';
             st.textContent=msg||(failed?'Model helper unavailable \u2014 connect to the internet once to set it up.':installed?('Installed \u00b7 '+Math.round(size/1048576)+' MB'):'Not downloaded');
             aiImgSetBusy(_aiImgBusy);
         }
-        async function aiImgDownload(){
+        async function aiImgDownload(isUpdate){
             if(_aiImgBusy)return;
             if(!navigator.onLine){showToast('You need an internet connection to download the model.','error');return;}
             const cn=navigator.connection;
             const warn=(cn&&(cn.type==='cellular'||cn.saveData))?'You appear to be on mobile data. ':'';
-            if(!await showAppConfirm(warn+'The image model is about 680 MB. Download it now?','Large download',{icon:'download',confirmLabel:'Download'}))return;
+            if(isUpdate){if(!await showAppConfirm(warn+'Updating re-downloads the image model (about 680 MB). The current copy is removed first, so the Generate tab is unavailable until the download finishes.','Update image model',{icon:'sync',confirmLabel:'Update'}))return;}
+            else if(!await showAppConfirm(warn+'The image model is about 680 MB. Download it now?','Large download',{icon:'download',confirmLabel:'Download'}))return;
             const bar=document.getElementById('ai-img-progress'),st=document.getElementById('ai-img-status');
             aiImgSetBusy(true);bar.value=0;bar.style.display='block';
             try{
                 await aiImgLoadHelper();
                 try{navigator.storage&&navigator.storage.persist&&await navigator.storage.persist();}catch(e){}
+                if(isUpdate){st.textContent='Removing the old model\u2026';await AIImage.remove();}
                 _aiImgAbort=new AbortController();
                 await AIImage.download((pct,l,t)=>{bar.value=pct;st.textContent='Downloading\u2026 '+Math.round(l/1048576)+' / '+Math.round(t/1048576)+' MB';},_aiImgAbort.signal);
                 st.textContent='Saving offline runtime\u2026';
                 await aiCacheRuntime(['aiimage.js','imgworker.js','ort.webgpu.min.mjs']);
                 bar.style.display='none';aiImgSetBusy(false);
                 await aiImgRefresh();
-                showToast('Image model downloaded','success');
+                showToast(isUpdate?'Image model updated':'Image model downloaded','success');
             }catch(e){
                 bar.style.display='none';aiImgSetBusy(false);
                 await aiImgRefresh('Download failed'+(e&&e.message?': '+e.message:'')+' \u2014 nothing was kept. Tap Download to retry.');
@@ -3909,7 +3912,7 @@
         }
         async function aiImgDelete(){
             if(_aiImgBusy)return;
-            if(!await showAppConfirm('This deletes the on-device image model. The Generate tab in Insert Image will disappear until you download it again.','Delete image model?',{destructive:true,confirmLabel:'Delete'}))return;
+            if(!await aiConfirmTypeDelete('This deletes the on-device image model. The Generate tab in Insert Image will disappear until you download it again.','Delete image model?'))return;
             aiImgSetBusy(true);
             try{await aiImgLoadHelper();await AIImage.remove();aiImgSetBusy(false);await aiImgRefresh();showToast('Image model deleted','info');}
             catch(e){aiImgSetBusy(false);await aiImgRefresh();showToast('Could not delete the image model','error');}
@@ -3921,6 +3924,13 @@
                 if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,()=>showToast('Could not copy \u2013 type '+text+' manually.','error'));return;}
             }catch(e){}
             showToast('Could not copy \u2013 type '+text+' manually.','error');
+        }
+        async function aiConfirmTypeDelete(message,title){
+            const v=await _openAppDialog({title:title,message:message+' Type DELETE to confirm.',icon:'delete',destructive:true,input:true,placeholder:'DELETE',defaultValue:'',
+                buttons:[{label:'Cancel',value:false,style:'secondary'},{label:'Delete',value:true,style:'destructive'}]});
+            if(v===null||v===undefined)return false;
+            if(String(v).trim()!=='DELETE'){showToast('Not deleted \u2013 you must type DELETE exactly.','info');return false;}
+            return true;
         }
         function aiModelSetBusy(on){
             _aiModelBusy=on;
@@ -3966,7 +3976,7 @@
         }
         async function aiModelDelete(){
             if(_aiModelBusy)return;
-            if(!await showAppConfirm('This deletes the on-device model and its offline runtime. Sentence Prediction will stop working until you download it again.','Delete model?',{destructive:true,confirmLabel:'Delete'}))return;
+            if(!await aiConfirmTypeDelete('This deletes the on-device model and its offline runtime. Sentence Prediction will stop working until you download it again.','Delete model?'))return;
             aiModelSetBusy(true);
             try{
                 await aiModelLoadHelper();

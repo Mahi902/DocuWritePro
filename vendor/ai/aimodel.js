@@ -26,12 +26,12 @@
   async function installed() {                 // cache lookup only, never downloads
     try {
       var e = await entries();
-      return REQUIRED.every(function (f) {
-        return e.some(function (x) {
-          return x.url.split('?')[0].endsWith('/' + f) && x.size > 0 &&
-                 (f.indexOf('.onnx') < 0 || x.size >= MIN_MODEL_BYTES);
-        });
-      });
+      var has = function (f) { return e.some(function (x) { return x.url.split('?')[0].endsWith('/' + f) && x.size > 0; }); };
+      if (!['config.json', 'tokenizer.json', 'tokenizer_config.json', 'onnx/model_quantized.onnx'].every(has)) return false;
+      // weights may be split into model_quantized.onnx + model_quantized.onnx_data: count both
+      var w = e.filter(function (x) { return /\/onnx\/model_quantized\.onnx(_data)?$/.test(x.url.split('?')[0]); })
+               .reduce(function (a, x) { return a + x.size; }, 0);
+      return w >= MIN_MODEL_BYTES;
     } catch (_) { return false; }
   }
   async function size() { return (await entries()).reduce(function (a, x) { return a + x.size; }, 0); }
@@ -46,9 +46,10 @@
       var w = new Worker(BASE + 'sentworker.js', { type: 'module' }), files = {};
       function done(err) {
         w.terminate();
+        if (err) { g.AIModel.lastError = err.message; console.error('[AIModel]', err); }
         if (err) { remove().catch(function () {}).then(function () { reject(err); }); return; }
         installed().then(function (ok) {
-          if (ok) resolve(); else remove().catch(function () {}).then(function () { reject(new Error('Verification failed')); });
+          if (ok) resolve(); else { g.AIModel.lastError = 'Download finished but files failed verification'; remove().catch(function () {}).then(function () { reject(new Error('Verification failed')); }); }
         });
       }
       if (signal) signal.addEventListener('abort', function () { done(new Error('Cancelled')); });
@@ -60,6 +61,7 @@
           onProgress && onProgress(T ? Math.min(100, L / T * 100) : 0, L, T);
         } else if (m.type === 'ready') done();
         else if (m.type === 'error') done(new Error(m.message));
+        else if (m.type === 'log') console.log('[AIModel]', m.message);
       };
       w.onerror = function (e) { done(new Error(e.message || 'Worker failed')); };
       w.postMessage({ type: 'init', modelId: MODEL_ID, download: true });

@@ -4482,6 +4482,36 @@ window.dwpGreet = function () {
 
   /* ── Optional add-on step ── */
   var stage2Started = false, aoItems = [], aoOn = {}, aoBusy = false;
+  /* Optional Sentence Prediction model — unchecked by default; Skip downloads nothing */
+  var aoModel = { on: false, installed: false, loaded: false };
+  function aoLoadModelHelper() {
+    if (window.AIModel) return Promise.resolve();
+    return new Promise(function (res, rej) {
+      var s = document.createElement('script'); s.src = './vendor/ai/aimodel.js';
+      s.onload = res; s.onerror = function () { rej(new Error('helper')); }; document.head.appendChild(s);
+    });
+  }
+  function aoAddModelRow(list) {
+    aoLoadModelHelper().then(function () { return AIModel.installed(); }).catch(function () { return false; }).then(function (inst) {
+      aoModel.installed = !!inst; aoModel.loaded = true;
+      var row = document.createElement('div');
+      row.className = 'dwp-ao-item' + (inst ? ' is-done' : '') + (aoModel.on && !inst ? ' is-on' : '');
+      var icon = document.createElement('div'); icon.className = 'dwp-ao-icon';
+      var g = document.createElement('span'); g.className = 'material-symbols-rounded'; g.textContent = 'neurology'; icon.appendChild(g);
+      var main = document.createElement('div'); main.className = 'dwp-ao-main';
+      var name = document.createElement('div'); name.className = 'dwp-ao-name'; name.textContent = 'Sentence Prediction model (~130 MB)';
+      var meta = document.createElement('div'); meta.className = 'dwp-ao-meta'; meta.textContent = 'Optional · on-device AI';
+      var desc = document.createElement('div'); desc.className = 'dwp-ao-desc'; desc.textContent = 'Gray suggestions as you type, accepted with Tab. Runs fully on this device. You can also get it later from Assistive Writing.';
+      main.appendChild(name); main.appendChild(meta); main.appendChild(desc);
+      row.appendChild(icon); row.appendChild(main);
+      if (inst) { var tag = document.createElement('span'); tag.className = 'dwp-ao-tag'; tag.textContent = 'Installed'; row.appendChild(tag); }
+      else {
+        var chk = document.createElement('span'); chk.className = 'dwp-ao-check material-symbols-rounded'; chk.textContent = 'check'; row.appendChild(chk);
+        row.onclick = function () { if (aoBusy) return; aoModel.on = !aoModel.on; row.classList.toggle('is-on', aoModel.on); aoUpdateButtons(); };
+      }
+      list.appendChild(row); aoUpdateButtons();
+    });
+  }
   function aoInstalledState(item) {
     try {
       var local = getSugarcaneAddons().find(function (a) { return String(a.name).toLowerCase() === String(item.name).toLowerCase(); });
@@ -4490,7 +4520,7 @@ window.dwpGreet = function () {
     } catch (e) { return ''; }
   }
   function aoUpdateButtons() {
-    var n = Object.keys(aoOn).filter(function (k) { return aoOn[k]; }).length;
+    var n = Object.keys(aoOn).filter(function (k) { return aoOn[k]; }).length + (aoModel.on && !aoModel.installed ? 1 : 0);
     var get = $('dwpAoGet');
     get.disabled = aoBusy || n === 0;
     get.textContent = n ? 'Download (' + n + ')' : 'Download';
@@ -4507,11 +4537,11 @@ window.dwpGreet = function () {
     $('dwpAoCount').textContent = '';
     fetchSugarcaneStoreItems().then(function (items) {
       aoItems = items || [];
-      if (!aoItems.length) { list.innerHTML = '<div class="dwp-ao-msg">No add-ons are available right now.</div>'; $('dwpAoSkip').textContent = 'Continue'; return; }
+      if (!aoItems.length) { list.innerHTML = '<div class="dwp-ao-msg">No add-ons are available right now.</div>'; $('dwpAoSkip').textContent = 'Continue'; aoAddModelRow(list); return; }
       renderAddonList();
     }).catch(function () {
       list.innerHTML = '<div class="dwp-ao-msg">Could not load the Add-ons Store. You can get add-ons later from the Add-ons Store in settings.</div>';
-      $('dwpAoSkip').textContent = 'Continue';
+      $('dwpAoSkip').textContent = 'Continue'; aoAddModelRow(list);
     });
   }
   function renderAddonList() {
@@ -4543,6 +4573,7 @@ window.dwpGreet = function () {
       }
       list.appendChild(row);
     });
+    aoAddModelRow(list);
     $('dwpAoAll').hidden = selectable < 2;
     $('dwpAoAll').onclick = function () {
       if (aoBusy) return;
@@ -4560,7 +4591,12 @@ window.dwpGreet = function () {
   $('dwpAoGet').onclick = async function () {
     if (aoBusy) return;
     var picks = aoItems.filter(function (_, i) { return aoOn[i]; });
-    if (!picks.length) return;
+    var wantModel = aoModel.on && !aoModel.installed;
+    if (!picks.length && !wantModel) return;
+    if (wantModel) {
+      var cn = navigator.connection;
+      if (cn && (cn.type === 'cellular' || cn.saveData) && !confirm('You appear to be on mobile data. The Sentence Prediction model is about 130 MB. Download anyway?')) return;
+    }
     aoBusy = true; aoUpdateButtons();
     $('dwpAoSkip').disabled = true; $('dwpAoAll').hidden = true;
     $('dwpAoBar').hidden = false; $('dwpAoFill').style.width = '0%';
@@ -4570,10 +4606,20 @@ window.dwpGreet = function () {
       try { await installSugarcaneStoreItem(picks[k]); okCount++; } catch (e) { failed.push(picks[k]); }
       $('dwpAoFill').style.width = Math.round((k + 1) / picks.length * 100) + '%';
     }
+    var modelFailed = false, modelOk = false;
+    if (wantModel) {
+      $('dwpAoFill').style.width = '0%';
+      $('dwpAoStatus').textContent = 'Downloading Sentence Prediction model…';
+      try {
+        try { navigator.storage && navigator.storage.persist && await navigator.storage.persist(); } catch (e2) {}
+        await AIModel.download(function (pct) { $('dwpAoFill').style.width = Math.round(pct) + '%'; });
+        modelOk = true; aoModel.installed = true; aoModel.on = false;
+      } catch (e) { modelFailed = true; failed.push({ name: 'Sentence Prediction model', _model: true }); }
+    }
     if (okCount) {
       try { localStorage.setItem(SUGARcANE_ADDONS_ENABLED_KEY, 'true'); checkSugarcaneAddonsVisibility(); } catch (e) {}
     }
-    aoBusy = false; $('dwpAoSkip').disabled = false;
+    aoBusy = false; $('dwpAoSkip').disabled = false; okCount += modelOk ? 1 : 0;
     if (!failed.length) {
       $('dwpAoList').hidden = true; $('dwpAoCount').textContent = '';
       $('dwpAoTitle').textContent = 'Add-ons ready';
@@ -4584,6 +4630,7 @@ window.dwpGreet = function () {
     } else {
       $('dwpAoStatus').textContent = failed.length + ' could not be downloaded: ' + failed.map(function (f) { return f.name; }).join(', ');
       aoItems.forEach(function (it, i) { aoOn[i] = failed.indexOf(it) !== -1; });
+      aoModel.on = modelFailed;
       renderAddonList();
       $('dwpAoGet').textContent = 'Retry';
       $('dwpAoSkip').textContent = 'Skip';

@@ -101,7 +101,7 @@ async function run(job) {
   const chk = () => { if (cancelled) throw new Error('Cancelled'); };
   const T = await loadTokenizer();
   const ids = encode(T, job.prompt);
-  const providers = (self.navigator && self.navigator.gpu) ? ['webgpu', 'wasm'] : ['wasm'];
+  const providers = ['wasm'];   // int8 dynamic-quantized models are CPU models (author-tested on CPU only); WebGPU kernels for them give garbage
 
   const go = async (prov) => {
     // 1 · text encoder
@@ -140,8 +140,10 @@ async function run(job) {
       }
       throw lastErr;
     });
-    // SDXS is a one-step model: the UNet output at t=999 is already the clean latent (no DDIM conversion)
-    const lat = pred;
+    // UNet predicts epsilon at t=999; one step to the clean latent (alpha_cumprod(999) = 0.00466009508818388, per the model card)
+    const ab = 0.00466009508818388, sa = Math.sqrt(ab), sb = Math.sqrt(1 - ab);
+    const lat = new Float32Array(noise.length);
+    for (let i = 0; i < lat.length; i++) lat[i] = (noise[i] - sb * pred[i]) / sa;
     // 3 · TAESD decoder
     post('decode'); chk();
     return await withSession('onnx/vae_decoder.onnx', prov, async (s) => {

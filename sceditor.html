@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="199">
+<meta name="sceditor-version" content="200">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -4019,7 +4019,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v199…</p>
+    <p class="loading-text">Loading Sugarcane v200…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -8279,7 +8279,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 199; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 200; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -25490,10 +25490,37 @@ AW.autoAssistTimer = null;
    Nothing below loads the runtime or model until the user installs it.
 ═══════════════════════════════════════════════════════ */
 const SP = { on:false, worker:null, ready:false, id:0, timer:null, sug:'', anchor:null, composing:false, skip:false, dl:false };
-const SP_AI = 'https://mahi902.github.io/DocuWritePro/vendor/ai/';
+// Resolve relative to this page so the cached copies are the ones used (works offline); fall back to the hosted URL for blob/file contexts.
+const SP_AI = /^https?:$/.test(location.protocol) ? new URL('vendor/ai/', location.href).href : 'https://mahi902.github.io/DocuWritePro/vendor/ai/';
+/* Sentence Prediction is locked unless BOTH are on in the app: Settings → AI → AI Features, and
+   AI Usecases → Sugarcane (cookies shared across the site; same gate Context Expansion uses). */
+function spGatingOk() {
+  try { return getCookie('ai_features_enabled') === 'true' && getCookie('ai_usecase_sugarcane') === 'true'; }
+  catch (e) { return false; }
+}
+const SP_LOCK_MSG = 'Locked \u2013 turn on AI Features and AI Usecases \u203a Sugarcane in the app Settings \u203a AI.';
+const SP_AI_CACHE = 'dwp-ai-runtime-v1';   // must match AI_CACHE in sw.js
+const SP_AI_FILES = ['aimodel.js', 'sentworker.js', 'transformers.min.js', 'ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm'];
+/* Saves the runtime (helper, worker, transformers.js, ONNX wasm ~30 MB) so Sentence Prediction runs with no connection.
+   Idempotent: files already stored are skipped. Never throws. */
+async function spCacheRuntime(onStep) {
+  try {
+    if (!('caches' in window) || SP_AI.indexOf('http') !== 0) return false;
+    const c = await caches.open(SP_AI_CACHE);
+    for (const f of SP_AI_FILES) {
+      const u = SP_AI + f;
+      if (await c.match(u, { ignoreSearch: true })) continue;
+      onStep && onStep(f);
+      const r = await fetch(u);
+      if (!r.ok) return false;
+      await c.put(u, r);
+    }
+    return true;
+  } catch (e) { console.warn('[SP] runtime caching failed', e); return false; }
+}
 function spLoadHelper() {
   if (window.AIModel) return Promise.resolve();
-  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js?v=199'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js?v=200'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
 }
 function spApplyModelCtl() {
   let on = false; try { on = localStorage.getItem('scSentModelCtl') === '1'; } catch (e) {}
@@ -25504,14 +25531,15 @@ const spMB = n => (n / 1048576).toFixed(0) + ' MB';
 async function spRefreshUI(msg) {
   const cb = document.getElementById('awSentPred'); if (!cb) return;
   let ok = false, size = 0;
-  try { if (navigator.onLine !== false || window.AIModel) { await spLoadHelper(); ok = await AIModel.installed(); if (ok) size = await AIModel.size(); } } catch (e) {}
-  cb.disabled = !ok || SP.dl;
-  if (!ok && cb.checked) { cb.checked = false; toggleSentencePrediction(false); }
+  try { await spLoadHelper(); ok = await AIModel.installed(); if (ok) size = await AIModel.size(); } catch (e) {}   // installed() is a pure cache lookup, so no online check
+  const gate = spGatingOk();
+  cb.disabled = !ok || SP.dl || !gate;
+  if ((!ok || !gate) && cb.checked) { cb.checked = false; toggleSentencePrediction(false); }
   document.getElementById('awSentDl').style.display = ok ? 'none' : '';
   document.getElementById('awSentDl').disabled = SP.dl;
   document.getElementById('awSentRm').style.display = ok ? '' : 'none';
   document.getElementById('awSentRm').textContent = 'Remove model (' + spMB(size) + ')';
-  document.getElementById('awSentMsg').textContent = msg || (ok ? '' : 'Model not installed \u2013 install in the app');
+  document.getElementById('awSentMsg').textContent = msg || (!ok ? 'Model not installed \u2013 install in the app' : (!gate ? SP_LOCK_MSG : ''));
   const dsc = document.getElementById('awSentDesc'); if (dsc) dsc.style.display = (ok || msg) ? '' : 'none';
 }
 async function spDownload() {
@@ -25525,8 +25553,10 @@ async function spDownload() {
     await spLoadHelper();
     try { navigator.storage && navigator.storage.persist && await navigator.storage.persist(); } catch (e) {}
     await AIModel.download((pct, l, t) => { bar.value = pct; document.getElementById('awSentMsg').textContent = 'Downloading… ' + spMB(l) + ' / ' + spMB(t); });
+    document.getElementById('awSentMsg').textContent = 'Saving offline runtime…';
+    const rtOk = await spCacheRuntime();
     SP.dl = false; bar.style.display = 'none';
-    await spRefreshUI('Model installed');
+    await spRefreshUI(rtOk ? 'Model installed' : 'Model installed (offline runtime not saved yet — it will retry next time you are online)');
     showToast('Sentence Prediction model installed', 'success');
   } catch (e) {
     SP.dl = false; bar.style.display = 'none';
@@ -25600,9 +25630,15 @@ async function spRemove() {
     showToast('Sentence Prediction model removed', 'info');
   } finally { SP.removing = false; }
 }
+function spRecheckGate() {                 // settings changed elsewhere (app Settings, another tab): lock or unlock live
+  if (SP.on && !spGatingOk()) { spStop(); }
+  if (document.getElementById('awSentPred')) spRefreshUI();
+}
+window.addEventListener('focus', spRecheckGate);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) spRecheckGate(); });
 function spStartWorker() {
   if (SP.worker) return;
-  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=199', { type: 'module' });
+  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=200', { type: 'module' });
   w.onmessage = (e) => {
     const m = e.data;
     if (m.type === 'ready') { SP.ready = true; clearTimeout(SP.loadTimer); spStatus(''); SP.backend = m.backend || ''; spIdle('Ready' + (SP.backend ? ' (' + SP.backend + ')' : '') + '. Keep typing a sentence.'); spSchedule(); }
@@ -25618,6 +25654,7 @@ function spStatus(t) { const el = document.getElementById('awStatus'); if (!el) 
 function spStop() { SP.on = false; SP.ready = false; spHide(); if (SP.worker) { SP.worker.terminate(); SP.worker = null; } const cb = document.getElementById('awSentPred'); if (cb) cb.checked = false; }
 async function toggleSentencePrediction(on) {
   if (!on) { const cb = document.getElementById('awSentPred'); SP.on = false; spHide(); if (SP.worker) { SP.worker.terminate(); SP.worker = null; SP.ready = false; } return; }
+  if (!spGatingOk()) { document.getElementById('awSentPred').checked = false; spRefreshUI(); showToast('Sentence Prediction is locked \u2013 enable AI Features and AI Usecases \u203a Sugarcane in the app Settings \u203a AI.', 'info'); return; }
   await spLoadHelper();
   if (!(await AIModel.installed())) { document.getElementById('awSentPred').checked = false; spRefreshUI(); showToast('Model not installed \u2013 install in the app', 'info'); return; }
   SP.on = true; spStartWorker(); spIdle();
@@ -25627,7 +25664,12 @@ async function spRestore() {            // saved awSentPred=true: only enable if
   let ok = false;
   try { await spLoadHelper(); ok = await AIModel.installed(); } catch (e) {}
   await spRefreshUI();
-  if (ok) { cb.checked = true; toggleSentencePrediction(true); }
+  if (ok && spGatingOk()) {
+    cb.checked = true; toggleSentencePrediction(true);
+    // Top up the offline runtime for users who installed the model before this was cached (skipped on mobile data / data saver)
+    const nc = navigator.connection;
+    if (navigator.onLine && !(nc && (nc.type === 'cellular' || nc.saveData))) spCacheRuntime();
+  }
 }
 
 /* ghost rendering */
@@ -29465,10 +29507,12 @@ authInitFromCookie();
 })();
 
 /* ── Promotional Toasts: the trigger-word list is downloaded (a plain GET of a static file) and matched
-   locally while typing. Nothing typed ever leaves the device. Off = the file is never requested. ── */
+   locally while typing. Nothing typed ever leaves the device. Off = the file is never requested.
+   The last downloaded list is kept on-device (and by the service worker) so toasts also work offline;
+   it is refreshed whenever a connection is available. ── */
 (function(){
-  var URL_='https://mahi902.github.io/DocuWritePro/spterm.txt', KEY='sc_promo_toasts';
-  var entries=[], loaded=false, loading=false, lastShown=0;
+  var URL_='https://mahi902.github.io/DocuWritePro/spterm.txt', KEY='sc_promo_toasts', SKEY='sc_promo_terms';
+  var entries=[], fresh=false, loading=false, lastShown=0;
   var BOUND=/[\s.,;:!?()\[\]{}"'“”‘’\-–—\/\\]/, WORD=/[\p{L}\p{N}]/u;
   function enabled(){ try{ return localStorage.getItem(KEY)!=='0'; }catch(e){ return true; } }
   function parse(txt){
@@ -29484,10 +29528,18 @@ authInitFromCookie();
     return out;
   }
   function load(){
-    if(loaded||loading||!enabled()||!navigator.onLine)return;
+    if(fresh||loading||!enabled())return;
+    var saved=null; try{ saved=localStorage.getItem(SKEY); }catch(e){}
+    if(saved&&!entries.length){ entries=parse(saved); }            // use the stored list straight away (works offline)
+    if(!navigator.onLine&&entries.length)return;                   // offline with a list in hand: nothing to fetch
     loading=true;
     fetch(URL_,{cache:'no-cache'}).then(function(r){ if(!r.ok)throw 0; return r.text(); })
-      .then(function(t){ if(enabled()){ entries=parse(t); loaded=true; } })
+      .then(function(t){
+        if(!enabled())return;
+        var e=parse(t); if(!e.length)return;
+        entries=e; fresh=true;
+        try{ localStorage.setItem(SKEY,t); }catch(x){}
+      })
       .catch(function(){}).then(function(){ loading=false; });
   }
   function has(text,term,endOnly){
@@ -29535,7 +29587,7 @@ authInitFromCookie();
       cb.checked=enabled();
       cb.addEventListener('change',function(){
         try{ localStorage.setItem(KEY,cb.checked?'1':'0'); }catch(e){}
-        if(cb.checked)load(); else { entries=[]; loaded=false; }
+        if(cb.checked)load(); else { entries=[]; fresh=false; try{ localStorage.removeItem(SKEY); }catch(e){} }
       });
     }
     document.addEventListener('input',onInput,true);

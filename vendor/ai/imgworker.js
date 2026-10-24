@@ -93,11 +93,6 @@ function randn(n, seed) {
   for (let i = 0; i < n; i += 2) { const u = Math.max(rnd(), 1e-9), v = rnd(), r = Math.sqrt(-2 * Math.log(u)); o[i] = r * Math.cos(2 * Math.PI * v); if (i + 1 < n) o[i + 1] = r * Math.sin(2 * Math.PI * v); }
   return o;
 }
-function alphaBar(t) {                          // Stable Diffusion scaled-linear schedule, 1000 steps
-  const a = Math.sqrt(0.00085), b = Math.sqrt(0.012); let p = 1;
-  for (let i = 0; i <= t; i++) { const be = Math.pow(a + (b - a) * i / 999, 2); p *= (1 - be); }
-  return p;
-}
 
 let cancelled = false, backendUsed = '';
 
@@ -145,10 +140,8 @@ async function run(job) {
       }
       throw lastErr;
     });
-    // one-step DDIM (epsilon prediction) at t = 999 → clean latent
-    const ab = alphaBar(999), sa = Math.sqrt(ab), sb = Math.sqrt(1 - ab);
-    const lat = new Float32Array(noise.length);
-    for (let i = 0; i < lat.length; i++) lat[i] = (noise[i] - sb * pred[i]) / sa;
+    // SDXS is a one-step model: the UNet output at t=999 is already the clean latent (no DDIM conversion)
+    const lat = pred;
     // 3 · TAESD decoder
     post('decode'); chk();
     return await withSession('onnx/vae_decoder.onnx', prov, async (s) => {

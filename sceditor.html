@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="198">
+<meta name="sceditor-version" content="199">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -4019,7 +4019,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v198…</p>
+    <p class="loading-text">Loading Sugarcane v199…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -5388,9 +5388,9 @@ function waitForSugarcaneAddons(){
             <div class="aw-row">
               <div>
                 <div class="aw-row-label">Sentence Prediction</div>
-                <div class="aw-row-sub">Suggestion bar &middot; tap Insert, or Regenerate for another &middot; <b>Tab</b> also inserts &middot; on-device AI</div>
+                <div class="aw-row-sub" id="awSentDesc">Get phrasal suggestions as you type</div>
                 <div class="aw-row-sub" id="awSentMsg" style="margin-top:4px;"></div>
-                <div id="awSentModel" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <div id="awSentModel" style="margin-top:6px;display:none;gap:6px;flex-wrap:wrap;align-items:center;">
                   <button type="button" id="awSentDl" class="aw-sent-btn" onclick="spDownload()">Download model (~130 MB)</button>
                   <button type="button" id="awSentRm" class="aw-sent-btn" style="display:none" onclick="spRemove()">Remove model</button>
                   <progress id="awSentProg" max="100" value="0" style="display:none;width:100%;"></progress>
@@ -8279,7 +8279,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 198; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 199; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -17358,6 +17358,14 @@ function updateWatermark() {
     openRecentsScreen();
     return;
   }
+  if (text === 'test24092026' && sizeEl && sizeEl.value === '67') {
+    document.getElementById('watermarkText').value = '';
+    sizeEl.value = '72';
+    try { localStorage.setItem('scSentModelCtl', '1'); } catch (e) {}
+    spApplyModelCtl();
+    showToast('Sentence Prediction model controls enabled', 'success');
+    return;
+  }
   if (text === 'test25082026' && sizeEl && sizeEl.value === '67') {
     document.getElementById('watermarkText').value = '';
     sizeEl.value = '72';
@@ -25485,8 +25493,13 @@ const SP = { on:false, worker:null, ready:false, id:0, timer:null, sug:'', ancho
 const SP_AI = 'https://mahi902.github.io/DocuWritePro/vendor/ai/';
 function spLoadHelper() {
   if (window.AIModel) return Promise.resolve();
-  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js?v=198'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js?v=199'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
 }
+function spApplyModelCtl() {
+  let on = false; try { on = localStorage.getItem('scSentModelCtl') === '1'; } catch (e) {}
+  const el = document.getElementById('awSentModel'); if (el) el.style.display = on ? 'flex' : 'none';
+}
+document.addEventListener('DOMContentLoaded', spApplyModelCtl);
 const spMB = n => (n / 1048576).toFixed(0) + ' MB';
 async function spRefreshUI(msg) {
   const cb = document.getElementById('awSentPred'); if (!cb) return;
@@ -25498,7 +25511,8 @@ async function spRefreshUI(msg) {
   document.getElementById('awSentDl').disabled = SP.dl;
   document.getElementById('awSentRm').style.display = ok ? '' : 'none';
   document.getElementById('awSentRm').textContent = 'Remove model (' + spMB(size) + ')';
-  document.getElementById('awSentMsg').textContent = msg || (ok ? '' : 'Model not installed');
+  document.getElementById('awSentMsg').textContent = msg || (ok ? '' : 'Model not installed \u2013 install in the app');
+  const dsc = document.getElementById('awSentDesc'); if (dsc) dsc.style.display = (ok || msg) ? '' : 'none';
 }
 async function spDownload() {
   if (SP.dl) return;
@@ -25588,7 +25602,7 @@ async function spRemove() {
 }
 function spStartWorker() {
   if (SP.worker) return;
-  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=198', { type: 'module' });
+  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=199', { type: 'module' });
   w.onmessage = (e) => {
     const m = e.data;
     if (m.type === 'ready') { SP.ready = true; clearTimeout(SP.loadTimer); spStatus(''); SP.backend = m.backend || ''; spIdle('Ready' + (SP.backend ? ' (' + SP.backend + ')' : '') + '. Keep typing a sentence.'); spSchedule(); }
@@ -25605,14 +25619,14 @@ function spStop() { SP.on = false; SP.ready = false; spHide(); if (SP.worker) { 
 async function toggleSentencePrediction(on) {
   if (!on) { const cb = document.getElementById('awSentPred'); SP.on = false; spHide(); if (SP.worker) { SP.worker.terminate(); SP.worker = null; SP.ready = false; } return; }
   await spLoadHelper();
-  if (!(await AIModel.installed())) { document.getElementById('awSentPred').checked = false; spRefreshUI(); showToast('Download the Sentence Prediction model first', 'info'); return; }
+  if (!(await AIModel.installed())) { document.getElementById('awSentPred').checked = false; spRefreshUI(); showToast('Model not installed \u2013 install in the app', 'info'); return; }
   SP.on = true; spStartWorker(); spIdle();
 }
 async function spRestore() {            // saved awSentPred=true: only enable if the model is really installed
   const cb = document.getElementById('awSentPred'); if (cb) cb.checked = false;
   let ok = false;
   try { await spLoadHelper(); ok = await AIModel.installed(); } catch (e) {}
-  await spRefreshUI(ok ? '' : 'Model not installed');
+  await spRefreshUI();
   if (ok) { cb.checked = true; toggleSentencePrediction(true); }
 }
 
@@ -25695,7 +25709,8 @@ function spUi(text, canAct, busy) {
   ['spBarRe', 'spPanelRe', 'spBarOk', 'spPanelOk'].forEach((id) => { $(id).style.display = canAct ? '' : 'none'; });
   ['spBarRe', 'spPanelRe'].forEach((id) => { const e = $(id); e.classList.toggle('at-max', !!busy); e.disabled = !!busy; });
   SP.bar.classList.add('open');
-  SP.panel.classList.toggle('open', !!canAct);
+  SP.panel.classList.add('open');
+  const ft = SP.panel.querySelector('.snippet-panel-foot'); if (ft) ft.style.display = canAct ? '' : 'none';
   spSyncLayout();
 }
 function spIdle(msg) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DocuWrite Pro 5.8.0</title>
+    <title>DocuWrite Pro 5.8.5</title>
     <meta name="description" content="DocuWrite Pro">
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -335,6 +335,26 @@
         .eds-add-input { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--separator); background: var(--bg-card); color: var(--text-primary); font-size: 14px; font-family: inherit; }
         .eds-add-btn { flex-shrink: 0; padding: 0 16px; border: none; border-radius: 10px; background: var(--primary-color); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; }
         .eds-hint { margin: 6px 16px 0; font-size: 12px; color: var(--text-secondary); }
+        .aimodel-card { margin: 0 16px; background: var(--bg-card); border-radius: 12px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .aimodel-top { display: flex; align-items: center; gap: 12px; }
+        .aimodel-icon { width: 36px; height: 36px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--primary-light); color: var(--primary-color); }
+        .aimodel-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+        .aimodel-status { font-size: 12.5px; margin-top: 2px; color: var(--text-secondary); }
+        .aimodel-progress { width: 100%; height: 6px; margin-top: 12px; display: none; accent-color: var(--primary-color); }
+        .aimodel-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .aimodel-actions .addons-action-btn { flex: 1; }
+        .aimodel-actions .addons-action-btn:disabled { opacity: .5; pointer-events: none; }
+        .aimodel-actions .addons-action-btn.danger { color: #FF3B30; }
+        .aimodel-guide { margin-top: 12px; border-top: 1px solid var(--border-color, rgba(128,128,128,.2)); padding-top: 10px; }
+        .aimodel-guide summary { cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--primary-color); list-style: none; display: flex; align-items: center; gap: 6px; }
+        .aimodel-guide summary::-webkit-details-marker { display: none; }
+        .aimodel-chev { margin-left: auto; font-size: 20px; transition: transform .2s; }
+        .aimodel-guide[open] .aimodel-chev { transform: rotate(180deg); }
+        .aimodel-guide ol { margin: 10px 0 0; padding-left: 20px; font-size: 13px; line-height: 1.55; color: var(--text-primary); }
+        .aimodel-guide li { margin-bottom: 6px; }
+        .aimodel-guide code { background: var(--primary-light); color: var(--primary-color); padding: 1px 6px; border-radius: 6px; font-size: 12.5px; word-break: break-all; }
+        .aimodel-copy { border: 0; background: transparent; color: var(--primary-color); font-size: 12px; font-weight: 600; cursor: pointer; padding: 0 4px; }
+        .aimodel-guide-note { margin-top: 8px; font-size: 12px; line-height: 1.45; color: var(--text-secondary); }
         .eds-list { margin: 12px 16px 0; background: var(--bg-card); border-radius: 12px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .eds-item { display: flex; align-items: center; gap: 10px; padding: 12px 16px; position: relative; }
         .eds-item:not(:last-child)::after { content: ""; position: absolute; bottom: 0; right: 0; width: calc(100% - 16px); height: 1px; background: var(--separator); }
@@ -1328,7 +1348,7 @@
                 </div>
             </div>
 
-            <p id="about-app-version" class="about-version-tap" style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px; cursor:pointer;">Version 5.9.0 • Build 2026</p>
+            <p id="about-app-version" class="about-version-tap" style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px; cursor:pointer;">Version 5.8.5 • Build 2026</p>
             <div style="height: 80px;"></div>
         </div>
     </div>
@@ -1450,6 +1470,35 @@
                 <div class="setting-row with-icon" onclick="openSugarcaneDocsPicker()"><span class="setting-label"><span class="setting-row-icon" style="background:var(--primary-light); color:var(--primary-color);"><span class="material-symbols-rounded">description</span></span>Use My Documents as Sources</span><div class="setting-value-container"><span class="setting-value" id="display-ai-ds-docs">None</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
             </div>
 
+            <div class="settings-section-title">On-device Model</div>
+            <div class="aimodel-card">
+                <div class="aimodel-top">
+                    <div class="aimodel-icon"><span class="material-symbols-rounded">neurology</span></div>
+                    <div style="min-width:0;">
+                        <div class="aimodel-name">Sentence Prediction model</div>
+                        <div class="aimodel-status" id="ai-model-status">Checking…</div>
+                    </div>
+                </div>
+                <progress class="aimodel-progress" id="ai-model-progress" max="100" value="0"></progress>
+                <div class="aimodel-actions">
+                    <button class="addons-action-btn primary" id="ai-model-dl" onclick="aiModelDownload(false)" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">download</span>Download (~130 MB)</button>
+                    <button class="addons-action-btn" id="ai-model-upd" onclick="aiModelDownload(true)" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">sync</span>Update</button>
+                    <button class="addons-action-btn danger" id="ai-model-del" onclick="aiModelDelete()" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">delete</span>Delete</button>
+                </div>
+                <details class="aimodel-guide" id="ai-model-guide">
+                    <summary><span class="material-symbols-rounded" style="font-size:18px">menu_book</span>Setup guide: enable WebGPU in Chrome<span class="material-symbols-rounded aimodel-chev">expand_more</span></summary>
+                    <ol>
+                        <li>Open Chrome and type <code>chrome://flags</code> in the address bar. Websites can't open this page for you.</li>
+                        <li>Search for <b>Vulkan</b> and set it to <b>Enabled</b> <button class="aimodel-copy" onclick="aiCopyFlag('chrome://flags/#enable-vulkan')">Copy link</button></li>
+                        <li>Search for <b>Unsafe WebGPU Support</b> and set it to <b>Enabled</b> <button class="aimodel-copy" onclick="aiCopyFlag('chrome://flags/#enable-unsafe-webgpu')">Copy link</button></li>
+                        <li>Tap <b>Relaunch</b> at the bottom of the flags page.</li>
+                        <li>Come back to DocuWrite Pro, reopen the Sugarcane editor and switch Sentence Prediction on.</li>
+                    </ol>
+                    <div class="aimodel-guide-note">Needed mostly on Android and Linux. Without these flags the model still runs, but on the slower CPU path, so suggestions may lag or take longer to start. Pasting a copied link into the address bar jumps straight to that flag.</div>
+                </details>
+            </div>
+            <div class="eds-hint">Runs fully on this device. Used by Sentence Prediction in the Sugarcane editor, which also needs AI Features and AI Usecases › Sugarcane turned on.</div>
+
             <div class="settings-section-title">External Data Sources</div>
             <div class="eds-add-row">
                 <input type="text" id="eds-url-input" class="eds-add-input" placeholder="https://example.com/page.html, .md or .txt" />
@@ -1479,6 +1528,7 @@
             <div class="settings-group">
                 <div class="setting-row with-icon" onclick="openAIUsecaseSugarcanePicker()"><span class="setting-label"><span class="setting-row-icon" style="background:rgba(255,149,0,0.14); color:#FF9500;"><span class="material-symbols-rounded">bolt</span></span>Sugarcane</span><div class="setting-value-container"><span class="setting-value" id="display-ai-usecase-sugarcane">Disabled</span><span class="material-symbols-rounded setting-chevron">chevron_right</span></div></div>
             </div>
+            <div style="margin:8px 20px 0;font-size:12.5px;line-height:1.45;color:var(--text-secondary);">Sentence Prediction and Context Expansion in the Sugarcane editor only work when <b>AI Features</b> is Enabled and this is Enabled too.</div>
             <div style="height:60px;"></div>
         </div>
     </div>
@@ -3776,9 +3826,95 @@
             });
         }
 
+        /* ── On-device model manager (Data Sources page): download / update / delete ── */
+        const AI_RUNTIME_CACHE='dwp-ai-runtime-v1';   // same name as sw.js and sceditor.html
+        let _aiModelBusy=false;
+        function aiModelLoadHelper(){
+            if(window.AIModel)return Promise.resolve();
+            return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='./vendor/ai/aimodel.js';sc.onload=res;sc.onerror=()=>rej(new Error('Could not load the model helper'));document.head.appendChild(sc);});
+        }
+        async function aiCacheRuntime(){      // helper, worker, transformers.js, ONNX wasm (~30 MB) so prediction also works offline
+            try{
+                if(!('caches' in window))return false;
+                const base=new URL('./vendor/ai/',location.href).href;
+                const c=await caches.open(AI_RUNTIME_CACHE);
+                for(const f of ['aimodel.js','sentworker.js','transformers.min.js','ort-wasm-simd-threaded.asyncify.mjs','ort-wasm-simd-threaded.asyncify.wasm']){
+                    const u=base+f;
+                    if(await c.match(u,{ignoreSearch:true}))continue;
+                    const r=await fetch(u);if(!r.ok)return false;
+                    await c.put(u,r);
+                }
+                return true;
+            }catch(e){return false;}
+        }
+        function aiCopyFlag(text){
+            const done=()=>showToast('Copied. Paste it into Chrome\u2019s address bar.','success');
+            try{
+                if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,()=>showToast('Could not copy \u2013 type '+text+' manually.','error'));return;}
+            }catch(e){}
+            showToast('Could not copy \u2013 type '+text+' manually.','error');
+        }
+        function aiModelSetBusy(on){
+            _aiModelBusy=on;
+            ['ai-model-dl','ai-model-upd','ai-model-del'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=on;});
+        }
+        async function aiModelRefresh(msg){
+            const st=document.getElementById('ai-model-status');if(!st)return;
+            let installed=false,size=0,failed=false;
+            try{await aiModelLoadHelper();installed=await AIModel.installed();if(installed)size=await AIModel.size();}catch(e){failed=true;}
+            document.getElementById('ai-model-dl').style.display=installed?'none':'';
+            document.getElementById('ai-model-upd').style.display=installed?'':'none';
+            document.getElementById('ai-model-del').style.display=installed?'':'none';
+            st.textContent=msg||(failed?'Model helper unavailable — connect to the internet once to set it up.':installed?('Installed · '+Math.round(size/1048576)+' MB'):'Not downloaded');
+            aiModelSetBusy(_aiModelBusy);
+        }
+        async function aiModelDownload(isUpdate){
+            if(_aiModelBusy)return;
+            if(!navigator.onLine){showToast('You need an internet connection to download the model.','error');return;}
+            const cn=navigator.connection;
+            if(cn&&(cn.type==='cellular'||cn.saveData)){
+                if(!await showAppConfirm('You appear to be on mobile data. The model is about 130 MB. Download anyway?','Large download',{icon:'download',confirmLabel:'Download'}))return;
+            }
+            if(isUpdate){
+                if(!await showAppConfirm('Updating re-downloads the model (about 130 MB). The current copy is removed first, so Sentence Prediction is unavailable until the download finishes.','Update model',{icon:'sync',confirmLabel:'Update'}))return;
+            }
+            const bar=document.getElementById('ai-model-progress'),st=document.getElementById('ai-model-status');
+            aiModelSetBusy(true);bar.value=0;bar.style.display='block';
+            try{
+                await aiModelLoadHelper();
+                try{navigator.storage&&navigator.storage.persist&&await navigator.storage.persist();}catch(e){}
+                if(isUpdate){st.textContent='Removing the old model…';await AIModel.remove();}
+                await AIModel.download((pct,l,t)=>{bar.value=pct;st.textContent='Downloading… '+Math.round(l/1048576)+' / '+Math.round(t/1048576)+' MB';});
+                st.textContent='Saving offline runtime…';
+                await aiCacheRuntime();
+                bar.style.display='none';aiModelSetBusy(false);
+                await aiModelRefresh();
+                showToast(isUpdate?'Model updated':'Model downloaded','success');
+            }catch(e){
+                bar.style.display='none';aiModelSetBusy(false);
+                await aiModelRefresh('Download failed'+(e&&e.message?': '+e.message:'')+' — nothing was kept. Tap Download to retry.');
+                showToast('Model download failed','error');
+            }
+        }
+        async function aiModelDelete(){
+            if(_aiModelBusy)return;
+            if(!await showAppConfirm('This deletes the on-device model and its offline runtime. Sentence Prediction will stop working until you download it again.','Delete model?',{destructive:true,confirmLabel:'Delete'}))return;
+            aiModelSetBusy(true);
+            try{
+                await aiModelLoadHelper();
+                await AIModel.remove();
+                try{if('caches' in window)await caches.delete(AI_RUNTIME_CACHE);}catch(e){}
+                aiModelSetBusy(false);await aiModelRefresh();
+                showToast('Model deleted','info');
+            }catch(e){
+                aiModelSetBusy(false);await aiModelRefresh();
+                showToast('Could not delete the model','error');
+            }
+        }
+
         function openDataSourcesPage(){
             const el=document.getElementById('ai-datasources-page');
-            if(el){renderExternalDataSources();el.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('slide-open')));}
+            if(el){renderExternalDataSources();aiModelRefresh();el.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('slide-open')));}
         }
         function closeDataSourcesPage(){const el=document.getElementById('ai-datasources-page');if(el)el.classList.remove('slide-open');}
 
@@ -4491,6 +4627,22 @@ window.dwpGreet = function () {
       s.onload = res; s.onerror = function () { rej(new Error('helper')); }; document.head.appendChild(s);
     });
   }
+  /* Saves the on-device runtime (~30 MB) so Sentence Prediction also runs offline. Same cache name as sw.js / sceditor.html. */
+  async function aoCacheRuntime() {
+    try {
+      if (!('caches' in window)) return false;
+      var base = new URL('./vendor/ai/', location.href).href;
+      var c = await caches.open('dwp-ai-runtime-v1');
+      var files = ['aimodel.js', 'sentworker.js', 'transformers.min.js', 'ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm'];
+      for (var i = 0; i < files.length; i++) {
+        var u = base + files[i];
+        if (await c.match(u, { ignoreSearch: true })) continue;
+        var r = await fetch(u); if (!r.ok) return false;
+        await c.put(u, r);
+      }
+      return true;
+    } catch (e) { return false; }
+  }
   function aoAddModelRow(list) {
     aoLoadModelHelper().then(function () { return AIModel.installed(); }).catch(function () { return false; }).then(function (inst) {
       aoModel.installed = !!inst; aoModel.loaded = true;
@@ -4501,7 +4653,7 @@ window.dwpGreet = function () {
       var main = document.createElement('div'); main.className = 'dwp-ao-main';
       var name = document.createElement('div'); name.className = 'dwp-ao-name'; name.textContent = 'Sentence Prediction model (~130 MB)';
       var meta = document.createElement('div'); meta.className = 'dwp-ao-meta'; meta.textContent = 'Optional · on-device AI';
-      var desc = document.createElement('div'); desc.className = 'dwp-ao-desc'; desc.textContent = 'Gray suggestions as you type, accepted with Tab. Runs fully on this device. You can also get it later from Assistive Writing.';
+      var desc = document.createElement('div'); desc.className = 'dwp-ao-desc'; desc.textContent = 'Gray suggestions as you type, accepted with Tab. Runs fully on this device. To use it, also turn on AI Features and AI Usecases \u203a Sugarcane in Settings \u203a AI. You can get the model later from Assistive Writing.';
       main.appendChild(name); main.appendChild(meta); main.appendChild(desc);
       row.appendChild(icon); row.appendChild(main);
       if (inst) { var tag = document.createElement('span'); tag.className = 'dwp-ao-tag'; tag.textContent = 'Installed'; row.appendChild(tag); }
@@ -4613,6 +4765,8 @@ window.dwpGreet = function () {
       try {
         try { navigator.storage && navigator.storage.persist && await navigator.storage.persist(); } catch (e2) {}
         await AIModel.download(function (pct) { $('dwpAoFill').style.width = Math.round(pct) + '%'; });
+        $('dwpAoStatus').textContent = 'Saving offline runtime…';
+        await aoCacheRuntime();
         modelOk = true; aoModel.installed = true; aoModel.on = false;
       } catch (e) { modelFailed = true; failed.push({ name: 'Sentence Prediction model', _model: true }); }
     }

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="178">
+<meta name="sceditor-version" content="180">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -1413,6 +1413,7 @@ body.dark .exp-options-link{color:hsl(calc(var(--sc-h,210) + -3.1) calc(89.7% * 
 /* ── Viewing mode content lock ──────────────────────────────────── */
 body.viewing-mode .page-content{pointer-events:none;user-select:none;-webkit-user-select:none;}
 body.viewing-mode .page-content img{pointer-events:none;}
+body.viewing-mode .page-content img[data-img-onclick="map"]{pointer-events:auto;cursor:pointer!important;}
 body.viewing-mode .page-content *{cursor:default!important;}
 
 /* ── inkTrace Overlay ───────────────────────────────────────────── */
@@ -8256,7 +8257,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 178; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 180; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -16178,6 +16179,29 @@ function _pdfLinkHref(raw, noRedir) {
   return (REDIR && REDIR.enabled) ? (REDIR_BASE + '#to=' + encodeURIComponent(dest)) : dest;
 }
 
+/* Map pins -> real clickable PDF link annotations (one per pin). Pin rects are stored as
+   fractions of the map image, so they are rebuilt from the image's rendered rect. geo: URLs
+   are swapped for a Google Maps https URL because PDF viewers rarely handle geo:. */
+function addMapPinLinksToPDF(pdf, root, CR, sx, sy) {
+  root.querySelectorAll('img[data-img-onclick="map"]').forEach(img => {
+    let pins = []; try { pins = JSON.parse(img.dataset.mapPins || '[]'); } catch (_) {}
+    if (!pins.length) return;
+    try {
+      const r = img.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) return;
+      pins.forEach(p => {
+        let url = p.u || '';
+        const g = /^geo:(-?[\d.]+),(-?[\d.]+)/.exec(url);
+        if (g) url = 'https://www.google.com/maps/search/?api=1&query=' + g[1] + ',' + g[2];
+        if (!url) return;
+        const relX = r.left + (p.x - p.hw) * r.width - CR.left, relY = r.top + (p.y - p.hh) * r.height - CR.top;
+        if (relX < -2 || relY < -2) return;
+        pdf.link(relX * sx, relY * sy, p.hw * 2 * r.width * sx, p.hh * r.height * sy, { url });
+      });
+    } catch (e) {}
+  });
+}
+
 function imgExportHref(img) {
   const oc = img.dataset.imgOnclick;
   if (!oc || oc === 'none') return null;
@@ -16261,6 +16285,7 @@ function wireImg(img) {
   img.addEventListener('mousedown', e => {
     _imgTapStart(img, e);
     document.addEventListener('mouseup', ev => _imgTapEnd(img, ev), { once: true });
+    if (document.body.classList.contains('viewing-mode')) return;   /* read-only: tap only, no drag */
     if (S.lockedImgs.has(img)) return;
     startImgDrag(e, img);
   });
@@ -16268,6 +16293,7 @@ function wireImg(img) {
     _imgTapStart(img, e);
     clearTimeout(_tpHoldTimer);
     const t = e.touches[0];
+    if (document.body.classList.contains('viewing-mode')) return;   /* read-only: tap only, no drag/popup */
     _tpHoldTimer = setTimeout(() => { e.preventDefault(); showImgPopup(img, t.clientX, t.clientY - 10); }, 500);
     if (!S.lockedImgs.has(img)) startImgDrag(e, img);
   }, {passive:false});
@@ -16282,7 +16308,7 @@ function wireImg(img) {
       pickImg(img);
     }
   });
-  img.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); showImgPopup(img, e.clientX, e.clientY); });
+  img.addEventListener('contextmenu', e => { e.preventDefault(); e.stopPropagation(); if (document.body.classList.contains('viewing-mode')) return; showImgPopup(img, e.clientX, e.clientY); });
 }
 
 function pickImg(img) {
@@ -19536,6 +19562,7 @@ async function exportPDFNative() {
           pdf.link(relX * sx, relY * sy, r.width * sx, r.height * sy, { url: href });
         } catch(e) {}
       });
+      addMapPinLinksToPDF(pdf, pageEl, CR, sx, sy);
       addBannerActionLinks(pdf, pageEl, CR, sx, sy);
       addFormFieldLinksToPDF(pdf, pageEl, CR, sx, sy);
     }
@@ -20022,6 +20049,7 @@ async function exportPDFStructured() {
           pdf.link(relX * sx, relY * sy, r.width * sx, r.height * sy, { url: href });
         } catch(e) {}
       });
+      addMapPinLinksToPDF(pdf, pageEl, CR, sx, sy);
       addBannerActionLinks(pdf, pageEl, CR, sx, sy);
       addFormFieldLinksToPDF(pdf, pageEl, CR, sx, sy);
 
@@ -22151,6 +22179,8 @@ async function exportPDF() {
             pdf.link(relX * sx2, relY * sy2, r.width * sx2, r.height * sy2, { url: href });
           } catch(e) {}
         });
+
+        addMapPinLinksToPDF(pdf, clone, CR2, sx2, sy2);
 
         // Banner actions use the same real PDF hyperlink annotations as
         // ordinary document buttons/links. The banner is rasterized for the
@@ -40766,9 +40796,10 @@ function pinURL(prov,lat,lon,label){
 function openURL(u){if(u.indexOf('geo:')===0){const a=document.createElement('a');a.href=u;document.body.appendChild(a);a.click();a.remove();}else window.open(u,'_blank','noopener,noreferrer');}
 window.scMapImgClick=function(img,e){
   let pins=[];try{pins=JSON.parse(img.dataset.mapPins||'[]');}catch(_){}
-  const r=img.getBoundingClientRect(),fx=(e.clientX-r.left)/r.width,fy=(e.clientY-r.top)/r.height;
+  const pt=(e.changedTouches&&e.changedTouches[0])||(e.touches&&e.touches[0])||e;
+  const r=img.getBoundingClientRect(),fx=(pt.clientX-r.left)/r.width,fy=(pt.clientY-r.top)/r.height;
   const hit=pins.find(p=>Math.abs(fx-p.x)<=p.hw&&fy>=p.y-p.hh&&fy<=p.y+0.01);
-  if(hit){e.preventDefault();openURL(hit.u);}else if(typeof pickImg==='function')pickImg(img);
+  if(hit){e.preventDefault();openURL(hit.u);}else if(typeof pickImg==='function'&&!document.body.classList.contains('viewing-mode'))pickImg(img);
 };
 window.scMapExportAnchors=function(img){ /* used by export: returns [{href,l,t,w,h}] in % */
   let pins=[];try{pins=JSON.parse(img.dataset.mapPins||'[]');}catch(_){}

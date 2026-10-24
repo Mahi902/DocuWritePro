@@ -693,6 +693,10 @@ body.dark #viewingDocTitle:focus{color:hsl(calc(var(--sc-h,210) + -3.1) calc(89.
 /* Word prediction */
 #wordPredBox{position:fixed;background:#fff;border:1px solid hsl(calc(var(--sc-h,210) + -0.9) calc(100% * var(--sc-s,1)) calc(93.1% + var(--sc-l,0%) * 0));border-radius:8px;box-shadow:0 4px 18px hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1) / 0.1);z-index:9600;display:none;min-width:150px;overflow:hidden;}
 #wordPredBox.open{display:block;}
+#sentGhost{position:fixed;display:none;z-index:9500;pointer-events:none;white-space:pre;overflow:hidden;color:rgba(128,128,128,.7);margin:0;padding:0;user-select:none;}
+body.dark #sentGhost{color:rgba(170,170,170,.6);}
+.aw-sent-btn{font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;cursor:pointer;}
+.aw-sent-btn:disabled{opacity:.5;cursor:default;}
 .wp-item{padding:6px 14px;cursor:pointer;font-size:13px;color:hsl(calc(var(--sc-h,210) + 1.9) calc(80.3% * var(--sc-s,1)) calc(41.8% + var(--sc-l,0%) * 1));transition:background .1s;border-bottom:1px solid hsl(calc(var(--sc-h,210) + 2) calc(100% * var(--sc-s,1)) calc(97.1% + var(--sc-l,0%) * 0));}
 .wp-item:last-child{border-bottom:none;}
 .wp-item:hover{background:hsl(calc(var(--sc-h,210) + -4.6) calc(86.7% * var(--sc-s,1)) calc(94.1% + var(--sc-l,0%) * 0));}
@@ -1317,7 +1321,7 @@ body.dark .rec-sync-bar {color:hsl(var(--sc-th,0) var(--sc-ts,0%) calc(39.4% + v
 /* ── Print ─────────────────────────────────────────────────────────── */
 @media print{
   .top-bar,.toolbar,.sidebar,.page-indicator,.expand-btn,.add-page-btn,
-  #tableCtxMenu,.image-resize-handle,#imgSelectionBorder,.overflow-alert,#tipBox,#wordPredBox,#spellSugBox{display:none!important;}
+  #tableCtxMenu,.image-resize-handle,#imgSelectionBorder,.overflow-alert,#tipBox,#wordPredBox,#spellSugBox,#sentGhost{display:none!important;}
   body,#editorContainer{overflow:visible;height:auto;}
   .main-content{overflow:visible;}
   .editor-area-wrapper{overflow:visible;}
@@ -5380,6 +5384,22 @@ function waitForSugarcaneAddons(){
                 <span class="toggle-slider"></span>
               </label>
             </div>
+            <div class="aw-row">
+              <div>
+                <div class="aw-row-label">Sentence Prediction</div>
+                <div class="aw-row-sub">Gray suggestions as you type &middot; <b>Tab</b> to accept &middot; on-device AI</div>
+                <div class="aw-row-sub" id="awSentMsg" style="margin-top:4px;"></div>
+                <div id="awSentModel" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                  <button type="button" id="awSentDl" class="aw-sent-btn" onclick="spDownload()">Download model (~130 MB)</button>
+                  <button type="button" id="awSentRm" class="aw-sent-btn" style="display:none" onclick="spRemove()">Remove model</button>
+                  <progress id="awSentProg" max="100" value="0" style="display:none;width:100%;"></progress>
+                </div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="awSentPred" disabled onchange="toggleSentencePrediction(this.checked)"/>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
             </div><!-- end awSubToggles2 -->
 
             <!-- TRANSLATE DOCUMENT -->
@@ -5639,6 +5659,7 @@ function waitForSugarcaneAddons(){
 </div>
 
 <!-- Word Prediction Box -->
+<div id="sentGhost" aria-hidden="true"></div>
 <div id="wordPredBox">
 </div>
 
@@ -20168,7 +20189,7 @@ const USCD = (() => {
     ['customMarginsEnabled',false],['activeMargins',[]],['customMargins',[]],
     ['scalingEnabled',false],['lazyPagesEnabled',false],['lazyPagesManual',false],['scaleUnit','cm'],['scaleInterval',1],['scaleRulerSize','28'],
     ['awSpellCheck',false],['awWordPred',false],['awAutoAssist',false],['awGrammarCheck',false],['awOffensive',false],['awPlaceholder',false],
-    ['editorMode','editing'],['latexCustomColor','#1976d2'],['lockedImageSrcs',[]],['redirPreview',true]];
+    ['editorMode','editing'],['latexCustomColor','#1976d2'],['lockedImageSrcs',[]],['redirPreview',true],['awSentPred',false]];
   const TOP = {title:'t', settings:'s', embeddedFonts:'ef', importedFontLinks:'fl', meta:'m'};
   const J = JSON.stringify;
   const LO = 0xE000, HI = 0xF8FF;
@@ -23161,6 +23182,7 @@ function collectData() {
       // ── Assistive writing ──
       awSpellCheck: !!(document.getElementById('awSpellCheck') || {checked:false}).checked,
       awWordPred: !!(document.getElementById('awWordPred') || {checked:false}).checked,
+      awSentPred: !!(document.getElementById('awSentPred') || {checked:false}).checked,
       awAutoAssist: !!(document.getElementById('awAutoAssist') || {checked:false}).checked,
       awGrammarCheck: !!(document.getElementById('awGrammarCheck') || {checked:false}).checked,
       awOffensive: !!(document.getElementById('awOffensive') || {checked:false}).checked,
@@ -23398,6 +23420,7 @@ function _loadDataCore(data) {
     if (typeof AW !== 'undefined') {
       if (s.awSpellCheck !== undefined) { chk('awSpellCheck', s.awSpellCheck); if (s.awSpellCheck && typeof toggleSpellCheck === 'function') try { toggleSpellCheck(true); } catch(e) {} }
       if (s.awWordPred !== undefined) { chk('awWordPred', s.awWordPred); if (s.awWordPred && typeof toggleWordPrediction === 'function') try { toggleWordPrediction(true); } catch(e) {} }
+      if (s.awSentPred && typeof spRestore === 'function') try { spRestore(); } catch(e) {}
       if (s.awAutoAssist !== undefined) { chk('awAutoAssist', s.awAutoAssist); if (typeof toggleAutoAssist === 'function') try { toggleAutoAssist(!!s.awAutoAssist); } catch(e) {} }
       if (s.awGrammarCheck !== undefined) { chk('awGrammarCheck', s.awGrammarCheck); if (typeof toggleGrammarCheck === 'function') try { toggleGrammarCheck(!!s.awGrammarCheck); } catch(e) {} }
       if (s.awOffensive !== undefined) { chk('awOffensive', s.awOffensive); if (typeof toggleOffensiveCheck === 'function') try { toggleOffensiveCheck(!!s.awOffensive); } catch(e) {} }
@@ -25451,6 +25474,173 @@ function hfPopulateFonts() {
 ═══════════════════════════════════════════════════════ */
 AW.autoAssist = false;
 AW.autoAssistTimer = null;
+
+
+/* ═══════════════════════════════════════════════════════
+   SENTENCE PREDICTION (optional on-device SmolLM2-135M)
+   Nothing below loads the runtime or model until the user installs it.
+═══════════════════════════════════════════════════════ */
+const SP = { on:false, worker:null, ready:false, id:0, timer:null, sug:'', anchor:null, composing:false, skip:false, dl:false };
+const SP_AI = 'https://mahi902.github.io/DocuWritePro/vendor/ai/';
+function spLoadHelper() {
+  if (window.AIModel) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
+}
+const spMB = n => (n / 1048576).toFixed(0) + ' MB';
+async function spRefreshUI(msg) {
+  const cb = document.getElementById('awSentPred'); if (!cb) return;
+  let ok = false, size = 0;
+  try { if (navigator.onLine !== false || window.AIModel) { await spLoadHelper(); ok = await AIModel.installed(); if (ok) size = await AIModel.size(); } } catch (e) {}
+  cb.disabled = !ok || SP.dl;
+  if (!ok && cb.checked) { cb.checked = false; toggleSentencePrediction(false); }
+  document.getElementById('awSentDl').style.display = ok ? 'none' : '';
+  document.getElementById('awSentDl').disabled = SP.dl;
+  document.getElementById('awSentRm').style.display = ok ? '' : 'none';
+  document.getElementById('awSentRm').textContent = 'Remove model (' + spMB(size) + ')';
+  document.getElementById('awSentMsg').textContent = msg || (ok ? '' : 'Model not installed');
+}
+async function spDownload() {
+  if (SP.dl) return;
+  const c = navigator.connection;
+  if (c && (c.type === 'cellular' || c.saveData) && !confirm('You appear to be on mobile data. The model is about 130 MB. Download anyway?')) return;
+  SP.dl = true;
+  const bar = document.getElementById('awSentProg'); bar.value = 0; bar.style.display = '';
+  document.getElementById('awSentDl').disabled = true;
+  try {
+    await spLoadHelper();
+    try { navigator.storage && navigator.storage.persist && await navigator.storage.persist(); } catch (e) {}
+    await AIModel.download((pct, l, t) => { bar.value = pct; document.getElementById('awSentMsg').textContent = 'Downloading… ' + spMB(l) + ' / ' + spMB(t); });
+    SP.dl = false; bar.style.display = 'none';
+    await spRefreshUI('Model installed');
+    showToast('Sentence Prediction model installed', 'success');
+  } catch (e) {
+    SP.dl = false; bar.style.display = 'none';
+    await spRefreshUI('Download failed — nothing was kept. Tap to retry.');
+    document.getElementById('awSentDl').textContent = 'Retry download (~130 MB)';
+    showToast('Model download failed', 'error');
+  }
+}
+async function spRemove() {
+  if (!confirm('Remove the Sentence Prediction model from this device?')) return;
+  toggleSentencePrediction(false); document.getElementById('awSentPred').checked = false;
+  try { await spLoadHelper(); await AIModel.remove(); } catch (e) {}
+  document.getElementById('awSentDl').textContent = 'Download model (~130 MB)';
+  await spRefreshUI();
+}
+function spStartWorker() {
+  if (SP.worker) return;
+  const w = SP.worker = new Worker(SP_AI + 'sentworker.js', { type: 'module' });
+  w.onmessage = (e) => {
+    const m = e.data;
+    if (m.type === 'ready') { SP.ready = true; spStatus(''); }
+    else if (m.type === 'error') { SP.ready = false; spStatus('Sentence model failed to load'); spStop(); }
+    else if (m.type === 'result') spOnResult(m);
+  };
+  w.onerror = () => { spStatus('Sentence model failed to load'); spStop(); };
+  spStatus('Loading sentence model…');
+  w.postMessage({ type: 'init', modelId: AIModel.MODEL_ID });
+}
+function spStatus(t) { const el = document.getElementById('awStatus'); if (!el) return; el.textContent = t; el.style.display = t ? '' : 'none'; }
+function spStop() { SP.on = false; SP.ready = false; spHide(); if (SP.worker) { SP.worker.terminate(); SP.worker = null; } const cb = document.getElementById('awSentPred'); if (cb) cb.checked = false; }
+async function toggleSentencePrediction(on) {
+  if (!on) { const cb = document.getElementById('awSentPred'); SP.on = false; spHide(); if (SP.worker) { SP.worker.terminate(); SP.worker = null; SP.ready = false; } return; }
+  await spLoadHelper();
+  if (!(await AIModel.installed())) { document.getElementById('awSentPred').checked = false; spRefreshUI(); showToast('Download the Sentence Prediction model first', 'info'); return; }
+  SP.on = true; spStartWorker();
+}
+async function spRestore() {            // saved awSentPred=true: only enable if the model is really installed
+  const cb = document.getElementById('awSentPred'); if (cb) cb.checked = false;
+  let ok = false;
+  try { await spLoadHelper(); ok = await AIModel.installed(); } catch (e) {}
+  await spRefreshUI(ok ? '' : 'Model not installed');
+  if (ok) { cb.checked = true; toggleSentencePrediction(true); }
+}
+
+/* ghost rendering */
+function spHide() {
+  clearTimeout(SP.timer); SP.sug = ''; SP.anchor = null; SP.id++;
+  if (SP.worker) SP.worker.postMessage({ type: 'cancel' });
+  const g = document.getElementById('sentGhost'); if (g) g.style.display = 'none';
+}
+function spCaret() {
+  if (!SP.on || SP.composing) return null;
+  const sel = getSelection(); if (!sel || !sel.rangeCount || !sel.isCollapsed) return null;
+  const r = sel.getRangeAt(0), n = r.startContainer;
+  if (n.nodeType !== 3 || r.startOffset !== n.nodeValue.length) return null;     // end of text run only
+  const pc = n.parentElement && n.parentElement.closest('#editorArea .page-content');
+  if (!pc || !pc.isContentEditable) return null;
+  return { node: n, offset: r.startOffset, text: n.nodeValue, pc, range: r };
+}
+function spSame(a) {
+  const c = spCaret(); return !!(c && a && c.node === a.node && c.offset === a.offset && c.text === a.text) && c;
+}
+function spRender() {
+  const g = document.getElementById('sentGhost'), a = SP.anchor;
+  const c = a && SP.sug && spSame(a);
+  if (!c) { g.style.display = 'none'; return; }
+  const rects = c.range.getClientRects();
+  const rc = rects.length ? rects[rects.length - 1] : c.range.getBoundingClientRect();
+  if (!rc || (!rc.height && !rc.width && !rc.top)) { g.style.display = 'none'; return; }
+  const pr = c.pc.getBoundingClientRect(), k = c.pc.offsetWidth ? pr.width / c.pc.offsetWidth : 1;
+  const cs = getComputedStyle(c.node.parentElement);
+  g.style.fontFamily = cs.fontFamily; g.style.fontWeight = cs.fontWeight; g.style.fontStyle = cs.fontStyle;
+  g.style.fontSize = (parseFloat(cs.fontSize) * k) + 'px';
+  g.style.letterSpacing = cs.letterSpacing === 'normal' ? 'normal' : (parseFloat(cs.letterSpacing) * k) + 'px';
+  g.style.lineHeight = rc.height + 'px'; g.style.height = rc.height + 'px';
+  g.textContent = SP.sug;
+  g.style.left = rc.right + 'px'; g.style.top = rc.top + 'px';
+  g.style.maxWidth = Math.max(0, pr.right - rc.right - 4) + 'px';
+  g.style.display = 'block';
+}
+function spOnResult(m) {
+  if (m.id !== SP.id || !m.text) return;                      // stale
+  if (!spSame(SP.anchor)) return;
+  SP.sug = m.text; spRender();
+}
+function spPromptFor(c) {
+  const blk = c.node.parentElement.closest('p,li,h1,h2,h3,h4,h5,h6,td,th,blockquote,div') || c.pc;
+  const r = document.createRange(); r.setStart(blk, 0); r.setEnd(c.node, c.offset);
+  return r.toString().slice(-300);
+}
+function spSchedule() {
+  clearTimeout(SP.timer);
+  if (!SP.on || !SP.ready) return;
+  SP.timer = setTimeout(() => {
+    const c = spCaret(); if (!c) return;
+    const text = spPromptFor(c); if (text.replace(/\s/g, '').length < 8) return;
+    SP.anchor = { node: c.node, offset: c.offset, text: c.text };
+    SP.worker.postMessage({ type: 'predict', id: ++SP.id, text });
+  }, 150);
+}
+document.addEventListener('input', (e) => {
+  if (!SP.on || !e.target.closest || !e.target.closest('#editorArea .page-content')) return;
+  if (SP.skip) { SP.skip = false; return; }                   // the Tab insertion itself
+  if (e.isComposing) { spHide(); return; }
+  if (SP.sug && e.inputType === 'insertText' && e.data && SP.sug.startsWith(e.data)) {   // type-ahead
+    const c = spCaret();
+    if (c) { SP.sug = SP.sug.slice(e.data.length); SP.anchor = { node: c.node, offset: c.offset, text: c.text };
+      if (SP.sug) { spRender(); return; } }
+  }
+  const keep = SP.id; spHide(); SP.id = keep + 1; spSchedule();
+}, true);
+document.addEventListener('compositionstart', () => { SP.composing = true; spHide(); }, true);
+document.addEventListener('compositionend', () => { SP.composing = false; }, true);
+document.addEventListener('keydown', (e) => {
+  if (!SP.on || !SP.sug) return;
+  if (e.key === 'Escape') { spHide(); return; }
+  if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.isComposing) {
+    if (!spSame(SP.anchor)) { spHide(); return; }
+    e.preventDefault(); e.stopImmediatePropagation();
+    const t = SP.sug; spHide(); SP.skip = true;
+    if (!document.execCommand('insertText', false, t)) SP.skip = false;
+    setTimeout(() => { SP.skip = false; }, 0);
+  }
+}, true);
+document.addEventListener('mousedown', () => { if (SP.sug) spHide(); }, true);
+window.addEventListener('scroll', () => { if (SP.sug) spHide(); }, true);
+window.addEventListener('resize', () => { if (SP.sug) spHide(); });
+document.addEventListener('selectionchange', () => { if (SP.sug && !spSame(SP.anchor)) spHide(); });
+document.addEventListener('DOMContentLoaded', () => { if (document.getElementById('awSentPred')) spRefreshUI(); });
 
 function toggleAutoAssist(on) {
   AW.autoAssist = on;

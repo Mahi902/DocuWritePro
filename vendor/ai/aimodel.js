@@ -43,7 +43,7 @@
   /* Downloads by starting the worker's `init`; resolves when verified, rejects (after cleanup) on failure. */
   function download(onProgress, signal) {
     return new Promise(function (resolve, reject) {
-      var w = new Worker(BASE + 'sentworker.js', { type: 'module' }), files = {};
+      var w = new Worker(BASE + 'sentworker.js?v=195', { type: 'module' }), files = {};
       function done(err) {
         w.terminate();
         if (err) { g.AIModel.lastError = err.message; console.error('[AIModel]', err); }
@@ -63,7 +63,7 @@
         else if (m.type === 'error') done(new Error(m.message));
         else if (m.type === 'log') console.log('[AIModel]', m.message);
       };
-      w.onerror = function (e) { done(new Error(e.message || 'Worker failed')); };
+      w.onerror = function (e) { done(new Error(e.message || 'Worker script failed to load (check vendor/ai/transformers.web.min.js and .wasm files)')); };
       w.postMessage({ type: 'init', modelId: MODEL_ID, download: true });
     });
   }

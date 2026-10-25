@@ -5294,7 +5294,9 @@ function waitForSugarcaneAddons(){
                 <div class="aw-row-label">Auto Correct</div>
                 <div class="aw-row-sub">Fix all mistakes at once</div>
               </div>
-              <button class="aw-correct-btn" id="awAutoCorrectBtn" onclick="runAutoCorrectAll()" style="width:auto;padding:5px 10px;font-size:11px;" title="Correct all misspelled words in the document">
+            </div>
+            <div style="padding:0 10px 6px">
+              <button class="aw-correct-btn" id="awAutoCorrectBtn" onclick="runAutoCorrectAll()" style="font-size:12px;" title="Correct all misspelled words in the document">
                 <span class="material-symbols-outlined" style="font-size:13px;">auto_fix_high</span>Fix All
               </button>
             </div>
@@ -5313,7 +5315,9 @@ function waitForSugarcaneAddons(){
                 <div class="aw-row-label">Repair Grammar</div>
                 <div class="aw-row-sub">Fix all grammar issues</div>
               </div>
-              <button class="aw-correct-btn" id="awFixGrammarBtn" onclick="runGrammarFixAll()" style="width:auto;padding:5px 10px;font-size:11px;background:hsl(calc(173.1 * var(--sc-hk,1) + var(--sc-rb,0)) calc(100.0% * var(--sc-rs,1)) calc(23.7% + var(--sc-rl,0%)));" title="Fix all grammar errors in the document" disabled>
+            </div>
+            <div style="padding:0 10px 6px">
+              <button class="aw-correct-btn" id="awFixGrammarBtn" onclick="runGrammarFixAll()" style="font-size:12px;background:hsl(calc(173.1 * var(--sc-hk,1) + var(--sc-rb,0)) calc(100.0% * var(--sc-rs,1)) calc(23.7% + var(--sc-rl,0%)));" title="Fix all grammar errors in the document" disabled>
                 <span class="material-symbols-outlined" style="font-size:13px;">spellcheck</span>Fix All
               </button>
             </div>
@@ -5378,10 +5382,14 @@ function waitForSugarcaneAddons(){
             <div class="aw-row" id="sumRow">
               <div>
                 <div class="aw-row-label">Summarize</div>
-                <div class="aw-row-sub" id="sumRowSub">Condense a selection or the whole document</div>
+                <div class="aw-row-sub" id="sumRowSub">Condense the whole document, specific pages, or a selection</div>
               </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="awSummarize" disabled onchange="toggleSummarize(this.checked)"/>
+                <span class="toggle-slider"></span>
+              </label>
             </div>
-            <div style="padding:0 10px 6px">
+            <div id="sumPanel" style="display:none;padding:0 10px 6px">
               <button id="sumDocBtn" onclick="openSummarize('document')" class="aw-correct-btn" style="background:hsl(calc(259.8 * var(--sc-hk,1) + var(--sc-rb,0)) calc(53.9% * var(--sc-rs,1)) calc(45.1% + var(--sc-rl,0%)));">
                 <span class="material-symbols-outlined" style="font-size:13px">summarize</span>Summarize document
               </button>
@@ -5421,8 +5429,10 @@ function waitForSugarcaneAddons(){
                 <div class="aw-row-label">Translate Document</div>
                 <div class="aw-row-sub">Translate all pages to another language</div>
               </div>
-              <button class="aw-correct-btn" onclick="openTranslateModal()" style="width:auto;padding:5px 10px;font-size:11px;background:hsl(calc(282.1 * var(--sc-hk,1) + var(--sc-rb,0)) calc(67.9% * var(--sc-rs,1)) calc(37.8% + var(--sc-rl,0%)));">
-                <span class="material-symbols-outlined" style="font-size:13px;">translate</span>Open
+            </div>
+            <div style="padding:0 10px 6px">
+              <button class="aw-correct-btn" onclick="openTranslateModal()" style="font-size:12px;background:hsl(calc(282.1 * var(--sc-hk,1) + var(--sc-rb,0)) calc(67.9% * var(--sc-rs,1)) calc(37.8% + var(--sc-rl,0%)));">
+                <span class="material-symbols-outlined" style="font-size:13px;">translate</span>Open Translator
               </button>
             </div>
 
@@ -7638,6 +7648,21 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
     </div>
     <div class="ph-info-box">
       Runs fully on this device. Summaries can miss details or get things wrong, so check the result against the original before you rely on it.
+    </div>
+
+    <div class="sm-section" id="sumScopeSec" style="display:none;">
+      <div class="sm-label">What to summarize</div>
+      <select class="sm-number" id="sumScope" style="width:100%;text-align:left;" onchange="sumScopeChanged()">
+        <option value="all">Full document</option>
+        <option value="pages">Specific pages</option>
+      </select>
+      <div id="sumPagesWrap" style="display:none;">
+        <div class="aed-pages-grid" id="sumPagesGrid"></div>
+        <div style="margin-top:8px;">
+          <button class="mbtn sec" style="font-size:11px;padding:5px 10px;margin-right:6px" onclick="sumSelectAllPages(true)">All</button>
+          <button class="mbtn sec" style="font-size:11px;padding:5px 10px" onclick="sumSelectAllPages(false)">None</button>
+        </div>
+      </div>
     </div>
 
     <div class="sm-section">
@@ -26710,21 +26735,44 @@ function sumLoadHelper() {
   return _sumHelper;
 }
 
+function sumEnabled() { try { return localStorage.getItem('sum_enabled') === 'true'; } catch (e) { return false; } }
+
+/* Sidebar state: toggle usable only when unlocked + model installed; the buttons show only while it is on. */
+function sumSyncSidebar() {
+  const gated = sumGatingOk(), ready = gated && _sumInstalled, on = ready && sumEnabled();
+  const cb = document.getElementById('awSummarize');
+  if (cb) { cb.disabled = !ready; cb.checked = on; }
+  const panel = document.getElementById('sumPanel');
+  if (panel) panel.style.display = on ? 'block' : 'none';
+  const sub = document.getElementById('sumRowSub');
+  if (sub) sub.textContent = !gated ? 'Locked \u2014 enable in app Settings \u2192 AI'
+    : (!_sumInstalled ? 'Model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources)'
+    : 'Condense the whole document, specific pages, or a selection');
+  if (!on) { const b = document.getElementById('tpSummarizeBtn'); if (b) b.style.display = 'none'; }
+}
+
 async function sumRefreshInstalled() {
   _sumInstalled = false;
   try { if (sumGatingOk()) { await sumLoadHelper(); _sumInstalled = await AISum.installed(); } } catch (e) {}
-  const sub = document.getElementById('sumRowSub');
-  if (sub) sub.textContent = !sumGatingOk() ? 'Locked \u2014 enable in app Settings \u2192 AI' : (_sumInstalled ? 'Condense a selection or the whole document' : 'Model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources)');
-  const b = document.getElementById('sumDocBtn');
-  if (b) b.disabled = !_sumInstalled;
+  sumSyncSidebar();
   return _sumInstalled;
+}
+
+function toggleSummarize(on) {
+  if (on && !(sumGatingOk() && _sumInstalled)) {
+    showToast(sumGatingOk() ? 'Install the summarization model in the app first (Settings \u2192 AI \u2192 Data Sources).' : 'Enable AI Features and the Sugarcane usecase in Settings \u2192 AI first.', 'error');
+    sumSyncSidebar();
+    return;
+  }
+  try { localStorage.setItem('sum_enabled', on ? 'true' : 'false'); } catch (e) {}
+  sumSyncSidebar();
 }
 
 /* Show/hide the Summarize button in the text selection popup */
 function sumCheckTextPopup() {
   const btn = document.getElementById('tpSummarizeBtn');
   if (!btn) return;
-  if (!_sumInstalled || !sumGatingOk()) { btn.style.display = 'none'; return; }
+  if (!_sumInstalled || !sumGatingOk() || !sumEnabled()) { btn.style.display = 'none'; return; }
   const sel = window.getSelection();
   if (!sel || sel.isCollapsed) { btn.style.display = 'none'; return; }
   const words = sel.toString().trim().split(/\s+/).filter(Boolean).length;
@@ -26738,6 +26786,49 @@ function sumDocText() {
 }
 function sumEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function sumWords(t) { return (t || '').trim().split(/\s+/).filter(Boolean).length; }
+
+let _sumPages = [], _sumTargetEl = null;   // _sumPages: 1-based page numbers for "Specific pages"
+function sumPageEls() { return Array.from(document.querySelectorAll('#editorArea .page-content')); }
+function sumScopeText() {
+  const els = sumPageEls(), pages = document.getElementById('sumScope').value === 'pages';
+  const pick = pages ? els.filter((_, i) => _sumPages.indexOf(i + 1) >= 0) : els;
+  _sumTargetEl = pick[0] || null;
+  const parts = [];
+  pick.forEach(p => { const t = (p.innerText || '').trim(); if (t) parts.push(t); });
+  return parts.join('\n\n');
+}
+function sumUpdateSource() {
+  _sumText = sumScopeText();
+  const n = sumWords(_sumText), pages = document.getElementById('sumScope').value === 'pages';
+  document.getElementById('sumSourceLbl').textContent = (pages ? (_sumPages.length + (_sumPages.length === 1 ? ' page' : ' pages')) : 'Whole document') + ' \u00b7 ' + n.toLocaleString() + ' words';
+  if (!_sumBusy && !document.getElementById('sumOut').value.trim()) {
+    document.getElementById('sumStatus').textContent = pages && !_sumPages.length ? 'Pick at least one page, then press Summarize.'
+      : (n > 650 ? 'Long text: it is read in parts, which takes a while on-device.' : 'Press Summarize when you are ready.');
+  }
+}
+function sumBuildPageChips() {
+  const n = sumPageEls().length;
+  let h = '';
+  for (let i = 1; i <= n; i++) h += '<button class="aed-page-toggle' + (_sumPages.indexOf(i) >= 0 ? ' selected' : '') + '" id="sumPg_' + i + '" onclick="sumTogglePage(' + i + ')">' + i + '</button>';
+  document.getElementById('sumPagesGrid').innerHTML = h;
+}
+function sumScopeChanged() {
+  const pages = document.getElementById('sumScope').value === 'pages';
+  document.getElementById('sumPagesWrap').style.display = pages ? 'block' : 'none';
+  if (pages) sumBuildPageChips();
+  sumUpdateSource();
+}
+function sumTogglePage(n) {
+  const i = _sumPages.indexOf(n);
+  if (i < 0) _sumPages.push(n); else _sumPages.splice(i, 1);
+  const b = document.getElementById('sumPg_' + n); if (b) b.classList.toggle('selected', i < 0);
+  sumUpdateSource();
+}
+function sumSelectAllPages(all) {
+  _sumPages = all ? sumPageEls().map((_, i) => i + 1) : [];
+  sumBuildPageChips();
+  sumUpdateSource();
+}
 
 let _sumText = '';
 async function openSummarize(mode) {
@@ -26755,7 +26846,7 @@ async function openSummarize(mode) {
   if (!sumGatingOk()) { showToast('Summarize is locked \u2014 enable it in the app Settings \u2192 AI.', 'error'); return; }
   if (!(await sumRefreshInstalled())) { showToast('Summarization model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources).', 'info'); return; }
   const n = sumWords(_sumText);
-  if (n < 30) { showToast('Select at least 30 words to summarize.', 'error'); return; }
+  if (_sumMode === 'selection' && n < 30) { showToast('Select at least 30 words to summarize.', 'error'); return; }
 
   document.getElementById('sumSourceLbl').textContent = (_sumMode === 'document' ? 'Whole document' : 'Selected text') + ' \u00b7 ' + n.toLocaleString() + ' words';
   const st = localStorage.getItem('sum_style');
@@ -26766,8 +26857,17 @@ async function openSummarize(mode) {
   document.getElementById('sumBtnReplace').style.display = _sumMode === 'document' ? 'none' : '';
   document.getElementById('sumBtnGo').textContent = 'Summarize';
   sumSyncButtons();
+  const scopeSec = document.getElementById('sumScopeSec');
+  if (scopeSec) scopeSec.style.display = _sumMode === 'document' ? '' : 'none';
   openMdl('sumMdl');
-  sumRun();
+  if (_sumMode === 'document') {       // let the user choose full document or specific pages first
+    document.getElementById('sumScope').value = 'all';
+    document.getElementById('sumPagesWrap').style.display = 'none';
+    _sumPages = [];
+    sumUpdateSource();
+  } else {
+    sumRun();
+  }
 }
 
 function sumSyncButtons() {
@@ -26784,6 +26884,11 @@ async function sumRun() {
   if (_sumBusy) { sumStop(); document.getElementById('sumStatus').textContent = 'Stopping\u2026'; return; }
   const out = document.getElementById('sumOut'), status = document.getElementById('sumStatus');
   const style = document.getElementById('sumStyle').value;
+  if (_sumMode === 'document') {
+    sumUpdateSource();
+    if (document.getElementById('sumScope').value === 'pages' && !_sumPages.length) { status.textContent = 'Pick at least one page first.'; return; }
+    if (sumWords(_sumText) < 30) { status.textContent = 'That is too short to summarize (at least 30 words needed).'; return; }
+  }
   out.value = '';
   _sumBusy = true; _sumAbort = new AbortController(); sumSyncButtons();
   let got = false;
@@ -26827,7 +26932,7 @@ function sumInsert() {
   if (!text) return;
   const node = sumBuildNode(text);
   if (_sumMode === 'document') {
-    const first = document.querySelector('#editorArea .page-content');
+    const first = (_sumTargetEl && _sumTargetEl.isConnected) ? _sumTargetEl : document.querySelector('#editorArea .page-content');
     if (!first) { showToast('Could not find the page to insert into.', 'error'); return; }
     first.insertBefore(node, first.firstChild);
     first.dispatchEvent(new Event('input', { bubbles: true }));

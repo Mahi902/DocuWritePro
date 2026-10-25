@@ -5395,6 +5395,18 @@ function waitForSugarcaneAddons(){
               </button>
             </div>
 
+            <div class="aw-row" id="askRow">
+              <div>
+                <div class="aw-row-label">Ask Document</div>
+                <div class="aw-row-sub" id="askRowSub">Chat with your document and get answers from its pages</div>
+              </div>
+            </div>
+            <div style="padding:0 10px 6px">
+              <button id="askOpenBtn" onclick="openAskDocument()" class="aw-correct-btn" disabled style="background:hsl(calc(259.8 * var(--sc-hk,1) + var(--sc-rb,0)) calc(53.9% * var(--sc-rs,1)) calc(45.1% + var(--sc-rl,0%)));">
+                <span class="material-symbols-outlined" style="font-size:13px;">forum</span>Open Ask Document
+              </button>
+            </div>
+
             <div class="aw-row">
               <div>
                 <div class="aw-row-label">Word Prediction</div>
@@ -7690,6 +7702,71 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
     <div class="mfooter">
       <button class="mbtn sec" onclick="sumClose()">Close</button>
       <button class="mbtn primary" id="sumBtnGo" onclick="sumRun()">Summarize</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ask Document Modal (on-device, SmolLM2-360M-Instruct) -->
+<style>
+.ask-chat{height:min(44vh,320px);overflow-y:auto;border:1px solid var(--ui-divider,#ddd);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:10px;background:var(--ui-raise,#fff);box-sizing:border-box;}
+.ask-empty{margin:auto;text-align:center;font-size:12.5px;opacity:.65;padding:12px;line-height:1.5;}
+.ask-msg{display:flex;flex-direction:column;max-width:88%;}
+.ask-msg.ask-user{align-self:flex-end;align-items:flex-end;}
+.ask-msg.ask-bot{align-self:flex-start;align-items:flex-start;}
+.ask-bub{padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.45;white-space:pre-wrap;word-break:break-word;}
+.ask-user .ask-bub{background:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));color:var(--sc-on-a,#fff);border-bottom-right-radius:4px;}
+.ask-bot .ask-bub{background:#f1f1f1;color:#222;border-bottom-left-radius:4px;}
+.ask-bot.ask-err .ask-bub{background:#fdecea;color:#8a1c12;}
+body.dark .ask-bot .ask-bub{background:#2a2a2a;color:#e8e8e8;}
+body.dark .ask-bot.ask-err .ask-bub{background:#3a1f1c;color:#ffb4a8;}
+.ask-meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:4px;font-size:11px;}
+.ask-src{border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;border-radius:999px;font-size:11px;padding:1px 8px;cursor:pointer;font-family:inherit;}
+.ask-src:hover{background:rgba(128,128,128,.18);}
+.ask-copy{border:none;background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:6px;color:inherit;opacity:.75;font-size:11px;font-family:inherit;}
+.ask-copy:hover{opacity:1;background:rgba(128,128,128,.18);}
+.ask-copy .material-symbols-outlined{font-size:15px;}
+.ask-input-row{display:flex;gap:8px;align-items:flex-end;margin-top:6px;}
+.ask-input-row textarea{flex:1;resize:none;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:1px solid var(--ui-divider,#ccc);background:var(--ui-raise,#fff);color:var(--ui-text,#111);outline:none;box-sizing:border-box;}
+</style>
+<div class="modal" id="askMdl">
+  <div class="mbox wide">
+    <div class="mhdr">
+      <h2 class="mtitle">Ask Document</h2>
+      <button class="mclose" onclick="askClose()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="ph-info-box">
+      Runs fully on this device. Answers come only from the passages it finds and can be wrong, so check the pages listed under each answer.
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label">Where to look</div>
+      <select class="sm-number" id="askScope" style="width:100%;text-align:left;" onchange="askScopeChanged()">
+        <option value="smart">Smart – find the best-matching passages</option>
+        <option value="all">All pages</option>
+        <option value="pages">Specific pages</option>
+      </select>
+      <div id="askPagesWrap" style="display:none;">
+        <div class="aed-pages-grid" id="askPagesGrid"></div>
+        <div style="margin-top:8px;">
+          <button class="mbtn sec" style="font-size:11px;padding:5px 10px;margin-right:6px" onclick="askSelectAllPages(true)">All</button>
+          <button class="mbtn sec" style="font-size:11px;padding:5px 10px" onclick="askSelectAllPages(false)">None</button>
+        </div>
+      </div>
+      <div class="sm-label" id="askScopeHint" style="margin-top:6px;"></div>
+    </div>
+
+    <div class="sm-section">
+      <div class="ask-chat" id="askChat" aria-live="polite"></div>
+      <div class="sm-label" id="askStatus" style="min-height:16px;margin-top:6px;"></div>
+      <div class="ask-input-row">
+        <textarea id="askInput" rows="2" placeholder="Ask something about this document…" onkeydown="askKey(event)"></textarea>
+        <button class="mbtn primary" id="askSendBtn" onclick="askSend()">Send</button>
+      </div>
+    </div>
+
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="askClear()">Clear chat</button>
+      <button class="mbtn sec" onclick="askClose()">Close</button>
     </div>
   </div>
 </div>
@@ -26727,9 +26804,9 @@ function sumLoadHelper() {
   if (_sumHelper) return _sumHelper;
   _sumHelper = new Promise((res, rej) => {
     const s = document.createElement('script');
-    s.src = SP_AI + 'aisum2.js?v=204';
+    s.src = SP_AI + 'aisum3.js?v=205';
     s.onload = res;
-    s.onerror = () => { _sumHelper = null; rej(new Error('Could not load vendor/ai/aisum2.js')); };
+    s.onerror = () => { _sumHelper = null; rej(new Error('Could not load vendor/ai/aisum3.js')); };
     document.head.appendChild(s);
   });
   return _sumHelper;
@@ -26748,6 +26825,11 @@ function sumSyncSidebar() {
   if (sub) sub.textContent = !gated ? 'Locked \u2014 enable in app Settings \u2192 AI'
     : (!_sumInstalled ? 'Model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources)'
     : 'Condense the whole document, specific pages, or a selection');
+  const ab = document.getElementById('askOpenBtn'); if (ab) ab.disabled = !ready;
+  const as = document.getElementById('askRowSub');
+  if (as) as.textContent = !gated ? 'Locked \u2014 enable in app Settings \u2192 AI'
+    : (!_sumInstalled ? 'Model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources)'
+    : 'Chat with your document and get answers from its pages');
   if (!on) { const b = document.getElementById('tpSummarizeBtn'); if (b) b.style.display = 'none'; }
 }
 
@@ -26966,6 +27048,230 @@ async function sumCopy() {
   try { await navigator.clipboard.writeText(text); showToast('Copied', 'success'); }
   catch (e) { const t = document.getElementById('sumOut'); t.select(); try { document.execCommand('copy'); showToast('Copied', 'success'); } catch (e2) { showToast('Could not copy', 'error'); } }
 }
+
+/* ═══════════════════════════════════════════════════════
+   ASK DOCUMENT — chat with the document using the same on-device model.
+   The editor finds the passages that match the question's words (BM25 keyword
+   ranking, per page), and the model answers only from those passages.
+═══════════════════════════════════════════════════════ */
+let _askMsgs = [], _askBusy = false, _askAbort = null, _askPages = [];
+const ASK_STOP = new Set('a an the and or but if of to in on at by for with from as is are was were be been being am do does did has have had it its this that these those i you he she we they me my your our their what which who whom whose when where why how can could should would will shall may might not no yes so than then there here about into over under again also just very please tell'.split(' '));
+const ASK_BUDGET = { smart: 800, all: 1400, pages: 1200 };   // words of excerpts sent to the model
+
+function askStem(w) {
+  if (w.length > 5 && /(ing|ed)$/.test(w)) return w.replace(/(ing|ed)$/, '');
+  if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
+  return w;
+}
+function askTokens(t) {
+  return (String(t).toLowerCase().match(/[\p{L}\p{N}]+/gu) || []).filter(w => w.length > 1 && !ASK_STOP.has(w)).map(askStem);
+}
+
+/* Split the pages into passages of about 90 words, remembering the page each came from. */
+function askPassages(pageNums) {
+  const out = []; let idx = 0;
+  sumPageEls().forEach((el, i) => {
+    const pn = i + 1;
+    if (pageNums && pageNums.indexOf(pn) < 0) return;
+    let cur = [], n = 0;
+    const flush = () => { if (cur.length) { const text = cur.join(' '); out.push({ page: pn, idx: idx++, text: text, toks: askTokens(text), words: n }); } cur = []; n = 0; };
+    (el.innerText || '').split(/\n+/).map(x => x.trim()).filter(Boolean).forEach(par => {
+      par.split(/(?<=[.!?\u3002\uff01\uff1f])\s+/).forEach(sn => {
+        const w = sn.split(/\s+/).filter(Boolean).length;
+        if (n + w > 90 && cur.length) flush();
+        cur.push(sn); n += w;
+      });
+    });
+    flush();
+  });
+  return out;
+}
+
+function askRank(ps, q) {
+  const N = ps.length, avg = ps.reduce((a, p) => a + p.words, 0) / Math.max(1, N) || 1, df = {};
+  ps.forEach(p => new Set(p.toks).forEach(t => { df[t] = (df[t] || 0) + 1; }));
+  const qs = Array.from(new Set(q));
+  ps.forEach(p => {
+    const tf = {}; p.toks.forEach(t => { tf[t] = (tf[t] || 0) + 1; });
+    let sc = 0;
+    qs.forEach(t => {
+      const f = tf[t]; if (!f) return;
+      const idf = Math.log(1 + (N - df[t] + 0.5) / (df[t] + 0.5));
+      sc += idf * (f * 2.5) / (f + 1.5 * (0.25 + 0.75 * p.words / avg));
+    });
+    p.score = sc;
+  });
+}
+
+/* -> { empty } | { none } | { context, pages, words } */
+function askBuildContext(question, scope) {
+  const ps = askPassages(scope === 'pages' ? _askPages.slice() : null);
+  if (!ps.length) return { empty: true };
+  const budget = ASK_BUDGET[scope] || ASK_BUDGET.smart;
+  const total = ps.reduce((a, p) => a + p.words, 0);
+  const q = askTokens(question);
+  let chosen;
+  if (scope === 'all' && total <= budget) {
+    chosen = ps;                                   // the whole document fits, so send all of it
+  } else if (!q.length) {
+    chosen = []; let w = 0;                        // no usable question words: start from the top
+    for (const p of ps) { if (w + p.words > budget && chosen.length) break; chosen.push(p); w += p.words; }
+  } else {
+    askRank(ps, q);
+    chosen = []; let w = 0;
+    for (const p of ps.slice().sort((a, b) => b.score - a.score)) {
+      if (p.score <= 0) break;
+      if (w + p.words > budget && chosen.length) break;
+      chosen.push(p); w += p.words;
+    }
+    if (!chosen.length) return { none: true };
+    chosen.sort((a, b) => a.idx - b.idx);
+  }
+  const blocks = []; let lastPage = -1, lastIdx = -2;
+  chosen.forEach(p => {
+    if (p.page === lastPage && p.idx === lastIdx + 1) blocks[blocks.length - 1] += '\n' + p.text;
+    else blocks.push('[Page ' + p.page + ']\n' + p.text);
+    lastPage = p.page; lastIdx = p.idx;
+  });
+  return { context: blocks.join('\n\n'), pages: Array.from(new Set(chosen.map(p => p.page))), words: chosen.reduce((a, p) => a + p.words, 0) };
+}
+
+/* ── UI ── */
+function askScopeValue() { return document.getElementById('askScope').value; }
+function askBuildPageChips() {
+  const n = sumPageEls().length; let h = '';
+  for (let i = 1; i <= n; i++) h += '<button class="aed-page-toggle' + (_askPages.indexOf(i) >= 0 ? ' selected' : '') + '" id="askPg_' + i + '" onclick="askTogglePage(' + i + ')">' + i + '</button>';
+  document.getElementById('askPagesGrid').innerHTML = h;
+}
+function askScopeChanged() {
+  const sc = askScopeValue();
+  document.getElementById('askPagesWrap').style.display = sc === 'pages' ? 'block' : 'none';
+  if (sc === 'pages') askBuildPageChips();
+  document.getElementById('askScopeHint').textContent = sc === 'smart' ? 'Picks the passages that match the words in your question.'
+    : sc === 'all' ? 'Reads as much of the whole document as fits.' : 'Only looks at the pages you choose.';
+}
+function askTogglePage(n) {
+  const i = _askPages.indexOf(n);
+  if (i < 0) _askPages.push(n); else _askPages.splice(i, 1);
+  const b = document.getElementById('askPg_' + n); if (b) b.classList.toggle('selected', i < 0);
+}
+function askSelectAllPages(all) { _askPages = all ? sumPageEls().map((_, i) => i + 1) : []; askBuildPageChips(); }
+
+function askRender() {
+  const box = document.getElementById('askChat');
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  box.textContent = '';
+  if (!_askMsgs.length) {
+    const e = document.createElement('div'); e.className = 'ask-empty';
+    e.textContent = 'Ask a question about this document.\nFor example: \u201cWhat is the deadline?\u201d or \u201cWho is responsible for the budget?\u201d';
+    e.style.whiteSpace = 'pre-line'; box.appendChild(e);
+  }
+  _askMsgs.forEach((m, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'ask-msg ' + (m.role === 'user' ? 'ask-user' : 'ask-bot') + (m.err ? ' ask-err' : '');
+    const bub = document.createElement('div'); bub.className = 'ask-bub';
+    bub.textContent = m.content || (m.streaming ? '\u2026' : '');
+    wrap.appendChild(bub);
+    if (m.role === 'assistant' && !m.streaming && m.content && !m.err) {
+      const meta = document.createElement('div'); meta.className = 'ask-meta';
+      if (m.pages && m.pages.length) {
+        const lbl = document.createElement('span'); lbl.textContent = m.pages.length === 1 ? 'Page:' : 'Pages:'; meta.appendChild(lbl);
+        m.pages.forEach(pn => {
+          const b = document.createElement('button'); b.className = 'ask-src'; b.textContent = pn; b.title = 'Go to page ' + pn;
+          b.onclick = () => askGoPage(pn); meta.appendChild(b);
+        });
+      }
+      const c = document.createElement('button'); c.className = 'ask-copy'; c.title = 'Copy answer';
+      c.innerHTML = '<span class="material-symbols-outlined">content_copy</span>Copy';
+      c.onclick = () => askCopy(i, c); meta.appendChild(c);
+      wrap.appendChild(meta);
+    }
+    box.appendChild(wrap);
+  });
+  if (nearBottom || _askBusy) box.scrollTop = box.scrollHeight;
+}
+
+function askSyncUI() {
+  const b = document.getElementById('askSendBtn'); if (b) b.textContent = _askBusy ? 'Stop' : 'Send';
+}
+function askKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!_askBusy) askSend(); }
+}
+function askStop() { try { _askAbort && _askAbort.abort(); } catch (e) {} }
+function askClose() { askStop(); closeMdl('askMdl'); }
+function askClear() { askStop(); _askMsgs = []; document.getElementById('askStatus').textContent = ''; askRender(); }
+
+async function askCopy(i, btn) {
+  const text = (_askMsgs[i] && _askMsgs[i].content) || '';
+  let ok = true;
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    try { const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); ok = document.execCommand('copy'); t.remove(); }
+    catch (e2) { ok = false; }
+  }
+  showToast(ok ? 'Copied' : 'Could not copy', ok ? 'success' : 'error');
+  if (ok && btn) { btn.innerHTML = '<span class="material-symbols-outlined">check</span>Copied'; setTimeout(() => { try { btn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>Copy'; } catch (e) {} }, 1500); }
+}
+
+function askGoPage(n) {
+  askClose();
+  const el = sumPageEls()[n - 1];
+  if (el) setTimeout(() => { try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }, 150);
+}
+
+async function openAskDocument() {
+  if (!sumGatingOk()) { showToast('Ask Document is locked \u2014 enable it in the app Settings \u2192 AI.', 'error'); return; }
+  if (!(await sumRefreshInstalled())) { showToast('Summarization model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources).', 'info'); return; }
+  askScopeChanged();
+  askSyncUI();
+  askRender();
+  openMdl('askMdl');
+  setTimeout(() => { const i = document.getElementById('askInput'); if (i) i.focus(); }, 80);
+}
+
+async function askSend() {
+  if (_askBusy) { askStop(); document.getElementById('askStatus').textContent = 'Stopping\u2026'; return; }
+  const inp = document.getElementById('askInput'), status = document.getElementById('askStatus');
+  const q = inp.value.trim();
+  if (!q) return;
+  const scope = askScopeValue();
+  if (scope === 'pages' && !_askPages.length) { status.textContent = 'Pick at least one page first.'; return; }
+  inp.value = '';
+  const history = [];                                   // completed question/answer pairs, newest last
+  for (let i = 0; i + 1 < _askMsgs.length; i += 2) {
+    const u = _askMsgs[i], a = _askMsgs[i + 1];
+    if (u && a && u.role === 'user' && a.role === 'assistant' && a.content && !a.err && !a.local) history.push({ role: 'user', content: u.content }, { role: 'assistant', content: a.content });
+  }
+  _askMsgs.push({ role: 'user', content: q });
+  const ctx = askBuildContext(q, scope);
+  if (ctx.empty || ctx.none) {
+    _askMsgs.push({ role: 'assistant', local: true, pages: [], content: ctx.empty
+      ? 'There is no text to search yet' + (scope === 'pages' ? ' on the pages you chose.' : '.')
+      : 'I could not find any passage that matches the words in your question. Try different words, or choose another place to look.' });
+    status.textContent = ''; askRender(); return;
+  }
+  const msg = { role: 'assistant', content: '', pages: ctx.pages, streaming: true };
+  _askMsgs.push(msg);
+  _askBusy = true; _askAbort = new AbortController(); askSyncUI(); askRender();
+  status.textContent = 'Reading ' + ctx.pages.length + (ctx.pages.length === 1 ? ' page' : ' pages') + '\u2026';
+  let got = false;
+  try {
+    await sumLoadHelper();
+    const text = await AISum.ask(q, ctx.context, {
+      history: history.slice(-4), signal: _askAbort.signal,
+      onLoading: () => { status.textContent = 'Loading the model (first run takes a moment)\u2026'; },
+      onToken: (t) => { if (!got) { got = true; status.textContent = 'Writing the answer\u2026'; } msg.content += t; askRender(); }
+    });
+    if (text === null) { if (!msg.content.trim()) { msg.content = '(Stopped)'; msg.local = true; } }
+    else { msg.content = text.trim() || 'The model returned nothing. Try rephrasing your question.'; }
+  } catch (e) {
+    msg.content = 'Could not answer: ' + ((e && e.message) || 'unknown error'); msg.err = true; msg.pages = [];
+  }
+  msg.streaming = false; _askBusy = false; _askAbort = null;
+  status.textContent = '';
+  askSyncUI(); askRender();
+}
+/* ASK DOCUMENT END */
 
 document.addEventListener('DOMContentLoaded', () => { try { sumRefreshInstalled(); } catch (e) {} });
 /* The model/gating is changed in the app (Settings \u2192 AI), so re-check when the user comes back to this page. */

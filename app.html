@@ -4010,7 +4010,7 @@
         let _aiSumBusy=false,_aiSumAbort=null;
         function aiSumLoadHelper(){
             if(window.AISum)return Promise.resolve();
-            return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='./vendor/ai/aisum2.js';sc.onload=res;sc.onerror=()=>rej(new Error('Could not load the summarization helper'));document.head.appendChild(sc);});
+            return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='./vendor/ai/aisum3.js';sc.onload=res;sc.onerror=()=>rej(new Error('Could not load the summarization helper'));document.head.appendChild(sc);});
         }
         function aiSumSetBusy(on){
             _aiSumBusy=on;
@@ -4019,7 +4019,7 @@
         async function aiSumRefresh(msg){
             const st=document.getElementById('ai-sum-status');if(!st)return;
             let installed=false,size=0,failed=false;
-            try{await aiSumLoadHelper();installed=await AISum.installed();if(installed)size=await AISum.size();}catch(e){failed=true;}
+            try{await aiSumLoadHelper();installed=await AISum.installed();if(installed){size=await AISum.size();aiCacheRuntime(['aisum3.js','sumworker3.js']);}}catch(e){failed=true;}
             document.getElementById('ai-sum-dl').style.display=installed?'none':'';
             document.getElementById('ai-sum-upd').style.display=installed?'':'none';
             document.getElementById('ai-sum-del').style.display=installed?'':'none';
@@ -4045,7 +4045,7 @@
                 _aiSumAbort=new AbortController();
                 await AISum.download((pct,l,t)=>{bar.value=pct;st.textContent='Downloading\u2026 '+Math.round(l/1048576)+' / '+Math.round(t/1048576)+' MB';},_aiSumAbort.signal);
                 st.textContent='Saving offline runtime\u2026';
-                await aiCacheRuntime(['aisum2.js','sumworker2.js']);
+                await aiCacheRuntime(['aisum3.js','sumworker3.js']);
                 bar.style.display='none';aiSumSetBusy(false);
                 await aiSumRefresh();
                 showToast(isUpdate?'Summarization model updated':'Summarization model downloaded','success');

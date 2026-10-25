@@ -1,5 +1,5 @@
 /* Summarization worker (SmolLM2-360M-Instruct, on-device).
-   In:  init {modelId, download?} | summarize {id, text, style} | cancel {id?}
+   In:  init {modelId, download?} | summarize {id, text, style} | ask {id, question, context, history} | cancel {id?}
    Out: progress {file,loaded,total} | ready {backend} | stage {id, name} | token {id, text}
         | result {id, text} | error {id?, message}
    Runtime is self-hosted in this folder (same build as sentworker.js). */
@@ -111,15 +111,41 @@ async function summarize(job) {
   return await one(job.id, pieces[0], style, true);
 }
 
+const ASK_SYSTEM = 'You answer questions about a document using ONLY the excerpts you are given. If the excerpts do not contain the answer, say that you could not find it in the selected part of the document. Be concise and do not invent facts. Reply in the same language as the question.';
+const MAX_ASK_WORDS = 2600;
+
+/* Ask Document: answer one question from the excerpts the page selected (retrieval happens in the editor). */
+async function answer(job) {
+  const ctxWords = job.context.split(/\s+/).filter(Boolean).length;
+  if (ctxWords > MAX_ASK_WORDS) throw new Error('Too much text for one question (' + ctxWords + ' words, limit ' + MAX_ASK_WORDS + '). Choose fewer pages.');
+  const messages = [{ role: 'system', content: ASK_SYSTEM }];
+  job.history.slice(-4).forEach(h => {
+    if (h && (h.role === 'user' || h.role === 'assistant') && h.content) messages.push({ role: h.role, content: String(h.content).slice(0, 700) });
+  });
+  messages.push({ role: 'user', content: 'Excerpts from the document:\n\n' + job.context + '\n\nQuestion: ' + job.question });
+  stopper = new InterruptableStoppingCriteria();
+  const opts = {
+    max_new_tokens: 280, do_sample: false, repetition_penalty: 1.1, stopping_criteria: stopper,
+    streamer: new TextStreamer(gen.tokenizer, { skip_prompt: true, skip_special_tokens: true,
+      callback_function: (t) => self.postMessage({ type: 'token', id: job.id, text: t }) })
+  };
+  const out = await gen(messages, opts);
+  const g = out && out[0] && out[0].generated_text;
+  const raw = Array.isArray(g) ? (g[g.length - 1] && g[g.length - 1].content) : String(g || '');
+  return (raw || '').trim();
+}
+
+const run = (job) => job.kind === 'ask' ? answer(job) : summarize(job);
+
 async function pump() {
   if (running || !gen || !queue.length) return;
   running = true;
   const job = queue.shift();
   try {
     let text;
-    try { text = await summarize(job); }
+    try { text = await run(job); }
     catch (e) {
-      if (backend === 'webgpu' && cancelledId !== job.id && await toWasm()) text = await summarize(job);
+      if (backend === 'webgpu' && cancelledId !== job.id && await toWasm()) text = await run(job);
       else throw e;
     }
     self.postMessage({ type: 'result', id: job.id, text: cancelledId === job.id ? '' : text, cancelled: cancelledId === job.id });
@@ -150,6 +176,10 @@ self.onmessage = async (e) => {
   } else if (m.type === 'summarize') {
     cancelledId = null;
     queue.push({ id: m.id, text: String(m.text || ''), style: m.style });
+    pump();
+  } else if (m.type === 'ask') {
+    cancelledId = null;
+    queue.push({ kind: 'ask', id: m.id, question: String(m.question || ''), context: String(m.context || ''), history: Array.isArray(m.history) ? m.history : [] });
     pump();
   } else if (m.type === 'cancel') {
     cancelledId = m.id != null ? m.id : cancelledId;

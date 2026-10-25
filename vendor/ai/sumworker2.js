@@ -7,7 +7,7 @@ import { pipeline, env, TextStreamer, InterruptableStoppingCriteria } from './tr
 
 env.allowLocalModels = false;
 env.useBrowserCache = true;
-env.allowRemoteModels = true;   // switched off after init unless this is the one-time download (see onmessage)
+env.allowRemoteModels = true;   // must stay true: Transformers.js reads its browser cache through this path
 env.backends.onnx.wasm.wasmPaths = new URL('./', self.location.href).href;
 
 let gen = null, loading = null, backend = '', modelId = '', wantGpu = false, offline = false;
@@ -136,7 +136,15 @@ self.onmessage = async (e) => {
   if (m.type === 'init') {
     wantGpu = !!m.webgpu;
     offline = !m.download;
-    env.allowRemoteModels = !offline;   // installed model: cache only, zero network requests
+    if (offline) {   // installed model: cache only. Refuse any cross-origin request (cache hits never call fetch).
+      const realFetch = self.fetch.bind(self);
+      const guard = (u, o) => {
+        const url = new URL(typeof u === 'string' ? u : (u && u.url) || String(u), self.location.href);
+        if (url.origin !== self.location.origin) return Promise.reject(new Error('Offline: a model file is missing from the cache. Re-download the model in Settings \u2192 AI.'));
+        return realFetch(u, o);
+      };
+      self.fetch = guard; try { env.fetch = guard; } catch (_) {}
+    }
     try { loading = loading || load(m.modelId); await loading; self.postMessage({ type: 'ready', backend }); }
     catch (err) { loading = null; self.postMessage({ type: 'error', message: String((err && err.message) || err) }); }
   } else if (m.type === 'summarize') {

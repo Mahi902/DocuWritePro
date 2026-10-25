@@ -6,7 +6,7 @@
   var CACHE = 'transformers-cache';            // Transformers.js default Cache API name (entries are keyed by model id)
   var REQUIRED = ['config.json', 'tokenizer.json', 'tokenizer_config.json', 'onnx/model_quantized.onnx'];
   var MIN_MODEL_BYTES = 200 * 1024 * 1024;     // sanity check against truncated weights (real file is ~365 MB)
-  var WORKER_V = '203';
+  var WORKER_V = '204';
   var BASE = new URL('./', (document.currentScript && document.currentScript.src) || location.href).href;
 
   async function entries() {
@@ -43,7 +43,7 @@
   /* Downloads by starting the worker's `init`; resolves when verified, rejects (after cleanup) on failure. */
   function download(onProgress, signal) {
     return new Promise(function (resolve, reject) {
-      var w = new Worker(BASE + 'sumworker.js?v=' + WORKER_V, { type: 'module' }), files = {};
+      var w = new Worker(BASE + 'sumworker2.js?v=' + WORKER_V, { type: 'module' }), files = {};
       function done(err) {
         w.terminate();
         if (err) { g.AISum.lastError = err.message; console.error('[AISum]', err); }
@@ -62,7 +62,7 @@
         } else if (m.type === 'ready') done();
         else if (m.type === 'error') done(new Error(m.message));
       };
-      w.onerror = function (e) { done(new Error(e.message || 'Worker script failed to load (check vendor/ai/sumworker.js and the runtime files)')); };
+      w.onerror = function (e) { done(new Error(e.message || 'Worker script failed to load (check vendor/ai/sumworker2.js and the runtime files)')); };
       w.postMessage({ type: 'init', modelId: MODEL_ID, download: true });
     });
   }
@@ -73,7 +73,7 @@
   function ensureWorker() {
     if (ready) return ready;
     ready = new Promise(function (resolve, reject) {
-      var w = W = new Worker(BASE + 'sumworker.js?v=' + WORKER_V, { type: 'module' });
+      var w = W = new Worker(BASE + 'sumworker2.js?v=' + WORKER_V, { type: 'module' });
       w.onmessage = function (e) {
         var m = e.data, j = m.id != null ? jobs[m.id] : null;
         if (m.type === 'ready') { g.AISum.backend = m.backend; resolve(); }

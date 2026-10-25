@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DocuWrite Pro 5.8.6</title>
+    <title>DocuWrite Pro 5.8.7</title>
     <meta name="description" content="DocuWrite Pro">
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
@@ -1348,7 +1348,7 @@
                 </div>
             </div>
 
-            <p id="about-app-version" class="about-version-tap" style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px; cursor:pointer;">Version 5.8.6 • Build 2026</p>
+            <p id="about-app-version" class="about-version-tap" style="font-size: 13px; color: var(--text-secondary); text-align: center; margin-top: 20px; cursor:pointer;">Version 5.8.7 • Build 2026</p>
             <div style="height: 80px;"></div>
         </div>
     </div>
@@ -1515,6 +1515,23 @@
                 </div>
             </div>
             <div class="eds-hint">A small, fun picture generator (512×512, low quality, no readable text). Runs fully on this device and adds a Generate tab to Insert Image in the Sugarcane editor. Needs AI Features and AI Usecases › Sugarcane turned on, and works best on a computer or a recent phone with plenty of free memory.</div>
+
+            <div class="aimodel-card" style="margin-top:12px;">
+                <div class="aimodel-top">
+                    <div class="aimodel-icon"><span class="material-symbols-rounded">summarize</span></div>
+                    <div style="min-width:0;">
+                        <div class="aimodel-name">Summarization model</div>
+                        <div class="aimodel-status" id="ai-sum-status">Checking…</div>
+                    </div>
+                </div>
+                <progress class="aimodel-progress" id="ai-sum-progress" max="100" value="0"></progress>
+                <div class="aimodel-actions">
+                    <button class="addons-action-btn primary" id="ai-sum-dl" onclick="aiSumDownload()" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">download</span>Download (~365 MB)</button>
+                    <button class="addons-action-btn" id="ai-sum-upd" onclick="aiSumDownload(true)" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">sync</span>Update</button>
+                    <button class="addons-action-btn danger" id="ai-sum-del" onclick="aiSumDelete()" style="display:none"><span class="material-symbols-rounded" style="font-size:18px">delete</span>Delete</button>
+                </div>
+            </div>
+            <div class="eds-hint">Summarizes selected text or a whole document, fully on this device (SmolLM2-360M-Instruct). Adds a Summarize button to the Sugarcane editor. Needs AI Features and AI Usecases › Sugarcane turned on. Once downloaded it works fully offline on the CPU, with no browser flags needed. Long texts are read in parts, so they take longer.</div>
 
             <div class="settings-section-title">External Data Sources</div>
             <div class="eds-add-row">
@@ -3990,9 +4007,65 @@
             }
         }
 
+        let _aiSumBusy=false,_aiSumAbort=null;
+        function aiSumLoadHelper(){
+            if(window.AISum)return Promise.resolve();
+            return new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='./vendor/ai/aisum.js';sc.onload=res;sc.onerror=()=>rej(new Error('Could not load the summarization helper'));document.head.appendChild(sc);});
+        }
+        function aiSumSetBusy(on){
+            _aiSumBusy=on;
+            ['ai-sum-dl','ai-sum-upd','ai-sum-del'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=on;});
+        }
+        async function aiSumRefresh(msg){
+            const st=document.getElementById('ai-sum-status');if(!st)return;
+            let installed=false,size=0,failed=false;
+            try{await aiSumLoadHelper();installed=await AISum.installed();if(installed)size=await AISum.size();}catch(e){failed=true;}
+            document.getElementById('ai-sum-dl').style.display=installed?'none':'';
+            document.getElementById('ai-sum-upd').style.display=installed?'':'none';
+            document.getElementById('ai-sum-del').style.display=installed?'':'none';
+            st.textContent=msg||(failed?'Model helper unavailable \u2014 connect to the internet once to set it up.':installed?('Installed \u00b7 '+Math.round(size/1048576)+' MB'):'Not downloaded');
+            aiSumSetBusy(_aiSumBusy);
+        }
+        async function aiSumDownload(isUpdate){
+            if(_aiSumBusy)return;
+            if(!navigator.onLine){showToast('You need an internet connection to download the model.','error');return;}
+            const cn=navigator.connection;
+            if(cn&&(cn.type==='cellular'||cn.saveData)){
+                if(!await showAppConfirm('You appear to be on mobile data. The model is about 365 MB. Download anyway?','Large download',{icon:'download',confirmLabel:'Download'}))return;
+            }
+            if(isUpdate){
+                if(!await showAppConfirm('Updating re-downloads the model (about 365 MB). The current copy is removed first, so Summarize is unavailable until the download finishes.','Update model',{icon:'sync',confirmLabel:'Update'}))return;
+            }
+            const bar=document.getElementById('ai-sum-progress'),st=document.getElementById('ai-sum-status');
+            aiSumSetBusy(true);bar.value=0;bar.style.display='block';
+            try{
+                await aiSumLoadHelper();
+                try{navigator.storage&&navigator.storage.persist&&await navigator.storage.persist();}catch(e){}
+                if(isUpdate){st.textContent='Removing the old model\u2026';await AISum.remove();}
+                _aiSumAbort=new AbortController();
+                await AISum.download((pct,l,t)=>{bar.value=pct;st.textContent='Downloading\u2026 '+Math.round(l/1048576)+' / '+Math.round(t/1048576)+' MB';},_aiSumAbort.signal);
+                st.textContent='Saving offline runtime\u2026';
+                await aiCacheRuntime(['aisum.js','sumworker.js']);
+                bar.style.display='none';aiSumSetBusy(false);
+                await aiSumRefresh();
+                showToast(isUpdate?'Summarization model updated':'Summarization model downloaded','success');
+            }catch(e){
+                bar.style.display='none';aiSumSetBusy(false);
+                await aiSumRefresh('Download failed'+(e&&e.message?': '+e.message:'')+' \u2014 nothing was kept. Tap Download to retry.');
+                showToast('Summarization model download failed','error');
+            }
+        }
+        async function aiSumDelete(){
+            if(_aiSumBusy)return;
+            if(!await aiConfirmTypeDelete('This deletes the on-device summarization model. Summarize will stop working until you download it again.','Delete model?'))return;
+            aiSumSetBusy(true);
+            try{await aiSumLoadHelper();await AISum.remove();aiSumSetBusy(false);await aiSumRefresh();showToast('Summarization model deleted','info');}
+            catch(e){aiSumSetBusy(false);await aiSumRefresh();showToast('Could not delete the summarization model','error');}
+        }
+
         function openDataSourcesPage(){
             const el=document.getElementById('ai-datasources-page');
-            if(el){renderExternalDataSources();aiModelRefresh();aiImgRefresh();el.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('slide-open')));}
+            if(el){renderExternalDataSources();aiModelRefresh();aiImgRefresh();aiSumRefresh();el.scrollTop=0;requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('slide-open')));}
         }
         function closeDataSourcesPage(){const el=document.getElementById('ai-datasources-page');if(el)el.classList.remove('slide-open');}
 

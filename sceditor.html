@@ -5375,6 +5375,18 @@ function waitForSugarcaneAddons(){
               </button>
             </div>
 
+            <div class="aw-row" id="sumRow">
+              <div>
+                <div class="aw-row-label">Summarize</div>
+                <div class="aw-row-sub" id="sumRowSub">Condense a selection or the whole document</div>
+              </div>
+            </div>
+            <div style="padding:0 10px 6px">
+              <button id="sumDocBtn" onclick="openSummarize('document')" class="aw-correct-btn" style="background:hsl(calc(259.8 * var(--sc-hk,1) + var(--sc-rb,0)) calc(53.9% * var(--sc-rs,1)) calc(45.1% + var(--sc-rl,0%)));">
+                <span class="material-symbols-outlined" style="font-size:13px">summarize</span>Summarize document
+              </button>
+            </div>
+
             <div class="aw-row">
               <div>
                 <div class="aw-row-label">Word Prediction</div>
@@ -7617,6 +7629,46 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
   </div>
 </div>
 
+<!-- Summarize Modal (on-device, SmolLM2-360M-Instruct) -->
+<div class="modal" id="sumMdl">
+  <div class="mbox narrow">
+    <div class="mhdr">
+      <h2 class="mtitle">Summarize</h2>
+      <button class="mclose" onclick="sumClose()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="ph-info-box">
+      Runs fully on this device. Summaries can miss details or get things wrong, so check the result against the original before you rely on it.
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label" id="sumSourceLbl">Selected text</div>
+      <div class="sm-row" style="gap:8px;">
+        <select class="sm-number" id="sumStyle" style="flex:1;width:auto;" onchange="localStorage.setItem('sum_style', this.value)">
+          <option value="short">Short (1–2 sentences)</option>
+          <option value="paragraph">Paragraph</option>
+          <option value="bullets">Bullet points</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label" id="sumStatus" style="min-height:16px;">Ready</div>
+      <textarea id="sumOut" rows="8" placeholder="The summary appears here. You can edit it before inserting." oninput="sumSyncButtons()" style="width:100%;min-height:150px;resize:vertical;font-family:inherit;font-size:13px;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--ui-divider,#ccc);background:var(--ui-raise,#fff);color:var(--ui-text,#111);outline:none;"></textarea>
+    </div>
+
+    <div class="sm-section" id="sumActions" style="display:flex;flex-wrap:wrap;gap:6px;">
+      <button class="mbtn sec" id="sumBtnInsert" onclick="sumInsert()" disabled>Insert below</button>
+      <button class="mbtn sec" id="sumBtnReplace" onclick="sumReplace()" disabled>Replace selection</button>
+      <button class="mbtn sec" id="sumBtnCopy" onclick="sumCopy()" disabled>Copy</button>
+    </div>
+
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="sumClose()">Close</button>
+      <button class="mbtn primary" id="sumBtnGo" onclick="sumRun()">Summarize</button>
+    </div>
+  </div>
+</div>
+
 <!-- Autofill Example Data Modal — from text popup (selection) -->
 <div class="modal" id="aedFromPopupMdl">
   <div class="mbox">
@@ -7972,6 +8024,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
       <button class="cpp-btn" id="tpEditLinkBtn" onclick="openEditLinkAttrs()" style="display:none;color:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));"><span class="material-symbols-outlined">link</span>Edit Link</button>
       <button class="cpp-btn" id="tpAutofillBtn" onclick="openAedFromPopup()" style="display:none;color:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));"><span class="material-symbols-outlined">auto_fix_high</span>Autofill</button>
       <button class="cpp-btn" id="tpExpandContextBtn" onclick="runExpandContext()" style="display:none;color:hsl(calc(259.8 * var(--sc-hk,1) + var(--sc-rb,0)) calc(53.9% * var(--sc-rs,1)) calc(45.1% + var(--sc-rl,0%)));"><span class="material-symbols-outlined">auto_awesome</span>Expand Context</button>
+      <button class="cpp-btn" id="tpSummarizeBtn" onclick="openSummarize('selection')" style="display:none;color:hsl(calc(259.8 * var(--sc-hk,1) + var(--sc-rb,0)) calc(53.9% * var(--sc-rs,1)) calc(45.1% + var(--sc-rl,0%)));"><span class="material-symbols-outlined">summarize</span>Summarize</button>
     </div>
     <div class="ctx-popup-sep"></div>
     <div class="ctx-popup-row">
@@ -8288,7 +8341,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 201; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 202; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -12893,6 +12946,7 @@ function _showTextPopupCore(x, y) {
   checkTextPopupForLink();
   checkTextPopupSingleWord();
   ceCheckTextPopup();
+  sumCheckTextPopup();
   syncSnippetButtonState();
 }
 
@@ -26633,6 +26687,185 @@ async function runExpandContext() {
   const added = expanded.length - words.length;
   showToast(`Context expanded — ${options.rounds} round${options.rounds === 1 ? '' : 's'}, +${added} word${added === 1 ? '' : 's'}`, 'success');
 }
+
+/* ═══════════════════════════════════════════════════════
+   SUMMARIZE — optional on-device model (SmolLM2-360M-Instruct).
+   Same gating as Context Expansion (AI Features + AI Usecases > Sugarcane).
+   The model is installed from the app: Settings → AI → Data Sources.
+═══════════════════════════════════════════════════════ */
+let _sumRange = null, _sumMode = 'selection', _sumBusy = false, _sumAbort = null, _sumInstalled = false, _sumHelper = null;
+
+function sumGatingOk() { return ceGatingOk(); }
+
+function sumLoadHelper() {
+  if (window.AISum) return Promise.resolve();
+  if (_sumHelper) return _sumHelper;
+  _sumHelper = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = SP_AI + 'aisum.js?v=203';
+    s.onload = res;
+    s.onerror = () => { _sumHelper = null; rej(new Error('Could not load vendor/ai/aisum.js')); };
+    document.head.appendChild(s);
+  });
+  return _sumHelper;
+}
+
+async function sumRefreshInstalled() {
+  _sumInstalled = false;
+  try { if (sumGatingOk()) { await sumLoadHelper(); _sumInstalled = await AISum.installed(); } } catch (e) {}
+  const sub = document.getElementById('sumRowSub');
+  if (sub) sub.textContent = !sumGatingOk() ? 'Locked \u2014 enable in app Settings \u2192 AI' : (_sumInstalled ? 'Condense a selection or the whole document' : 'Model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources)');
+  const b = document.getElementById('sumDocBtn');
+  if (b) b.disabled = !_sumInstalled;
+  return _sumInstalled;
+}
+
+/* Show/hide the Summarize button in the text selection popup */
+function sumCheckTextPopup() {
+  const btn = document.getElementById('tpSummarizeBtn');
+  if (!btn) return;
+  if (!_sumInstalled || !sumGatingOk()) { btn.style.display = 'none'; return; }
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) { btn.style.display = 'none'; return; }
+  const words = sel.toString().trim().split(/\s+/).filter(Boolean).length;
+  btn.style.display = words >= 30 ? 'inline-flex' : 'none';
+}
+
+function sumDocText() {
+  const parts = [];
+  document.querySelectorAll('#editorArea .page-content').forEach(p => { const t = (p.innerText || '').trim(); if (t) parts.push(t); });
+  return parts.join('\n\n');
+}
+function sumEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function sumWords(t) { return (t || '').trim().split(/\s+/).filter(Boolean).length; }
+
+let _sumText = '';
+async function openSummarize(mode) {
+  _sumMode = mode === 'document' ? 'document' : 'selection';
+  _sumRange = null;
+  if (_sumMode === 'selection') {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) { hideTextPopup(); return; }
+    _sumRange = sel.getRangeAt(0).cloneRange();
+    _sumText = sel.toString();
+  } else {
+    _sumText = sumDocText();
+  }
+  hideTextPopup();
+  if (!sumGatingOk()) { showToast('Summarize is locked \u2014 enable it in the app Settings \u2192 AI.', 'error'); return; }
+  if (!(await sumRefreshInstalled())) { showToast('Summarization model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources).', 'info'); return; }
+  const n = sumWords(_sumText);
+  if (n < 30) { showToast('Select at least 30 words to summarize.', 'error'); return; }
+
+  document.getElementById('sumSourceLbl').textContent = (_sumMode === 'document' ? 'Whole document' : 'Selected text') + ' \u00b7 ' + n.toLocaleString() + ' words';
+  const st = localStorage.getItem('sum_style');
+  document.getElementById('sumStyle').value = (st === 'short' || st === 'bullets') ? st : 'paragraph';
+  document.getElementById('sumOut').value = '';
+  document.getElementById('sumStatus').textContent = n > 650 ? 'Long text: it is read in parts, which takes a while on-device.' : 'Ready';
+  document.getElementById('sumBtnInsert').textContent = _sumMode === 'document' ? 'Insert at top' : 'Insert below';
+  document.getElementById('sumBtnReplace').style.display = _sumMode === 'document' ? 'none' : '';
+  document.getElementById('sumBtnGo').textContent = 'Summarize';
+  sumSyncButtons();
+  openMdl('sumMdl');
+  sumRun();
+}
+
+function sumSyncButtons() {
+  const has = !!document.getElementById('sumOut').value.trim();
+  ['sumBtnInsert', 'sumBtnReplace', 'sumBtnCopy'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !has || _sumBusy; });
+  const go = document.getElementById('sumBtnGo');
+  if (go) go.textContent = _sumBusy ? 'Stop' : (has ? 'Regenerate' : 'Summarize');
+}
+
+function sumStop() { try { _sumAbort && _sumAbort.abort(); } catch (e) {} }
+function sumClose() { sumStop(); closeMdl('sumMdl'); }
+
+async function sumRun() {
+  if (_sumBusy) { sumStop(); document.getElementById('sumStatus').textContent = 'Stopping\u2026'; return; }
+  const out = document.getElementById('sumOut'), status = document.getElementById('sumStatus');
+  const style = document.getElementById('sumStyle').value;
+  out.value = '';
+  _sumBusy = true; _sumAbort = new AbortController(); sumSyncButtons();
+  let got = false;
+  try {
+    await sumLoadHelper();
+    const text = await AISum.summarize(_sumText, {
+      style, signal: _sumAbort.signal,
+      onLoading: () => { status.textContent = 'Loading the model (first run takes a moment)\u2026'; },
+      onStage: (n) => { status.textContent = n; },
+      onToken: (t) => { if (!got) { got = true; status.textContent = 'Writing the summary\u2026'; } out.value += t; }
+    });
+    if (text === null) { status.textContent = out.value.trim() ? 'Stopped \u2014 partial summary kept.' : 'Stopped.'; }
+    else { out.value = text; status.textContent = text.trim() ? 'Done' : 'The model returned nothing. Try again or choose another length.'; }
+  } catch (e) {
+    status.textContent = 'Could not summarize: ' + ((e && e.message) || 'unknown error');
+  }
+  _sumBusy = false; _sumAbort = null; sumSyncButtons();
+}
+
+/* Build the node(s) to insert: real list for bullets, otherwise paragraphs */
+function sumBuildNode(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const isList = lines.length > 0 && lines.every(l => /^[-*\u2022]\s+/.test(l));
+  if (isList) {
+    const ul = document.createElement('ul');
+    lines.forEach(l => { const li = document.createElement('li'); li.textContent = l.replace(/^[-*\u2022]\s+/, ''); ul.appendChild(li); });
+    return ul;
+  }
+  const wrap = document.createDocumentFragment();
+  lines.forEach(l => { const p = document.createElement('p'); p.textContent = l; wrap.appendChild(p); });
+  return wrap;
+}
+function sumBlockOf(node) {            // the top-level block (direct child of the page) that holds the node
+  let el = node && node.nodeType === 1 ? node : (node && node.parentElement);
+  while (el && !(el.parentElement && el.parentElement.classList && el.parentElement.classList.contains('page-content'))) el = el.parentElement;
+  return el;
+}
+
+function sumInsert() {
+  const text = document.getElementById('sumOut').value.trim();
+  if (!text) return;
+  const node = sumBuildNode(text);
+  if (_sumMode === 'document') {
+    const first = document.querySelector('#editorArea .page-content');
+    if (!first) { showToast('Could not find the page to insert into.', 'error'); return; }
+    first.insertBefore(node, first.firstChild);
+    first.dispatchEvent(new Event('input', { bubbles: true }));
+  } else {
+    const block = _sumRange && sumBlockOf(_sumRange.endContainer);
+    if (!block || !block.isConnected) { showToast('The selection moved. Select the text again.', 'error'); return; }
+    block.parentNode.insertBefore(node, block.nextSibling);
+    block.parentNode.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  try { scheduleAutoSave(); } catch (e) {}
+  closeMdl('sumMdl');
+  showToast('Summary inserted', 'success');
+}
+
+function sumReplace() {
+  const text = document.getElementById('sumOut').value.trim();
+  if (!text || !_sumRange) return;
+  try {
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(_sumRange);
+    const html = text.split('\n').map(l => sumEsc(l.trim().replace(/^[-*]\s+/, '\u2022 '))).filter(Boolean).join('<br>');
+    document.execCommand('insertHTML', false, html);
+  } catch (e) { showToast('Could not replace the selection.', 'error'); return; }
+  try { scheduleAutoSave(); } catch (e) {}
+  closeMdl('sumMdl');
+  showToast('Selection replaced with the summary', 'success');
+}
+
+async function sumCopy() {
+  const text = document.getElementById('sumOut').value;
+  try { await navigator.clipboard.writeText(text); showToast('Copied', 'success'); }
+  catch (e) { const t = document.getElementById('sumOut'); t.select(); try { document.execCommand('copy'); showToast('Copied', 'success'); } catch (e2) { showToast('Could not copy', 'error'); } }
+}
+
+document.addEventListener('DOMContentLoaded', () => { try { sumRefreshInstalled(); } catch (e) {} });
+/* The model/gating is changed in the app (Settings \u2192 AI), so re-check when the user comes back to this page. */
+window.addEventListener('focus', () => { if (!_sumBusy) sumRefreshInstalled().catch(() => {}); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !_sumBusy) sumRefreshInstalled().catch(() => {}); });
 
 document.addEventListener('DOMContentLoaded', () => { try { ceInit(); } catch(e) {} });
 

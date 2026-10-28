@@ -6,12 +6,12 @@
 
 
 ### 🔹mahi902.GitHub.io/DocuWritePro
-_Last updated: Sep 1, 2026_
+_Last updated: Oct 28, 2026_
 
 
 ## Introduction
 
-DocuWrite Pro is a completely client side based online document editor. No need to go to different sites for document editing, get everything done in one place using **DocuWrite Pro**.
+DocuWrite Pro is a completely client side document editor. No need to go to different sites for document editing, get everything done in one place using **DocuWrite Pro**.
 
 ![Banner7](https://i.ibb.co.com/YBXksxz4/IMG-20260104-123057.png)
 
@@ -56,9 +56,9 @@ DocuWrite Pro is a completely client side based online document editor. No need 
 ![Banner6](https://i.ibb.co/zh4g1GNq/1000039604-removebg-preview.png)
 
 
-DocuWrite Pro is a powerful, intuitive web-based writing and documentation tool designed to empower creators, students, and professionals to craft polished content effortlessly. Built with a clean and minimalist interface, it removes distractions so users can focus fully on their ideas. The platform supports rich text formatting, seamless embedding of media, and real-time collaboration, making it ideal for anything from academic papers to business reports. With robust version history and self-storage capabilities, users never lose progress, and can access their documents anytime they want. Smart features like context-aware suggestions, customizable templates, and distraction-free modes help guide writers through every stage of the creative process, whether they’re drafting a first outline or refining a final draft.
+DocuWrite Pro is an all-in-one document suite built for your phone. It brings writing, editing, signing, converting, and collaborating into one app, so you no longer need a different website for every small task. Its clean, minimal interface keeps the focus on your work, whether you’re drafting an essay, polishing a report, filling in a form, or putting together a presentation. At its core is the Sugarcane Editor, which supports rich formatting and embedded media, and exports to PDF, DOCX, or SCD. Around it sits a full toolkit: PDF markup, signing, merging, and compression, spreadsheets, charts, mind maps, file conversion, image editing, and developer tools. The app also adds offline use, templates, a built-in scanner, and PIN lock, and an optional on-device AI suggests your next sentence as you type.
 
-What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth. Unlike bloated writing suites that overwhelm users with menus, this tool intuitively adapts to what you’re doing, offering relevant tools when you need them and staying out of the way when you don’t. It integrates smoothly with productivity workflows by providing tools in all text, code and image editing divisions. It also supports easy sharing links for collaborators or readers. Security and privacy are built in, with encrypted storage and permissions controls so users can confidently manage their work. Whether you’re working solo or within a team, DocuWrite Pro makes writing feel natural, organized, and even enjoyable—transforming ideas into polished documents with clarity and ease.
+What sets DocuWrite Pro apart is that it is private and free. Everything runs on your device, so your documents are processed locally, and the AI model works offline once downloaded. Live collaboration, chat, calls, and file transfer run peer-to-peer over WebRTC, so your edits and messages go straight to your collaborators and never pass through a central server. There are no accounts, no ads, and no limits, and every tool is free. You can share a finished document as a PDF, DOCX, or SCD file, or send a single link that opens it in one tap. Whether you’re a student, a professional, or just someone who needs to get a document done, DocuWrite Pro makes the work quick, organized, and simple.
 
   
 # DocuWrite Pro Tools
@@ -78,60 +78,57 @@ What sets DocuWrite Pro apart is its thoughtful balance of simplicity and depth.
 <img width="2504" height="1247" alt="1000042461" src="https://github.com/user-attachments/assets/0b6cb555-5a51-4b5b-b35e-e5b8ea5434ed" />
 
 
-This is our main document editor. It uses the Sugercane Document Engine to generate perfect documents. The editor is filled with features your think are useless, but you use them anyway. The UI and the features, all were crafter with careful precision.
+This is our main document editor. It uses the Sugercane Document Engine to generate perfect documents. The editor is filled with features your think are useless, but you use them anyway. The UI and the features, all were crafted with careful precision.
 
 
 
 ## Main Tools
 - **Editor**: Edit documents seamlessly with the clutter free PDF editor!
- 
-  
-  
-
 - **Collab**: Edit documents together
-- **Document Viewer**: Viewing documents
-- **Markup & Reconstructor**: Edit already edited PDFs
+- **Viewer**: Viewing documents
+- **Markup**: Edit already edited PDFs
 - **Word Finder**: Searching for specific words
 - **Translator**: Language translation
-- **Document Signer**: Electronically signing documents
-- **Find & Replacer**: Find and replace specific phrases in a paragraph
-- **Page Number Adder**: Adding page numbers to documents
-- **Spreadsheet Editor**: Edit, export or import spreadsheets seamlessly
+- **Doc Translator**: Document translation
+- **Signer**: Electronically signing documents
+- **Find & Replace**: Find and replace specific phrases in a paragraph
+- **Page Numbers**: Adding page numbers to documents
+- **Spreadsheet**: Edit, export or import spreadsheets seamlessly
 - **Reorder & Merge**: Reorder and merge pages from different PDFs
-- **File Encryptor**: Encrypt complete file data with secure PIN code
+- **Encryptor**: Encrypt complete file data with secure PIN code
 - **Chart Maker**: Creating data charts
 - **Graph Maker**: Make clear graphs with visualization
 - **Whiteboard**: Create and place jams in your very own workplace
-- **Mind Map Maker**: Make sleek and custom mind maps
+- **Mind Map**: Make sleek and custom mind maps
 - **Table Maker**: Creating tables
-- **Watermark Adder**: Adding watermarks to files
+- **Watermarker**: Adding watermarks to files
 - **Email Writer**: Assisting with writing emails
 - **Spell Checker**: Checking spelling and grammar
-- **File Extractor**: Extracting contents from files
+- **Extractor**: Extracting contents from zip files
 - **QR Maker**: Creating QR codes
 - **ID Card Maker**: Designing and creating ID cards
-- **File Zipper**: Compressing or zipping files
+- **Zipper**: Compressing or zipping files
 - **Format Converter**: Converting files to or from different formats
-- **PDF Compressor**: Compress PDFs and shrink file size
-- **Markdown Editor**: Edit or convert plain text to markdown .md
+- **Compressor**: Compress PDFs and shrink file size
+- **Markdown**: Edit or convert plain text to markdown .md
 
 ## Additional Tools
-- **Context Field**: Analyzing text (e.g., word count, frequency)
-- **Metadata Inspector**: Inspect and edit file metadata info
-- **Gift Card Maker**: Creating custom gift cards
+- **Context**: Analyzing text (e.g., word count, frequency)
+- **Metadata**: Inspect and edit file metadata info
+- **Gift Card**: Creating custom gift cards
 - **Share File**: Uploading or sharing a file
 - **Text Extractor**: Extracting text from sources (e.g., images)
-- **Keyboard Click Test**: Testing keyboard functionality
+- **Key Test**: Testing keyboard functionality
 - **Frontend IDE**: Integrated Development Environment for frontend coding
 - **Code Editor**: Storing and creating code 
 - **Code Playground**: Writing or generating code
-- **Button Designer**: Designing user interface buttons
-- **HTML Splitter**: Splitting HTML files or elements
+- **Button Dev**: Designing user interface buttons
+- **Splitter**: Splitting HTML files or elements
 - **GoTo Code**: Navigation feature in an IDE/editor
-- **Code Snipper**: Storing or managing code snippets
-- **Image Editor**: Editing images
-- **Attribution Editor**: Edit attribution values of images
-- **Drawing Board**: A simple drawing or sketching tool
+- **Snipper**: Storing or managing code snippets
+- **Img Editor**: Editing images
+- **Attrib Editor**: Edit attribution values of images
+- **Draw**: A simple drawing or sketching tool
 
 
 
@@ -140,9 +137,8 @@ This is our main document editor. It uses the Sugercane Document Engine to gener
 In DocuWrite Pro, there are various tools which support collaboration or can connect users together in one united workspace. The tools which use collaboration features are listed below:
 
 - ❖ Collab Editor
-- ❖ Connect Text Chat
-- ❖ Connect Call
-- ❖ DocuDrop Share File
+- ❖ Text
+- ❖ Call
 
 ⓘ All collaboration tools in DocuWrite Pro are built using **PeerJS** and **WebRTC**, which allow real-time communication directly between users’ devices. This means that your files, edits, and messages never pass through DocuWrite Pro’s servers, ensuring full privacy and security. By using this peer-to-peer approach, DocuWrite Pro keeps your data safe while still enabling features like live collaboration, file sharing, and team editing.  
 

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="201">
+<meta name="sceditor-version" content="203">
 <style id="dwi-css">/* DocuWrite icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -3712,6 +3712,26 @@ body.dark .material-symbols-outlined.fmt-ico svg path[fill="#fff"]{fill:#2b2b2e;
   #hrPopup{width:304px;max-width:calc(100vw - 16px);}
   #hrInsertSheet{width:264px;max-width:calc(100vw - 16px);}
 }
+
+/* Add-page hold / right-click → Before | Cancel | After */
+.add-page-btn.apb-hold{position:relative;flex-shrink:0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.add-page-btn .apb-fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1) / .25);pointer-events:none}
+.add-page-btn .apb-clip{position:absolute;inset:0;border-radius:10px;overflow:hidden;pointer-events:none}
+.add-page-btn .apb-content{position:relative;display:flex;align-items:center;justify-content:center;gap:10px}
+body.dark .add-page-btn .apb-fill{background:hsl(calc(var(--sc-h,210) + -3.1) calc(89.7% * var(--sc-s,1)) calc(77.1% + var(--sc-l,0%) * 0) / .25)}
+.add-page-btn.apb-back{animation:apbBack .22s ease-out}
+@keyframes apbBack{from{opacity:.35;transform:scale(.985)}to{opacity:1;transform:none}}
+.add-page-btn.filling{background:hsl(calc(var(--sc-h,210) + -4.6) calc(86.7% * var(--sc-s,1)) calc(94.1% + var(--sc-l,0%) * 0))}
+body.dark .add-page-btn.filling{background:#222}
+.add-page-btn.apb-open>*:not(.apb-choose){display:none!important}
+.add-page-btn.apb-open,.add-page-btn.apb-open:hover{transform:none;background:transparent;border-color:transparent}
+.apb-choose{position:relative;display:flex;gap:8px;padding:0;box-sizing:border-box;cursor:default;flex:none;align-self:center;justify-self:center;max-width:100%}
+.apb-choose button{flex:1;min-width:0;border-radius:10px;border:2px solid hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));background:#fff;color:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));font-size:16px;font-weight:600;font-family:inherit;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px;margin:0;height:100%}
+.apb-choose button .material-symbols-outlined{font-size:22px;width:22px;height:22px;flex:none}
+.apb-choose button:hover,.apb-choose button:active{background:hsl(calc(var(--sc-h,210) + -4.6) calc(86.7% * var(--sc-s,1)) calc(94.1% + var(--sc-l,0%) * 0))}
+.apb-choose button.apb-cancel{border-color:#999;color:#777}
+body.dark .apb-choose button{background:#1a1a1a}
+body.dark .apb-choose button:hover,body.dark .apb-choose button:active{background:#222}
 </style>
 <style id="fw-action-style-fix">
 /* Action button appearance — honours Box / Underline / Invisible, colors, bold, size */
@@ -4019,7 +4039,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v201…</p>
+    <p class="loading-text">Loading Sugarcane v203…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -8443,7 +8463,7 @@ body.dark .ask-bot.ask-err .ask-bub{background:#3a1f1c;color:#ffb4a8;}
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 202; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 203; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -15827,7 +15847,7 @@ let _igWorker = null, _igBusy = false, _igTimer = null, _igId = 0;
 function imgGenStatus(t) { const s = _imgEl('imgGenStatus'); if (s) s.textContent = t; }
 function imgGenLoadHelper() {
   if (window.AIImage) return Promise.resolve();
-  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aiimage.js?v=201'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aiimage.js?v=203'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
 }
 async function imgGenCheck() {
   const tab = _imgEl('imgSrcGenTab'); if (tab) tab.style.display = 'none';
@@ -15857,7 +15877,7 @@ function imgGenStart() {
   tick(); _igTimer = setInterval(tick, 500);
   const names = { text: 'Reading your prompt…', draw: 'Drawing…', decode: 'Finishing the picture…' };
   try {
-    const w = new Worker(SP_AI + 'imgworker2.js?v=201', { type: 'module' }); _igWorker = w;
+    const w = new Worker(SP_AI + 'imgworker2.js?v=203', { type: 'module' }); _igWorker = w;
     w.onmessage = e => {
       const m = e.data; if (m.id !== id) return;
       if (m.type === 'stage') { stage = names[m.name] || stage; tick(); }
@@ -41974,5 +41994,387 @@ window.openMapModal=function(img){
 
 <script>document.addEventListener('dblclick',function(e){var i=e.target;if(i&&i.tagName==='IMG'&&i.dataset&&i.dataset.mapState){e.preventDefault();e.stopPropagation();window.openMapModal(i);}},true);</script>
 
+
+<script>
+/* ── Add Page button: hold 0.5s (+1.5s fill) or right-click → Before | Cancel | After ── */
+(function(){
+  const DELAY=500, FILL=1500;
+  let btn=null, fill=null, dT=null, fT=null, holding=false, done=false, menu=null;
+  const sel='.add-page-btn';
+  function reset(){ clearTimeout(dT); clearTimeout(fT); holding=false;
+    if(btn){ btn.classList.remove('filling'); }
+    if(fill){ fill.style.transition='width .15s ease'; fill.style.width='0%'; } }
+  function closeMenu(){ if(menu){ menu.remove(); menu=null; } if(btn){ const was=btn.style.display==='none'; btn.style.display=''; if(was){ btn.classList.remove('apb-back'); void btn.offsetWidth; btn.classList.add('apb-back'); btn.addEventListener('animationend',()=>btn.classList.remove('apb-back'),{once:true}); } } document.removeEventListener('pointerdown',outside,true); }
+  function outside(e){ if(menu && !menu.contains(e.target)){ e.preventDefault(); e.stopPropagation(); closeMenu(); } }
+  function lastOuter(){ const a=[...document.querySelectorAll('#editorArea .page-outer')]; return a[a.length-1]||null; }
+  function insertBeforeLast(){
+    if(!_scGate('addPageBefore')) return;
+    const outer=_buildPageOuter(Date.now()+'_'+Math.floor(Math.random()*9999));
+    const ref=lastOuter(); const area=document.getElementById('editorArea');
+    ref ? ref.before(outer) : area.appendChild(outer);
+    certMintForPage(outer.querySelector('.page')); _refreshPageState();
+    const c=outer.querySelector('.page-content'); if(c){ c.focus(); outer.scrollIntoView({behavior:'smooth',block:'center'}); }
+    DOC.schedule(); showToast('Page added before last','success');
+  }
+  function openMenu(){
+    if(!btn) return; closeMenu();
+    menu=document.createElement('div'); menu.className='apb-choose';
+    const mk=(cls,icon,label,fn)=>{ const b=document.createElement('button'); b.type='button'; if(cls) b.className=cls;
+      b.innerHTML=`<span class="material-symbols-outlined">${icon}</span>${label}`;
+      b.addEventListener('click',e=>{ e.stopPropagation(); e.preventDefault(); closeMenu(); fn&&fn(); }); return b; };
+    menu.append(mk('','note_add','Before',insertBeforeLast), mk('apb-cancel','close','Cancel'), mk('','post_add','After',()=>addNewPage()));
+    const w=btn.offsetWidth, h=Math.max(btn.offsetHeight,48); menu.style.width=w+'px'; menu.style.height=h+'px'; menu.style.minHeight=h+'px'; btn.after(menu); btn.style.display='none';
+    setTimeout(()=>document.addEventListener('pointerdown',outside,true),0);
+  }
+  let lastType='mouse';
+  document.addEventListener('pointerdown',e=>{
+    lastType=e.pointerType||'mouse';
+    if(e.target.closest&&e.target.closest('.apb-choose')) return; const b=e.target.closest&&e.target.closest(sel); if(!b||b.disabled||e.button>0) return;
+    btn=b; btn.classList.add('apb-hold');
+    fill=btn.querySelector('.apb-fill');
+    if(!fill||!btn.querySelector('.apb-content')){
+      btn.querySelectorAll('.apb-clip,.apb-content').forEach(n=>{ if(n.classList.contains('apb-content')) while(n.firstChild) btn.insertBefore(n.firstChild,n); n.remove(); });
+      const clip=document.createElement('span'); clip.className='apb-clip';
+      fill=document.createElement('span'); fill.className='apb-fill'; clip.appendChild(fill);
+      const content=document.createElement('span'); content.className='apb-content';
+      while(btn.firstChild) content.appendChild(btn.firstChild);
+      btn.append(clip,content);
+    }
+    reset(); fill.style.transition='none'; fill.style.width='0%'; holding=true; done=false;
+    dT=setTimeout(()=>{ if(!holding) return; btn.classList.add('filling'); void fill.offsetWidth;
+      fill.style.transition=`width ${FILL}ms linear`; fill.style.width='100%';
+      fT=setTimeout(()=>{ if(!holding) return; done=true; reset(); openMenu(); },FILL); },DELAY);
+  },true);
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,e=>{ if(holding && (t!=='pointerleave'||(e.target.closest&&e.target.closest(sel)))) reset(); },true));
+  document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest(sel); if(b&&done){ e.stopImmediatePropagation(); e.preventDefault(); done=false; } },true);
+  document.addEventListener('contextmenu',e=>{ const b=e.target.closest&&e.target.closest(sel);
+    if(!b) return; e.preventDefault(); if(b.disabled||e.target.closest('.apb-choose')) return; if(lastType==='touch'||lastType==='pen') return; btn=b; reset(); done=false; openMenu(); },true);
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   UNIVERSAL HISTORY — one undo/redo for everything in the pages
+   • A MutationObserver on #editorArea records EVERY change (text, attributes,
+     inserted/removed/moved nodes, whole pages) as reversible operations, so
+     nothing needs registering: new features are covered automatically.
+   • Live nodes are kept (not re-parsed), so listeners / wiring survive undo.
+   • Sidebar settings (inputs/selects inside .sidebar) are recorded too and
+     replayed through their own input/change events so the app re-applies them.
+   • Decorations (spell/grammar marks, rulers, page numbers…) never create steps.
+   Opt-outs for future transient UI:  data-undo-ignore  |  SCHistory.ignore(sel)
+                                      SCHistory.decor(className) | SCHistory.mute(fn)
+═══════════════════════════════════════════════════════ */
+(function () {
+  if (window.SCHistory) return;
+  const area = document.getElementById('editorArea');
+  if (!area) return;
+
+  const MAX_STEPS = 400, TYPE_MS = 1000, GAP_MS = 150, SETTLE_MS = 250, HUGE = 4000;
+  const ROOT_SEL = '.page-content,.page-header-area,.page-footer-area';
+  const ignoreSels = ['.add-page-btn', '.apb-choose', '.page-num-stamp', '.page-margin-overlay', '.page-scale-ruler', '.ruler-corner', '.watermark', '[data-undo-ignore]'];
+  const decorCls = new Set(['spell-error', 'spell-corrected', 'grammar-error', 'offensive-word', 'sc-hit-bad']);
+  const transientClass = /(^|-)(selected|active|hover|hovering|focus|focused|dragging|dragover|drag-over|resizing|highlight|highlighted|holding|filling|flash|flashing|picked|img-active)(-|$)|^pi-drag$/i;
+  const transientStyle = new Set(['cursor', 'outline', 'outline-offset', 'transition', 'pointer-events', 'user-select', '-webkit-user-select', 'will-change', 'caret-color', 'animation', 'touch-action']);
+  const ctrlIgnore = '[class*="chat"],[id*="chat"],[id*="search"],[class*="search"],[id*="find"],[id*="replace"],[id*="prompt"],[data-undo-ignore]';
+  const BAD_INPUT = new Set(['button', 'submit', 'reset', 'file', 'password', 'image', 'hidden']);
+
+  const H = {
+    undo: [], redo: [], mute: 0, applying: false, settle: 0,
+    lastSel: null, lastBI: null, textBase: new WeakMap(),
+    pendCtrl: [], ctrlTimer: 0, gesture: false, lastKnown: new WeakMap(), radioPrev: new Map()
+  };
+  const now = () => Date.now();
+  const ignoreSel = () => ignoreSels.join(',');
+
+  /* ── environment checks ── */
+  const loading = () => { try { if (typeof _isLoadingData !== 'undefined' && _isLoadingData) return true; } catch (e) {} try { if (typeof DOC !== 'undefined' && DOC.opening) return true; } catch (e) {} return false; };
+  const collabOn = () => { const b = document.getElementById('collabBanner'); return !!(b && b.classList.contains('visible')); };
+  const elOf = n => (n && n.nodeType === 1) ? n : (n ? n.parentElement : null);
+  const isIgnored = n => { const e = elOf(n); return !!(e && e.closest && e.closest(ignoreSel())); };
+  const rootOf = n => { const e = elOf(n); return e && e.closest ? e.closest(ROOT_SEL) : null; };
+
+  /* ── selection snapshots ── */
+  function snapSel() {
+    const s = window.getSelection && window.getSelection();
+    if (!s || !s.rangeCount || !s.anchorNode || !area.contains(s.anchorNode)) return null;
+    return { an: s.anchorNode, ao: s.anchorOffset, fn: s.focusNode, fo: s.focusOffset };
+  }
+  document.addEventListener('selectionchange', () => { if (!H.applying) H.lastSel = snapSel(); });
+  const nodeLen = n => n.nodeType === 3 ? n.data.length : n.childNodes.length;
+  function restoreSel(sel, fallbackNode) {
+    const s = window.getSelection(); if (!s) return;
+    try {
+      if (sel && sel.an.isConnected && sel.fn.isConnected) {
+        const ed = elOf(sel.an) && elOf(sel.an).closest('[contenteditable="true"]');
+        if (ed && document.activeElement !== ed) ed.focus({ preventScroll: true });
+        s.setBaseAndExtent(sel.an, Math.min(sel.ao, nodeLen(sel.an)), sel.fn, Math.min(sel.fo, nodeLen(sel.fn)));
+        H.lastSel = snapSel();
+        const e = elOf(sel.fn); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' });
+        return;
+      }
+    } catch (e) {}
+    const fe = elOf(fallbackNode);
+    if (fe && fe.isConnected && fe.scrollIntoView) fe.scrollIntoView({ block: 'nearest' });
+  }
+
+  /* ── classification of a single record ── */
+  const styleMap = css => { const m = {}; (css || '').split(';').forEach(p => { const i = p.indexOf(':'); if (i > 0) m[p.slice(0, i).trim().toLowerCase()] = p.slice(i + 1).trim(); }); return m; };
+  function isDecorNode(n) { return n.nodeType === 3 || (n.nodeType === 1 && [...n.classList].some(c => decorCls.has(c))); }
+
+  function classify(r) {
+    if (r.type === 'attributes') {
+      const t = r.target, name = r.attributeName;
+      if (isIgnored(t)) return 'drop';
+      const nv = t.getAttribute(name);
+      if (nv === r.oldValue) return 'drop';
+      if (name === 'spellcheck') return 'attr-t';
+      if (name === 'class') {
+        const a = new Set((r.oldValue || '').split(/\s+/).filter(Boolean)), b = new Set((nv || '').split(/\s+/).filter(Boolean));
+        const diff = [...a].filter(x => !b.has(x)).concat([...b].filter(x => !a.has(x)));
+        if (diff.length && diff.every(x => transientClass.test(x) || decorCls.has(x))) return 'attr-t';
+        return 'real';
+      }
+      if (name === 'style') {
+        const a = styleMap(r.oldValue), b = styleMap(nv);
+        const keys = new Set(Object.keys(a).concat(Object.keys(b)));
+        const changed = [...keys].filter(k => a[k] !== b[k]);
+        if (changed.length && changed.every(k => transientStyle.has(k))) return 'attr-t';
+      }
+      return 'real';
+    }
+    if (r.type === 'characterData') return isIgnored(r.target) ? 'drop' : 'struct-d';
+    const nodes = [...r.addedNodes, ...r.removedNodes];
+    if (isIgnored(r.target)) return 'drop';
+    if (nodes.length && nodes.every(isIgnored)) return 'drop';
+    return nodes.every(isDecorNode) ? 'struct-d' : 'real';
+  }
+
+  /* ── turn a record into a reversible op ── */
+  function toOp(r) {
+    if (r.type === 'attributes') return { k: 'a', t: r.target, n: r.attributeName, ov: r.oldValue, nv: r.target.getAttribute(r.attributeName) };
+    if (r.type === 'characterData') return { k: 'c', t: r.target, ov: r.oldValue, nv: r.target.data };
+    return { k: 'l', t: r.target, add: [...r.addedNodes], rem: [...r.removedNodes], prev: r.previousSibling, next: r.nextSibling };
+  }
+  function refFor(op) {
+    if (op.next && op.next.parentNode === op.t) return op.next;
+    if (op.prev && op.prev.parentNode === op.t) return op.prev.nextSibling;
+    return null;
+  }
+  function inv(op) {
+    try {
+      if (op.k === 'c') { if (op.ov != null) op.t.data = op.ov; }
+      else if (op.k === 'a') { op.ov === null ? op.t.removeAttribute(op.n) : op.t.setAttribute(op.n, op.ov); }
+      else {
+        op.add.forEach(n => { if (n.parentNode === op.t) op.t.removeChild(n); });
+        const ref = refFor(op);
+        op.rem.forEach(n => op.t.insertBefore(n, ref));
+      }
+    } catch (e) {}
+  }
+  function fwd(op) {
+    try {
+      if (op.k === 'c') { op.t.data = op.nv; }
+      else if (op.k === 'a') { op.nv === null ? op.t.removeAttribute(op.n) : op.t.setAttribute(op.n, op.nv); }
+      else {
+        op.rem.forEach(n => { if (n.parentNode === op.t) op.t.removeChild(n); });
+        const ref = refFor(op);
+        op.add.forEach(n => op.t.insertBefore(n, ref));
+      }
+    } catch (e) {}
+  }
+
+  /* ── recording ── */
+  function seedText() { area.querySelectorAll(ROOT_SEL).forEach(r => H.textBase.set(r, r.textContent)); }
+  const TYPING = /^(insertText|insertCompositionText|deleteContent|deleteWord|insertReplacementText|deleteSoftLine|deleteHardLine)/;
+  document.addEventListener('beforeinput', e => { H.lastBI = { t: now(), type: e.inputType || '' }; }, true);
+
+  function trim() { while (H.undo.length > MAX_STEPS) H.undo.shift(); }
+  function clear() { H.undo.length = 0; H.redo.length = 0; H.pendCtrl.length = 0; seedText(); H.lastSel = snapSel(); }
+
+  function commit(ops, typing, root, decorative) {
+    const last = H.undo[H.undo.length - 1], t = now();
+    if (decorative) {                       // marks only: never a step of its own
+      if (H.redo.length) { H.applying = true; try { for (let i = ops.length - 1; i >= 0; i--) inv(ops[i]); } finally { obs.takeRecords(); H.applying = false; } }
+      else if (last) last.ops.push(...ops);
+      return;
+    }
+    const ctrl = H.pendCtrl.splice(0);
+    const canMerge = last && !H.redo.length && (
+      H.gesture ||
+      (typing && last.typing && last.root === root && t - last.t < TYPE_MS) ||
+      (!typing && !last.typing && t - last.t < GAP_MS) ||
+      (!typing && last.ctrlOnly && t - last.t < GAP_MS));
+    if (canMerge) {
+      last.ops.push(...ops); last.ctrl.push(...ctrl); last.selA = snapSel(); last.t = t;
+      last.typing = last.typing && typing; last.ctrlOnly = false;
+    } else {
+      H.undo.push({ ops, ctrl, typing, root, t, selB: H.lastSel, selA: snapSel() });
+      H.redo.length = 0; trim();
+    }
+  }
+
+  const obs = new MutationObserver(recs => {
+    if (H.applying || H.mute || now() < H.settle || loading() || collabOn()) return;
+    if (recs.length > HUGE) { clear(); return; }
+    const kept = []; let allDecor = true; const roots = new Set();
+    for (const r of recs) {
+      const k = classify(r);
+      if (k === 'drop') continue;
+      if (k === 'real') allDecor = false;
+      kept.push(r);
+      const rt = rootOf(r.target); if (rt) roots.add(rt);
+    }
+    if (!kept.length) return;
+    let textChanged = false;
+    roots.forEach(rt => { const cur = rt.textContent, old = H.textBase.get(rt); if (old === undefined || old !== cur) textChanged = true; H.textBase.set(rt, cur); });
+    const decorative = allDecor && !textChanged && !H.pendCtrl.length;
+    const ops = kept.map(toOp);
+    const bi = H.lastBI, typing = !!(bi && now() - bi.t < 120 && TYPING.test(bi.type));
+    commit(ops, typing, roots.size === 1 ? [...roots][0] : null, decorative);
+  });
+  obs.observe(area, { childList: true, attributes: true, attributeOldValue: true, characterData: true, characterDataOldValue: true, subtree: true });
+
+  /* ── sidebar settings (inputs / selects) ── */
+  const trackable = el => {
+    if (!el || !el.matches || !el.matches('input,select,textarea')) return false;
+    if (!el.closest('.sidebar') || el.closest(ctrlIgnore)) return false;
+    return !BAD_INPUT.has((el.type || '').toLowerCase());
+  };
+  const valOf = el => el.type === 'checkbox' ? el.checked : el.value;
+  const checkedRadio = el => el.name ? document.querySelector('input[type="radio"][name="' + (window.CSS && CSS.escape ? CSS.escape(el.name) : el.name) + '"]:checked') : null;
+  function refreshKnown(e) {
+    const el = e.target; if (H.applying || !trackable(el)) return;
+    if (el.type === 'radio') H.radioPrev.set(el.name, checkedRadio(el)); else H.lastKnown.set(el, valOf(el));
+    if (e.type === 'pointerdown' && (el.type === 'range' || el.type === 'color')) H.gesture = true;
+  }
+  ['pointerdown', 'focusin', 'keydown'].forEach(t => document.addEventListener(t, refreshKnown, true));
+  ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => setTimeout(() => { H.gesture = false; }, 300), true));
+  function flushCtrl() {
+    H.ctrlTimer = 0;
+    if (!H.pendCtrl.length || H.applying) return;
+    H.undo.push({ ops: [], ctrl: H.pendCtrl.splice(0), typing: false, root: null, t: now(), selB: null, selA: null, ctrlOnly: true });
+    H.redo.length = 0; trim();
+  }
+  document.addEventListener('change', e => {
+    const el = e.target; H.gesture = false;
+    if (H.applying || H.mute || loading() || collabOn() || !trackable(el)) return;
+    if (el.type === 'radio') {
+      const prev = H.radioPrev.get(el.name); H.radioPrev.set(el.name, el);
+      if (prev && prev !== el) H.pendCtrl.push({ kind: 'radio', el, prev });
+    } else {
+      const old = H.lastKnown.has(el) ? H.lastKnown.get(el) : (el.type === 'checkbox' ? !el.checked : undefined);
+      const cur = valOf(el); H.lastKnown.set(el, cur);
+      if (old === undefined || old === cur) return;
+      H.pendCtrl.push({ kind: el.type === 'checkbox' ? 'checkbox' : 'value', el, old, nw: cur });
+    }
+    clearTimeout(H.ctrlTimer); H.ctrlTimer = setTimeout(flushCtrl, 60);
+  }, true);
+
+  function fire(el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }
+  function setCtrl(c, dir) {
+    try {
+      if (c.kind === 'radio') { const t = dir < 0 ? c.prev : c.el; if (t) { t.checked = true; H.radioPrev.set(t.name, t); fire(t); } return; }
+      const v = dir < 0 ? c.old : c.nw;
+      if (c.kind === 'checkbox') c.el.checked = !!v; else c.el.value = v;
+      H.lastKnown.set(c.el, v); fire(c.el);
+    } catch (e) {}
+  }
+
+  /* ── applying a step ── */
+  function pageLevel(entry) {
+    return entry.ops.some(o => o.t === area || (o.t.classList && (o.t.classList.contains('page-outer') || o.t.classList.contains('page'))) ||
+      (o.k === 'l' && [...o.add, ...o.rem].some(n => n.nodeType === 1 && n.classList && (n.classList.contains('page-outer') || n.classList.contains('page')))));
+  }
+  function afterApply(entry) {
+    const pl = pageLevel(entry);
+    try {
+      if (pl) {
+        try { if (typeof CERT !== 'undefined') CERT.list = [...area.querySelectorAll('.page')].map(p => p.getAttribute('data-auth')).filter(Boolean); } catch (e) {}
+        try { S.pageCount = area.querySelectorAll('.page').length; if (S.currentContextPage && !S.currentContextPage.isConnected) S.currentContextPage = null; } catch (e) {}
+        if (typeof _refreshPageState === 'function') _refreshPageState();
+        if (typeof renderPageManagerList === 'function') { try { renderPageManagerList(); } catch (e) {} }
+      } else {
+        if (typeof updateWordCount === 'function') updateWordCount();
+      }
+      if (typeof DOC !== 'undefined' && DOC.schedule) DOC.schedule();
+    } catch (e) {}
+    seedText();
+  }
+  function run(entry, dir) {
+    H.applying = true;
+    try {
+      const ops = entry.ops;
+      if (dir < 0) { for (let i = ops.length - 1; i >= 0; i--) inv(ops[i]); for (let i = entry.ctrl.length - 1; i >= 0; i--) setCtrl(entry.ctrl[i], -1); }
+      else { for (let i = 0; i < ops.length; i++) fwd(ops[i]); for (let i = 0; i < entry.ctrl.length; i++) setCtrl(entry.ctrl[i], 1); }
+      afterApply(entry);
+    } finally { obs.takeRecords(); H.applying = false; H.settle = now() + SETTLE_MS; }
+    const fb = entry.ops.length ? entry.ops[entry.ops.length - 1].t : null;
+    restoreSel(dir < 0 ? entry.selB : entry.selA, fb);
+  }
+  function toast(msg) { try { if (typeof showToast === 'function') showToast(msg, 'info'); } catch (e) {} }
+
+  function undo() {
+    if (collabOn()) return nativeExec('undo');
+    if (H.ctrlTimer) { clearTimeout(H.ctrlTimer); flushCtrl(); }
+    const e = H.undo.pop(); if (!e) { toast('Nothing to undo'); return false; }
+    H.redo.push(e); run(e, -1); return true;
+  }
+  function redo() {
+    if (collabOn()) return nativeExec('redo');
+    const e = H.redo.pop(); if (!e) { toast('Nothing to redo'); return false; }
+    H.undo.push(e); run(e, 1); return true;
+  }
+
+  /* ── route every undo / redo trigger here ── */
+  const nativeExec = (document.execCommand || function () { return false; }).bind(document);
+  document.execCommand = function (c) {
+    const l = String(c || '').toLowerCase();
+    if (l === 'undo') return undo();
+    if (l === 'redo') return redo();
+    return nativeExec.apply(document, arguments);
+  };
+  const inEditable = t => { const e = elOf(t); return !!(e && e.closest && e.closest('#editorArea')); };
+  document.addEventListener('keydown', e => {
+    if (e.isComposing || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const k = (e.key || '').toLowerCase(), t = e.target;
+    if (k !== 'z' && k !== 'y') return;
+    if (t && t.closest && t.closest('input,textarea,select')) return;                 // let text fields keep their own undo
+    if (t && t.isContentEditable && !inEditable(t)) return;
+    e.preventDefault();
+    document.execCommand((k === 'y' || e.shiftKey) ? 'redo' : 'undo');
+  }, true);
+  document.addEventListener('beforeinput', e => {
+    if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') return;
+    if (!inEditable(e.target)) return;
+    e.preventDefault();
+    document.execCommand(e.inputType === 'historyUndo' ? 'undo' : 'redo');
+  }, true);
+
+  /* ── a loaded / new document starts a fresh history ── */
+  function wrapReset(name) {
+    const f = window[name]; if (typeof f !== 'function') return;
+    window[name] = function () {
+      H.mute++; let res;
+      const done = () => { H.mute--; clear(); H.settle = now() + 1500; };
+      try { res = f.apply(this, arguments); } catch (e) { done(); throw e; }
+      if (res && typeof res.then === 'function') return res.then(v => { done(); return v; }, er => { done(); throw er; });
+      done(); return res;
+    };
+  }
+  wrapReset('loadData'); wrapReset('resetPages');
+
+  seedText(); H.lastSel = snapSel();
+  document.querySelectorAll('.sidebar input,.sidebar select,.sidebar textarea').forEach(el => { if (trackable(el) && el.type !== 'radio') H.lastKnown.set(el, valOf(el)); });
+
+  window.SCHistory = {
+    undo, redo, clear,
+    canUndo: () => H.undo.length > 0, canRedo: () => H.redo.length > 0,
+    mute(fn) { H.mute++; try { return fn(); } finally { obs.takeRecords(); H.mute--; seedText(); } },
+    ignore(sel) { if (sel && !ignoreSels.includes(sel)) ignoreSels.push(sel); },
+    decor(cls) { if (cls) decorCls.add(cls); },
+    _state: H
+  };
+})();
+</script>
 </body>
 </html>

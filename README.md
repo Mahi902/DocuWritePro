@@ -1,4 +1,4 @@
-<img width="889" height="268" alt="1000032278" src="https://mahi902.github.io/Oryn/img/banner.jpg" />
+<img width="889" height="268" alt="1000032278" src="https://mahi902.github.io/Oryn/img/banner.png" />
 
 
 ## Premium Document Editing Suite
@@ -6,7 +6,7 @@
 
 
 ### 🔹mahi902.GitHub.io/Oryn
-_Last updated: Oct 28, 2026_
+_Last updated: Oct 30, 2026_
 
 
 ## Introduction

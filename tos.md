@@ -2,10 +2,10 @@
 
 _Last updated: September 9, 2025_
 
-Welcome to **DocuWrite Pro**   
+Welcome to **Oryn**   
 These Terms of Service explain how you can use the platform, what you can expect from us, and what we expect from you. Our goal is to provide a safe, reliable, and user-friendly document editing experience.
 
-By using DocuWrite Pro, you agree to these Terms. If you do not agree, please discontinue use of the platform.
+By using Oryn, you agree to these Terms. If you do not agree, please discontinue use of the platform.
 
 ---
 
@@ -13,7 +13,7 @@ By using DocuWrite Pro, you agree to these Terms. If you do not agree, please di
 
 1. [Introduction](#introduction)  
 2. [Definitions](#definitions)  
-3. [What DocuWrite Pro Provides](#what-docuwrite-pro-provides)  
+3. [What Oryn Provides](#what-oryn-provides)  
 4. [Cookies & Basic Tracking](#cookies--basic-tracking)  
 5. [File Access & Code Execution](#file-access--code-execution)  
 6. [Data Collection & Usage](#data-collection--usage)  
@@ -31,7 +31,7 @@ By using DocuWrite Pro, you agree to these Terms. If you do not agree, please di
 
 ## Introduction
 
-DocuWrite Pro (“we”, “our”, or “the Platform”) is a browser-based document editing and productivity suite.  
+Oryn (“we”, “our”, or “the Platform”) is a browser-based document editing and productivity suite.  
 These Terms establish a clear, respectful, and transparent relationship between you and the platform.
 
 We believe in simplicity, stability, and putting users first.
@@ -40,7 +40,7 @@ We believe in simplicity, stability, and putting users first.
 
 ## Definitions
 
-- **Services** — All tools, features, and functionality provided by DocuWrite Pro  
+- **Services** — All tools, features, and functionality provided by Oryn  
 - **User Content** — Any text, files, or data you create, upload, or edit  
 - **Third-Party Services** — External tools or services not operated by us  
 
@@ -48,9 +48,9 @@ Headings are for clarity only. Words in the singular include the plural, and vic
 
 ---
 
-## What DocuWrite Pro Provides
+## What Oryn Provides
 
-DocuWrite Pro allows you to create, edit, export, and manage documents directly in your browser.
+Oryn allows you to create, edit, export, and manage documents directly in your browser.
 
 Features may evolve over time. We may add, modify, or remove functionality while striving to maintain reliability and continuity.
 
@@ -58,7 +58,7 @@ Features may evolve over time. We may add, modify, or remove functionality while
 
 ## Cookies & Basic Tracking
 
-DocuWrite Pro and its hosting infrastructure may use cookies or similar technologies for:
+Oryn and its hosting infrastructure may use cookies or similar technologies for:
 
 - Core functionality  
 - Performance optimization  
@@ -95,14 +95,14 @@ This data is used solely to improve platform quality, stability, and usability.
 
 You retain **full ownership** of all content you create or upload.
 
-By using DocuWrite Pro, you grant a limited license to process your content **only as required** to provide the Services.  
+By using Oryn, you grant a limited license to process your content **only as required** to provide the Services.  
 We do **not** claim ownership of your documents.
 
 ---
 
 ## Third-Party Services
 
-DocuWrite Pro may link to or integrate with third-party services.
+Oryn may link to or integrate with third-party services.
 
 We are not responsible for:
 - Their content  
@@ -133,7 +133,7 @@ Use caution when interacting with external links, downloads, or shared files.
 
 ## Warranties & Limitations
 
-DocuWrite Pro is provided **“as is”** and **“as available.”**
+Oryn is provided **“as is”** and **“as available.”**
 
 We do not guarantee:
 - Uninterrupted availability  
@@ -145,7 +145,7 @@ To the maximum extent permitted by law, we are not liable for indirect or conseq
 
 ## Indemnification
 
-You agree to indemnify and hold DocuWrite Pro harmless from claims or liabilities arising from:
+You agree to indemnify and hold Oryn harmless from claims or liabilities arising from:
 
 - Misuse of the platform  
 - Violation of these Terms  
@@ -157,8 +157,8 @@ You agree to indemnify and hold DocuWrite Pro harmless from claims or liabilitie
 
 Users acknowledge and agree that:
 
-- The identity of the creator(s), developer(s), or editorial board of DocuWrite Pro is **not subject to user inquiry**
-- Users have **no right to demand, investigate, or question** how, why, or by whom DocuWrite Pro was created
+- The identity of the creator(s), developer(s), or editorial board of Oryn is **not subject to user inquiry**
+- Users have **no right to demand, investigate, or question** how, why, or by whom Oryn was created
 - Development methods, design decisions, and authorship are **internal matters** and not open to dispute or explanation  
 
 Continued use of the platform constitutes acceptance of this condition.
@@ -176,7 +176,7 @@ If any provision is found invalid or unenforceable, the remaining provisions sha
 ## Updates & Notices
 
 These Terms may be updated periodically.  
-The latest version will always be published on the official DocuWrite Pro site.
+The latest version will always be published on the official Oryn site.
 
 Continued use of the platform indicates acceptance of the updated Terms.
 

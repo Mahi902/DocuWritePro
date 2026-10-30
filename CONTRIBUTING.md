@@ -1,27 +1,27 @@
-# Contributing to DocuWrite Pro
+# Contributing to Oryn
 
 *Last Updated: January 13th, 2026*
 
-Thank you for your interest in contributing to **DocuWrite Pro**.  
+Thank you for your interest in contributing to **Oryn**.  
 This document outlines how contributions, requests, and communications are handled to ensure clarity, respect, and long-term sustainability of the project.
 
 ---
 
 ## Project Ownership & Moderation
 
-DocuWrite Pro is **created, owned, and moderated by Mahi902**.
+Oryn is **created, owned, and moderated by Mahi902**.
 
 The project follows a **single-maintainer model**, meaning:
 - All decisions regarding features, design, architecture, and direction are made by the creator.
 - Contributions are reviewed selectively and may be accepted, modified, or declined at the maintainer’s discretion.
 
-This structure exists to preserve the vision, quality, and integrity of DocuWrite Pro.
+This structure exists to preserve the vision, quality, and integrity of Oryn.
 
 ---
 
 ## Ways You Can Contribute
 
-While DocuWrite Pro is not an open-governance project, constructive involvement is welcome in the following forms:
+While Oryn is not an open-governance project, constructive involvement is welcome in the following forms:
 
 ### 1. Feature Requests
 You may suggest:
@@ -86,19 +86,19 @@ Do **not** assume:
 
 Please note the following important points:
 
-- DocuWrite Pro is **not for sale**
+- Oryn is **not for sale**
 - The creator does **not intend to sell, license, or transfer** the project to potential buyers
-- Requests to purchase, acquire, or commercialize DocuWrite Pro will be declined
+- Requests to purchase, acquire, or commercialize Oryn will be declined
 
 Additionally:
-- You may **not** republish, rebrand, or redistribute DocuWrite Pro as your own
+- You may **not** republish, rebrand, or redistribute Oryn as your own
 - You may **not** claim authorship or ownership of the project or its components
 
 ---
 
 ## Donations & Support
 
-While DocuWrite Pro is not sold, **donation requests are welcome**.
+While Oryn is not sold, **donation requests are welcome**.
 
 Donations:
 - Help support ongoing development and maintenance
@@ -122,7 +122,7 @@ Abusive, manipulative, or disrespectful behavior will result in disengagement.
 
 ## Final Note
 
-DocuWrite Pro exists as a focused, independently driven project.  
+Oryn exists as a focused, independently driven project.  
 Contributions are welcomed when they align with the project’s goals, values, and direction.
 
 Thank you for your interest, respect, and understanding.

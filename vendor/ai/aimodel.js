@@ -1,4 +1,4 @@
-/* DocuWrite Pro — optional on-device model helper (shared by sceditor.html and app.html).
+/* Oryn — optional on-device model helper (shared by sceditor.html and app.html).
    Loads NO runtime and makes NO network requests until AIModel.download() is called. */
 (function (g) {
   'use strict';

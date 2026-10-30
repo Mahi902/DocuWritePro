@@ -1,5 +1,5 @@
 // ============================================================
-//  DocuWrite Pro — Service Worker  v5.8.0
+//  Oryn — Service Worker  v5.8.0
 //  Strategies:
 //    SHELL_CACHE  → Cache-first  (own .html pages, app shell)
 //    LIB_CACHE    → Stale-while-revalidate  (CDN / third-party libs)
@@ -11,7 +11,7 @@ const LIB_CACHE   = 'dwp-libs-v5800';
 
 // ── Own-origin pages to pre-cache on install ─────────────────
 const OWN_ORIGIN = 'https://mahi902.github.io';
-const BASE_PATH  = '/DocuWritePro/';
+const BASE_PATH  = '/Oryn/';
 
 // Every tool page extracted from toolsDB (including onlineOnly —
 // their HTML shell is still useful offline even if features need net).
@@ -344,7 +344,7 @@ async function discoverConverters() {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 6000);   // never stall the download on a slow GitHub
   try {
-    const r = await fetch('https://api.github.com/repos/mahi902/DocuWritePro/contents/', { cache: 'no-cache', signal: ctl.signal });
+    const r = await fetch('https://api.github.com/repos/mahi902/Oryn/contents/', { cache: 'no-cache', signal: ctl.signal });
     clearTimeout(timer);
     if (!r.ok) return [];
     const files = await r.json();

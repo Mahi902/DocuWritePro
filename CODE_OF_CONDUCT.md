@@ -3,10 +3,10 @@
 
 ## Our Commitment
 
-DocuWrite Pro is created to empower users with efficient, creative, and accessible document tools.  
+Oryn is created to empower users with efficient, creative, and accessible document tools.  
 We are committed to maintaining a **safe, respectful, ethical, and inclusive environment** for everyone who uses or interacts with the project.
 
-By using DocuWrite Pro or engaging with its community, you agree to follow this Code of Conduct.
+By using Oryn or engaging with its community, you agree to follow this Code of Conduct.
 
 ---
 
@@ -17,7 +17,7 @@ All users, contributors, and community members are expected to:
 - Treat others with **respect, professionalism, and empathy**
 - Communicate in a **civil, constructive, and non-hostile** manner
 - Respect differences in opinions, experience, and skill levels
-- Use DocuWrite Pro and its features **responsibly and lawfully**
+- Use Oryn and its features **responsibly and lawfully**
 - Provide feedback that is **helpful, relevant, and solution-oriented**
 - Respect the creator’s time, effort, boundaries, and creative direction
 
@@ -33,7 +33,7 @@ The following behaviors are **strictly prohibited**:
 - Trolling, spamming, or intentional disruption
 
 ### 2. Misuse of Document Sharing
-- Using DocuWrite Pro’s document sharing features to create, upload, distribute, or promote:
+- Using Oryn’s document sharing features to create, upload, distribute, or promote:
   - Illegal content
   - Abusive, violent, hateful, or sexually exploitative material
   - Any content intended to harm individuals, groups, or communities  
@@ -41,16 +41,16 @@ The following behaviors are **strictly prohibited**:
 
 ### 3. Creator Boundaries
 - Asking, pressuring, forcing, or attempting to extract information about:
-  - How DocuWrite Pro was created
+  - How Oryn was created
   - How specific tools, systems, or internal logic work
   - Private development methods, architecture, or decisions  
 - Questioning or challenging the creator’s right to keep such details private
 
 ### 4. Intellectual Property Abuse
-- Republishing DocuWrite Pro, fully or partially, as your own product
-- Cloning, rebranding, or redistributing DocuWrite Pro under another name
-- Claiming ownership, authorship, or credit for DocuWrite Pro or its tools
-- Misrepresenting affiliation with or endorsement by DocuWrite Pro
+- Republishing Oryn, fully or partially, as your own product
+- Cloning, rebranding, or redistributing Oryn under another name
+- Claiming ownership, authorship, or credit for Oryn or its tools
+- Misrepresenting affiliation with or endorsement by Oryn
 
 ### 5. Malicious Use
 - Attempting to exploit, sabotage, reverse-engineer, or bypass protections
@@ -61,13 +61,13 @@ The following behaviors are **strictly prohibited**:
 
 ## Scope
 
-This Code of Conduct applies to all spaces associated with DocuWrite Pro, including but not limited to:
+This Code of Conduct applies to all spaces associated with Oryn, including but not limited to:
 
-- The DocuWrite Pro website and tools
+- The Oryn website and tools
 - Shared documents and content
 - GitHub repositories, issues, pull requests, and discussions
 - Feedback channels, community interactions, and social platforms
-- Any interaction that represents or involves DocuWrite Pro
+- Any interaction that represents or involves Oryn
 
 ---
 
@@ -81,7 +81,7 @@ Violations of this Code of Conduct may result in one or more of the following ac
 - Repository access removal
 - Reporting to hosting platforms or authorities if necessary
 
-All enforcement decisions are made at the **sole discretion of the DocuWrite Pro maintainer(s)** and are final.
+All enforcement decisions are made at the **sole discretion of the Oryn maintainer(s)** and are final.
 
 ---
 
@@ -99,7 +99,7 @@ Knowingly false or malicious reports may themselves be treated as violations.
 
 ## Respect for the Project
 
-DocuWrite Pro is an independent creation driven by vision, innovation, and sustained effort.
+Oryn is an independent creation driven by vision, innovation, and sustained effort.
 
 Users and contributors:
 - Have **no right to demand disclosure** about its creation or internal systems
@@ -113,6 +113,6 @@ Respect fuels collaboration. Entitlement undermines it.
 ## Final Note
 
 This Code of Conduct exists to protect creativity, safety, and trust.  
-By participating in DocuWrite Pro, you help maintain a space where innovation thrives and respect comes first.
+By participating in Oryn, you help maintain a space where innovation thrives and respect comes first.
 
-Thank you for being part of the DocuWrite Pro ecosystem.
+Thank you for being part of the Oryn ecosystem.

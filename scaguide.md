@@ -113,7 +113,7 @@ JavaScript can add buttons, react to editor events, modify the DOM, and provide 
 
 ## 5. Enabling and disabling add-ons
 
-In **DocuWrite Pro → Settings → Add-ons**, turn on **Apply Add-ons**. Then open **Library** to manage individual add-ons.
+In **Oryn → Settings → Add-ons**, turn on **Apply Add-ons**. Then open **Library** to manage individual add-ons.
 
 Each add-on can be enabled or disabled separately. Disabling the main **Apply Add-ons** setting stops all add-ons from being loaded into Sugarcane Editor.
 

@@ -6,8 +6,11 @@
 //    NEVER_CACHE  → Network-only (live data endpoints)
 // ============================================================
 
-const SHELL_CACHE = 'dwp-shell-v5800';
+const SHELL_CACHE = 'dwp-shell-v5810';
 const LIB_CACHE   = 'dwp-libs-v5800';
+// On-device sentence-prediction runtime (vendor/ai/*, ~30 MB). Kept in its own cache that is NOT
+// versioned with the shell, so a shell version bump never forces users to re-download it.
+const AI_CACHE   = 'dwp-ai-runtime-v1';
 
 // ── Own-origin pages to pre-cache on install ─────────────────
 const OWN_ORIGIN = 'https://mahi902.github.io';
@@ -108,6 +111,7 @@ const OFFLINE_ASSETS = [
   'pmarg.json',
   'ctab.json',
   'aed.txt',
+  'spterm.txt',
   'sceditortips.txt',
   'img/1024appicon.png',
   'img/Icon.png',
@@ -308,7 +312,7 @@ const NEVER_CACHE_PATTERNS = [
 ];
 
 // Release notes: network first so "What's New" is current; cached copy is the offline fallback.
-const NETWORK_FIRST_RE = /\/whatsnew\.md(\?|$)/;
+const NETWORK_FIRST_RE = /\/(whatsnew\.md|spterm\.txt)(\?|$)/;   // fresh when online, cached copy offline
 
 // ── CDN / third-party host patterns → LIB_CACHE ──────────────
 const LIB_HOST_PATTERNS = [
@@ -443,7 +447,7 @@ self.addEventListener('install', event => {
 //  ACTIVATE — delete stale caches from old versions
 // ─────────────────────────────────────────────────────────────
 self.addEventListener('activate', event => {
-  const KEEP = [SHELL_CACHE, LIB_CACHE];
+  const KEEP = [SHELL_CACHE, LIB_CACHE, AI_CACHE];
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
@@ -470,6 +474,12 @@ self.addEventListener('fetch', event => {
   // ~130 MB of weights are cached by Transformers.js in its own Cache API
   // store ('transformers-cache'); don't double-cache them in SHELL_CACHE.
   if (/^https:\/\/([^/]*\.)?(huggingface\.co|hf\.co)\//i.test(url)) return;
+
+  // ── Sentence-prediction runtime: cache-first, stored in AI_CACHE ──
+  if (url.startsWith(OWN_ORIGIN + BASE_PATH + 'vendor/ai/')) {
+    event.respondWith(aiRuntime(request));
+    return;
+  }
 
   // ── Never-cache: live data / auth ──────────────────────────
   if (NEVER_CACHE_PATTERNS.some(re => re.test(url))) {
@@ -508,6 +518,22 @@ self.addEventListener('fetch', event => {
 // ─────────────────────────────────────────────────────────────
 //  Strategy helpers
 // ─────────────────────────────────────────────────────────────
+
+/** vendor/ai runtime: look in every cache (ignoring ?v=), else fetch once and keep in AI_CACHE */
+async function aiRuntime(request) {
+  const hit = await caches.match(request, { ignoreSearch: true });
+  if (hit) return hit;
+  try {
+    const res = await fetch(request);
+    if (res && res.ok && res.status === 200) {
+      const cache = await caches.open(AI_CACHE);
+      cache.put(request, res.clone());
+    }
+    return res;
+  } catch (e) {
+    return new Response('', { status: 503 });
+  }
+}
 
 /** Cache-first: serve cached copy instantly; revalidate in background */
 async function cacheFirst(request, cacheName) {

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sugarcane Editor</title>
-<meta name="sceditor-version" content="195">
+<meta name="sceditor-version" content="208">
 <style id="dwi-css">/* Oryn icons: ink line + off-register tint */
 .dwi{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;line-height:1;display:inline-block;font-size:24px;letter-spacing:normal;white-space:nowrap;-webkit-font-feature-settings:'liga';font-feature-settings:'liga'}
 :is(span,i)[data-dwi]{display:inline-block;flex-shrink:0;width:1em;height:1em;overflow:hidden;text-indent:-99em;white-space:nowrap;vertical-align:middle;line-height:1;background-color:currentColor;-webkit-mask:var(--dwi) center/contain no-repeat;mask:var(--dwi) center/contain no-repeat}
@@ -3712,6 +3712,26 @@ body.dark .material-symbols-outlined.fmt-ico svg path[fill="#fff"]{fill:#2b2b2e;
   #hrPopup{width:304px;max-width:calc(100vw - 16px);}
   #hrInsertSheet{width:264px;max-width:calc(100vw - 16px);}
 }
+
+/* Add-page hold / right-click → Before | Cancel | After */
+.add-page-btn.apb-hold{position:relative;flex-shrink:0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.add-page-btn .apb-fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1) / .25);pointer-events:none}
+.add-page-btn .apb-clip{position:absolute;inset:0;border-radius:10px;overflow:hidden;pointer-events:none}
+.add-page-btn .apb-content{position:relative;display:flex;align-items:center;justify-content:center;gap:10px}
+body.dark .add-page-btn .apb-fill{background:hsl(calc(var(--sc-h,210) + -3.1) calc(89.7% * var(--sc-s,1)) calc(77.1% + var(--sc-l,0%) * 0) / .25)}
+.add-page-btn.apb-back{animation:apbBack .22s ease-out}
+@keyframes apbBack{from{opacity:.35;transform:scale(.985)}to{opacity:1;transform:none}}
+.add-page-btn.filling{background:hsl(calc(var(--sc-h,210) + -4.6) calc(86.7% * var(--sc-s,1)) calc(94.1% + var(--sc-l,0%) * 0))}
+body.dark .add-page-btn.filling{background:#222}
+.add-page-btn.apb-open>*:not(.apb-choose){display:none!important}
+.add-page-btn.apb-open,.add-page-btn.apb-open:hover{transform:none;background:transparent;border-color:transparent}
+.apb-choose{position:relative;display:flex;gap:8px;padding:0;box-sizing:border-box;cursor:default;flex:none;align-self:center;justify-self:center;max-width:100%}
+.apb-choose button{flex:1;min-width:0;border-radius:10px;border:2px solid hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));background:#fff;color:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));font-size:16px;font-weight:600;font-family:inherit;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 8px;margin:0;height:100%}
+.apb-choose button .material-symbols-outlined{font-size:22px;width:22px;height:22px;flex:none}
+.apb-choose button:hover,.apb-choose button:active{background:hsl(calc(var(--sc-h,210) + -4.6) calc(86.7% * var(--sc-s,1)) calc(94.1% + var(--sc-l,0%) * 0))}
+.apb-choose button.apb-cancel{border-color:#999;color:#777}
+body.dark .apb-choose button{background:#1a1a1a}
+body.dark .apb-choose button:hover,body.dark .apb-choose button:active{background:#222}
 </style>
 <style id="fw-action-style-fix">
 /* Action button appearance — honours Box / Underline / Invisible, colors, bold, size */
@@ -4008,6 +4028,40 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
 }
 @media(prefers-reduced-motion:reduce){.pgx-card.flash .pgx-thumb{animation:none;}}
 </style>
+<style id="ped-css">
+#pedMdl{z-index:8600}
+#pedMdl .sc-ov,#pedMdl .sc-lock,#pedMdl .sc-del{display:none}
+.material-symbols-outlined.pic{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;line-height:1;vertical-align:middle;font-family:inherit;overflow:visible;flex-shrink:0}
+.material-symbols-outlined.pic svg{width:1em;height:1em;display:block}
+.sm-chip .pic,.scf-btn .pic{vertical-align:-3px}
+.sm-chip .pic{margin-right:4px}
+.scf-btn .pic{margin-right:6px}
+.ped-tools .scf-btn{flex:1;justify-content:center}
+.ped-tools .scf-btn .pic{margin-right:0}
+.ped-hold{position:relative;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.ped-hold.holding{background:var(--scf-a-soft)}
+.ped-hold-fill{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--scf-a);opacity:.25;pointer-events:none}
+.ped-hold-in{position:relative;display:inline-flex;align-items:center;justify-content:center;pointer-events:none}
+.scf-ed-frame.ped-frame{display:flex;overflow:auto;padding:14px;height:min(58vh,440px);background:repeating-conic-gradient(rgba(128,128,128,.12) 0% 25%,transparent 0% 50%) 0 0/18px 18px,var(--ui-card)}
+.ped-tabs{flex-wrap:nowrap!important;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.ped-tabs::-webkit-scrollbar{display:none}
+.ped-tabs .sm-chip{flex:none;white-space:nowrap}
+@media (max-width:720px),(orientation:portrait){.scf-ed-frame.ped-frame{height:min(32vh,260px);padding:8px}}
+.ped-wrap{position:relative;margin:auto;flex:none;box-shadow:var(--ui-shadow-lg);touch-action:none}
+.ped-wrap canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#pedOv{touch-action:none}
+.ped-panes{flex:1;min-height:0;overflow-y:auto;padding:12px}
+.ped-pane{display:none}.ped-pane.on{display:block}
+.ped-fxgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ped-fxgrid .scf-btn{padding:8px 10px;font-size:12px}
+.ped-presets{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ped-pre{display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px;border:2px solid transparent;border-radius:10px;background:var(--ui-chip);cursor:pointer;color:var(--ui-text);font:600 11px inherit}
+.ped-pre:hover{border-color:var(--ui-edge-hover)}
+.ped-pre canvas{max-width:100%;border-radius:6px}
+.ped-sw{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px}
+.ped-sw button{width:24px;height:24px;border-radius:50%;border:2px solid var(--ui-divider);cursor:pointer;padding:0}
+.ped-prevbar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--ui-line);font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ui-muted)}
+</style>
 </head>
 <body>
 
@@ -4019,7 +4073,7 @@ body.pgx-no-select,body.pgx-no-select *{user-select:none!important;-webkit-user-
   <div id="scTip" aria-live="polite"></div>
   <button id="scTipToggle" type="button"></button>
   <div class="loading-text-wrap">
-    <p class="loading-text">Loading Sugarcane v195…</p>
+    <p class="loading-text">Loading Sugarcane v208…</p>
     <div id="loadingAddonText"></div>
   </div>
 </div>
@@ -4134,7 +4188,7 @@ window.__sugarcaneAddonReady = window.SugarcaneAddons.load();
    Fetched from sceditortips.txt (one tip per line). If they can't be
    loaded, neither the tips nor the Hide/Show button are displayed. */
 (function(){
-  const URL_ = 'https://mahi902.github.io/Oryn/sceditortips.txt';
+  const URL_ = 'https://mahi902.github.io/OrynPro/sceditortips.txt';
   const KEY = 'sc_hide_tips';
   const tipEl = document.getElementById('scTip');
   const btn = document.getElementById('scTipToggle');
@@ -4534,8 +4588,8 @@ function waitForSugarcaneAddons(){
     <button class="auth-modal-close" onclick="closeAuthModal()"><span class="material-symbols-outlined" style="font-size:18px">close</span></button>
     <!-- Login state -->
     <div id="authLoginState">
-      <div class="auth-modal-logo"><img src="img/1024appicon.png" style="width:64px;height:64px;object-fit:contain;border-radius:16px;" alt="Oryn"/></div>
-      <div class="auth-modal-title">Sign in to Oryn</div>
+      <div class="auth-modal-logo"><img src="img/1024appicon.png" style="width:64px;height:64px;object-fit:contain;border-radius:16px;" alt="Oryn Pro"/></div>
+      <div class="auth-modal-title">Sign in to Oryn Pro</div>
       <div class="auth-modal-sub">Back up your documents to Google Drive and access them anywhere.</div>
       <button class="auth-google-btn" onclick="triggerGoogleLogin()">
         <svg class="auth-google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
@@ -5294,7 +5348,9 @@ function waitForSugarcaneAddons(){
                 <div class="aw-row-label">Auto Correct</div>
                 <div class="aw-row-sub">Fix all mistakes at once</div>
               </div>
-              <button class="aw-correct-btn" id="awAutoCorrectBtn" onclick="runAutoCorrectAll()" style="width:auto;padding:5px 10px;font-size:11px;" title="Correct all misspelled words in the document">
+            </div>
+            <div style="padding:0 10px 6px">
+              <button class="aw-correct-btn" id="awAutoCorrectBtn" onclick="runAutoCorrectAll()" style="font-size:12px;" title="Correct all misspelled words in the document">
                 <span class="material-symbols-outlined" style="font-size:13px;">auto_fix_high</span>Fix All
               </button>
             </div>
@@ -5313,7 +5369,9 @@ function waitForSugarcaneAddons(){
                 <div class="aw-row-label">Repair Grammar</div>
                 <div class="aw-row-sub">Fix all grammar issues</div>
               </div>
-              <button class="aw-correct-btn" id="awFixGrammarBtn" onclick="runGrammarFixAll()" style="width:auto;padding:5px 10px;font-size:11px;background:hsl(calc(173.1 * var(--sc-hk,1) + var(--sc-rb,0)) calc(100.0% * var(--sc-rs,1)) calc(23.7% + var(--sc-rl,0%)));" title="Fix all grammar errors in the document" disabled>
+            </div>
+            <div style="padding:0 10px 6px">
+              <button class="aw-correct-btn" id="awFixGrammarBtn" onclick="runGrammarFixAll()" style="font-size:12px;background:hsl(calc(173.1 * var(--sc-hk,1) + var(--sc-rb,0)) calc(100.0% * var(--sc-rs,1)) calc(23.7% + var(--sc-rl,0%)));" title="Fix all grammar errors in the document" disabled>
                 <span class="material-symbols-outlined" style="font-size:13px;">spellcheck</span>Fix All
               </button>
             </div>
@@ -5375,6 +5433,34 @@ function waitForSugarcaneAddons(){
               </button>
             </div>
 
+            <div class="aw-row" id="sumRow">
+              <div>
+                <div class="aw-row-label">Summarize</div>
+                <div class="aw-row-sub" id="sumRowSub">Condense the whole document, specific pages, or a selection</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="awSummarize" disabled onchange="toggleSummarize(this.checked)"/>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div id="sumPanel" style="display:none;padding:0 10px 6px">
+              <button id="sumDocBtn" onclick="openSummarize('document')" class="aw-correct-btn" style="background:hsl(calc(259.8 * var(--sc-hk,1) + var(--sc-rb,0)) calc(53.9% * var(--sc-rs,1)) calc(45.1% + var(--sc-rl,0%)));">
+                <span class="material-symbols-outlined" style="font-size:13px">summarize</span>Summarize document
+              </button>
+            </div>
+
+            <div class="aw-row" id="askRow">
+              <div>
+                <div class="aw-row-label">Ask Document</div>
+                <div class="aw-row-sub" id="askRowSub">Chat with your document and get answers from its pages</div>
+              </div>
+            </div>
+            <div style="padding:0 10px 6px">
+              <button id="askOpenBtn" onclick="openAskDocument()" class="aw-correct-btn" disabled style="background:hsl(calc(259.8 * var(--sc-hk,1) + var(--sc-rb,0)) calc(53.9% * var(--sc-rs,1)) calc(45.1% + var(--sc-rl,0%)));">
+                <span class="material-symbols-outlined" style="font-size:13px;">forum</span>Open Ask Document
+              </button>
+            </div>
+
             <div class="aw-row">
               <div>
                 <div class="aw-row-label">Word Prediction</div>
@@ -5388,9 +5474,9 @@ function waitForSugarcaneAddons(){
             <div class="aw-row">
               <div>
                 <div class="aw-row-label">Sentence Prediction</div>
-                <div class="aw-row-sub">Gray suggestions as you type &middot; <b>Tab</b> to accept &middot; on-device AI</div>
+                <div class="aw-row-sub" id="awSentDesc">Get phrasal suggestions as you type</div>
                 <div class="aw-row-sub" id="awSentMsg" style="margin-top:4px;"></div>
-                <div id="awSentModel" style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <div id="awSentModel" style="margin-top:6px;display:none;gap:6px;flex-wrap:wrap;align-items:center;">
                   <button type="button" id="awSentDl" class="aw-sent-btn" onclick="spDownload()">Download model (~130 MB)</button>
                   <button type="button" id="awSentRm" class="aw-sent-btn" style="display:none" onclick="spRemove()">Remove model</button>
                   <progress id="awSentProg" max="100" value="0" style="display:none;width:100%;"></progress>
@@ -5409,8 +5495,10 @@ function waitForSugarcaneAddons(){
                 <div class="aw-row-label">Translate Document</div>
                 <div class="aw-row-sub">Translate all pages to another language</div>
               </div>
-              <button class="aw-correct-btn" onclick="openTranslateModal()" style="width:auto;padding:5px 10px;font-size:11px;background:hsl(calc(282.1 * var(--sc-hk,1) + var(--sc-rb,0)) calc(67.9% * var(--sc-rs,1)) calc(37.8% + var(--sc-rl,0%)));">
-                <span class="material-symbols-outlined" style="font-size:13px;">translate</span>Open
+            </div>
+            <div style="padding:0 10px 6px">
+              <button class="aw-correct-btn" onclick="openTranslateModal()" style="font-size:12px;background:hsl(calc(282.1 * var(--sc-hk,1) + var(--sc-rb,0)) calc(67.9% * var(--sc-rs,1)) calc(37.8% + var(--sc-rl,0%)));">
+                <span class="material-symbols-outlined" style="font-size:13px;">translate</span>Open Translator
               </button>
             </div>
 
@@ -5707,7 +5795,7 @@ function waitForSugarcaneAddons(){
     <div class="ctx-item wide danger" data-cm data-cm-gap data-cm-title="Delete table" onclick="tableAction('deleteTable')"><span class="material-symbols-outlined">delete</span>Delete table</div>
   </div>
   <div class="popup-collapsed-row" id="tblCollapsedRow"></div>
-  <button class="popup-collapse-btn" onclick="togglePopupCollapse('tableCtxMenu','tblCollapsed')" title="Collapse popup"><span class="material-symbols-outlined">unfold_less</span></button>
+  <button class="popup-collapse-btn" onclick="togglePopupCollapse('tableCtxMenu','tblCollapsed')" title="Collapse popup"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button>
 </div>
 
 <!-- ── Windows-Style Right-click Menu ──────────────────────────────── -->
@@ -5931,21 +6019,22 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
   <div class="mbox scf-box" data-stage="source">
     <div class="split-modal-header">
       <h2 class="mtitle">Insert Image</h2>
-      <button class="mclose" onclick="closeMdl('imageMdl')"><span class="material-symbols-outlined">close</span></button>
+      <button class="mclose" onclick="closeMdl('imageMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
     </div>
     <div class="scf-flow">
 
       <!-- STAGE 1 · source -->
       <section class="scf-stage on" data-stage="source">
         <div class="scf-seg" id="imgSrcSeg">
-          <button type="button" class="scf-seg-btn on" data-src="upload" onclick="imgSrcTab('upload')"><span class="material-symbols-outlined">upload</span>Upload</button>
-          <button type="button" class="scf-seg-btn" data-src="url" onclick="imgSrcTab('url')"><span class="material-symbols-outlined">link</span>URL</button>
-          <button type="button" class="scf-seg-btn" data-src="drive" id="imgSrcDriveTab" style="display:none" onclick="imgSrcTab('drive')"><span class="material-symbols-outlined">cloud</span>Google Drive</button>
+          <button type="button" class="scf-seg-btn on" data-src="upload" onclick="imgSrcTab('upload')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></span>Upload</button>
+          <button type="button" class="scf-seg-btn" data-src="url" onclick="imgSrcTab('url')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg></span>URL</button>
+          <button type="button" class="scf-seg-btn" data-src="gen" id="imgSrcGenTab" style="display:none" onclick="imgSrcTab('gen')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 16v4M17 18h4"/></svg></span>Generate</button>
+          <button type="button" class="scf-seg-btn" data-src="drive" id="imgSrcDriveTab" style="display:none" onclick="imgSrcTab('drive')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18a4.5 4.5 0 1 1 .8-8.9A6 6 0 0 1 19 11a3.5 3.5 0 0 1-.5 7z"/></svg></span>Google Drive</button>
         </div>
 
         <div class="scf-pane on" data-pane="upload">
           <button type="button" class="scf-drop" id="imgUploadBtn" onclick="document.getElementById('imageFile').click()">
-            <span class="material-symbols-outlined">add_photo_alternate</span>
+            <span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 4H5v15h14v-8"/><path d="M5 17l4.5-4.5 3.5 3.5 2-2 4 4"/><path d="M18 2.5v5M15.5 5h5"/></svg></span>
             <b>Click or drag an image here</b>
             <small>JPG, PNG, GIF, WebP, SVG</small>
           </button>
@@ -5955,17 +6044,25 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
         <div class="scf-pane" data-pane="url">
           <div class="scf-row">
             <input type="text" class="scf-input" id="imgUrlInput" placeholder="Image link or website address" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();imgFetchUrl()}"/>
-            <button type="button" class="scf-btn pri" id="imgUrlGo" onclick="imgFetchUrl()"><span class="material-symbols-outlined">search</span>Fetch</button>
+            <button type="button" class="scf-btn pri" id="imgUrlGo" onclick="imgFetchUrl()"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20 20"/></svg></span>Fetch</button>
           </div>
           <div class="scf-status" id="imgUrlStatus">Paste a direct image link, or a web page to pick from all of its images.</div>
           <div class="scf-grid" id="imgUrlGrid"></div>
         </div>
 
+        <div class="scf-pane" data-pane="gen">
+          <div class="scf-row">
+            <input type="text" class="scf-input" id="imgGenPrompt" placeholder="Describe a picture, e.g. a cat astronaut on the moon" maxlength="200" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();imgGenStart()}"/>
+            <button type="button" class="scf-btn pri" id="imgGenGo" onclick="imgGenStart()"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z"/><path d="M19 16v4M17 18h4"/></svg></span><span id="imgGenGoLbl">Generate</span></button>
+          </div>
+          <div class="scf-status" id="imgGenStatus">A fun, low-quality picture made on this device. It can take a while.</div>
+        </div>
+
         <div class="scf-pane" data-pane="drive">
           <div class="scf-row" style="align-items:center;">
             <div class="scf-status" id="imgDriveStatus" style="flex:1;margin:0;">Loading…</div>
-            <button type="button" class="scf-btn" onclick="imgOpenDrivePicker()"><span class="material-symbols-outlined">add_photo_alternate</span>Browse Drive</button>
-            <button type="button" class="scf-btn" onclick="imgLoadDrive(true)"><span class="material-symbols-outlined">refresh</span>Refresh</button>
+            <button type="button" class="scf-btn" onclick="imgOpenDrivePicker()"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 4H5v15h14v-8"/><path d="M5 17l4.5-4.5 3.5 3.5 2-2 4 4"/><path d="M18 2.5v5M15.5 5h5"/></svg></span>Browse Drive</button>
+            <button type="button" class="scf-btn" onclick="imgLoadDrive(true)"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6"/></svg></span>Refresh</button>
           </div>
           <div class="scf-grid" id="imgDriveGrid" style="margin-top:10px;"></div>
         </div>
@@ -5973,7 +6070,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
         <div class="scf-picked" id="imgPicked">
           <img id="imgPickedThumb" alt=""/>
           <span class="scf-picked-name" id="imgPickedName"></span>
-          <button type="button" class="scf-icon-btn" title="Remove" onclick="imgClearPick()"><span class="material-symbols-outlined">close</span></button>
+          <button type="button" class="scf-icon-btn" title="Remove" onclick="imgClearPick()"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
         </div>
       </section>
 
@@ -5982,30 +6079,34 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
         <div class="scf-hero"><img id="imgChoosePreview" alt="Selected image"/></div>
         <div class="scf-cards">
           <button type="button" class="scf-card" onclick="imgChoose('insert')">
-            <span class="material-symbols-outlined">add_photo_alternate</span>
+            <span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 4H5v15h14v-8"/><path d="M5 17l4.5-4.5 3.5 3.5 2-2 4 4"/><path d="M18 2.5v5M15.5 5h5"/></svg></span>
             <b>Insert as is</b><small>Place the image in your document right away.</small>
           </button>
           <button type="button" class="scf-card" onclick="imgChoose('edit')">
-            <span class="material-symbols-outlined">tune</span>
+            <span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg></span>
             <b>Edit</b><small>Crop, round corners, add a border, set what a click does.</small>
           </button>
         </div>
-        <button type="button" class="scf-back" onclick="SCFlow.go('imageMdl','source')"><span class="material-symbols-outlined">arrow_back</span>Choose another image</button>
+        <button type="button" class="scf-back" onclick="SCFlow.go('imageMdl','source')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span>Choose another image</button>
       </section>
 
       <!-- STAGE 3 · edit (landscape: controls left / image right · portrait: image sticky on top) -->
       <section class="scf-stage" data-stage="edit">
         <div class="scf-ed">
           <div class="scf-ed-view">
-            <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" id="imgPrevToggle" title="Collapse preview" onclick="SCFlow.togglePreview('imageMdl')"><span class="material-symbols-outlined">unfold_less</span></button></div>
+            <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" id="imgPrevToggle" title="Collapse preview" onclick="SCFlow.togglePreview('imageMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
             <div class="scf-ed-frame"><img id="imagePreview" alt="Preview"/></div>
             <p class="scf-ed-label" id="imgPreviewLabel">No image loaded yet</p>
           </div>
           <div class="scf-ed-panel">
-            <button type="button" class="scf-back" id="imgEdBack" onclick="SCFlow.go('imageMdl','choose')"><span class="material-symbols-outlined">arrow_back</span>Back</button>
+            <button type="button" class="scf-back" id="imgEdBack" onclick="SCFlow.go('imageMdl','choose')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span>Back</button>
 
             <div class="scf-sec">
-              <div class="scf-sec-h"><span class="material-symbols-outlined">visibility</span>Opacity</div>
+              <button type="button" class="scf-btn wide" id="imgEditBtn" onclick="pedOpen()"><svg class="ped-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M4 16l5-5 4 4 3-3 4 4"/><circle cx="9" cy="9" r=".6"/></svg>Open Photo Editor</button>
+            </div>
+
+            <div class="scf-sec">
+              <div class="scf-sec-h"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></span>Opacity</div>
               <div class="sm-row">
                 <label>Amount</label>
                 <input type="range" class="sm-slider" id="imgOpacity" min="0" max="100" value="100" oninput="imgCtrlPreview()">
@@ -6014,7 +6115,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
             </div>
 
             <div class="scf-sec">
-              <div class="scf-sec-h"><span class="material-symbols-outlined">border_top</span>Border</div>
+              <div class="scf-sec-h"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4zM8 8h8v8H8z"/></svg></span>Border</div>
               <div class="sm-btn-row" id="imgBorderStyle">
                 <button class="sm-chip active" data-v="none" onclick="imgChipSel(this,'imgBorderStyle');imgCtrlPreview()">None</button>
                 <button class="sm-chip" data-v="solid" onclick="imgChipSel(this,'imgBorderStyle');imgCtrlPreview()">Line</button>
@@ -6034,13 +6135,13 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
             </div>
 
             <div class="scf-sec">
-              <div class="scf-sec-h"><span class="material-symbols-outlined">crop</span>Corners &amp; Crop</div>
+              <div class="scf-sec-h"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v14h14M3 7h14v14"/></svg></span>Corners &amp; Crop</div>
               <div class="sm-row">
                 <label>Roundness</label>
                 <input type="range" class="sm-slider" id="imgRadius" min="0" max="50" value="0" oninput="document.getElementById('imgRadiusVal').textContent=this.value+'%';imgCtrlPreview()">
                 <span class="sm-val" id="imgRadiusVal">0%</span>
               </div>
-              <button type="button" class="scf-btn wide" id="imgCropBtn" onclick="openFabricCrop()"><span class="material-symbols-outlined">crop</span>Open Crop Tool</button>
+              <button type="button" class="scf-btn wide" id="imgCropBtn" onclick="openFabricCrop()"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3v14h14M3 7h14v14"/></svg></span>Open Crop Tool</button>
               <div class="scf-note" id="imgCropPreviewNote" style="display:none;">
                 <span>Crop applied — it is baked in when you insert.</span>
                 <button type="button" class="scf-link" onclick="resetImgCrop()">Reset</button>
@@ -6048,7 +6149,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
             </div>
 
             <div class="scf-sec">
-              <div class="scf-sec-h"><span class="material-symbols-outlined">smart_button</span>On Click</div>
+              <div class="scf-sec-h"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3v2M3 9h2M5 5l1.5 1.5M13 5l-1.5 1.5"/><path d="M9 9l10 4-4 2-2 4z"/></svg></span>On Click</div>
               <div class="sm-btn-row" id="imgOnClickType">
                 <button class="sm-chip active" data-v="none" onclick="imgChipSel(this,'imgOnClickType');imgOnClickTypeChange()">Do nothing</button>
                 <button class="sm-chip" data-v="enlarge" onclick="imgChipSel(this,'imgOnClickType');imgOnClickTypeChange()">Enlarge</button>
@@ -6082,6 +6183,46 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 </div>
 
 <!-- ═══════════════ INSERT BANNER — SCF split layout (controls left · live editable preview right) ═══════════════ -->
+<div class="modal" id="pedMdl">
+  <div class="mbox scf-box" data-stage="edit">
+    <div class="split-modal-header">
+      <h2 class="mtitle">Photo Editor</h2>
+      <button class="mclose" onclick="pedCancel()"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></span></button>
+    </div>
+    <div class="scf-flow">
+      <section class="scf-stage on" data-stage="edit">
+        <div class="scf-ed">
+          <div class="scf-ed-view">
+            <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('pedMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
+            <div class="scf-ed-frame ped-frame" id="pedFrame"><div class="ped-wrap" id="pedWrap"><canvas id="pedCv"></canvas><canvas id="pedOv"></canvas></div></div>
+          </div>
+          <div class="scf-ed-panel">
+            <div class="scf-sec">
+              <div class="sm-btn-row ped-tools">
+                <button type="button" class="scf-btn" id="pedUndo" onclick="pedUndo()" title="Undo" aria-label="Undo"><span class="material-symbols-outlined pic" style="font-size:18px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3"/></svg></span></button>
+                <button type="button" class="scf-btn" id="pedRedo" onclick="pedRedo()" title="Redo" aria-label="Redo"><span class="material-symbols-outlined pic" style="font-size:18px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3"/></svg></span></button>
+                <button type="button" class="scf-btn" id="pedBefore" title="Hold to compare with the original" aria-label="Hold to compare with the original"><span class="material-symbols-outlined pic" style="font-size:18px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h6v14H4zM14 5h6v14h-6zM12 2v20"/></svg></span></button>
+                <button type="button" class="scf-btn ped-hold" id="pedResetBtn" title="Hold 3 seconds to reset all" aria-label="Hold 3 seconds to reset all"><span class="ped-hold-fill" id="pedResetFill"></span><span class="ped-hold-in"><span class="material-symbols-outlined pic" style="font-size:18px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 3v5h5"/></svg></span></span></button>
+              </div>
+              <div class="sm-row" style="margin:10px 0 0;">
+                <label>Zoom</label>
+                <input type="range" class="sm-slider" id="pedZoom" min="1" max="4" step="0.1" value="1" oninput="pedSetZoom(this.value)">
+                <span class="sm-val" id="pedZoomV">100%</span>
+              </div>
+            </div>
+            <div class="scf-sec"><div class="sm-btn-row ped-tabs" id="pedTabs"></div></div>
+            <div id="pedPanes"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div class="split-modal-footer">
+      <button class="mbtn sec" onclick="pedCancel()">Cancel</button>
+      <button class="mbtn primary" onclick="pedApply()">Apply</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal" id="bannerMdl">
   <div class="mbox scf-box bn-box" data-stage="start">
     <div class="split-modal-header">
@@ -6231,7 +6372,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
       <!-- preview: right in landscape, sticky + collapsible on top in portrait -->
       <div class="scf-ed-view">
-        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('bannerMdl')"><span class="material-symbols-outlined">unfold_less</span></button></div>
+        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('bannerMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
         <div class="bn-tools">
           <button class="bn-tb" onmousedown="event.preventDefault()" onclick="document.execCommand('bold')" title="Bold"><b>B</b></button>
           <button class="bn-tb" onmousedown="event.preventDefault()" onclick="document.execCommand('italic')" title="Italic"><i>I</i></button>
@@ -6420,7 +6561,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
       </div>
       <!-- preview: right in landscape, sticky + collapsible on top in portrait -->
       <div class="scf-ed-view">
-        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('tableMdl')"><span class="material-symbols-outlined">unfold_less</span></button></div>
+        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('tableMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
         <div class="scf-ed-frame tbl"><div class="tbl-preview-wrap">
           <div class="tbl-preview" id="tblPreview"></div>
         </div></div>
@@ -6469,7 +6610,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
     </div>
     <div class="scf-flow"><section class="scf-stage on" data-stage="edit"><div class="scf-ed">
       <div class="scf-ed-view">
-        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('mapMdl')"><span class="material-symbols-outlined">unfold_less</span></button></div>
+        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('mapMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
         <div class="scf-ed-frame" id="mpStage">
           <canvas id="mpCanvas" width="720" height="480"></canvas>
           <div class="mp-zoom">
@@ -6650,7 +6791,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
       </div>
       <!-- preview: right in landscape, sticky + collapsible on top in portrait -->
       <div class="scf-ed-view">
-        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('linkMdl')"><span class="material-symbols-outlined">unfold_less</span></button></div>
+        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('linkMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
         <div class="scf-ed-frame lnk">
           <div class="link-preview-box" id="linkPreviewBox">
             <span style="font-size:12px;color:var(--ui-muted);">Preview will appear here</span>
@@ -7034,7 +7175,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
       </div>
       <!-- preview: right in landscape, sticky + collapsible on top in portrait -->
       <div class="scf-ed-view">
-        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('fieldPropsMdl')"><span class="material-symbols-outlined">unfold_less</span></button></div>
+        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('fieldPropsMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
         <div class="scf-ed-frame fp">
           <div class="fp-paper"><div id="fpPreview"></div></div>
         </div>
@@ -7134,7 +7275,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
       <!-- preview + colour: right in landscape, sticky + collapsible on top in portrait -->
       <div class="scf-side">
         <div class="scf-ed-view">
-          <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('iconMdl')"><span class="material-symbols-outlined">unfold_less</span></button></div>
+          <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('iconMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
           <div class="scf-ed-frame ic"><div id="iconStylePreview"></div></div>
           <p class="scf-ed-label" id="iconPickedLabel">No icon selected</p>
         </div>
@@ -7224,7 +7365,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
       </div>
       <!-- preview: right in landscape, sticky + collapsible on top in portrait -->
       <div class="scf-ed-view">
-        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('latexMdl')"><span class="material-symbols-outlined">unfold_less</span></button></div>
+        <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('latexMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
         <div class="scf-ed-frame lx">
           <div class="lx-paper"><div id="latexPreview"></div></div>
         </div>
@@ -7261,7 +7402,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
       <!-- preview + style: right in landscape, sticky + collapsible on top in portrait -->
       <div class="scf-side">
         <div class="scf-ed-view">
-          <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('shapeMdl')"><span class="material-symbols-outlined">unfold_less</span></button></div>
+          <div class="scf-ed-bar"><span>Preview</span><button type="button" class="scf-icon-btn scf-prev-toggle" title="Collapse preview" onclick="SCFlow.togglePreview('shapeMdl')"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button></div>
           <div class="scf-ed-frame sh"><div id="shapePreviewWrap"><span class="scx-ph">Select a shape</span></div></div>
           <p class="scf-ed-label" id="shapePickedLabel">No shape selected</p>
         </div>
@@ -7604,6 +7745,126 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
     <div class="mfooter">
       <button class="mbtn sec" onclick="closeMdl('ceOptionsMdl')">Close</button>
       <button class="mbtn primary" onclick="saveCeOptions()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Summarize Modal (on-device, SmolLM2-360M-Instruct) -->
+<div class="modal" id="sumMdl">
+  <div class="mbox narrow">
+    <div class="mhdr">
+      <h2 class="mtitle">Summarize</h2>
+      <button class="mclose" onclick="sumClose()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="ph-info-box">
+      Runs fully on this device. Summaries can miss details or get things wrong, so check the result against the original before you rely on it.
+    </div>
+
+    <div class="sm-section" id="sumScopeSec" style="display:none;">
+      <div class="sm-label">What to summarize</div>
+      <select class="sm-number" id="sumScope" style="width:100%;text-align:left;" onchange="sumScopeChanged()">
+        <option value="all">Full document</option>
+        <option value="pages">Specific pages</option>
+      </select>
+      <div id="sumPagesWrap" style="display:none;">
+        <div class="aed-pages-grid" id="sumPagesGrid"></div>
+        <div style="margin-top:8px;">
+          <button class="mbtn sec" style="font-size:11px;padding:5px 10px;margin-right:6px" onclick="sumSelectAllPages(true)">All</button>
+          <button class="mbtn sec" style="font-size:11px;padding:5px 10px" onclick="sumSelectAllPages(false)">None</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label" id="sumSourceLbl">Selected text</div>
+      <div class="sm-row" style="gap:8px;">
+        <select class="sm-number" id="sumStyle" style="flex:1;width:auto;" onchange="localStorage.setItem('sum_style', this.value)">
+          <option value="short">Short (1–2 sentences)</option>
+          <option value="paragraph">Paragraph</option>
+          <option value="bullets">Bullet points</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label" id="sumStatus" style="min-height:16px;">Ready</div>
+      <textarea id="sumOut" rows="8" placeholder="The summary appears here. You can edit it before inserting." oninput="sumSyncButtons()" style="width:100%;min-height:150px;resize:vertical;font-family:inherit;font-size:13px;box-sizing:border-box;padding:10px 12px;border-radius:10px;border:1px solid var(--ui-divider,#ccc);background:var(--ui-raise,#fff);color:var(--ui-text,#111);outline:none;"></textarea>
+    </div>
+
+    <div class="sm-section" id="sumActions" style="display:flex;flex-wrap:wrap;gap:6px;">
+      <button class="mbtn sec" id="sumBtnInsert" onclick="sumInsert()" disabled>Insert below</button>
+      <button class="mbtn sec" id="sumBtnReplace" onclick="sumReplace()" disabled>Replace selection</button>
+      <button class="mbtn sec" id="sumBtnCopy" onclick="sumCopy()" disabled>Copy</button>
+    </div>
+
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="sumClose()">Close</button>
+      <button class="mbtn primary" id="sumBtnGo" onclick="sumRun()">Summarize</button>
+    </div>
+  </div>
+</div>
+
+<!-- Ask Document Modal (on-device, SmolLM2-360M-Instruct) -->
+<style>
+.ask-chat{height:min(44vh,320px);overflow-y:auto;border:1px solid var(--ui-divider,#ddd);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:10px;background:var(--ui-raise,#fff);box-sizing:border-box;}
+.ask-empty{margin:auto;text-align:center;font-size:12.5px;opacity:.65;padding:12px;line-height:1.5;}
+.ask-msg{display:flex;flex-direction:column;max-width:88%;}
+.ask-msg.ask-user{align-self:flex-end;align-items:flex-end;}
+.ask-msg.ask-bot{align-self:flex-start;align-items:flex-start;}
+.ask-bub{padding:8px 11px;border-radius:12px;font-size:13px;line-height:1.45;white-space:pre-wrap;word-break:break-word;}
+.ask-user .ask-bub{background:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));color:var(--sc-on-a,#fff);border-bottom-right-radius:4px;}
+.ask-bot .ask-bub{background:#f1f1f1;color:#222;border-bottom-left-radius:4px;}
+.ask-bot.ask-err .ask-bub{background:#fdecea;color:#8a1c12;}
+body.dark .ask-bot .ask-bub{background:#2a2a2a;color:#e8e8e8;}
+body.dark .ask-bot.ask-err .ask-bub{background:#3a1f1c;color:#ffb4a8;}
+.ask-meta{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:4px;font-size:11px;}
+.ask-src{border:1px solid rgba(128,128,128,.4);background:transparent;color:inherit;border-radius:999px;font-size:11px;padding:1px 8px;cursor:pointer;font-family:inherit;}
+.ask-src:hover{background:rgba(128,128,128,.18);}
+.ask-copy{border:none;background:transparent;cursor:pointer;display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:6px;color:inherit;opacity:.75;font-size:11px;font-family:inherit;}
+.ask-copy:hover{opacity:1;background:rgba(128,128,128,.18);}
+.ask-copy .material-symbols-outlined{font-size:15px;}
+.ask-input-row{display:flex;gap:8px;align-items:flex-end;margin-top:6px;}
+.ask-input-row textarea{flex:1;resize:none;font-family:inherit;font-size:13px;padding:8px 10px;border-radius:10px;border:1px solid var(--ui-divider,#ccc);background:var(--ui-raise,#fff);color:var(--ui-text,#111);outline:none;box-sizing:border-box;}
+</style>
+<div class="modal" id="askMdl">
+  <div class="mbox wide">
+    <div class="mhdr">
+      <h2 class="mtitle">Ask Document</h2>
+      <button class="mclose" onclick="askClose()"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="ph-info-box">
+      Runs fully on this device. Answers come only from the passages it finds and can be wrong, so check the pages listed under each answer.
+    </div>
+
+    <div class="sm-section">
+      <div class="sm-label">Where to look</div>
+      <select class="sm-number" id="askScope" style="width:100%;text-align:left;" onchange="askScopeChanged()">
+        <option value="smart">Smart – find the best-matching passages</option>
+        <option value="all">All pages</option>
+        <option value="pages">Specific pages</option>
+      </select>
+      <div id="askPagesWrap" style="display:none;">
+        <div class="aed-pages-grid" id="askPagesGrid"></div>
+        <div style="margin-top:8px;">
+          <button class="mbtn sec" style="font-size:11px;padding:5px 10px;margin-right:6px" onclick="askSelectAllPages(true)">All</button>
+          <button class="mbtn sec" style="font-size:11px;padding:5px 10px" onclick="askSelectAllPages(false)">None</button>
+        </div>
+      </div>
+      <div class="sm-label" id="askScopeHint" style="margin-top:6px;"></div>
+    </div>
+
+    <div class="sm-section">
+      <div class="ask-chat" id="askChat" aria-live="polite"></div>
+      <div class="sm-label" id="askStatus" style="min-height:16px;margin-top:6px;"></div>
+      <div class="ask-input-row">
+        <textarea id="askInput" rows="2" placeholder="Ask something about this document…" onkeydown="askKey(event)"></textarea>
+        <button class="mbtn primary" id="askSendBtn" onclick="askSend()">Send</button>
+      </div>
+    </div>
+
+    <div class="mfooter">
+      <button class="mbtn sec" onclick="askClear()">Clear chat</button>
+      <button class="mbtn sec" onclick="askClose()">Close</button>
     </div>
   </div>
 </div>
@@ -7963,6 +8224,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
       <button class="cpp-btn" id="tpEditLinkBtn" onclick="openEditLinkAttrs()" style="display:none;color:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));"><span class="material-symbols-outlined">link</span>Edit Link</button>
       <button class="cpp-btn" id="tpAutofillBtn" onclick="openAedFromPopup()" style="display:none;color:hsl(calc(var(--sc-h,210) + -0.2) calc(78.7% * var(--sc-s,1)) calc(46.1% + var(--sc-l,0%) * 1));"><span class="material-symbols-outlined">auto_fix_high</span>Autofill</button>
       <button class="cpp-btn" id="tpExpandContextBtn" onclick="runExpandContext()" style="display:none;color:hsl(calc(259.8 * var(--sc-hk,1) + var(--sc-rb,0)) calc(53.9% * var(--sc-rs,1)) calc(45.1% + var(--sc-rl,0%)));"><span class="material-symbols-outlined">auto_awesome</span>Expand Context</button>
+      <button class="cpp-btn" id="tpSummarizeBtn" onclick="openSummarize('selection')" style="display:none;color:hsl(calc(259.8 * var(--sc-hk,1) + var(--sc-rb,0)) calc(53.9% * var(--sc-rs,1)) calc(45.1% + var(--sc-rl,0%)));"><span class="material-symbols-outlined">summarize</span>Summarize</button>
     </div>
     <div class="ctx-popup-sep"></div>
     <div class="ctx-popup-row">
@@ -7995,7 +8257,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
     <!-- Collapsed flat row -->
     <div class="popup-collapsed-row" id="tpCollapsedRow"></div>
   </div>
-  <button class="popup-collapse-btn" onclick="togglePopupCollapse('textPopup','tpCollapsed')" title="Collapse popup"><span class="material-symbols-outlined">unfold_less</span></button>
+  <button class="popup-collapse-btn" onclick="togglePopupCollapse('textPopup','tpCollapsed')" title="Collapse popup"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button>
   <button class="continue-sel-btn" onclick="continueSelectionMode()" title="Select more text without closing"><span class="material-symbols-outlined">south</span>Continue Selection</button>
   <button id="tpSnippetBtn" onclick="addSnippetFromSelection()" title="Select another snippet"><span class="material-symbols-outlined">playlist_add</span><span class="tp-snippet-badge" id="tpSnippetBadge"></span></button>
 </div>
@@ -8144,7 +8406,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
     <button class="cpp-btn danger wide" data-cm data-cm-gap data-cm-title="Delete line" onclick="hrPopupAction('delete')"><span class="material-symbols-outlined">delete</span>Delete line</button>
     <div class="popup-collapsed-row" id="hrCollapsedRow"></div>
   </div>
-  <button class="popup-collapse-btn" onclick="togglePopupCollapse('hrPopup','hrCollapsed')" title="Collapse popup"><span class="material-symbols-outlined">unfold_less</span></button>
+  <button class="popup-collapse-btn" onclick="togglePopupCollapse('hrPopup','hrCollapsed')" title="Collapse popup"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button>
 </div>
 
 <!-- Image Popup -->
@@ -8159,7 +8421,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
     </div>
     <div class="popup-collapsed-row" id="imgCollapsedRow"></div>
   </div>
-  <button class="popup-collapse-btn" onclick="togglePopupCollapse('imgPopup','imgCollapsed')" title="Collapse"><span class="material-symbols-outlined">unfold_less</span></button>
+  <button class="popup-collapse-btn" onclick="togglePopupCollapse('imgPopup','imgCollapsed')" title="Collapse"><span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg></span></button>
 </div>
 
 <!-- Form Field context popup -->
@@ -8279,7 +8541,7 @@ body #ulBulletChips .olcust-chip.active,body.dark #ulBulletChips .olcust-chip.ac
 
 <script>
 'use strict';
-const SC_EDITOR_VERSION = 195; // editor release (not the saved-file format build below)
+const SC_EDITOR_VERSION = 208; // editor release (not the saved-file format build below)
 
 /* ═══════════════════════════════════════════════════════
    BUILD / VERSIONING
@@ -8359,7 +8621,7 @@ async function loadDictionary() {
   statusEl.style.display = 'block';
   statusEl.textContent = 'Loading dictionary…';
   try {
-    const res = await fetch('https://mahi902.github.io/Oryn/words.txt');
+    const res = await fetch('https://mahi902.github.io/OrynPro/words.txt');
     const text = await res.text();
     AW.dictionary = new Set(text.split('\n').map(w => w.trim().toLowerCase()).filter(Boolean));
     AW.dictLoaded = true;
@@ -9998,7 +10260,7 @@ const POPUP_COLLAPSE_KEYS = {
    COLOR CHOOSER  — ColorLabs colorchooser1.html integration
    ════════════════════════════════════════════════════════════════ */
 (function(){
-  const CC_URL = 'https://mahi902.github.io/Oryn/ColorLabs/colorchooser1.html';
+  const CC_URL = 'https://mahi902.github.io/OrynPro/ColorLabs/colorchooser1.html';
   let _ccTargetId = null;  // ID of the hidden <input type="color"> we're controlling
   let _ccCallback = null;  // optional extra callback after color applied
 
@@ -10233,7 +10495,7 @@ const POPUP_COLLAPSE_KEYS = {
    ACTION CONFIRMATION  — ColorLabs actionconfirmation1.html integration
    ════════════════════════════════════════════════════════════════ */
 (function(){
-  const AC_URL = 'https://mahi902.github.io/Oryn/ColorLabs/actionconfirmation1.html';
+  const AC_URL = 'https://mahi902.github.io/OrynPro/ColorLabs/actionconfirmation1.html';
   let _acCallback = null;
 
   /* Theme helper */
@@ -10320,7 +10582,7 @@ const POPUP_COLLAPSE_KEYS = {
    INSERT DRAW  — ColorLabs draw1.html integration
    ════════════════════════════════════════════════════════════════ */
 (function(){
-  const DRAW_URL = 'https://mahi902.github.io/Oryn/ColorLabs/draw1.html';
+  const DRAW_URL = 'https://mahi902.github.io/OrynPro/ColorLabs/draw1.html';
 
   function _drawTheme(){
     return document.body.classList.contains('dark') ? 'dark' : 'light';
@@ -10374,7 +10636,7 @@ const POPUP_COLLAPSE_KEYS = {
    INSERT CHART  — ColorLabs chartmaker1.html integration
    ════════════════════════════════════════════════════════════════ */
 (function(){
-  const CHART_URL = 'https://mahi902.github.io/Oryn/ColorLabs/chartmaker1.html';
+  const CHART_URL = 'https://mahi902.github.io/OrynPro/ColorLabs/chartmaker1.html';
 
   function _chartTheme(){
     return document.body.classList.contains('dark') ? 'dark' : 'light';
@@ -12204,7 +12466,7 @@ function switchFcTab(tab) {
 
 async function loadFcStyles() {
   try {
-    const resp = await fetch('https://mahi902.github.io/Oryn/textstyles.json');
+    const resp = await fetch('https://mahi902.github.io/OrynPro/textstyles.json');
     _fcTextStyles = await resp.json();
     // Load Google Fonts for all styles
     const families = [...new Set(_fcTextStyles.map(s => s.font).filter(Boolean))];
@@ -12314,7 +12576,7 @@ function applyFcStyle(style) {
 
 async function loadFcOnlineFonts() {
   try {
-    const resp = await fetch('https://mahi902.github.io/Oryn/textfonts.txt');
+    const resp = await fetch('https://mahi902.github.io/OrynPro/textfonts.txt');
     const text = await resp.text();
     _fcOnlineFonts = text.split('\n').map(l => l.trim()).filter(Boolean);
     // Auto-load pinned fonts
@@ -12336,7 +12598,7 @@ async function loadFcOnlineFonts() {
 async function loadFcFancyFonts() {
   const custom = _fcLoadPersistedCustomFonts();
   try {
-    const resp = await fetch('https://mahi902.github.io/Oryn/ffonts.json');
+    const resp = await fetch('https://mahi902.github.io/OrynPro/ffonts.json');
     const base = await resp.json();
     const baseNames = new Set(base.map(f => f.name));
     _fcFancyFonts = base.concat(custom.filter(f => !baseNames.has(f.name)));
@@ -12884,6 +13146,7 @@ function _showTextPopupCore(x, y) {
   checkTextPopupForLink();
   checkTextPopupSingleWord();
   ceCheckTextPopup();
+  sumCheckTextPopup();
   syncSnippetButtonState();
 }
 
@@ -15000,7 +15263,7 @@ let _bannerImageData = null;
 let _editingBanner = null;
 let _bannerSavedRange = null;
 
-const BANNER_COPY_BASE = 'https://mahi902.github.io/Oryn/copy.html';
+const BANNER_COPY_BASE = 'https://mahi902.github.io/OrynPro/copy.html';
 const BANNER_TEXT_LIMIT = 1500;
 const BANNER_LINK_LIMIT = 2000;
 
@@ -15548,7 +15811,7 @@ const SCFlow = {
     const c = force !== undefined ? !!force : !v.classList.contains('collapsed');
     v.classList.toggle('collapsed', c);
     const b = v.querySelector('.scf-prev-toggle');
-    if (b) { b.title = c ? 'Expand preview' : 'Collapse preview'; b.firstElementChild.textContent = c ? 'unfold_more' : 'unfold_less'; }
+    if (b) { b.title = c ? 'Expand preview' : 'Collapse preview'; b.firstElementChild.innerHTML = c ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>' : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6l4 4 4-4M8 18l4-4 4 4"/></svg>'; }
   },
   go(id, name) {
     const b = this.box(id); if (!b) return;
@@ -15577,6 +15840,7 @@ function openImageModal() {
   _imgEl('imgUrlGrid').innerHTML = '';
   _imgEl('imgDriveGrid').innerHTML = '';
   imgUrlStatus('Paste a direct image link, or a web page to pick from all of its images.');
+  imgGenReset();
   imgSetPreview(null);
   imgRenderPicked();
   imgTogglePreview(false);
@@ -15587,6 +15851,7 @@ function openImageModal() {
   SCFlow.go('imageMdl', 'source');
   setupImgDZ();
   openMdl('imageMdl');
+  imgGenCheck();
 }
 
 function imgResetControls() {
@@ -15636,6 +15901,7 @@ function imgSrcTab(name, silent) {
   document.querySelectorAll('#imageMdl .scf-pane').forEach(p => p.classList.toggle('on', p.dataset.pane === name));
   if (name === 'drive' && !silent) imgLoadDrive();
   if (name === 'url' && !silent) setTimeout(() => _imgEl('imgUrlInput').focus(), 60);
+  if (name === 'gen' && !silent) setTimeout(() => _imgEl('imgGenPrompt').focus(), 60);
 }
 
 function setupImgDZ() {
@@ -15652,6 +15918,62 @@ function readImgFile(file) {
   r.onload = e => imgSetImage(e.target.result, file.name || 'Image');
   r.onerror = () => showToast('Could not read that file', 'error');
   r.readAsDataURL(file);
+}
+
+/* ── Generate source: on-device text-to-image (SDXS one-step). Tab appears only when AI Features + Sugarcane are on AND the image model is downloaded. ── */
+let _igWorker = null, _igBusy = false, _igTimer = null, _igId = 0;
+function imgGenStatus(t) { const s = _imgEl('imgGenStatus'); if (s) s.textContent = t; }
+function imgGenLoadHelper() {
+  if (window.AIImage) return Promise.resolve();
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aiimage.js?v=207'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
+}
+async function imgGenCheck() {
+  const tab = _imgEl('imgSrcGenTab'); if (tab) tab.style.display = 'none';
+  if (typeof spGatingOk !== 'function' || !spGatingOk()) return;
+  try { await imgGenLoadHelper(); if (await AIImage.installed() && tab) tab.style.display = ''; } catch (e) {}
+}
+function imgGenEnd() {
+  _igBusy = false; clearInterval(_igTimer); _igTimer = null;
+  if (_igWorker) { _igWorker.terminate(); _igWorker = null; }   // frees all model memory
+  const l = _imgEl('imgGenGoLbl'); if (l) l.textContent = 'Generate';
+  const p = _imgEl('imgGenPrompt'); if (p) p.disabled = false;
+}
+function imgGenReset() {
+  if (_igBusy) imgGenEnd();
+  const p = _imgEl('imgGenPrompt'); if (p) p.value = '';
+  imgGenStatus('A fun, low-quality picture made on this device. It can take a while.');
+}
+function imgGenStart() {
+  if (_igBusy) { imgGenEnd(); imgGenStatus('Cancelled.'); return; }
+  const prompt = _imgEl('imgGenPrompt').value.trim();
+  if (!prompt) { imgGenStatus('Type what you want to see.'); return; }
+  _igBusy = true;
+  _imgEl('imgGenGoLbl').textContent = 'Cancel'; _imgEl('imgGenPrompt').disabled = true;
+  const id = ++_igId, t0 = Date.now();
+  let stage = 'Loading the model…';
+  const tick = () => imgGenStatus(stage + ' ' + Math.round((Date.now() - t0) / 1000) + 's');
+  tick(); _igTimer = setInterval(tick, 500);
+  const names = { text: 'Reading your prompt…', draw: 'Drawing…', decode: 'Finishing the picture…' };
+  try {
+    const w = new Worker(SP_AI + 'imgworker2.js?v=207', { type: 'module' }); _igWorker = w;
+    w.onmessage = e => {
+      const m = e.data; if (m.id !== id) return;
+      if (m.type === 'stage') { stage = names[m.name] || stage; tick(); }
+      else if (m.type === 'result') {
+        const cv = document.createElement('canvas'); cv.width = m.w; cv.height = m.h;
+        cv.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(m.rgba), m.w, m.h), 0, 0);
+        const secs = Math.round((Date.now() - t0) / 1000);
+        imgGenEnd();
+        imgSetImage(cv.toDataURL('image/png'), 'AI: ' + prompt.slice(0, 40));
+        imgGenStatus('Done in ' + secs + 's. Press Next, or change the prompt and generate again.');
+      } else if (m.type === 'error') {
+        imgGenEnd(); imgGenStatus(m.message === 'Cancelled' ? 'Cancelled.' : 'Could not generate: ' + m.message);
+        if (m.message !== 'Cancelled') showToast('Image generation failed', 'error');
+      }
+    };
+    w.onerror = e => { imgGenEnd(); imgGenStatus('Could not start the image model. Open the app once online to finish setup.'); console.error('[imgGen]', e); };
+    w.postMessage({ type: 'generate', id, prompt });
+  } catch (err) { imgGenEnd(); imgGenStatus('Could not start the image model.'); }
 }
 
 /* ── URL source: direct image link OR a web page whose images are listed ── */
@@ -16047,7 +16369,7 @@ function resetImgCrop() {
    current src, so editing/cropping the image changes the link automatically. Images whose
    link would exceed ENL_MAX_URL (after re-encoding a smaller copy) cannot use Enlarge.
 ═══════════════════════════════════════════════════════ */
-const ENL_PAGE = 'https://mahi902.github.io/Oryn/enlimg.html';
+const ENL_PAGE = 'https://mahi902.github.io/OrynPro/enlimg.html';
 const ENL_MAX_URL = 100000;                       // max characters in the encoded link
 const _enlCache = new Map(), _enlPending = new Map();
 let _enlWebpOk = null;
@@ -16959,7 +17281,7 @@ function updateLinkDestVisibility() {
 }
 
 /* Toggle between a plain URL destination and a "Definitive Word" dictionary
-   link (mahi902.github.io/Oryn/defw.html#l|d + word). Definitive
+   link (mahi902.github.io/OrynPro/defw.html#l|d + word). Definitive
    Word links always bypass Redirection Preview and open directly — this
    also works inside exported PDFs since it's a normal <a href>. */
 function switchLinkDestType(type) {
@@ -16991,7 +17313,7 @@ function _defwUrlPreview() {
 
 function _buildDefwUrl(word) {
   const theme = document.body.classList.contains('dark') ? 'd' : 'l';
-  return 'https://mahi902.github.io/Oryn/defw.html#' + theme + encodeURIComponent(word.trim());
+  return 'https://mahi902.github.io/OrynPro/defw.html#' + theme + encodeURIComponent(word.trim());
 }
 
 function switchLinkType(type) {
@@ -17201,7 +17523,7 @@ function openEditLinkAttrs() {
     lnkChipSelById('lnkUnderline', td === 'none' ? 'none' : 'underline');
   }
   updateLinkDestVisibility();
-  const wasDefw = anchor.dataset.noRedir === 'true' && (anchor.getAttribute('href') || '').includes('/Oryn/defw.html#');
+  const wasDefw = anchor.dataset.noRedir === 'true' && (anchor.getAttribute('href') || '').includes('/OrynPro/defw.html#');
   if (wasDefw) switchLinkDestType('defw'); else switchLinkDestType('url');
   updateLinkPreview();
   SCFlow.togglePreview('linkMdl', false); openMdl('linkMdl');
@@ -17356,6 +17678,14 @@ function updateWatermark() {
     document.getElementById('watermarkText').value = '';
     sizeEl.value = '72';
     openRecentsScreen();
+    return;
+  }
+  if (text === 'test24092026' && sizeEl && sizeEl.value === '67') {
+    document.getElementById('watermarkText').value = '';
+    sizeEl.value = '72';
+    try { localStorage.setItem('scSentModelCtl', '1'); } catch (e) {}
+    spApplyModelCtl();
+    showToast('Sentence Prediction model controls enabled', 'success');
     return;
   }
   if (text === 'test25082026' && sizeEl && sizeEl.value === '67') {
@@ -21564,7 +21894,7 @@ function toggleCustomMargins(enabled) {
 async function loadCmargLibrary() {
   CMARG._libraryLoaded = true;
   try {
-    const r = await fetch('https://mahi902.github.io/Oryn/pmarg.json');
+    const r = await fetch('https://mahi902.github.io/OrynPro/pmarg.json');
     if (!r.ok) throw new Error('Network error');
     const data = await r.json();
     CMARG.library = Array.isArray(data) ? data : (data.margins || []);
@@ -21927,7 +22257,7 @@ function toggleCustomTableDesign(enabled) {
 async function loadCtabLibrary() {
   CTAB._libraryLoaded = true;
   try {
-    const r = await fetch('https://mahi902.github.io/Oryn/ctab.json');
+    const r = await fetch('https://mahi902.github.io/OrynPro/ctab.json');
     if (!r.ok) throw new Error('Network error');
     const data = await r.json();
     CTAB.library = Array.isArray(data) ? data : (data.tables || data.designs || []);
@@ -25482,23 +25812,57 @@ AW.autoAssistTimer = null;
    Nothing below loads the runtime or model until the user installs it.
 ═══════════════════════════════════════════════════════ */
 const SP = { on:false, worker:null, ready:false, id:0, timer:null, sug:'', anchor:null, composing:false, skip:false, dl:false };
-const SP_AI = 'https://mahi902.github.io/Oryn/vendor/ai/';
+// Resolve relative to this page so the cached copies are the ones used (works offline); fall back to the hosted URL for blob/file contexts.
+const SP_AI = /^https?:$/.test(location.protocol) ? new URL('vendor/ai/', location.href).href : 'https://mahi902.github.io/OrynPro/vendor/ai/';
+/* Sentence Prediction is locked unless BOTH are on in the app: Settings → AI → AI Features, and
+   AI Usecases → Sugarcane (cookies shared across the site; same gate Context Expansion uses). */
+function spGatingOk() {
+  try { return getCookie('ai_features_enabled') === 'true' && getCookie('ai_usecase_sugarcane') === 'true'; }
+  catch (e) { return false; }
+}
+const SP_LOCK_MSG = 'Locked \u2013 turn on AI Features and AI Usecases \u203a Sugarcane in the app Settings \u203a AI.';
+const SP_AI_CACHE = 'dwp-ai-runtime-v1';   // must match AI_CACHE in sw.js
+const SP_AI_FILES = ['aimodel.js', 'sentworker.js', 'transformers.min.js', 'ort-wasm-simd-threaded.asyncify.mjs', 'ort-wasm-simd-threaded.asyncify.wasm'];
+/* Saves the runtime (helper, worker, transformers.js, ONNX wasm ~30 MB) so Sentence Prediction runs with no connection.
+   Idempotent: files already stored are skipped. Never throws. */
+async function spCacheRuntime(onStep) {
+  try {
+    if (!('caches' in window) || SP_AI.indexOf('http') !== 0) return false;
+    const c = await caches.open(SP_AI_CACHE);
+    for (const f of SP_AI_FILES) {
+      const u = SP_AI + f;
+      if (await c.match(u, { ignoreSearch: true })) continue;
+      onStep && onStep(f);
+      const r = await fetch(u);
+      if (!r.ok) return false;
+      await c.put(u, r);
+    }
+    return true;
+  } catch (e) { console.warn('[SP] runtime caching failed', e); return false; }
+}
 function spLoadHelper() {
   if (window.AIModel) return Promise.resolve();
-  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js?v=195'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = SP_AI + 'aimodel.js?v=200'; s.onload = res; s.onerror = () => rej(new Error('helper')); document.head.appendChild(s); });
 }
+function spApplyModelCtl() {
+  let on = false; try { on = localStorage.getItem('scSentModelCtl') === '1'; } catch (e) {}
+  const el = document.getElementById('awSentModel'); if (el) el.style.display = on ? 'flex' : 'none';
+}
+document.addEventListener('DOMContentLoaded', spApplyModelCtl);
 const spMB = n => (n / 1048576).toFixed(0) + ' MB';
 async function spRefreshUI(msg) {
   const cb = document.getElementById('awSentPred'); if (!cb) return;
   let ok = false, size = 0;
-  try { if (navigator.onLine !== false || window.AIModel) { await spLoadHelper(); ok = await AIModel.installed(); if (ok) size = await AIModel.size(); } } catch (e) {}
-  cb.disabled = !ok || SP.dl;
-  if (!ok && cb.checked) { cb.checked = false; toggleSentencePrediction(false); }
+  try { await spLoadHelper(); ok = await AIModel.installed(); if (ok) size = await AIModel.size(); } catch (e) {}   // installed() is a pure cache lookup, so no online check
+  const gate = spGatingOk();
+  cb.disabled = !ok || SP.dl || !gate;
+  if ((!ok || !gate) && cb.checked) { cb.checked = false; toggleSentencePrediction(false); }
   document.getElementById('awSentDl').style.display = ok ? 'none' : '';
   document.getElementById('awSentDl').disabled = SP.dl;
   document.getElementById('awSentRm').style.display = ok ? '' : 'none';
   document.getElementById('awSentRm').textContent = 'Remove model (' + spMB(size) + ')';
-  document.getElementById('awSentMsg').textContent = msg || (ok ? '' : 'Model not installed');
+  document.getElementById('awSentMsg').textContent = msg || (!ok ? 'Model not installed \u2013 install in the app' : (!gate ? SP_LOCK_MSG : ''));
+  const dsc = document.getElementById('awSentDesc'); if (dsc) dsc.style.display = (ok || msg) ? '' : 'none';
 }
 async function spDownload() {
   if (SP.dl) return;
@@ -25511,8 +25875,10 @@ async function spDownload() {
     await spLoadHelper();
     try { navigator.storage && navigator.storage.persist && await navigator.storage.persist(); } catch (e) {}
     await AIModel.download((pct, l, t) => { bar.value = pct; document.getElementById('awSentMsg').textContent = 'Downloading… ' + spMB(l) + ' / ' + spMB(t); });
+    document.getElementById('awSentMsg').textContent = 'Saving offline runtime…';
+    const rtOk = await spCacheRuntime();
     SP.dl = false; bar.style.display = 'none';
-    await spRefreshUI('Model installed');
+    await spRefreshUI(rtOk ? 'Model installed' : 'Model installed (offline runtime not saved yet — it will retry next time you are online)');
     showToast('Sentence Prediction model installed', 'success');
   } catch (e) {
     SP.dl = false; bar.style.display = 'none';
@@ -25521,50 +25887,174 @@ async function spDownload() {
     showToast('Model download failed', 'error');
   }
 }
-async function spRemove() {
-  if (!confirm('Remove the Sentence Prediction model from this device?')) return;
-  toggleSentencePrediction(false); document.getElementById('awSentPred').checked = false;
-  try { await spLoadHelper(); await AIModel.remove(); } catch (e) {}
-  document.getElementById('awSentDl').textContent = 'Download model (~130 MB)';
-  await spRefreshUI();
+/* Removing the model takes three separate verifications:
+   1) confirm the intent, 2) type REMOVE, 3) press-and-hold for 3 seconds. */
+function spVerifyThree() {
+  return new Promise((resolve) => {
+    const dark = document.body.classList.contains('dark');
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;';
+    const box = document.createElement('div');
+    box.style.cssText = 'width:100%;max-width:360px;border-radius:16px;padding:18px;font-family:inherit;box-shadow:0 20px 50px rgba(0,0,0,.4);background:' + (dark ? '#1e1e1e' : '#fff') + ';color:' + (dark ? '#eee' : '#222') + ';';
+    ov.appendChild(box);
+    const done = (v) => { try { ov.remove(); } catch (e) {} resolve(v); };
+    const btn = (label, bg, fg) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.style.cssText = 'flex:1;padding:12px 8px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:' + bg + ';color:' + fg + ';'; return b; };
+    const grey = dark ? '#333' : '#eee', greyFg = dark ? '#ddd' : '#333', red = '#d32f2f';
+    const step = (n) => {
+      box.innerHTML = '';
+      const t = document.createElement('div'); t.style.cssText = 'font-size:12px;font-weight:700;opacity:.6;margin-bottom:6px;'; t.textContent = 'Verification ' + n + ' of 3'; box.appendChild(t);
+      const h = document.createElement('div'); h.style.cssText = 'font-size:16px;font-weight:700;margin-bottom:8px;'; box.appendChild(h);
+      const d = document.createElement('div'); d.style.cssText = 'font-size:13px;line-height:1.45;opacity:.85;margin-bottom:14px;'; box.appendChild(d);
+      const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:8px;'; 
+      const cancel = btn('Keep model', grey, greyFg); cancel.onclick = () => done(false);
+      if (n === 1) {
+        h.textContent = 'Remove the Sentence Prediction model?';
+        d.textContent = 'This deletes the ~130 MB on-device model. Sentence Prediction will stop working until you download it again.';
+        const go = btn('Continue', red, '#fff'); go.onclick = () => step(2);
+        row.append(cancel, go); box.appendChild(row);
+      } else if (n === 2) {
+        h.textContent = 'Type REMOVE to continue';
+        d.textContent = 'Type the word exactly as shown, in capital letters.';
+        const inp = document.createElement('input'); inp.type = 'text'; inp.autocapitalize = 'off'; inp.autocomplete = 'off'; inp.spellcheck = false; inp.placeholder = 'REMOVE';
+        inp.style.cssText = 'width:100%;box-sizing:border-box;padding:11px;margin-bottom:12px;border-radius:10px;font-size:15px;border:1px solid ' + (dark ? '#555' : '#bbb') + ';background:' + (dark ? '#111' : '#fff') + ';color:inherit;';
+        box.insertBefore(inp, d.nextSibling);
+        const go = btn('Continue', red, '#fff'); go.disabled = true; go.style.opacity = '.4';
+        inp.oninput = () => { const ok = inp.value === 'REMOVE'; go.disabled = !ok; go.style.opacity = ok ? '1' : '.4'; };
+        go.onclick = () => { if (inp.value === 'REMOVE') step(3); };
+        row.append(cancel, go); box.appendChild(row);
+        setTimeout(() => { try { inp.focus(); } catch (e) {} }, 50);
+      } else {
+        h.textContent = 'Final check: press and hold';
+        d.textContent = 'Press and hold the red button for 3 seconds to permanently remove the model. Letting go early cancels.';
+        const hold = btn('Hold to remove', red, '#fff'); hold.style.position = 'relative'; hold.style.overflow = 'hidden'; hold.style.touchAction = 'none'; hold.style.userSelect = 'none';
+        const fill = document.createElement('span'); fill.style.cssText = 'position:absolute;left:0;top:0;bottom:0;width:0;background:rgba(0,0,0,.35);pointer-events:none;'; hold.appendChild(fill);
+        let t0 = 0, raf = 0;
+        const tick = () => { const p = Math.min(1, (performance.now() - t0) / 3000); fill.style.width = (p * 100) + '%'; if (p >= 1) { done(true); return; } raf = requestAnimationFrame(tick); };
+        const start = (e) => { e.preventDefault(); t0 = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(tick); };
+        const stop = () => { cancelAnimationFrame(raf); fill.style.width = '0'; };
+        hold.addEventListener('pointerdown', start); ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => hold.addEventListener(ev, stop));
+        hold.addEventListener('contextmenu', e => e.preventDefault());
+        row.append(cancel, hold); box.appendChild(row);
+      }
+    };
+    document.body.appendChild(ov); step(1);
+  });
 }
+async function spRemove() {
+  if (SP.removing) return;
+  SP.removing = true;
+  try {
+    if (!(await spVerifyThree())) return;
+    toggleSentencePrediction(false); document.getElementById('awSentPred').checked = false;
+    try { await spLoadHelper(); await AIModel.remove(); } catch (e) {}
+    document.getElementById('awSentDl').textContent = 'Download model (~130 MB)';
+    await spRefreshUI();
+    showToast('Sentence Prediction model removed', 'info');
+  } finally { SP.removing = false; }
+}
+function spRecheckGate() {                 // settings changed elsewhere (app Settings, another tab): lock or unlock live
+  if (SP.on && !spGatingOk()) { spStop(); }
+  if (document.getElementById('awSentPred')) spRefreshUI();
+}
+window.addEventListener('focus', spRecheckGate);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) spRecheckGate(); });
 function spStartWorker() {
   if (SP.worker) return;
-  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=195', { type: 'module' });
+  const w = SP.worker = new Worker(SP_AI + 'sentworker.js?v=200', { type: 'module' });
   w.onmessage = (e) => {
     const m = e.data;
-    if (m.type === 'ready') { SP.ready = true; spStatus(''); }
-    else if (m.type === 'error') { SP.ready = false; spStatus('Sentence model failed to load'); spStop(); }
+    if (m.type === 'ready') { SP.ready = true; clearTimeout(SP.loadTimer); spStatus(''); SP.backend = m.backend || ''; spIdle('Ready' + (SP.backend ? ' (' + SP.backend + ')' : '') + '. Keep typing a sentence.'); spSchedule(); }
+    else if (m.type === 'error') { SP.ready = false; console.error('[SP worker]', m); const why = (m.message || m.error || 'unknown error'); spStatus('Sentence model failed to load: ' + why); showToast('Sentence model failed to load: ' + why, 'error'); spStop(); }
     else if (m.type === 'result') spOnResult(m);
   };
-  w.onerror = () => { spStatus('Sentence model failed to load'); spStop(); };
-  spStatus('Loading sentence model…');
+  w.onerror = (ev) => { console.error('[SP worker error]', ev); const why = (ev && ev.message) || 'worker could not load (open the page over https from GitHub Pages)'; spStatus('Sentence model failed to start: ' + why); showToast('Sentence model failed to start: ' + why, 'error'); spStop(); };
+  spStatus('Loading sentence model…'); spIdle();
+  clearTimeout(SP.loadTimer); SP.loadTimer = setTimeout(() => { if (SP.on && !SP.ready) spIdle('Still loading the model. This can take a minute on a phone.'); }, 25000);
   w.postMessage({ type: 'init', modelId: AIModel.MODEL_ID });
 }
 function spStatus(t) { const el = document.getElementById('awStatus'); if (!el) return; el.textContent = t; el.style.display = t ? '' : 'none'; }
 function spStop() { SP.on = false; SP.ready = false; spHide(); if (SP.worker) { SP.worker.terminate(); SP.worker = null; } const cb = document.getElementById('awSentPred'); if (cb) cb.checked = false; }
 async function toggleSentencePrediction(on) {
   if (!on) { const cb = document.getElementById('awSentPred'); SP.on = false; spHide(); if (SP.worker) { SP.worker.terminate(); SP.worker = null; SP.ready = false; } return; }
+  if (!spGatingOk()) { document.getElementById('awSentPred').checked = false; spRefreshUI(); showToast('Sentence Prediction is locked \u2013 enable AI Features and AI Usecases \u203a Sugarcane in the app Settings \u203a AI.', 'info'); return; }
   await spLoadHelper();
-  if (!(await AIModel.installed())) { document.getElementById('awSentPred').checked = false; spRefreshUI(); showToast('Download the Sentence Prediction model first', 'info'); return; }
-  SP.on = true; spStartWorker();
+  if (!(await AIModel.installed())) { document.getElementById('awSentPred').checked = false; spRefreshUI(); showToast('Model not installed \u2013 install in the app', 'info'); return; }
+  SP.on = true; spStartWorker(); spIdle();
 }
 async function spRestore() {            // saved awSentPred=true: only enable if the model is really installed
   const cb = document.getElementById('awSentPred'); if (cb) cb.checked = false;
   let ok = false;
   try { await spLoadHelper(); ok = await AIModel.installed(); } catch (e) {}
-  await spRefreshUI(ok ? '' : 'Model not installed');
-  if (ok) { cb.checked = true; toggleSentencePrediction(true); }
+  await spRefreshUI();
+  if (ok && spGatingOk()) {
+    cb.checked = true; toggleSentencePrediction(true);
+    // Top up the offline runtime for users who installed the model before this was cached (skipped on mobile data / data saver)
+    const nc = navigator.connection;
+    if (navigator.onLine && !(nc && (nc.type === 'cellular' || nc.saveData))) spCacheRuntime();
+  }
 }
 
 /* ghost rendering */
+/* Suggestion banner: built from the same Snippets bar (mobile) and Snippets
+   panel (wide screens) components used by Dictation and Magic Typing. */
+function spIc(name, size) { return '<span class="material-symbols-outlined" data-dwi="' + name + '"' + (size ? ' style="font-size:' + size + 'px"' : '') + '>' + name + '</span>'; }
+function spBuild() {
+  if (SP.bar) return;
+  const $ = (id) => document.getElementById(id);
+  const panel = SP.panel = document.createElement('div');
+  panel.id = 'scSentPanel'; panel.className = 'snippet-panel'; panel.setAttribute('role', 'status'); panel.setAttribute('aria-live', 'polite');
+  panel.innerHTML =
+    '<div class="snippet-panel-head"><span class="snippet-panel-title">Suggestion</span>' +
+    '<button type="button" class="snippet-panel-close" id="spPanelX" title="Dismiss">' + spIc('close') + '</button></div>' +
+    '<div class="snippet-panel-list"><div class="snippet-row" id="spRow" title="Insert suggestion"><span class="snippet-row-num">' + spIc('auto_awesome', 11) + '</span><span class="snippet-row-text" id="spRowTxt" style="unicode-bidi:plaintext"></span></div></div>' +
+    '<div class="snippet-panel-foot"><button type="button" class="snippet-panel-btn" id="spPanelRe">' + spIc('refresh', 15) + '<span>Regenerate</span></button>' +
+    '<button type="button" class="snippet-panel-btn primary" id="spPanelOk">' + spIc('check', 15) + 'Insert</button></div>';
+  document.body.appendChild(panel);
+
+  const bar = SP.bar = document.createElement('div');
+  bar.id = 'scSentBar'; bar.className = 'snippet-toolbar'; bar.setAttribute('role', 'status'); bar.setAttribute('aria-live', 'polite');
+  bar.innerHTML =
+    '<span class="snippet-toolbar-label">Suggestion</span>' +
+    '<div class="snippet-toolbar-chips"><span class="snippet-chip" id="spChip" title="Insert suggestion" style="max-width:none;flex:1;min-width:0"><span class="snippet-chip-num">' + spIc('auto_awesome', 10) + '</span><span class="snippet-chip-text" id="spChipTxt" style="unicode-bidi:plaintext"></span></span></div>' +
+    '<button type="button" class="snippet-toolbar-add" id="spBarRe" title="Regenerate">' + spIc('refresh', 16) + '</button>' +
+    '<button type="button" class="snippet-toolbar-done" id="spBarOk" title="Insert">' + spIc('check', 16) + 'Insert</button>';
+  const anchor = $('scMagicBar') || $('scDictBar') || $('snippetToolbar');
+  if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(bar, anchor.nextSibling);
+  else { const tb = document.querySelector('.toolbar'); if (tb && tb.parentNode) tb.parentNode.insertBefore(bar, tb.nextSibling); else document.body.appendChild(bar); }
+
+  [panel, bar].forEach((el) => {
+    el.addEventListener('mousedown', (e) => { e.preventDefault(); });          // keep the caret in the page
+    el.addEventListener('pointerdown', () => { SP.hold = true; setTimeout(() => { SP.hold = false; }, 600); });
+  });
+  ['spBarRe', 'spPanelRe'].forEach((id) => $(id).addEventListener('click', () => spRegenerate()));
+  ['spBarOk', 'spPanelOk', 'spChip', 'spRow'].forEach((id) => $(id).addEventListener('click', () => spAccept()));
+  $('spPanelX').addEventListener('click', () => spHide());
+  window.addEventListener('resize', spSyncLayout);
+}
+function spSyncLayout() {
+  if (!SP.bar) return;
+  const $ = (id) => document.getElementById(id);
+  let h = 0, on = false;
+  ['snippetToolbar', 'scDictBar', 'scMagicBar', 'scSentBar'].forEach((id) => {
+    const e = $(id); if (e && e.classList.contains('open')) { on = true; h += e.offsetHeight || 0; }
+  });
+  document.body.classList.toggle('sc-snippet-bar-on', on);
+  if (on && h) document.documentElement.style.setProperty('--sc-snippet-h', h + 'px');
+  const sp = $('snippetPanel');
+  SP.panel.style.bottom = (sp && sp.classList.contains('open') && sp.offsetHeight) ? (sp.offsetHeight + 34) + 'px' : '';
+}
+function spPanelsClose() {
+  if (!SP.bar) return;
+  SP.bar.classList.remove('open'); SP.panel.classList.remove('open'); spSyncLayout();
+}
 function spHide() {
-  clearTimeout(SP.timer); SP.sug = ''; SP.anchor = null; SP.id++;
+  clearTimeout(SP.timer); SP.sug = ''; SP.anchor = null; SP.id++; SP.regenBusy = false; SP.regenN = 0;
   if (SP.worker) SP.worker.postMessage({ type: 'cancel' });
   const g = document.getElementById('sentGhost'); if (g) g.style.display = 'none';
+  spIdle();
 }
 function spCaret() {
-  if (!SP.on || SP.composing) return null;
+  if (!SP.on) return null;
   const sel = getSelection(); if (!sel || !sel.rangeCount || !sel.isCollapsed) return null;
   const r = sel.getRangeAt(0), n = r.startContainer;
   if (n.nodeType !== 3 || r.startOffset !== n.nodeValue.length) return null;     // end of text run only
@@ -25575,28 +26065,51 @@ function spCaret() {
 function spSame(a) {
   const c = spCaret(); return !!(c && a && c.node === a.node && c.offset === a.offset && c.text === a.text) && c;
 }
+function spUi(text, canAct, busy) {
+  if (!SP.on) return;
+  spBuild();
+  const $ = (id) => document.getElementById(id);
+  $('spChipTxt').textContent = text; $('spRowTxt').textContent = text;
+  ['spBarRe', 'spPanelRe', 'spBarOk', 'spPanelOk'].forEach((id) => { $(id).style.display = canAct ? '' : 'none'; });
+  ['spBarRe', 'spPanelRe'].forEach((id) => { const e = $(id); e.classList.toggle('at-max', !!busy); e.disabled = !!busy; });
+  SP.bar.classList.add('open');
+  SP.panel.classList.add('open');
+  const ft = SP.panel.querySelector('.snippet-panel-foot'); if (ft) ft.style.display = canAct ? '' : 'none';
+  spSyncLayout();
+}
+function spIdle(msg) {
+  if (!SP.on) { spPanelsClose(); return; }
+  spUi(msg || (SP.ready ? 'Keep typing for suggestions' : 'Loading model\u2026'), false, false);
+}
 function spRender() {
-  const g = document.getElementById('sentGhost'), a = SP.anchor;
-  const c = a && SP.sug && spSame(a);
-  if (!c) { g.style.display = 'none'; return; }
-  const rects = c.range.getClientRects();
-  const rc = rects.length ? rects[rects.length - 1] : c.range.getBoundingClientRect();
-  if (!rc || (!rc.height && !rc.width && !rc.top)) { g.style.display = 'none'; return; }
-  const pr = c.pc.getBoundingClientRect(), k = c.pc.offsetWidth ? pr.width / c.pc.offsetWidth : 1;
-  const cs = getComputedStyle(c.node.parentElement);
-  g.style.fontFamily = cs.fontFamily; g.style.fontWeight = cs.fontWeight; g.style.fontStyle = cs.fontStyle;
-  g.style.fontSize = (parseFloat(cs.fontSize) * k) + 'px';
-  g.style.letterSpacing = cs.letterSpacing === 'normal' ? 'normal' : (parseFloat(cs.letterSpacing) * k) + 'px';
-  g.style.lineHeight = rc.height + 'px'; g.style.height = rc.height + 'px';
-  g.textContent = SP.sug;
-  g.style.left = rc.right + 'px'; g.style.top = rc.top + 'px';
-  g.style.maxWidth = Math.max(0, pr.right - rc.right - 4) + 'px';
-  g.style.display = 'block';
+  const a = SP.anchor, c = a && SP.sug && spSame(a);
+  if (!c) { spIdle(); return; }
+  spUi(SP.regenBusy ? 'Thinking of another\u2026' : SP.sug.replace(/^\s+/, ''), true, SP.regenBusy);
+}
+function spAsk(regen) {
+  if (!SP.worker || !SP.ready || !SP.lastText) return;
+  const msg = { type: 'predict', id: ++SP.id, text: SP.lastText };
+  if (regen) { SP.regenN++; Object.assign(msg, { regen: SP.regenN, temperature: Math.min(1.1, 0.6 + 0.2 * SP.regenN), seed: (Date.now() % 100000) + SP.regenN, avoid: SP.sug }); }
+  SP.worker.postMessage(msg);
+}
+function spRegenerate() {
+  if (!SP.anchor || !SP.sug || SP.regenBusy) return;
+  if (!spSame(SP.anchor) && !spRestoreCaret()) { spHide(); return; }
+  SP.regenBusy = true; SP.regenTries = 0; spRender(); spAsk(true);
 }
 function spOnResult(m) {
-  if (m.id !== SP.id || !m.text) return;                      // stale
-  if (!spSame(SP.anchor)) return;
-  SP.sug = m.text; spRender();
+  if (m.id !== SP.id) return;                                   // stale
+  if (m.error) { SP.regenBusy = false; console.error('[SP predict]', m.error); spIdle('Prediction failed: ' + String(m.error).slice(0, 90)); return; }
+  if (!m.text) { if (SP.regenBusy) { SP.regenBusy = false; spRender(); showToast('No other suggestion found', 'info'); } else spIdle('No suggestion for this text'); return; }
+  if (!spSame(SP.anchor) && !spRestoreCaret()) return;
+  if (SP.regenBusy && SP.sug && m.text.trim() === SP.sug.trim() && SP.regenTries < 2) { SP.regenTries++; spAsk(true); return; }
+  if (SP.regenBusy && SP.sug && m.text.trim() === SP.sug.trim()) showToast('Got the same suggestion again', 'info');
+  SP.regenBusy = false; SP.sug = m.text; spRender();
+}
+function spRestoreCaret() {            // the tap may have moved the caret; put it back at the anchor
+  const a = SP.anchor; if (!a || !a.node || !a.node.isConnected || a.node.nodeValue !== a.text) return false;
+  try { const r = document.createRange(); r.setStart(a.node, a.offset); r.collapse(true); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); } catch (e) { return false; }
+  return !!spSame(a);
 }
 function spPromptFor(c) {
   const blk = c.node.parentElement.closest('p,li,h1,h2,h3,h4,h5,h6,td,th,blockquote,div') || c.pc;
@@ -25607,40 +26120,40 @@ function spSchedule() {
   clearTimeout(SP.timer);
   if (!SP.on || !SP.ready) return;
   SP.timer = setTimeout(() => {
-    const c = spCaret(); if (!c) return;
-    const text = spPromptFor(c); if (text.replace(/\s/g, '').length < 8) return;
+    const c = spCaret(); if (!c) { spIdle('Put the cursor at the end of a sentence'); return; }
+    const text = spPromptFor(c).replace(/\u00a0/g, ' '); if (text.replace(/\s/g, '').length < 8) { spIdle(); return; }
     SP.anchor = { node: c.node, offset: c.offset, text: c.text };
+    SP.lastText = text; SP.regenN = 0; SP.regenBusy = false;
     SP.worker.postMessage({ type: 'predict', id: ++SP.id, text });
+    spUi('Thinking\u2026', false, false);
   }, 150);
 }
 document.addEventListener('input', (e) => {
   if (!SP.on || !e.target.closest || !e.target.closest('#editorArea .page-content')) return;
   if (SP.skip) { SP.skip = false; return; }                   // the Tab insertion itself
-  if (e.isComposing) { spHide(); return; }
-  if (SP.sug && e.inputType === 'insertText' && e.data && SP.sug.startsWith(e.data)) {   // type-ahead
-    const c = spCaret();
-    if (c) { SP.sug = SP.sug.slice(e.data.length); SP.anchor = { node: c.node, offset: c.offset, text: c.text };
-      if (SP.sug) { spRender(); return; } }
-  }
   const keep = SP.id; spHide(); SP.id = keep + 1; spSchedule();
 }, true);
-document.addEventListener('compositionstart', () => { SP.composing = true; spHide(); }, true);
-document.addEventListener('compositionend', () => { SP.composing = false; }, true);
+
+function spAccept() {
+  if (!SP.sug || SP.regenBusy || (!spSame(SP.anchor) && !spRestoreCaret())) { if (!SP.regenBusy) spHide(); return false; }
+  let t = SP.sug; if (SP.anchor && /\s$/.test(SP.anchor.text) && /^\s/.test(t)) t = t.replace(/^\s+/, '');
+  spHide(); SP.skip = true;
+  if (!document.execCommand('insertText', false, t)) SP.skip = false;
+  setTimeout(() => { SP.skip = false; }, 0);
+  return true;
+}
+document.addEventListener('compositionend', () => { if (SP.on) setTimeout(() => { spHide(); spSchedule(); }, 0); }, true);
 document.addEventListener('keydown', (e) => {
   if (!SP.on || !SP.sug) return;
   if (e.key === 'Escape') { spHide(); return; }
   if (e.key === 'Tab' && !e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey && !e.isComposing) {
     if (!spSame(SP.anchor)) { spHide(); return; }
-    e.preventDefault(); e.stopImmediatePropagation();
-    const t = SP.sug; spHide(); SP.skip = true;
-    if (!document.execCommand('insertText', false, t)) SP.skip = false;
-    setTimeout(() => { SP.skip = false; }, 0);
+    e.preventDefault(); e.stopImmediatePropagation(); spAccept();
   }
 }, true);
-document.addEventListener('mousedown', () => { if (SP.sug) spHide(); }, true);
-window.addEventListener('scroll', () => { if (SP.sug) spHide(); }, true);
-window.addEventListener('resize', () => { if (SP.sug) spHide(); });
-document.addEventListener('selectionchange', () => { if (SP.sug && !spSame(SP.anchor)) spHide(); });
+document.addEventListener('mousedown', (e) => { if (SP.sug && !(e.target && e.target.closest && e.target.closest('#scSentBar,#scSentPanel'))) spHide(); }, true);
+window.addEventListener('scroll', (e) => { if (SP.sug && !(e.target && e.target.closest && e.target.closest('#scSentBar,#scSentPanel'))) spHide(); }, true);
+document.addEventListener('selectionchange', () => { if (SP.sug && !SP.hold && !SP.regenBusy && !spSame(SP.anchor)) spHide(); });
 document.addEventListener('DOMContentLoaded', () => { if (document.getElementById('awSentPred')) spRefreshUI(); });
 
 function toggleAutoAssist(on) {
@@ -25819,14 +26332,14 @@ function awDeletePlaceholder(key) {
 
 /* ═══════════════════════════════════════════════════════
    AUTOFILL EXAMPLE DATA (AED)
-   Fetches mahi902.github.io/Oryn/aed.txt
+   Fetches mahi902.github.io/OrynPro/aed.txt
    Format per line:  fieldname="val1","val2","val3"
 ═══════════════════════════════════════════════════════ */
 const AED = {
   data: null,          // parsed { fieldname: [val1, val2, ...] }
   loading: false,
   error: null,
-  AED_URL: 'https://mahi902.github.io/Oryn/aed.txt',
+  AED_URL: 'https://mahi902.github.io/OrynPro/aed.txt',
 
   /* Parse the raw aed.txt text into a map */
   parse(raw) {
@@ -26374,6 +26887,494 @@ async function runExpandContext() {
   const added = expanded.length - words.length;
   showToast(`Context expanded — ${options.rounds} round${options.rounds === 1 ? '' : 's'}, +${added} word${added === 1 ? '' : 's'}`, 'success');
 }
+
+/* ═══════════════════════════════════════════════════════
+   SUMMARIZE — optional on-device model (SmolLM2-360M-Instruct).
+   Same gating as Context Expansion (AI Features + AI Usecases > Sugarcane).
+   The model is installed from the app: Settings → AI → Data Sources.
+═══════════════════════════════════════════════════════ */
+let _sumRange = null, _sumMode = 'selection', _sumBusy = false, _sumAbort = null, _sumInstalled = false, _sumHelper = null;
+
+function sumGatingOk() { return ceGatingOk(); }
+
+function sumLoadHelper() {
+  if (window.AISum) return Promise.resolve();
+  if (_sumHelper) return _sumHelper;
+  _sumHelper = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = SP_AI + 'aisum3.js?v=205';
+    s.onload = res;
+    s.onerror = () => { _sumHelper = null; rej(new Error('Could not load vendor/ai/aisum3.js')); };
+    document.head.appendChild(s);
+  });
+  return _sumHelper;
+}
+
+function sumEnabled() { try { return localStorage.getItem('sum_enabled') === 'true'; } catch (e) { return false; } }
+
+/* Sidebar state: toggle usable only when unlocked + model installed; the buttons show only while it is on. */
+function sumSyncSidebar() {
+  const gated = sumGatingOk(), ready = gated && _sumInstalled, on = ready && sumEnabled();
+  const cb = document.getElementById('awSummarize');
+  if (cb) { cb.disabled = !ready; cb.checked = on; }
+  const panel = document.getElementById('sumPanel');
+  if (panel) panel.style.display = on ? 'block' : 'none';
+  const sub = document.getElementById('sumRowSub');
+  if (sub) sub.textContent = !gated ? 'Locked \u2014 enable in app Settings \u2192 AI'
+    : (!_sumInstalled ? 'Model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources)'
+    : 'Condense the whole document, specific pages, or a selection');
+  const ab = document.getElementById('askOpenBtn'); if (ab) ab.disabled = !ready;
+  const as = document.getElementById('askRowSub');
+  if (as) as.textContent = !gated ? 'Locked \u2014 enable in app Settings \u2192 AI'
+    : (!_sumInstalled ? 'Model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources)'
+    : 'Chat with your document and get answers from its pages');
+  if (!on) { const b = document.getElementById('tpSummarizeBtn'); if (b) b.style.display = 'none'; }
+}
+
+async function sumRefreshInstalled() {
+  _sumInstalled = false;
+  try { if (sumGatingOk()) { await sumLoadHelper(); _sumInstalled = await AISum.installed(); } } catch (e) {}
+  sumSyncSidebar();
+  return _sumInstalled;
+}
+
+function toggleSummarize(on) {
+  if (on && !(sumGatingOk() && _sumInstalled)) {
+    showToast(sumGatingOk() ? 'Install the summarization model in the app first (Settings \u2192 AI \u2192 Data Sources).' : 'Enable AI Features and the Sugarcane usecase in Settings \u2192 AI first.', 'error');
+    sumSyncSidebar();
+    return;
+  }
+  try { localStorage.setItem('sum_enabled', on ? 'true' : 'false'); } catch (e) {}
+  sumSyncSidebar();
+}
+
+/* Show/hide the Summarize button in the text selection popup */
+function sumCheckTextPopup() {
+  const btn = document.getElementById('tpSummarizeBtn');
+  if (!btn) return;
+  if (!_sumInstalled || !sumGatingOk() || !sumEnabled()) { btn.style.display = 'none'; return; }
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) { btn.style.display = 'none'; return; }
+  const words = sel.toString().trim().split(/\s+/).filter(Boolean).length;
+  btn.style.display = words >= 30 ? 'inline-flex' : 'none';
+}
+
+function sumDocText() {
+  const parts = [];
+  document.querySelectorAll('#editorArea .page-content').forEach(p => { const t = (p.innerText || '').trim(); if (t) parts.push(t); });
+  return parts.join('\n\n');
+}
+function sumEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+function sumWords(t) { return (t || '').trim().split(/\s+/).filter(Boolean).length; }
+
+let _sumPages = [], _sumTargetEl = null;   // _sumPages: 1-based page numbers for "Specific pages"
+function sumPageEls() { return Array.from(document.querySelectorAll('#editorArea .page-content')); }
+function sumScopeText() {
+  const els = sumPageEls(), pages = document.getElementById('sumScope').value === 'pages';
+  const pick = pages ? els.filter((_, i) => _sumPages.indexOf(i + 1) >= 0) : els;
+  _sumTargetEl = pick[0] || null;
+  const parts = [];
+  pick.forEach(p => { const t = (p.innerText || '').trim(); if (t) parts.push(t); });
+  return parts.join('\n\n');
+}
+function sumUpdateSource() {
+  _sumText = sumScopeText();
+  const n = sumWords(_sumText), pages = document.getElementById('sumScope').value === 'pages';
+  document.getElementById('sumSourceLbl').textContent = (pages ? (_sumPages.length + (_sumPages.length === 1 ? ' page' : ' pages')) : 'Whole document') + ' \u00b7 ' + n.toLocaleString() + ' words';
+  if (!_sumBusy && !document.getElementById('sumOut').value.trim()) {
+    document.getElementById('sumStatus').textContent = pages && !_sumPages.length ? 'Pick at least one page, then press Summarize.'
+      : (n > 650 ? 'Long text: it is read in parts, which takes a while on-device.' : 'Press Summarize when you are ready.');
+  }
+}
+function sumBuildPageChips() {
+  const n = sumPageEls().length;
+  let h = '';
+  for (let i = 1; i <= n; i++) h += '<button class="aed-page-toggle' + (_sumPages.indexOf(i) >= 0 ? ' selected' : '') + '" id="sumPg_' + i + '" onclick="sumTogglePage(' + i + ')">' + i + '</button>';
+  document.getElementById('sumPagesGrid').innerHTML = h;
+}
+function sumScopeChanged() {
+  const pages = document.getElementById('sumScope').value === 'pages';
+  document.getElementById('sumPagesWrap').style.display = pages ? 'block' : 'none';
+  if (pages) sumBuildPageChips();
+  sumUpdateSource();
+}
+function sumTogglePage(n) {
+  const i = _sumPages.indexOf(n);
+  if (i < 0) _sumPages.push(n); else _sumPages.splice(i, 1);
+  const b = document.getElementById('sumPg_' + n); if (b) b.classList.toggle('selected', i < 0);
+  sumUpdateSource();
+}
+function sumSelectAllPages(all) {
+  _sumPages = all ? sumPageEls().map((_, i) => i + 1) : [];
+  sumBuildPageChips();
+  sumUpdateSource();
+}
+
+let _sumText = '';
+async function openSummarize(mode) {
+  _sumMode = mode === 'document' ? 'document' : 'selection';
+  _sumRange = null;
+  if (_sumMode === 'selection') {
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) { hideTextPopup(); return; }
+    _sumRange = sel.getRangeAt(0).cloneRange();
+    _sumText = sel.toString();
+  } else {
+    _sumText = sumDocText();
+  }
+  hideTextPopup();
+  if (!sumGatingOk()) { showToast('Summarize is locked \u2014 enable it in the app Settings \u2192 AI.', 'error'); return; }
+  if (!(await sumRefreshInstalled())) { showToast('Summarization model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources).', 'info'); return; }
+  const n = sumWords(_sumText);
+  if (_sumMode === 'selection' && n < 30) { showToast('Select at least 30 words to summarize.', 'error'); return; }
+
+  document.getElementById('sumSourceLbl').textContent = (_sumMode === 'document' ? 'Whole document' : 'Selected text') + ' \u00b7 ' + n.toLocaleString() + ' words';
+  const st = localStorage.getItem('sum_style');
+  document.getElementById('sumStyle').value = (st === 'short' || st === 'bullets') ? st : 'paragraph';
+  document.getElementById('sumOut').value = '';
+  document.getElementById('sumStatus').textContent = n > 650 ? 'Long text: it is read in parts, which takes a while on-device.' : 'Ready';
+  document.getElementById('sumBtnInsert').textContent = _sumMode === 'document' ? 'Insert at top' : 'Insert below';
+  document.getElementById('sumBtnReplace').style.display = _sumMode === 'document' ? 'none' : '';
+  document.getElementById('sumBtnGo').textContent = 'Summarize';
+  sumSyncButtons();
+  const scopeSec = document.getElementById('sumScopeSec');
+  if (scopeSec) scopeSec.style.display = _sumMode === 'document' ? '' : 'none';
+  openMdl('sumMdl');
+  if (_sumMode === 'document') {       // let the user choose full document or specific pages first
+    document.getElementById('sumScope').value = 'all';
+    document.getElementById('sumPagesWrap').style.display = 'none';
+    _sumPages = [];
+    sumUpdateSource();
+  } else {
+    sumRun();
+  }
+}
+
+function sumSyncButtons() {
+  const has = !!document.getElementById('sumOut').value.trim();
+  ['sumBtnInsert', 'sumBtnReplace', 'sumBtnCopy'].forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !has || _sumBusy; });
+  const go = document.getElementById('sumBtnGo');
+  if (go) go.textContent = _sumBusy ? 'Stop' : (has ? 'Regenerate' : 'Summarize');
+}
+
+function sumStop() { try { _sumAbort && _sumAbort.abort(); } catch (e) {} }
+function sumClose() { sumStop(); closeMdl('sumMdl'); }
+
+async function sumRun() {
+  if (_sumBusy) { sumStop(); document.getElementById('sumStatus').textContent = 'Stopping\u2026'; return; }
+  const out = document.getElementById('sumOut'), status = document.getElementById('sumStatus');
+  const style = document.getElementById('sumStyle').value;
+  if (_sumMode === 'document') {
+    sumUpdateSource();
+    if (document.getElementById('sumScope').value === 'pages' && !_sumPages.length) { status.textContent = 'Pick at least one page first.'; return; }
+    if (sumWords(_sumText) < 30) { status.textContent = 'That is too short to summarize (at least 30 words needed).'; return; }
+  }
+  out.value = '';
+  _sumBusy = true; _sumAbort = new AbortController(); sumSyncButtons();
+  let got = false;
+  try {
+    await sumLoadHelper();
+    const text = await AISum.summarize(_sumText, {
+      style, signal: _sumAbort.signal,
+      onLoading: () => { status.textContent = 'Loading the model (first run takes a moment)\u2026'; },
+      onStage: (n) => { status.textContent = n; },
+      onToken: (t) => { if (!got) { got = true; status.textContent = 'Writing the summary\u2026'; } out.value += t; }
+    });
+    if (text === null) { status.textContent = out.value.trim() ? 'Stopped \u2014 partial summary kept.' : 'Stopped.'; }
+    else { out.value = text; status.textContent = text.trim() ? 'Done' : 'The model returned nothing. Try again or choose another length.'; }
+  } catch (e) {
+    status.textContent = 'Could not summarize: ' + ((e && e.message) || 'unknown error');
+  }
+  _sumBusy = false; _sumAbort = null; sumSyncButtons();
+}
+
+/* Build the node(s) to insert: real list for bullets, otherwise paragraphs */
+function sumBuildNode(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const isList = lines.length > 0 && lines.every(l => /^[-*\u2022]\s+/.test(l));
+  if (isList) {
+    const ul = document.createElement('ul');
+    lines.forEach(l => { const li = document.createElement('li'); li.textContent = l.replace(/^[-*\u2022]\s+/, ''); ul.appendChild(li); });
+    return ul;
+  }
+  const wrap = document.createDocumentFragment();
+  lines.forEach(l => { const p = document.createElement('p'); p.textContent = l; wrap.appendChild(p); });
+  return wrap;
+}
+function sumBlockOf(node) {            // the top-level block (direct child of the page) that holds the node
+  let el = node && node.nodeType === 1 ? node : (node && node.parentElement);
+  while (el && !(el.parentElement && el.parentElement.classList && el.parentElement.classList.contains('page-content'))) el = el.parentElement;
+  return el;
+}
+
+function sumInsert() {
+  const text = document.getElementById('sumOut').value.trim();
+  if (!text) return;
+  const node = sumBuildNode(text);
+  if (_sumMode === 'document') {
+    const first = (_sumTargetEl && _sumTargetEl.isConnected) ? _sumTargetEl : document.querySelector('#editorArea .page-content');
+    if (!first) { showToast('Could not find the page to insert into.', 'error'); return; }
+    first.insertBefore(node, first.firstChild);
+    first.dispatchEvent(new Event('input', { bubbles: true }));
+  } else {
+    const block = _sumRange && sumBlockOf(_sumRange.endContainer);
+    if (!block || !block.isConnected) { showToast('The selection moved. Select the text again.', 'error'); return; }
+    block.parentNode.insertBefore(node, block.nextSibling);
+    block.parentNode.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+  try { scheduleAutoSave(); } catch (e) {}
+  closeMdl('sumMdl');
+  showToast('Summary inserted', 'success');
+}
+
+function sumReplace() {
+  const text = document.getElementById('sumOut').value.trim();
+  if (!text || !_sumRange) return;
+  try {
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(_sumRange);
+    const html = text.split('\n').map(l => sumEsc(l.trim().replace(/^[-*]\s+/, '\u2022 '))).filter(Boolean).join('<br>');
+    document.execCommand('insertHTML', false, html);
+  } catch (e) { showToast('Could not replace the selection.', 'error'); return; }
+  try { scheduleAutoSave(); } catch (e) {}
+  closeMdl('sumMdl');
+  showToast('Selection replaced with the summary', 'success');
+}
+
+async function sumCopy() {
+  const text = document.getElementById('sumOut').value;
+  try { await navigator.clipboard.writeText(text); showToast('Copied', 'success'); }
+  catch (e) { const t = document.getElementById('sumOut'); t.select(); try { document.execCommand('copy'); showToast('Copied', 'success'); } catch (e2) { showToast('Could not copy', 'error'); } }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ASK DOCUMENT — chat with the document using the same on-device model.
+   The editor finds the passages that match the question's words (BM25 keyword
+   ranking, per page), and the model answers only from those passages.
+═══════════════════════════════════════════════════════ */
+let _askMsgs = [], _askBusy = false, _askAbort = null, _askPages = [];
+const ASK_STOP = new Set('a an the and or but if of to in on at by for with from as is are was were be been being am do does did has have had it its this that these those i you he she we they me my your our their what which who whom whose when where why how can could should would will shall may might not no yes so than then there here about into over under again also just very please tell'.split(' '));
+const ASK_BUDGET = { smart: 800, all: 1400, pages: 1200 };   // words of excerpts sent to the model
+
+function askStem(w) {
+  if (w.length > 5 && /(ing|ed)$/.test(w)) return w.replace(/(ing|ed)$/, '');
+  if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
+  return w;
+}
+function askTokens(t) {
+  return (String(t).toLowerCase().match(/[\p{L}\p{N}]+/gu) || []).filter(w => w.length > 1 && !ASK_STOP.has(w)).map(askStem);
+}
+
+/* Split the pages into passages of about 90 words, remembering the page each came from. */
+function askPassages(pageNums) {
+  const out = []; let idx = 0;
+  sumPageEls().forEach((el, i) => {
+    const pn = i + 1;
+    if (pageNums && pageNums.indexOf(pn) < 0) return;
+    let cur = [], n = 0;
+    const flush = () => { if (cur.length) { const text = cur.join(' '); out.push({ page: pn, idx: idx++, text: text, toks: askTokens(text), words: n }); } cur = []; n = 0; };
+    (el.innerText || '').split(/\n+/).map(x => x.trim()).filter(Boolean).forEach(par => {
+      par.split(/(?<=[.!?\u3002\uff01\uff1f])\s+/).forEach(sn => {
+        const w = sn.split(/\s+/).filter(Boolean).length;
+        if (n + w > 90 && cur.length) flush();
+        cur.push(sn); n += w;
+      });
+    });
+    flush();
+  });
+  return out;
+}
+
+function askRank(ps, q) {
+  const N = ps.length, avg = ps.reduce((a, p) => a + p.words, 0) / Math.max(1, N) || 1, df = {};
+  ps.forEach(p => new Set(p.toks).forEach(t => { df[t] = (df[t] || 0) + 1; }));
+  const qs = Array.from(new Set(q));
+  ps.forEach(p => {
+    const tf = {}; p.toks.forEach(t => { tf[t] = (tf[t] || 0) + 1; });
+    let sc = 0;
+    qs.forEach(t => {
+      const f = tf[t]; if (!f) return;
+      const idf = Math.log(1 + (N - df[t] + 0.5) / (df[t] + 0.5));
+      sc += idf * (f * 2.5) / (f + 1.5 * (0.25 + 0.75 * p.words / avg));
+    });
+    p.score = sc;
+  });
+}
+
+/* -> { empty } | { none } | { context, pages, words } */
+function askBuildContext(question, scope) {
+  const ps = askPassages(scope === 'pages' ? _askPages.slice() : null);
+  if (!ps.length) return { empty: true };
+  const budget = ASK_BUDGET[scope] || ASK_BUDGET.smart;
+  const total = ps.reduce((a, p) => a + p.words, 0);
+  const q = askTokens(question);
+  let chosen;
+  if (scope === 'all' && total <= budget) {
+    chosen = ps;                                   // the whole document fits, so send all of it
+  } else if (!q.length) {
+    chosen = []; let w = 0;                        // no usable question words: start from the top
+    for (const p of ps) { if (w + p.words > budget && chosen.length) break; chosen.push(p); w += p.words; }
+  } else {
+    askRank(ps, q);
+    chosen = []; let w = 0;
+    for (const p of ps.slice().sort((a, b) => b.score - a.score)) {
+      if (p.score <= 0) break;
+      if (w + p.words > budget && chosen.length) break;
+      chosen.push(p); w += p.words;
+    }
+    if (!chosen.length) return { none: true };
+    chosen.sort((a, b) => a.idx - b.idx);
+  }
+  const blocks = []; let lastPage = -1, lastIdx = -2;
+  chosen.forEach(p => {
+    if (p.page === lastPage && p.idx === lastIdx + 1) blocks[blocks.length - 1] += '\n' + p.text;
+    else blocks.push('[Page ' + p.page + ']\n' + p.text);
+    lastPage = p.page; lastIdx = p.idx;
+  });
+  return { context: blocks.join('\n\n'), pages: Array.from(new Set(chosen.map(p => p.page))), words: chosen.reduce((a, p) => a + p.words, 0) };
+}
+
+/* ── UI ── */
+function askScopeValue() { return document.getElementById('askScope').value; }
+function askBuildPageChips() {
+  const n = sumPageEls().length; let h = '';
+  for (let i = 1; i <= n; i++) h += '<button class="aed-page-toggle' + (_askPages.indexOf(i) >= 0 ? ' selected' : '') + '" id="askPg_' + i + '" onclick="askTogglePage(' + i + ')">' + i + '</button>';
+  document.getElementById('askPagesGrid').innerHTML = h;
+}
+function askScopeChanged() {
+  const sc = askScopeValue();
+  document.getElementById('askPagesWrap').style.display = sc === 'pages' ? 'block' : 'none';
+  if (sc === 'pages') askBuildPageChips();
+  document.getElementById('askScopeHint').textContent = sc === 'smart' ? 'Picks the passages that match the words in your question.'
+    : sc === 'all' ? 'Reads as much of the whole document as fits.' : 'Only looks at the pages you choose.';
+}
+function askTogglePage(n) {
+  const i = _askPages.indexOf(n);
+  if (i < 0) _askPages.push(n); else _askPages.splice(i, 1);
+  const b = document.getElementById('askPg_' + n); if (b) b.classList.toggle('selected', i < 0);
+}
+function askSelectAllPages(all) { _askPages = all ? sumPageEls().map((_, i) => i + 1) : []; askBuildPageChips(); }
+
+function askRender() {
+  const box = document.getElementById('askChat');
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  box.textContent = '';
+  if (!_askMsgs.length) {
+    const e = document.createElement('div'); e.className = 'ask-empty';
+    e.textContent = 'Ask a question about this document.\nFor example: \u201cWhat is the deadline?\u201d or \u201cWho is responsible for the budget?\u201d';
+    e.style.whiteSpace = 'pre-line'; box.appendChild(e);
+  }
+  _askMsgs.forEach((m, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'ask-msg ' + (m.role === 'user' ? 'ask-user' : 'ask-bot') + (m.err ? ' ask-err' : '');
+    const bub = document.createElement('div'); bub.className = 'ask-bub';
+    bub.textContent = m.content || (m.streaming ? '\u2026' : '');
+    wrap.appendChild(bub);
+    if (m.role === 'assistant' && !m.streaming && m.content && !m.err) {
+      const meta = document.createElement('div'); meta.className = 'ask-meta';
+      if (m.pages && m.pages.length) {
+        const lbl = document.createElement('span'); lbl.textContent = m.pages.length === 1 ? 'Page:' : 'Pages:'; meta.appendChild(lbl);
+        m.pages.forEach(pn => {
+          const b = document.createElement('button'); b.className = 'ask-src'; b.textContent = pn; b.title = 'Go to page ' + pn;
+          b.onclick = () => askGoPage(pn); meta.appendChild(b);
+        });
+      }
+      const c = document.createElement('button'); c.className = 'ask-copy'; c.title = 'Copy answer';
+      c.innerHTML = '<span class="material-symbols-outlined">content_copy</span>Copy';
+      c.onclick = () => askCopy(i, c); meta.appendChild(c);
+      wrap.appendChild(meta);
+    }
+    box.appendChild(wrap);
+  });
+  if (nearBottom || _askBusy) box.scrollTop = box.scrollHeight;
+}
+
+function askSyncUI() {
+  const b = document.getElementById('askSendBtn'); if (b) b.textContent = _askBusy ? 'Stop' : 'Send';
+}
+function askKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if (!_askBusy) askSend(); }
+}
+function askStop() { try { _askAbort && _askAbort.abort(); } catch (e) {} }
+function askClose() { askStop(); closeMdl('askMdl'); }
+function askClear() { askStop(); _askMsgs = []; document.getElementById('askStatus').textContent = ''; askRender(); }
+
+async function askCopy(i, btn) {
+  const text = (_askMsgs[i] && _askMsgs[i].content) || '';
+  let ok = true;
+  try { await navigator.clipboard.writeText(text); }
+  catch (e) {
+    try { const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select(); ok = document.execCommand('copy'); t.remove(); }
+    catch (e2) { ok = false; }
+  }
+  showToast(ok ? 'Copied' : 'Could not copy', ok ? 'success' : 'error');
+  if (ok && btn) { btn.innerHTML = '<span class="material-symbols-outlined">check</span>Copied'; setTimeout(() => { try { btn.innerHTML = '<span class="material-symbols-outlined">content_copy</span>Copy'; } catch (e) {} }, 1500); }
+}
+
+function askGoPage(n) {
+  askClose();
+  const el = sumPageEls()[n - 1];
+  if (el) setTimeout(() => { try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {} }, 150);
+}
+
+async function openAskDocument() {
+  if (!sumGatingOk()) { showToast('Ask Document is locked \u2014 enable it in the app Settings \u2192 AI.', 'error'); return; }
+  if (!(await sumRefreshInstalled())) { showToast('Summarization model not installed \u2013 install it in the app (Settings \u2192 AI \u2192 Data Sources).', 'info'); return; }
+  askScopeChanged();
+  askSyncUI();
+  askRender();
+  openMdl('askMdl');
+  setTimeout(() => { const i = document.getElementById('askInput'); if (i) i.focus(); }, 80);
+}
+
+async function askSend() {
+  if (_askBusy) { askStop(); document.getElementById('askStatus').textContent = 'Stopping\u2026'; return; }
+  const inp = document.getElementById('askInput'), status = document.getElementById('askStatus');
+  const q = inp.value.trim();
+  if (!q) return;
+  const scope = askScopeValue();
+  if (scope === 'pages' && !_askPages.length) { status.textContent = 'Pick at least one page first.'; return; }
+  inp.value = '';
+  const history = [];                                   // completed question/answer pairs, newest last
+  for (let i = 0; i + 1 < _askMsgs.length; i += 2) {
+    const u = _askMsgs[i], a = _askMsgs[i + 1];
+    if (u && a && u.role === 'user' && a.role === 'assistant' && a.content && !a.err && !a.local) history.push({ role: 'user', content: u.content }, { role: 'assistant', content: a.content });
+  }
+  _askMsgs.push({ role: 'user', content: q });
+  const ctx = askBuildContext(q, scope);
+  if (ctx.empty || ctx.none) {
+    _askMsgs.push({ role: 'assistant', local: true, pages: [], content: ctx.empty
+      ? 'There is no text to search yet' + (scope === 'pages' ? ' on the pages you chose.' : '.')
+      : 'I could not find any passage that matches the words in your question. Try different words, or choose another place to look.' });
+    status.textContent = ''; askRender(); return;
+  }
+  const msg = { role: 'assistant', content: '', pages: ctx.pages, streaming: true };
+  _askMsgs.push(msg);
+  _askBusy = true; _askAbort = new AbortController(); askSyncUI(); askRender();
+  status.textContent = 'Reading ' + ctx.pages.length + (ctx.pages.length === 1 ? ' page' : ' pages') + '\u2026';
+  let got = false;
+  try {
+    await sumLoadHelper();
+    const text = await AISum.ask(q, ctx.context, {
+      history: history.slice(-4), signal: _askAbort.signal,
+      onLoading: () => { status.textContent = 'Loading the model (first run takes a moment)\u2026'; },
+      onToken: (t) => { if (!got) { got = true; status.textContent = 'Writing the answer\u2026'; } msg.content += t; askRender(); }
+    });
+    if (text === null) { if (!msg.content.trim()) { msg.content = '(Stopped)'; msg.local = true; } }
+    else { msg.content = text.trim() || 'The model returned nothing. Try rephrasing your question.'; }
+  } catch (e) {
+    msg.content = 'Could not answer: ' + ((e && e.message) || 'unknown error'); msg.err = true; msg.pages = [];
+  }
+  msg.streaming = false; _askBusy = false; _askAbort = null;
+  status.textContent = '';
+  askSyncUI(); askRender();
+}
+/* ASK DOCUMENT END */
+
+document.addEventListener('DOMContentLoaded', () => { try { sumRefreshInstalled(); } catch (e) {} });
+/* The model/gating is changed in the app (Settings \u2192 AI), so re-check when the user comes back to this page. */
+window.addEventListener('focus', () => { if (!_sumBusy) sumRefreshInstalled().catch(() => {}); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !_sumBusy) sumRefreshInstalled().catch(() => {}); });
 
 document.addEventListener('DOMContentLoaded', () => { try { ceInit(); } catch(e) {} });
 
@@ -29316,10 +30317,12 @@ authInitFromCookie();
 })();
 
 /* ── Promotional Toasts: the trigger-word list is downloaded (a plain GET of a static file) and matched
-   locally while typing. Nothing typed ever leaves the device. Off = the file is never requested. ── */
+   locally while typing. Nothing typed ever leaves the device. Off = the file is never requested.
+   The last downloaded list is kept on-device (and by the service worker) so toasts also work offline;
+   it is refreshed whenever a connection is available. ── */
 (function(){
-  var URL_='https://mahi902.github.io/Oryn/spterm.txt', KEY='sc_promo_toasts';
-  var entries=[], loaded=false, loading=false, lastShown=0;
+  var URL_='https://mahi902.github.io/OrynPro/spterm.txt', KEY='sc_promo_toasts', SKEY='sc_promo_terms';
+  var entries=[], fresh=false, loading=false, lastShown=0;
   var BOUND=/[\s.,;:!?()\[\]{}"'“”‘’\-–—\/\\]/, WORD=/[\p{L}\p{N}]/u;
   function enabled(){ try{ return localStorage.getItem(KEY)!=='0'; }catch(e){ return true; } }
   function parse(txt){
@@ -29335,10 +30338,18 @@ authInitFromCookie();
     return out;
   }
   function load(){
-    if(loaded||loading||!enabled()||!navigator.onLine)return;
+    if(fresh||loading||!enabled())return;
+    var saved=null; try{ saved=localStorage.getItem(SKEY); }catch(e){}
+    if(saved&&!entries.length){ entries=parse(saved); }            // use the stored list straight away (works offline)
+    if(!navigator.onLine&&entries.length)return;                   // offline with a list in hand: nothing to fetch
     loading=true;
     fetch(URL_,{cache:'no-cache'}).then(function(r){ if(!r.ok)throw 0; return r.text(); })
-      .then(function(t){ if(enabled()){ entries=parse(t); loaded=true; } })
+      .then(function(t){
+        if(!enabled())return;
+        var e=parse(t); if(!e.length)return;
+        entries=e; fresh=true;
+        try{ localStorage.setItem(SKEY,t); }catch(x){}
+      })
       .catch(function(){}).then(function(){ loading=false; });
   }
   function has(text,term,endOnly){
@@ -29386,7 +30397,7 @@ authInitFromCookie();
       cb.checked=enabled();
       cb.addEventListener('change',function(){
         try{ localStorage.setItem(KEY,cb.checked?'1':'0'); }catch(e){}
-        if(cb.checked)load(); else { entries=[]; loaded=false; }
+        if(cb.checked)load(); else { entries=[]; fresh=false; try{ localStorage.removeItem(SKEY); }catch(e){} }
       });
     }
     document.addEventListener('input',onInput,true);
@@ -30762,7 +31773,7 @@ function insertShape() {
    REDIRECTION PREVIEW
 ═══════════════════════════════════════════════════════ */
 const REDIR = { enabled: true };
-const REDIR_BASE = 'https://mahi902.github.io/Oryn/red.html';
+const REDIR_BASE = 'https://mahi902.github.io/OrynPro/red.html';
 
 /* Intercept all link clicks inside page content */
 document.addEventListener('click', function(e) {
@@ -35175,7 +36186,7 @@ async function checkApiHash() {
 </script>
 <script id="sc-companion-api">
 /* ═══════════════════════════════════════════════════════
-   COMPANION MESSAGE API (inbound)  - used by the Oryn Companion add-on
+   COMPANION MESSAGE API (inbound)  - used by the Oryn Pro Companion add-on
    Contract (parent -> app): { source:"oryn-companion", id, command, ...args }
    Reply (app -> sender):    { source:"sugarcane-editor", id, command, ok, ... }
    Commands: ping | newdoc{title,html} | insert{html} | open{docId,mode} | getdownload{docId,format}
@@ -37006,7 +38017,7 @@ body.dark .sc-admin-box button.sc-admin-pick{background:#252525;color:hsl(var(--
 <script>
 /* v150 — SCAdmin: Google login + su.json "Admin" role gates Admin Ability */
 window.SCAdmin=(function(){
-  const SU_URL='https://mahi902.github.io/Oryn/su.json';
+  const SU_URL='https://mahi902.github.io/OrynPro/su.json';
   let state={status:'nologin',msg:'Sign in with Google to use Admin Ability.'}, busy=null, sel='', open=false, lastEmail='', wasAdmin=false, lastTry=0;
   const E=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const gu=()=>(typeof _googleUser!=='undefined')?_googleUser:null;
@@ -37146,8 +38157,8 @@ setInterval(()=>{ try{ const A=window.SCAdmin; const u=(typeof _googleUser!=='un
 window._scAcc=function(){ try{ const p=document.createElement('span'); p.style.cssText='position:absolute;visibility:hidden;pointer-events:none;color:var(--ui-link)'; document.body.appendChild(p); const c=getComputedStyle(p).color; p.remove(); return c||'#1976d2'; }catch(e){ return '#1976d2'; } };
 /* v152 — SCTheme: Theme Panel for users tagged "verified" in su.json */
 window.SCTheme=(function(){
-  const SU_URL='https://mahi902.github.io/Oryn/su.json';
-  const IMG='https://mahi902.github.io/Oryn/img/verifiedonlybottomright.png';
+  const SU_URL='https://mahi902.github.io/OrynPro/su.json';
+  const IMG='https://mahi902.github.io/OrynPro/img/verifiedonlybottomright.png';
   const PK='sc-theme-prefs', VK='sc-theme-verified';
   const t0=Date.now();
   let isVer=false, prefs={accent:'blueberry',css:'',bloom:false,palette:'default'}, rbTimer=null, hue=0, panel=null, busy=false;
@@ -38313,7 +39324,8 @@ body.dark .mbox.scf-box{--scf-a:hsl(calc(var(--sc-h,210) + -3.3) calc(89% * var(
 (function(){
 'use strict';
 const toast=(m,t)=>{try{showToast(m,t||'info')}catch(e){}};
-const ic=n=>'<span class="material-symbols-outlined">'+n+'</span>';
+const PHOTO_ED_SVG='<span class="material-symbols-outlined pic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M4 16l5-5 4 4 3-3 4 4"/><circle cx="9" cy="9" r=".6"/></svg></span>';
+const ic=n=>n==='photo_editor'?PHOTO_ED_SVG:'<span class="material-symbols-outlined">'+n+'</span>';
 const mk=(cls,html)=>{const b=document.createElement('button');b.type='button';b.className=cls;if(html)b.innerHTML=html;return b};
 const E=window.__scEdit=window.__scEdit||{};
 const flag=el=>!!(el&&el.dataset&&el.dataset.scLocked==='1');
@@ -38402,6 +39414,8 @@ const CFG=[
    isLocked:i=>S.lockedImgs.has(i),
    toggleLock:i=>{if(S.lockedImgs.has(i)){S.lockedImgs.delete(i);i.classList.remove('img-locked');i.draggable=false;toast('Image unlocked')}else{S.lockedImgs.add(i);i.classList.add('img-locked');toast('Image locked')}},
    del:i=>{S.lockedImgs.delete(i);i.remove();try{checkContent()}catch(e){}try{depickImg()}catch(e){}_editingImg=null}}],
+ ['pedMdl',{name:'Photo Editor',icon:'photo_editor',primary:'.mbtn.primary',keepTitle:true,alwaysEdit:true,close:()=>pedCancel(),
+   label:()=>({icon:'check',text:'Apply'}),target:()=>null}],
  ['mapMdl',{name:'Map',icon:'map',primary:'#mpInsert',keepTitle:true,
    target:()=>window.scMapEditing?window.scMapEditing():null,
    isLocked:i=>S.lockedImgs.has(i),
@@ -41061,5 +42075,813 @@ window.openMapModal=function(img){
 
 <script>document.addEventListener('dblclick',function(e){var i=e.target;if(i&&i.tagName==='IMG'&&i.dataset&&i.dataset.mapState){e.preventDefault();e.stopPropagation();window.openMapModal(i);}},true);</script>
 
+
+<script>
+/* ── Add Page button: hold 0.5s (+1.5s fill) or right-click → Before | Cancel | After ── */
+(function(){
+  const DELAY=500, FILL=1500;
+  let btn=null, fill=null, dT=null, fT=null, holding=false, done=false, menu=null;
+  const sel='.add-page-btn';
+  function reset(){ clearTimeout(dT); clearTimeout(fT); holding=false;
+    if(btn){ btn.classList.remove('filling'); }
+    if(fill){ fill.style.transition='width .15s ease'; fill.style.width='0%'; } }
+  function closeMenu(){ if(menu){ menu.remove(); menu=null; } if(btn){ const was=btn.style.display==='none'; btn.style.display=''; if(was){ btn.classList.remove('apb-back'); void btn.offsetWidth; btn.classList.add('apb-back'); btn.addEventListener('animationend',()=>btn.classList.remove('apb-back'),{once:true}); } } document.removeEventListener('pointerdown',outside,true); }
+  function outside(e){ if(menu && !menu.contains(e.target)){ e.preventDefault(); e.stopPropagation(); closeMenu(); } }
+  function lastOuter(){ const a=[...document.querySelectorAll('#editorArea .page-outer')]; return a[a.length-1]||null; }
+  function insertBeforeLast(){
+    if(!_scGate('addPageBefore')) return;
+    const outer=_buildPageOuter(Date.now()+'_'+Math.floor(Math.random()*9999));
+    const ref=lastOuter(); const area=document.getElementById('editorArea');
+    ref ? ref.before(outer) : area.appendChild(outer);
+    certMintForPage(outer.querySelector('.page')); _refreshPageState();
+    const c=outer.querySelector('.page-content'); if(c){ c.focus(); outer.scrollIntoView({behavior:'smooth',block:'center'}); }
+    DOC.schedule(); showToast('Page added before last','success');
+  }
+  function openMenu(){
+    if(!btn) return; closeMenu();
+    menu=document.createElement('div'); menu.className='apb-choose';
+    const mk=(cls,icon,label,fn)=>{ const b=document.createElement('button'); b.type='button'; if(cls) b.className=cls;
+      b.innerHTML=`<span class="material-symbols-outlined">${icon}</span>${label}`;
+      b.addEventListener('click',e=>{ e.stopPropagation(); e.preventDefault(); closeMenu(); fn&&fn(); }); return b; };
+    menu.append(mk('','note_add','Before',insertBeforeLast), mk('apb-cancel','close','Cancel'), mk('','post_add','After',()=>addNewPage()));
+    const w=btn.offsetWidth, h=Math.max(btn.offsetHeight,48); menu.style.width=w+'px'; menu.style.height=h+'px'; menu.style.minHeight=h+'px'; btn.after(menu); btn.style.display='none';
+    setTimeout(()=>document.addEventListener('pointerdown',outside,true),0);
+  }
+  let lastType='mouse';
+  document.addEventListener('pointerdown',e=>{
+    lastType=e.pointerType||'mouse';
+    if(e.target.closest&&e.target.closest('.apb-choose')) return; const b=e.target.closest&&e.target.closest(sel); if(!b||b.disabled||e.button>0) return;
+    btn=b; btn.classList.add('apb-hold');
+    fill=btn.querySelector('.apb-fill');
+    if(!fill||!btn.querySelector('.apb-content')){
+      btn.querySelectorAll('.apb-clip,.apb-content').forEach(n=>{ if(n.classList.contains('apb-content')) while(n.firstChild) btn.insertBefore(n.firstChild,n); n.remove(); });
+      const clip=document.createElement('span'); clip.className='apb-clip';
+      fill=document.createElement('span'); fill.className='apb-fill'; clip.appendChild(fill);
+      const content=document.createElement('span'); content.className='apb-content';
+      while(btn.firstChild) content.appendChild(btn.firstChild);
+      btn.append(clip,content);
+    }
+    reset(); fill.style.transition='none'; fill.style.width='0%'; holding=true; done=false;
+    dT=setTimeout(()=>{ if(!holding) return; btn.classList.add('filling'); void fill.offsetWidth;
+      fill.style.transition=`width ${FILL}ms linear`; fill.style.width='100%';
+      fT=setTimeout(()=>{ if(!holding) return; done=true; reset(); openMenu(); },FILL); },DELAY);
+  },true);
+  ['pointerup','pointercancel','pointerleave'].forEach(t=>document.addEventListener(t,e=>{ if(holding && (t!=='pointerleave'||(e.target.closest&&e.target.closest(sel)))) reset(); },true));
+  document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest(sel); if(b&&done){ e.stopImmediatePropagation(); e.preventDefault(); done=false; } },true);
+  document.addEventListener('contextmenu',e=>{ const b=e.target.closest&&e.target.closest(sel);
+    if(!b) return; e.preventDefault(); if(b.disabled||e.target.closest('.apb-choose')) return; if(lastType==='touch'||lastType==='pen') return; btn=b; reset(); done=false; openMenu(); },true);
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════
+   UNIVERSAL HISTORY — one undo/redo for everything in the pages
+   • A MutationObserver on #editorArea records EVERY change (text, attributes,
+     inserted/removed/moved nodes, whole pages) as reversible operations, so
+     nothing needs registering: new features are covered automatically.
+   • Live nodes are kept (not re-parsed), so listeners / wiring survive undo.
+   • Sidebar settings (inputs/selects inside .sidebar) are recorded too and
+     replayed through their own input/change events so the app re-applies them.
+   • Decorations (spell/grammar marks, rulers, page numbers…) never create steps.
+   Opt-outs for future transient UI:  data-undo-ignore  |  SCHistory.ignore(sel)
+                                      SCHistory.decor(className) | SCHistory.mute(fn)
+═══════════════════════════════════════════════════════ */
+(function () {
+  if (window.SCHistory) return;
+  const area = document.getElementById('editorArea');
+  if (!area) return;
+
+  const MAX_STEPS = 400, TYPE_MS = 1000, GAP_MS = 150, SETTLE_MS = 250, HUGE = 4000;
+  const ROOT_SEL = '.page-content,.page-header-area,.page-footer-area';
+  const ignoreSels = ['.add-page-btn', '.apb-choose', '.page-num-stamp', '.page-margin-overlay', '.page-scale-ruler', '.ruler-corner', '.watermark', '[data-undo-ignore]'];
+  const decorCls = new Set(['spell-error', 'spell-corrected', 'grammar-error', 'offensive-word', 'sc-hit-bad']);
+  const transientClass = /(^|-)(selected|active|hover|hovering|focus|focused|dragging|dragover|drag-over|resizing|highlight|highlighted|holding|filling|flash|flashing|picked|img-active)(-|$)|^pi-drag$/i;
+  const transientStyle = new Set(['cursor', 'outline', 'outline-offset', 'transition', 'pointer-events', 'user-select', '-webkit-user-select', 'will-change', 'caret-color', 'animation', 'touch-action']);
+  const ctrlIgnore = '[class*="chat"],[id*="chat"],[id*="search"],[class*="search"],[id*="find"],[id*="replace"],[id*="prompt"],[data-undo-ignore]';
+  const BAD_INPUT = new Set(['button', 'submit', 'reset', 'file', 'password', 'image', 'hidden']);
+
+  const H = {
+    undo: [], redo: [], mute: 0, applying: false, settle: 0,
+    lastSel: null, lastBI: null, textBase: new WeakMap(),
+    pendCtrl: [], ctrlTimer: 0, gesture: false, lastKnown: new WeakMap(), radioPrev: new Map()
+  };
+  const now = () => Date.now();
+  const ignoreSel = () => ignoreSels.join(',');
+
+  /* ── environment checks ── */
+  const loading = () => { try { if (typeof _isLoadingData !== 'undefined' && _isLoadingData) return true; } catch (e) {} try { if (typeof DOC !== 'undefined' && DOC.opening) return true; } catch (e) {} return false; };
+  const collabOn = () => { const b = document.getElementById('collabBanner'); return !!(b && b.classList.contains('visible')); };
+  const elOf = n => (n && n.nodeType === 1) ? n : (n ? n.parentElement : null);
+  const isIgnored = n => { const e = elOf(n); return !!(e && e.closest && e.closest(ignoreSel())); };
+  const rootOf = n => { const e = elOf(n); return e && e.closest ? e.closest(ROOT_SEL) : null; };
+
+  /* ── selection snapshots ── */
+  function snapSel() {
+    const s = window.getSelection && window.getSelection();
+    if (!s || !s.rangeCount || !s.anchorNode || !area.contains(s.anchorNode)) return null;
+    return { an: s.anchorNode, ao: s.anchorOffset, fn: s.focusNode, fo: s.focusOffset };
+  }
+  document.addEventListener('selectionchange', () => { if (!H.applying) H.lastSel = snapSel(); });
+  const nodeLen = n => n.nodeType === 3 ? n.data.length : n.childNodes.length;
+  function restoreSel(sel, fallbackNode) {
+    const s = window.getSelection(); if (!s) return;
+    try {
+      if (sel && sel.an.isConnected && sel.fn.isConnected) {
+        const ed = elOf(sel.an) && elOf(sel.an).closest('[contenteditable="true"]');
+        if (ed && document.activeElement !== ed) ed.focus({ preventScroll: true });
+        s.setBaseAndExtent(sel.an, Math.min(sel.ao, nodeLen(sel.an)), sel.fn, Math.min(sel.fo, nodeLen(sel.fn)));
+        H.lastSel = snapSel();
+        const e = elOf(sel.fn); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'nearest' });
+        return;
+      }
+    } catch (e) {}
+    const fe = elOf(fallbackNode);
+    if (fe && fe.isConnected && fe.scrollIntoView) fe.scrollIntoView({ block: 'nearest' });
+  }
+
+  /* ── classification of a single record ── */
+  const styleMap = css => { const m = {}; (css || '').split(';').forEach(p => { const i = p.indexOf(':'); if (i > 0) m[p.slice(0, i).trim().toLowerCase()] = p.slice(i + 1).trim(); }); return m; };
+  function isDecorNode(n) { return n.nodeType === 3 || (n.nodeType === 1 && [...n.classList].some(c => decorCls.has(c))); }
+
+  function classify(r) {
+    if (r.type === 'attributes') {
+      const t = r.target, name = r.attributeName;
+      if (isIgnored(t)) return 'drop';
+      const nv = t.getAttribute(name);
+      if (nv === r.oldValue) return 'drop';
+      if (name === 'spellcheck') return 'attr-t';
+      if (name === 'class') {
+        const a = new Set((r.oldValue || '').split(/\s+/).filter(Boolean)), b = new Set((nv || '').split(/\s+/).filter(Boolean));
+        const diff = [...a].filter(x => !b.has(x)).concat([...b].filter(x => !a.has(x)));
+        if (diff.length && diff.every(x => transientClass.test(x) || decorCls.has(x))) return 'attr-t';
+        return 'real';
+      }
+      if (name === 'style') {
+        const a = styleMap(r.oldValue), b = styleMap(nv);
+        const keys = new Set(Object.keys(a).concat(Object.keys(b)));
+        const changed = [...keys].filter(k => a[k] !== b[k]);
+        if (changed.length && changed.every(k => transientStyle.has(k))) return 'attr-t';
+      }
+      return 'real';
+    }
+    if (r.type === 'characterData') return isIgnored(r.target) ? 'drop' : 'struct-d';
+    const nodes = [...r.addedNodes, ...r.removedNodes];
+    if (isIgnored(r.target)) return 'drop';
+    if (nodes.length && nodes.every(isIgnored)) return 'drop';
+    return nodes.every(isDecorNode) ? 'struct-d' : 'real';
+  }
+
+  /* ── turn a record into a reversible op ── */
+  function toOp(r) {
+    if (r.type === 'attributes') return { k: 'a', t: r.target, n: r.attributeName, ov: r.oldValue, nv: r.target.getAttribute(r.attributeName) };
+    if (r.type === 'characterData') return { k: 'c', t: r.target, ov: r.oldValue, nv: r.target.data };
+    return { k: 'l', t: r.target, add: [...r.addedNodes], rem: [...r.removedNodes], prev: r.previousSibling, next: r.nextSibling };
+  }
+  function refFor(op) {
+    if (op.next && op.next.parentNode === op.t) return op.next;
+    if (op.prev && op.prev.parentNode === op.t) return op.prev.nextSibling;
+    return null;
+  }
+  function inv(op) {
+    try {
+      if (op.k === 'c') { if (op.ov != null) op.t.data = op.ov; }
+      else if (op.k === 'a') { op.ov === null ? op.t.removeAttribute(op.n) : op.t.setAttribute(op.n, op.ov); }
+      else {
+        op.add.forEach(n => { if (n.parentNode === op.t) op.t.removeChild(n); });
+        const ref = refFor(op);
+        op.rem.forEach(n => op.t.insertBefore(n, ref));
+      }
+    } catch (e) {}
+  }
+  function fwd(op) {
+    try {
+      if (op.k === 'c') { op.t.data = op.nv; }
+      else if (op.k === 'a') { op.nv === null ? op.t.removeAttribute(op.n) : op.t.setAttribute(op.n, op.nv); }
+      else {
+        op.rem.forEach(n => { if (n.parentNode === op.t) op.t.removeChild(n); });
+        const ref = refFor(op);
+        op.add.forEach(n => op.t.insertBefore(n, ref));
+      }
+    } catch (e) {}
+  }
+
+  /* ── recording ── */
+  function seedText() { area.querySelectorAll(ROOT_SEL).forEach(r => H.textBase.set(r, r.textContent)); }
+  const TYPING = /^(insertText|insertCompositionText|deleteContent|deleteWord|insertReplacementText|deleteSoftLine|deleteHardLine)/;
+  document.addEventListener('beforeinput', e => { H.lastBI = { t: now(), type: e.inputType || '' }; }, true);
+
+  function trim() { while (H.undo.length > MAX_STEPS) H.undo.shift(); }
+  function clear() { H.undo.length = 0; H.redo.length = 0; H.pendCtrl.length = 0; seedText(); H.lastSel = snapSel(); }
+
+  function commit(ops, typing, root, decorative) {
+    const last = H.undo[H.undo.length - 1], t = now();
+    if (decorative) {                       // marks only: never a step of its own
+      if (H.redo.length) { H.applying = true; try { for (let i = ops.length - 1; i >= 0; i--) inv(ops[i]); } finally { obs.takeRecords(); H.applying = false; } }
+      else if (last) last.ops.push(...ops);
+      return;
+    }
+    const ctrl = H.pendCtrl.splice(0);
+    const canMerge = last && !H.redo.length && (
+      H.gesture ||
+      (typing && last.typing && last.root === root && t - last.t < TYPE_MS) ||
+      (!typing && !last.typing && t - last.t < GAP_MS) ||
+      (!typing && last.ctrlOnly && t - last.t < GAP_MS));
+    if (canMerge) {
+      last.ops.push(...ops); last.ctrl.push(...ctrl); last.selA = snapSel(); last.t = t;
+      last.typing = last.typing && typing; last.ctrlOnly = false;
+    } else {
+      H.undo.push({ ops, ctrl, typing, root, t, selB: H.lastSel, selA: snapSel() });
+      H.redo.length = 0; trim();
+    }
+  }
+
+  const obs = new MutationObserver(recs => {
+    if (H.applying || H.mute || now() < H.settle || loading() || collabOn()) return;
+    if (recs.length > HUGE) { clear(); return; }
+    const kept = []; let allDecor = true; const roots = new Set();
+    for (const r of recs) {
+      const k = classify(r);
+      if (k === 'drop') continue;
+      if (k === 'real') allDecor = false;
+      kept.push(r);
+      const rt = rootOf(r.target); if (rt) roots.add(rt);
+    }
+    if (!kept.length) return;
+    let textChanged = false;
+    roots.forEach(rt => { const cur = rt.textContent, old = H.textBase.get(rt); if (old === undefined || old !== cur) textChanged = true; H.textBase.set(rt, cur); });
+    const decorative = allDecor && !textChanged && !H.pendCtrl.length;
+    const ops = kept.map(toOp);
+    const bi = H.lastBI, typing = !!(bi && now() - bi.t < 120 && TYPING.test(bi.type));
+    commit(ops, typing, roots.size === 1 ? [...roots][0] : null, decorative);
+  });
+  obs.observe(area, { childList: true, attributes: true, attributeOldValue: true, characterData: true, characterDataOldValue: true, subtree: true });
+
+  /* ── sidebar settings (inputs / selects) ── */
+  const trackable = el => {
+    if (!el || !el.matches || !el.matches('input,select,textarea')) return false;
+    if (!el.closest('.sidebar') || el.closest(ctrlIgnore)) return false;
+    return !BAD_INPUT.has((el.type || '').toLowerCase());
+  };
+  const valOf = el => el.type === 'checkbox' ? el.checked : el.value;
+  const checkedRadio = el => el.name ? document.querySelector('input[type="radio"][name="' + (window.CSS && CSS.escape ? CSS.escape(el.name) : el.name) + '"]:checked') : null;
+  function refreshKnown(e) {
+    const el = e.target; if (H.applying || !trackable(el)) return;
+    if (el.type === 'radio') H.radioPrev.set(el.name, checkedRadio(el)); else H.lastKnown.set(el, valOf(el));
+    if (e.type === 'pointerdown' && (el.type === 'range' || el.type === 'color')) H.gesture = true;
+  }
+  ['pointerdown', 'focusin', 'keydown'].forEach(t => document.addEventListener(t, refreshKnown, true));
+  ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, () => setTimeout(() => { H.gesture = false; }, 300), true));
+  function flushCtrl() {
+    H.ctrlTimer = 0;
+    if (!H.pendCtrl.length || H.applying) return;
+    H.undo.push({ ops: [], ctrl: H.pendCtrl.splice(0), typing: false, root: null, t: now(), selB: null, selA: null, ctrlOnly: true });
+    H.redo.length = 0; trim();
+  }
+  document.addEventListener('change', e => {
+    const el = e.target; H.gesture = false;
+    if (H.applying || H.mute || loading() || collabOn() || !trackable(el)) return;
+    if (el.type === 'radio') {
+      const prev = H.radioPrev.get(el.name); H.radioPrev.set(el.name, el);
+      if (prev && prev !== el) H.pendCtrl.push({ kind: 'radio', el, prev });
+    } else {
+      const old = H.lastKnown.has(el) ? H.lastKnown.get(el) : (el.type === 'checkbox' ? !el.checked : undefined);
+      const cur = valOf(el); H.lastKnown.set(el, cur);
+      if (old === undefined || old === cur) return;
+      H.pendCtrl.push({ kind: el.type === 'checkbox' ? 'checkbox' : 'value', el, old, nw: cur });
+    }
+    clearTimeout(H.ctrlTimer); H.ctrlTimer = setTimeout(flushCtrl, 60);
+  }, true);
+
+  function fire(el) { el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); }
+  function setCtrl(c, dir) {
+    try {
+      if (c.kind === 'radio') { const t = dir < 0 ? c.prev : c.el; if (t) { t.checked = true; H.radioPrev.set(t.name, t); fire(t); } return; }
+      const v = dir < 0 ? c.old : c.nw;
+      if (c.kind === 'checkbox') c.el.checked = !!v; else c.el.value = v;
+      H.lastKnown.set(c.el, v); fire(c.el);
+    } catch (e) {}
+  }
+
+  /* ── applying a step ── */
+  function pageLevel(entry) {
+    return entry.ops.some(o => o.t === area || (o.t.classList && (o.t.classList.contains('page-outer') || o.t.classList.contains('page'))) ||
+      (o.k === 'l' && [...o.add, ...o.rem].some(n => n.nodeType === 1 && n.classList && (n.classList.contains('page-outer') || n.classList.contains('page')))));
+  }
+  function afterApply(entry) {
+    const pl = pageLevel(entry);
+    try {
+      if (pl) {
+        try { if (typeof CERT !== 'undefined') CERT.list = [...area.querySelectorAll('.page')].map(p => p.getAttribute('data-auth')).filter(Boolean); } catch (e) {}
+        try { S.pageCount = area.querySelectorAll('.page').length; if (S.currentContextPage && !S.currentContextPage.isConnected) S.currentContextPage = null; } catch (e) {}
+        if (typeof _refreshPageState === 'function') _refreshPageState();
+        if (typeof renderPageManagerList === 'function') { try { renderPageManagerList(); } catch (e) {} }
+      } else {
+        if (typeof updateWordCount === 'function') updateWordCount();
+      }
+      if (typeof DOC !== 'undefined' && DOC.schedule) DOC.schedule();
+    } catch (e) {}
+    seedText();
+  }
+  function run(entry, dir) {
+    H.applying = true;
+    try {
+      const ops = entry.ops;
+      if (dir < 0) { for (let i = ops.length - 1; i >= 0; i--) inv(ops[i]); for (let i = entry.ctrl.length - 1; i >= 0; i--) setCtrl(entry.ctrl[i], -1); }
+      else { for (let i = 0; i < ops.length; i++) fwd(ops[i]); for (let i = 0; i < entry.ctrl.length; i++) setCtrl(entry.ctrl[i], 1); }
+      afterApply(entry);
+    } finally { obs.takeRecords(); H.applying = false; H.settle = now() + SETTLE_MS; }
+    const fb = entry.ops.length ? entry.ops[entry.ops.length - 1].t : null;
+    restoreSel(dir < 0 ? entry.selB : entry.selA, fb);
+  }
+  function toast(msg) { try { if (typeof showToast === 'function') showToast(msg, 'info'); } catch (e) {} }
+
+  function undo() {
+    if (collabOn()) return nativeExec('undo');
+    if (H.ctrlTimer) { clearTimeout(H.ctrlTimer); flushCtrl(); }
+    const e = H.undo.pop(); if (!e) { toast('Nothing to undo'); return false; }
+    H.redo.push(e); run(e, -1); return true;
+  }
+  function redo() {
+    if (collabOn()) return nativeExec('redo');
+    const e = H.redo.pop(); if (!e) { toast('Nothing to redo'); return false; }
+    H.undo.push(e); run(e, 1); return true;
+  }
+
+  /* ── route every undo / redo trigger here ── */
+  const nativeExec = (document.execCommand || function () { return false; }).bind(document);
+  document.execCommand = function (c) {
+    const l = String(c || '').toLowerCase();
+    if (l === 'undo') return undo();
+    if (l === 'redo') return redo();
+    return nativeExec.apply(document, arguments);
+  };
+  const inEditable = t => { const e = elOf(t); return !!(e && e.closest && e.closest('#editorArea')); };
+  document.addEventListener('keydown', e => {
+    if (e.isComposing || !(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const k = (e.key || '').toLowerCase(), t = e.target;
+    if (k !== 'z' && k !== 'y') return;
+    if (t && t.closest && t.closest('input,textarea,select')) return;                 // let text fields keep their own undo
+    if (t && t.isContentEditable && !inEditable(t)) return;
+    e.preventDefault();
+    document.execCommand((k === 'y' || e.shiftKey) ? 'redo' : 'undo');
+  }, true);
+  document.addEventListener('beforeinput', e => {
+    if (e.inputType !== 'historyUndo' && e.inputType !== 'historyRedo') return;
+    if (!inEditable(e.target)) return;
+    e.preventDefault();
+    document.execCommand(e.inputType === 'historyUndo' ? 'undo' : 'redo');
+  }, true);
+
+  /* ── a loaded / new document starts a fresh history ── */
+  function wrapReset(name) {
+    const f = window[name]; if (typeof f !== 'function') return;
+    window[name] = function () {
+      H.mute++; let res;
+      const done = () => { H.mute--; clear(); H.settle = now() + 1500; };
+      try { res = f.apply(this, arguments); } catch (e) { done(); throw e; }
+      if (res && typeof res.then === 'function') return res.then(v => { done(); return v; }, er => { done(); throw er; });
+      done(); return res;
+    };
+  }
+  wrapReset('loadData'); wrapReset('resetPages');
+
+  seedText(); H.lastSel = snapSel();
+  document.querySelectorAll('.sidebar input,.sidebar select,.sidebar textarea').forEach(el => { if (trackable(el) && el.type !== 'radio') H.lastKnown.set(el, valOf(el)); });
+
+  window.SCHistory = {
+    undo, redo, clear,
+    canUndo: () => H.undo.length > 0, canRedo: () => H.redo.length > 0,
+    mute(fn) { H.mute++; try { return fn(); } finally { obs.takeRecords(); H.mute--; seedText(); } },
+    ignore(sel) { if (sel && !ignoreSels.includes(sel)) ignoreSels.push(sel); },
+    decor(cls) { if (cls) decorCls.add(cls); },
+    _state: H
+  };
+})();
+</script>
+<script id="ped-js">
+/* ═══ PHOTO EDITOR — full canvas editor stacked on the image modal. "Apply" bakes the result into _croppedImgData. ═══ */
+const PED = { open:false, built:false, base:null, orig:null, hist:[], redo:[], adj:null, tool:'adjust', zoom:1, fit:1, crop:null, ratio:0, drag:null, stroke:null, showOrig:false, hover:null, raf:0, fmt:'image/png', q:90,
+  o:{ brush:'brush', size:24, opacity:100, color:'#e53935', shape:'rect', sw:6, scolor:'#e53935', fill:false, fcolor:'#ffeb3b', sopacity:100,
+      txt:'Your text', font:'Arial', fsize:48, bold:true, italic:false, tcolor:'#ffffff', tstroke:4, tscol:'#000000', lock:true, frame:20, fcol:'#ffffff', ang:0 } };
+const PED_DEF = { bri:0, con:0, sat:0, exp:0, hue:0, tmp:0, tnt:0, blr:0, vig:0, gry:0, sep:0, inv:0 };
+const PED_FILTER_OK = (() => { try { return 'filter' in CanvasRenderingContext2D.prototype; } catch (e) { return false; } })();
+const PED_PRE = { Original:{}, 'B&W':{gry:100,con:10}, Sepia:{sep:85,con:5}, Vivid:{sat:45,con:15}, Warm:{tmp:55,sat:10,bri:3}, Cool:{tmp:-55,sat:5}, Fade:{con:-25,bri:10,sat:-20}, Noir:{gry:100,con:45,bri:-8,vig:55}, Vintage:{sep:45,con:-10,tmp:25,vig:35,sat:-15}, Dramatic:{con:40,sat:-15,vig:45,bri:-5}, Bright:{bri:22,con:8}, Sunset:{tmp:70,tnt:20,sat:25}, Cyber:{hue:-60,sat:50,con:15}, Invert:{inv:1} };
+const PED_IC = {"tune": "<path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2.2\"/><circle cx=\"9\" cy=\"17\" r=\"2.2\"/>", "wand": "<path d=\"M4 20L14 10M14 4v3M12.5 5.5h3M19 11v3M17.5 12.5h3\"/><path d=\"M11.5 7.5l5 5\"/>", "sparkle": "<path d=\"M11 3l1.8 5.2L18 10l-5.2 1.8L11 17l-1.8-5.2L4 10l5.2-1.8z\"/><path d=\"M19 16v4M17 18h4\"/>", "crop": "<path d=\"M7 3v14h14M3 7h14v14\"/>", "brush": "<path d=\"M15 4.5l4.5 4.5L9 19.5H4.5V15z\"/><path d=\"M13 6.5l4.5 4.5\"/>", "shapes": "<path d=\"M4 4h9v9H4z\"/><circle cx=\"16\" cy=\"16\" r=\"4.5\"/>", "text": "<path d=\"M5 6V4h14v2M12 4v16M9 20h6\"/>", "palette": "<path d=\"M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2s0-2 1.5-2h2a4 4 0 0 0 4-4 9 9 0 0 0-9-10z\"/><path d=\"M8 11h.01M12 7.5h.01M16 9h.01\"/>", "detail": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 3v18\"/>", "refresh": "<path d=\"M20 11a8 8 0 1 0-2.3 5.7M20 5v6h-6\"/>", "rotl": "<path d=\"M4 11a8 8 0 1 1 2.3 5.7M4 5v6h6\"/>", "rot180": "<path d=\"M4 12a8 8 0 0 1 14-5.3M20 4v4h-4M20 12a8 8 0 0 1-14 5.3M4 20v-4h4\"/>", "undo": "<path d=\"M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3\"/>", "redo": "<path d=\"M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3\"/>", "flip_h": "<path d=\"M12 3v18M8 7L3 17h5zM16 7l5 10h-5z\"/>", "flip_v": "<g transform=\"rotate(90 12 12)\"><path d=\"M12 3v18M8 7L3 17h5zM16 7l5 10h-5z\"/></g>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "resize": "<path d=\"M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5\"/>", "lock": "<path d=\"M6 11h12v9H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3\"/>", "frame": "<path d=\"M4 4h16v16H4zM8 8h8v8H8z\"/>", "add": "<path d=\"M12 5v14M5 12h14\"/>", "highlight": "<path d=\"M13 5l6 6-7 7-6-6z\"/><path d=\"M4 21h8\"/>", "eraser": "<path d=\"M3.5 15.5L14 5l5.5 5.5L11 19H7z\"/><path d=\"M11 19h9\"/>", "drop": "<path d=\"M12 3s6 6 6 10.5a6 6 0 0 1-12 0C6 9 12 3 12 3z\"/>", "grid": "<path d=\"M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z\"/>", "compare": "<path d=\"M4 5h6v14H4zM14 5h6v14h-6zM12 2v20\"/>", "reset": "<path d=\"M3 12a9 9 0 1 0 3-6.7M3 3v5h5\"/>", "zoom": "<circle cx=\"10.5\" cy=\"10.5\" r=\"6.5\"/><path d=\"M15.5 15.5L20 20M8 10.5h5M10.5 8v5\"/>", "close": "<path d=\"M6 6l12 12M18 6L6 18\"/>", "panel": "<path d=\"M4 5h16v14H4zM15 5v14\"/>", "photo": "<path d=\"M4 5h16v14H4z\"/><path d=\"M4 16l5-5 4 4 3-3 4 4\"/><circle cx=\"9\" cy=\"9\" r=\".6\"/>"};
+const PED_MAP = {"tune": "tune", "auto_fix_high": "wand", "flare": "sparkle", "crop": "crop", "brush": "brush", "interests": "shapes", "text_fields": "text", "palette": "palette", "adjust": "detail", "refresh": "refresh", "rotate_right": "refresh", "undo": "undo", "redo": "redo", "unfold_more": "flip_h", "check": "check", "fit_screen": "resize", "lock": "lock", "border_top": "frame", "add": "add", "highlight": "highlight", "ink_eraser": "eraser", "blur_on": "drop", "grid_view": "grid", "download": "check", "photo_filter": "photo"};
+function pedIc(n, sz) { const k = PED_MAP[n] || n; return '<span class="material-symbols-outlined pic"' + (sz ? ' style="font-size:' + sz + 'px"' : '') + '><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (PED_IC[k] || '') + '</svg></span>'; }
+const _pe = id => document.getElementById(id);
+const _pedPct = k => k === 'hue' ? '°' : (k === 'gry' || k === 'sep' || k === 'vig') ? '%' : '';
+
+function pedRow(k, label, min, max, val, unit) { return `<div class="sm-row"><label>${label}</label><input type="range" class="sm-slider" id="ped_${k}" min="${min}" max="${max}" value="${val}" oninput="pedSlide('${k}',this.value)"><span class="sm-val" id="ped_${k}_v">${val}${unit||''}</span></div>`; }
+function pedOptRow(k, label, min, max, unit) { const v = PED.o[k]; return `<div class="sm-row"><label>${label}</label><input type="range" class="sm-slider" id="pedo_${k}" min="${min}" max="${max}" value="${v}" oninput="pedOpt('${k}',+this.value,'${unit||''}')"><span class="sm-val" id="pedo_${k}_v">${v}${unit||''}</span></div>`; }
+function pedChipRow(key, items) { return `<div class="sm-btn-row">${items.map(([v, l, ic]) => `<button type="button" class="sm-chip${String(PED.o[key]) === String(v) ? ' active' : ''}" onclick="pedPick(this,'${key}','${v}')">${ic ? `${pedIc(ic,15)}` : ''}${l}</button>`).join('')}</div>`; }
+function pedColor(key, label) { return `<div class="sm-row"><label>${label}</label><input type="color" class="sm-color" id="pedc_${key}" value="${PED.o[key]}" oninput="pedOpt('${key}',this.value)"></div>`; }
+function pedSec(icon, title, body) { return `<div class="scf-sec"><div class="scf-sec-h">${pedIc(icon,18)}${title}</div>${body}</div>`; }
+function pedBtn(icon, label, fn, cls) { return `<button type="button" class="scf-btn ${cls||''}" onclick="${fn}">${pedIc(icon,16)}${label}</button>`; }
+
+function pedBuild() {
+  if (PED.built) return; PED.built = true;
+  const tabs = [['adjust','tune','Adjust'],['filters','wand','Filters'],['effects','sparkle','Effects'],['transform','crop','Transform'],['draw','brush','Draw'],['shapes','shapes','Shapes'],['text','text','Text']];
+  _pe('pedTabs').innerHTML = tabs.map(([t, ic, l]) => `<button type="button" class="sm-chip${t === 'adjust' ? ' active' : ''}" data-t="${t}" onclick="pedTool('${t}')">${pedIc(ic,15)}${l}</button>`).join('');
+  const P = {};
+  P.adjust = pedSec('tune', 'Light', pedRow('bri','Brightness',-100,100,0) + pedRow('exp','Exposure',-100,100,0) + pedRow('con','Contrast',-100,100,0))
+    + pedSec('palette', 'Colour', pedRow('sat','Saturation',-100,100,0) + pedRow('hue','Hue',-180,180,0,'°') + pedRow('tmp','Temperature',-100,100,0) + pedRow('tnt','Tint',-100,100,0) + pedRow('gry','Grayscale',0,100,0,'%') + pedRow('sep','Sepia',0,100,0,'%')
+      + `<div class="sm-btn-row"><button type="button" class="sm-chip" id="ped_inv_c" onclick="pedInvert(this)">Invert colours</button></div>`)
+    + pedSec('adjust', 'Detail', pedRow('blr','Blur',0,20,0) + pedRow('vig','Vignette',0,100,0,'%'))
+    + pedBtn('refresh', 'Reset adjustments', 'pedResetAdj();pedRender();pedBtns()', 'wide');
+  P.filters = pedSec('auto_fix_high', 'Presets', `<div class="ped-presets" id="pedPresets"></div>`) + `<div class="scf-note"><span>Presets set the Adjust sliders — fine-tune them there.</span></div>`;
+  P.effects = pedSec('flare', 'One-click effects', `<div class="ped-fxgrid">${[['auto','Auto enhance'],['sharpen','Sharpen'],['smooth','Smooth'],['pixelate','Pixelate'],['posterize','Posterize'],['noise','Add noise'],['emboss','Emboss'],['edges','Edges'],['threshold','Black & white'],['sketch','Sketch']].map(([k, l]) => `<button type="button" class="scf-btn" onclick="pedFx('${k}')">${l}</button>`).join('')}</div>`);
+  P.transform = pedSec('rotate_right', 'Rotate & flip', `<div class="ped-fxgrid">${pedBtn('undo','Left 90°',"pedRotate(-90)")}${pedBtn('redo','Right 90°',"pedRotate(90)")}${pedBtn('refresh','180°',"pedRotate(180)")}${pedBtn('unfold_more','Flip horiz.',"pedFlip('h')")}${pedBtn('unfold_more','Flip vert.',"pedFlip('v')")}</div>`
+      + `<div class="sm-row" style="margin-top:12px"><label>Straighten</label><input type="range" class="sm-slider" id="ped_ang" min="-45" max="45" value="0" oninput="PED.o.ang=+this.value;_pe('ped_ang_v').textContent=this.value+'°'"><span class="sm-val" id="ped_ang_v">0°</span></div>` + pedBtn('check', 'Apply straighten', 'pedStraighten()', 'wide'))
+    + pedSec('crop', 'Crop', `<div class="scf-note" style="margin:0 0 8px"><span>Drag the box on the image, then apply.</span></div>` + pedChipRow('ratio', [[0,'Free'],[1,'1:1'],[1.3333,'4:3'],[1.5,'3:2'],[1.7778,'16:9'],[0.75,'3:4'],[0.5625,'9:16'],['orig','Original']]) + `<div style="display:flex;gap:8px;margin-top:10px">${pedBtn('check','Apply crop','pedApplyCrop()','pri')}${pedBtn('refresh','Reset box','pedCropReset()')}</div>`)
+    + pedSec('fit_screen', 'Resize', `<div class="sm-row"><label>Width</label><input type="number" class="finput" id="ped_rw" min="1" max="8000" style="flex:1" oninput="pedSizeIn('w')"></div><div class="sm-row"><label>Height</label><input type="number" class="finput" id="ped_rh" min="1" max="8000" style="flex:1" oninput="pedSizeIn('h')"></div>`
+      + `<div class="sm-btn-row"><button type="button" class="sm-chip active" id="ped_lock" onclick="pedToggle(this,'lock')">${pedIc('lock',15)}Keep ratio</button>${[25,50,75,200].map(p => `<button type="button" class="sm-chip" onclick="pedScaleBy(${p/100})">${p}%</button>`).join('')}</div><div style="height:8px"></div>` + pedBtn('check', 'Apply size', 'pedResize()', 'wide'))
+    + pedSec('border_top', 'Frame', pedOptRow('frame','Thickness',1,100,'px') + pedColor('fcol','Colour') + pedBtn('add', 'Add frame', 'pedFrame()', 'wide'));
+  P.draw = pedSec('brush', 'Tool', pedChipRow('brush', [['brush','Brush','brush'],['hl','Highlighter','highlight'],['eraser','Eraser','ink_eraser'],['blur','Blur','blur_on'],['pix','Pixelate','grid_view']]))
+    + pedSec('tune', 'Brush', pedOptRow('size','Size',1,100) + pedOptRow('opacity','Opacity',5,100,'%') + pedColor('color','Colour') + `<div class="ped-sw">${['#000000','#ffffff','#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa','#ec407a','#795548'].map(c => `<button type="button" style="background:${c}" onclick="pedSwatch('color','${c}')"></button>`).join('')}</div>`);
+  P.shapes = pedSec('interests', 'Shape', pedChipRow('shape', [['rect','Rectangle'],['ellipse','Ellipse'],['line','Line'],['arrow','Arrow']]))
+    + pedSec('tune', 'Style', pedOptRow('sw','Line width',0,40,'px') + pedColor('scolor','Line colour') + `<div class="sm-btn-row"><button type="button" class="sm-chip" onclick="pedToggle(this,'fill')">Fill shape</button></div><div style="height:8px"></div>` + pedColor('fcolor','Fill colour') + pedOptRow('sopacity','Opacity',5,100,'%'))
+    + `<div class="scf-note"><span>Drag on the image to draw.</span></div>`;
+  P.text = pedSec('text_fields', 'Text', `<textarea class="finput" id="pedo_txt" rows="2" style="width:100%;resize:vertical;font-size:13px" oninput="pedOpt('txt',this.value)">Your text</textarea>`
+      + `<div class="sm-row" style="margin-top:10px"><label>Font</label><select class="finput" style="flex:1" onchange="pedOpt('font',this.value)">${['Arial','Georgia','Times New Roman','Courier New','Verdana','Trebuchet MS','Impact','Comic Sans MS','system-ui','cursive'].map(f => `<option value="${f}">${f}</option>`).join('')}</select></div>`
+      + pedOptRow('fsize','Size',8,300) + `<div class="sm-btn-row"><button type="button" class="sm-chip active" onclick="pedToggle(this,'bold')"><b>Bold</b></button><button type="button" class="sm-chip" onclick="pedToggle(this,'italic')"><i>Italic</i></button></div><div style="height:10px"></div>`
+      + pedColor('tcolor','Colour') + pedOptRow('tstroke','Outline',0,30,'px') + pedColor('tscol','Outline colour'))
+    + `<div class="scf-note"><span>Click on the image to place the text.</span></div>`;
+  _pe('pedPanes').innerHTML = Object.keys(P).map(t => `<div class="ped-pane${t === 'adjust' ? ' on' : ''}" data-t="${t}">${P[t]}</div>`).join('');
+  const ov = _pe('pedOv');
+  ov.addEventListener('pointerdown', pedDown); ov.addEventListener('pointermove', pedMove); ov.addEventListener('pointerup', pedUp); ov.addEventListener('pointercancel', pedUp);
+  ov.addEventListener('pointerleave', () => { if (!PED.drag) { PED.hover = null; pedDrawOv(); } });
+  const bf = _pe('pedBefore'); bf.addEventListener('pointerdown', () => { PED.showOrig = true; pedRender(); pedDrawOv(); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(n => bf.addEventListener(n, () => { if (PED.showOrig) { PED.showOrig = false; pedRender(); pedDrawOv(); } }));
+  window.addEventListener('resize', () => { if (PED.open) pedLayout(); });
+  if (window.ResizeObserver) new ResizeObserver(() => { const f = _pe('pedFrame'); if (PED.open && f && f.clientWidth > 0) pedLayout(); }).observe(_pe('pedFrame'));
+  document.addEventListener('keydown', e => {
+    if (!PED.open) return;
+    if (!_pe('pedMdl').classList.contains('open')) { PED.open = false; return; }
+    if (e.target.matches && e.target.matches('textarea,input[type=text],input[type=number]')) return;
+    const k = e.key.toLowerCase();
+    if ((e.ctrlKey || e.metaKey) && k === 'z') { e.preventDefault(); e.stopImmediatePropagation(); e.shiftKey ? pedRedo() : pedUndo(); }
+    else if ((e.ctrlKey || e.metaKey) && k === 'y') { e.preventDefault(); e.stopImmediatePropagation(); pedRedo(); }
+  }, true);
+}
+
+function pedCopy(c) { const t = document.createElement('canvas'); t.width = c.width; t.height = c.height; t.getContext('2d').drawImage(c, 0, 0); return t; }
+async function pedOpen() {
+  const src = _croppedImgData || S.imgData;
+  if (!src) { showToast('Choose an image first', 'error'); return; }
+  pedBuild();
+  let im; try { im = await _imgLoadEl(src); } catch (e) { showToast('Could not load that image for editing', 'error'); return; }
+  const w = im.naturalWidth || im.width, h = im.naturalHeight || im.height;
+  if (!w || !h) { showToast('Could not read that image', 'error'); return; }
+  const k = Math.min(1, 4096 / Math.max(w, h)), c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+  c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+  try { c.getContext('2d').getImageData(0, 0, 1, 1); } catch (e) { showToast('This image is protected by its site and cannot be edited', 'error'); return; }
+  PED.orig = pedCopy(c); PED.base = c; PED.hist = [pedCopy(c)]; PED.redo = []; PED.crop = null; PED.zoom = 1; PED.stroke = null; PED.drag = null;
+  _pe('pedZoom').value = '1'; { const l = _pe('pedZoomV'); if (l) l.textContent = '100%'; } pedResetAdj();
+  SCFlow.togglePreview('pedMdl', false);
+  openMdl('pedMdl', { stack: true }); PED.open = true;
+  pedTool('adjust');
+  setTimeout(() => { pedLayout(); pedRender(); pedPresetThumbs(); pedSizeSync(); pedBtns(); }, 90);
+}
+function pedClose() { PED.open = false; PED.drag = null; PED.stroke = null; closeMdl('pedMdl'); }
+function pedCancel() {
+  if ((PED.hist.length > 1 || !pedIsDef()) && !confirm('Discard your edits?')) return;
+  pedClose();
+}
+function pedExport() {
+  const b = PED.base, f = PED.fmt;
+  if (f === 'image/png') return b.toDataURL('image/png');
+  const t = document.createElement('canvas'); t.width = b.width; t.height = b.height;
+  const x = t.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, t.width, t.height); x.drawImage(b, 0, 0);
+  return t.toDataURL(f, PED.q / 100);
+}
+function pedApply() {
+  pedCommit();
+  if (PED.hist.length < 2) { pedClose(); return; }
+  let url; try { url = pedExport(); } catch (e) { showToast('Could not export the edited image', 'error'); return; }
+  _croppedImgData = url; imgSetPreview(url); _croppedImgData = url; imgCtrlPreview();
+  const n = _imgEl('imgCropPreviewNote'); if (n) { n.style.display = 'flex'; if (n.firstElementChild) n.firstElementChild.textContent = 'Edits applied — they are baked in when you insert.'; }
+  pedClose(); showToast('Edits applied');
+}
+
+function pedPush() { PED.hist.push(pedCopy(PED.base)); if (PED.hist.length > 30) PED.hist.shift(); PED.redo = []; pedBtns(); }
+function pedBtns() { const u = _pe('pedUndo'), r = _pe('pedRedo'); if (u) u.disabled = PED.hist.length < 2 && pedIsDef(); if (r) r.disabled = !PED.redo.length; }
+function pedAfterBase() { PED.crop = PED.tool === 'transform' ? { x:0, y:0, w:PED.base.width, h:PED.base.height } : null; pedLayout(); pedRender(); pedSizeSync(); pedPresetThumbs(); pedBtns(); }
+function pedSetBase(c) { PED.base = c; pedPush(); pedAfterBase(); }
+function pedUndo() {
+  if (!pedIsDef()) { pedResetAdj(); pedRender(); pedBtns(); return; }
+  if (PED.hist.length < 2) return;
+  PED.redo.push(PED.hist.pop()); PED.base = pedCopy(PED.hist[PED.hist.length - 1]); pedAfterBase();
+}
+function pedRedo() { if (!PED.redo.length) return; const c = PED.redo.pop(); PED.hist.push(c); PED.base = pedCopy(c); pedAfterBase(); }
+const PED_HOLD_MS = 3000; let _pedHoldT = null;
+function pedHoldStart(e) {
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const btn = _pe('pedResetBtn'), fill = _pe('pedResetFill'); if (!btn || !fill) return;
+  btn.classList.add('holding'); fill.style.transition = 'none'; fill.style.width = '0%';
+  requestAnimationFrame(() => { fill.style.transition = `width ${PED_HOLD_MS}ms linear`; fill.style.width = '100%'; });
+  clearTimeout(_pedHoldT);
+  _pedHoldT = setTimeout(() => { pedHoldReset(); pedResetAll(); try { showToast('All edits reset', 'info'); } catch (x) {} }, PED_HOLD_MS);
+}
+function pedHoldReset() {
+  clearTimeout(_pedHoldT); _pedHoldT = null;
+  const btn = _pe('pedResetBtn'), fill = _pe('pedResetFill');
+  if (btn) btn.classList.remove('holding');
+  if (fill) { fill.style.transition = 'width .15s ease'; fill.style.width = '0%'; }
+}
+(function () { const b = _pe('pedResetBtn'); if (!b) return;
+  b.addEventListener('pointerdown', pedHoldStart);
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => b.addEventListener(t, pedHoldReset));
+  b.addEventListener('contextmenu', e => e.preventDefault()); })();
+function pedResetAll() { PED.base = pedCopy(PED.orig); PED.hist = [pedCopy(PED.orig)]; PED.redo = []; pedResetAdj(); pedAfterBase(); }
+
+function pedIsDef() { return !PED.adj || Object.keys(PED_DEF).every(k => PED.adj[k] === PED_DEF[k]); }
+function pedResetAdj() { PED.adj = { ...PED_DEF }; pedSyncUI(); }
+function pedSyncUI() {
+  Object.keys(PED_DEF).forEach(k => { const s = _pe('ped_' + k), v = _pe('ped_' + k + '_v'); if (s) s.value = PED.adj[k]; if (v) v.textContent = PED.adj[k] + _pedPct(k); });
+  const i = _pe('ped_inv_c'); if (i) i.classList.toggle('active', !!PED.adj.inv);
+}
+function pedSlide(k, v) { PED.adj[k] = +v; const l = _pe('ped_' + k + '_v'); if (l) l.textContent = v + _pedPct(k); pedQueue(); }
+function pedInvert(b) { PED.adj.inv = PED.adj.inv ? 0 : 1; b.classList.toggle('active', !!PED.adj.inv); pedQueue(); }
+function pedQueue() { if (PED.raf) return; PED.raf = requestAnimationFrame(() => { PED.raf = 0; pedRender(); pedBtns(); }); }
+function pedPixelAdj(ctx, w, h, a, bri) {
+  const id = ctx.getImageData(0, 0, w, h), d = id.data, c = 1 + a.con / 100, s = 1 + a.sat / 100;
+  for (let i = 0; i < d.length; i += 4) {
+    let r = d[i] * bri, g = d[i + 1] * bri, b = d[i + 2] * bri;
+    r = (r - 128) * c + 128; g = (g - 128) * c + 128; b = (b - 128) * c + 128;
+    const l = .299 * r + .587 * g + .114 * b; r = l + (r - l) * s; g = l + (g - l) * s; b = l + (b - l) * s;
+    if (a.gry) { const k = a.gry / 100; r += (l - r) * k; g += (l - g) * k; b += (l - b) * k; }
+    if (a.sep) { const k = a.sep / 100; r += (l * 1.07 - r) * k; g += (l * .74 - g) * k; b += (l * .43 - b) * k; }
+    if (a.inv) { r = 255 - r; g = 255 - g; b = 255 - b; }
+    d[i] = r < 0 ? 0 : r > 255 ? 255 : r; d[i + 1] = g < 0 ? 0 : g > 255 ? 255 : g; d[i + 2] = b < 0 ? 0 : b > 255 ? 255 : b;
+  }
+  ctx.putImageData(id, 0, 0);
+}
+function pedDrawAdj(ctx, src, a) {
+  const w = src.width, h = src.height, bri = (1 + a.bri / 100) * Math.pow(2, a.exp / 100);
+  const f = [`brightness(${bri})`, `contrast(${1 + a.con / 100})`, `saturate(${1 + a.sat / 100})`];
+  if (a.hue) f.push(`hue-rotate(${a.hue}deg)`);
+  if (a.blr) f.push(`blur(${a.blr * Math.max(w, h) / 1000}px)`);
+  if (a.gry) f.push(`grayscale(${a.gry}%)`);
+  if (a.sep) f.push(`sepia(${a.sep}%)`);
+  if (a.inv) f.push('invert(100%)');
+  if (PED_FILTER_OK) { ctx.filter = f.join(' '); ctx.drawImage(src, 0, 0); ctx.filter = 'none'; }
+  else { ctx.drawImage(src, 0, 0); pedPixelAdj(ctx, w, h, a, bri); }
+  ctx.save(); ctx.globalCompositeOperation = 'source-atop';
+  if (a.tmp) { ctx.fillStyle = a.tmp > 0 ? `rgba(255,150,30,${a.tmp / 100 * .3})` : `rgba(40,140,255,${-a.tmp / 100 * .3})`; ctx.fillRect(0, 0, w, h); }
+  if (a.tnt) { ctx.fillStyle = a.tnt > 0 ? `rgba(255,50,200,${a.tnt / 100 * .25})` : `rgba(50,220,90,${-a.tnt / 100 * .25})`; ctx.fillRect(0, 0, w, h); }
+  if (a.vig) { const g = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * .25, w / 2, h / 2, Math.hypot(w, h) / 2); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, `rgba(0,0,0,${a.vig / 100 * .9})`); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); }
+  ctx.restore();
+}
+function pedCommit() {
+  if (pedIsDef()) return false;
+  const b = PED.base, t = document.createElement('canvas'); t.width = b.width; t.height = b.height;
+  pedDrawAdj(t.getContext('2d'), b, PED.adj); pedResetAdj(); pedSetBase(t); return true;
+}
+function pedRender() {
+  const cv = _pe('pedCv'), b = PED.base; if (!cv || !b) return;
+  if (cv.width !== b.width || cv.height !== b.height) { cv.width = b.width; cv.height = b.height; }
+  const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height);
+  if (PED.showOrig) { ctx.drawImage(PED.orig, 0, 0, cv.width, cv.height); return; }
+  pedDrawAdj(ctx, b, PED.adj);
+  if (PED.stroke) { ctx.save(); ctx.globalAlpha = PED.stroke.alpha; ctx.globalCompositeOperation = PED.stroke.mode; ctx.drawImage(PED.stroke.cv, 0, 0); ctx.restore(); }
+}
+function pedLayout() {
+  const fr = _pe('pedFrame'), b = PED.base, wrap = _pe('pedWrap'); if (!fr || !b) return;
+  PED.fit = Math.min((fr.clientWidth - 28) / b.width, (fr.clientHeight - 28) / b.height, 1); if (!(PED.fit > 0)) PED.fit = 1;
+  const sc = PED.fit * PED.zoom; wrap.style.width = Math.max(1, Math.round(b.width * sc)) + 'px'; wrap.style.height = Math.max(1, Math.round(b.height * sc)) + 'px';
+  const ov = _pe('pedOv'); if (ov.width !== b.width || ov.height !== b.height) { ov.width = b.width; ov.height = b.height; }
+  pedDrawOv();
+}
+function pedSetZoom(v) { PED.zoom = +v; const l = _pe('pedZoomV'); if (l) l.textContent = Math.round(PED.zoom * 100) + '%'; pedLayout(); }
+
+function pedTool(t) {
+  if (t !== 'adjust' && t !== 'filters') pedCommit();
+  PED.tool = t; PED.drag = null;
+  document.querySelectorAll('#pedTabs .sm-chip').forEach(b => b.classList.toggle('active', b.dataset.t === t));
+  document.querySelectorAll('#pedPanes .ped-pane').forEach(p => p.classList.toggle('on', p.dataset.t === t));
+  PED.crop = t === 'transform' ? { x:0, y:0, w:PED.base.width, h:PED.base.height } : null;
+  _pe('pedOv').style.cursor = t === 'transform' ? 'default' : 'crosshair';
+  if (t === 'filters') pedPresetThumbs();
+  pedSizeSync(); pedDrawOv();
+}
+function pedOpt(k, v, unit) { PED.o[k] = v; const l = _pe('pedo_' + k + '_v'); if (l) l.textContent = v + (unit || ''); pedDrawOv(); }
+function pedSwatch(k, c) { PED.o[k] = c; const i = _pe('pedc_' + k); if (i) i.value = c; }
+function pedToggle(b, k) { PED.o[k] = !PED.o[k]; b.classList.toggle('active', PED.o[k]); }
+function pedPick(b, k, v) {
+  b.parentElement.querySelectorAll('.sm-chip').forEach(x => x.classList.remove('active')); b.classList.add('active');
+  if (k === 'ratio') { PED.o.ratio = v; PED.ratio = v === 'orig' ? PED.base.width / PED.base.height : +v; pedCropFit(); return; }
+  if (k === 'fmt') { PED.fmt = v; _pe('pedQRow').style.display = v === 'image/png' ? 'none' : ''; return; }
+  PED.o[k] = v;
+  if (k === 'brush' && v === 'blur' && !PED_FILTER_OK) showToast('Blur brush is not supported in this browser', 'error');
+}
+
+function pedPresetThumbs() {
+  const box = _pe('pedPresets'); if (!box || !PED.base) return;
+  const b = PED.base, k = 76 / Math.max(b.width, b.height), s = document.createElement('canvas');
+  s.width = Math.max(1, Math.round(b.width * k)); s.height = Math.max(1, Math.round(b.height * k)); s.getContext('2d').drawImage(b, 0, 0, s.width, s.height);
+  box.innerHTML = '';
+  Object.keys(PED_PRE).forEach(name => {
+    const t = document.createElement('canvas'); t.width = s.width; t.height = s.height;
+    pedDrawAdj(t.getContext('2d'), s, { ...PED_DEF, ...PED_PRE[name] });
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'ped-pre'; btn.appendChild(t);
+    const sp = document.createElement('span'); sp.textContent = name; btn.appendChild(sp);
+    btn.onclick = () => { PED.adj = { ...PED_DEF, ...PED_PRE[name] }; pedSyncUI(); pedRender(); pedBtns(); };
+    box.appendChild(btn);
+  });
+}
+
+function pedRotate(deg) {
+  pedCommit(); const b = PED.base, sw = Math.abs(deg) === 90, c = document.createElement('canvas');
+  c.width = sw ? b.height : b.width; c.height = sw ? b.width : b.height;
+  const x = c.getContext('2d'); x.translate(c.width / 2, c.height / 2); x.rotate(deg * Math.PI / 180); x.drawImage(b, -b.width / 2, -b.height / 2); pedSetBase(c);
+}
+function pedFlip(d) {
+  pedCommit(); const b = PED.base, c = document.createElement('canvas'); c.width = b.width; c.height = b.height;
+  const x = c.getContext('2d'); if (d === 'h') { x.translate(b.width, 0); x.scale(-1, 1); } else { x.translate(0, b.height); x.scale(1, -1); } x.drawImage(b, 0, 0); pedSetBase(c);
+}
+function pedStraighten() {
+  const a = PED.o.ang; if (!a) return; pedCommit(); const b = PED.base, r = a * Math.PI / 180, cs = Math.abs(Math.cos(r)), sn = Math.abs(Math.sin(r)), c = document.createElement('canvas');
+  c.width = Math.round(b.width * cs + b.height * sn); c.height = Math.round(b.width * sn + b.height * cs);
+  const x = c.getContext('2d'); x.translate(c.width / 2, c.height / 2); x.rotate(r); x.drawImage(b, -b.width / 2, -b.height / 2);
+  PED.o.ang = 0; _pe('ped_ang').value = 0; _pe('ped_ang_v').textContent = '0°'; pedSetBase(c);
+}
+function pedResize() {
+  const w = Math.round(+_pe('ped_rw').value), h = Math.round(+_pe('ped_rh').value);
+  if (!(w > 0 && h > 0) || w > 8000 || h > 8000) { showToast('Enter a size between 1 and 8000 px', 'error'); return; }
+  pedCommit(); const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(PED.base, 0, 0, w, h); pedSetBase(c);
+}
+function pedScaleBy(f) { _pe('ped_rw').value = Math.round(PED.base.width * f); _pe('ped_rh').value = Math.round(PED.base.height * f); pedResize(); }
+function pedSizeSync() { const w = _pe('ped_rw'); if (!w || !PED.base) return; w.value = PED.base.width; _pe('ped_rh').value = PED.base.height; }
+function pedSizeIn(which) {
+  if (!PED.o.lock) return; const r = PED.base.width / PED.base.height;
+  if (which === 'w') _pe('ped_rh').value = Math.max(1, Math.round(_pe('ped_rw').value / r)); else _pe('ped_rw').value = Math.max(1, Math.round(_pe('ped_rh').value * r));
+}
+function pedFrame() {
+  pedCommit(); const t = Math.round(PED.o.frame * Math.max(1, Math.max(PED.base.width, PED.base.height) / 800)), b = PED.base, c = document.createElement('canvas');
+  c.width = b.width + t * 2; c.height = b.height + t * 2; const x = c.getContext('2d'); x.fillStyle = PED.o.fcol; x.fillRect(0, 0, c.width, c.height); x.drawImage(b, t, t); pedSetBase(c);
+}
+function pedCropFit() {
+  const b = PED.base, r = PED.ratio; if (!r) { PED.crop = { x:0, y:0, w:b.width, h:b.height }; pedDrawOv(); return; }
+  let w = b.width, h = w / r; if (h > b.height) { h = b.height; w = h * r; }
+  PED.crop = { x:(b.width - w) / 2, y:(b.height - h) / 2, w, h }; pedDrawOv();
+}
+function pedCropReset() { PED.ratio = 0; PED.o.ratio = 0; document.querySelectorAll('#pedPanes [onclick*="\'ratio\'"]').forEach((b, i) => b.classList.toggle('active', i === 0)); PED.crop = { x:0, y:0, w:PED.base.width, h:PED.base.height }; pedDrawOv(); }
+function pedApplyCrop() {
+  const c = PED.crop, b = PED.base; if (!c) return;
+  const x = Math.round(c.x), y = Math.round(c.y), w = Math.round(c.w), h = Math.round(c.h);
+  if (w < 2 || h < 2) { showToast('Crop area is empty', 'error'); return; }
+  if (w >= b.width && h >= b.height) { showToast('Drag the box on the image first', 'info'); return; }
+  const n = document.createElement('canvas'); n.width = w; n.height = h; n.getContext('2d').drawImage(b, x, y, w, h, 0, 0, w, h); pedSetBase(n);
+}
+
+function pedConv(d, w, h, k, div, bias) {
+  const s = new Uint8ClampedArray(d);
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = (y * w + x) * 4;
+    for (let c = 0; c < 3; c++) {
+      let v = 0, n = 0;
+      for (let j = -1; j <= 1; j++) for (let l = -1; l <= 1; l++) v += s[((y + j) * w + x + l) * 4 + c] * k[n++];
+      d[i + c] = v / div + bias;
+    }
+  }
+}
+function pedFx(name) {
+  pedCommit(); const b = PED.base, ctx = b.getContext('2d');
+  if (name === 'pixelate') {
+    const bs = Math.max(4, Math.round(Math.max(b.width, b.height) / 60)), t = document.createElement('canvas');
+    t.width = Math.max(1, Math.ceil(b.width / bs)); t.height = Math.max(1, Math.ceil(b.height / bs));
+    const tx = t.getContext('2d'); tx.imageSmoothingEnabled = true; tx.drawImage(b, 0, 0, t.width, t.height);
+    ctx.save(); ctx.imageSmoothingEnabled = false; ctx.clearRect(0, 0, b.width, b.height); ctx.drawImage(t, 0, 0, t.width, t.height, 0, 0, t.width * bs, t.height * bs); ctx.restore();
+  } else {
+    const id = ctx.getImageData(0, 0, b.width, b.height), d = id.data, w = b.width, h = b.height;
+    if (name === 'auto') {
+      for (let c = 0; c < 3; c++) {
+        const hist = new Uint32Array(256); for (let i = c; i < d.length; i += 4) hist[d[i]]++;
+        const tot = w * h; let lo = 0, hi = 255, a = 0; while (lo < 255 && (a += hist[lo]) < tot * .01) lo++; a = 0; while (hi > 0 && (a += hist[hi]) < tot * .01) hi--;
+        if (hi - lo < 10) continue; const sc = 255 / (hi - lo); for (let i = c; i < d.length; i += 4) d[i] = (d[i] - lo) * sc;
+      }
+    }
+    else if (name === 'sharpen') pedConv(d, w, h, [0, -1, 0, -1, 5, -1, 0, -1, 0], 1, 0);
+    else if (name === 'smooth') pedConv(d, w, h, [1, 1, 1, 1, 1, 1, 1, 1, 1], 9, 0);
+    else if (name === 'emboss') pedConv(d, w, h, [-2, -1, 0, -1, 1, 1, 0, 1, 2], 1, 128);
+    else if (name === 'edges') pedConv(d, w, h, [-1, -1, -1, -1, 8, -1, -1, -1, -1], 1, 0);
+    else if (name === 'sketch') { pedConv(d, w, h, [-1, -1, -1, -1, 8, -1, -1, -1, -1], 1, 0); for (let i = 0; i < d.length; i += 4) { const l = 255 - (d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114) * 3; d[i] = d[i + 1] = d[i + 2] = l; } }
+    else if (name === 'posterize') { for (let i = 0; i < d.length; i += 4) for (let c = 0; c < 3; c++) d[i + c] = Math.round(d[i + c] / 255 * 3) / 3 * 255; }
+    else if (name === 'noise') { for (let i = 0; i < d.length; i += 4) { const n = (Math.random() - .5) * 60; d[i] += n; d[i + 1] += n; d[i + 2] += n; } }
+    else if (name === 'threshold') { for (let i = 0; i < d.length; i += 4) { const v = (d[i] * .299 + d[i + 1] * .587 + d[i + 2] * .114) > 128 ? 255 : 0; d[i] = d[i + 1] = d[i + 2] = v; } }
+    ctx.putImageData(id, 0, 0);
+  }
+  pedPush(); pedRender(); pedPresetThumbs();
+}
+
+function pedPt(e) { const r = _pe('pedOv').getBoundingClientRect(); return { x:(e.clientX - r.left) * PED.base.width / r.width, y:(e.clientY - r.top) * PED.base.height / r.height }; }
+function pedScale() { return Math.max(.25, Math.max(PED.base.width, PED.base.height) / 800); }
+function pedHit(p) {
+  const c = PED.crop; if (!c) return null; const u = 16 / (PED.fit * PED.zoom), xs = [c.x, c.x + c.w / 2, c.x + c.w], ys = [c.y, c.y + c.h / 2, c.y + c.h], nm = [['nw','n','ne'],['w','','e'],['sw','s','se']];
+  for (let j = 0; j < 3; j++) for (let i = 0; i < 3; i++) { if (i === 1 && j === 1) continue; if (Math.abs(p.x - xs[i]) < u && Math.abs(p.y - ys[j]) < u) return nm[j][i]; }
+  return (p.x > c.x && p.x < c.x + c.w && p.y > c.y && p.y < c.y + c.h) ? 'move' : null;
+}
+function pedDown(e) {
+  if (PED.showOrig || !PED.base) return; e.preventDefault(); const p = pedPt(e), t = PED.tool;
+  try { _pe('pedOv').setPointerCapture(e.pointerId); } catch (x) {}
+  if (t === 'transform' && PED.crop) { PED.drag = { kind:'crop', mode:pedHit(p) || 'new', p0:p, r0:{ ...PED.crop } }; }
+  else if (t === 'draw') {
+    pedCommit(); const k = PED.o.brush, b = PED.base; PED.drag = { kind:'draw', k, last:p };
+    if (k === 'brush' || k === 'hl') { const s = document.createElement('canvas'); s.width = b.width; s.height = b.height; PED.stroke = { cv:s, alpha:PED.o.opacity / 100 * (k === 'hl' ? .6 : 1), mode:k === 'hl' ? 'multiply' : 'source-over' }; }
+    pedDrawSeg(p, p);
+  }
+  else if (t === 'shapes') { pedCommit(); PED.drag = { kind:'shape', a:p, b:p }; }
+  else if (t === 'text') { pedCommit(); pedText(PED.base.getContext('2d'), p.x, p.y, 1); pedPush(); pedRender(); }
+}
+function pedMove(e) {
+  if (!PED.base) return; const p = pedPt(e), d = PED.drag;
+  if (!d) {
+    PED.hover = p;
+    if (PED.tool === 'transform' && PED.crop) { const h = pedHit(p); _pe('pedOv').style.cursor = !h ? 'crosshair' : h === 'move' ? 'move' : h + '-resize'; }
+    pedDrawOv(); return;
+  }
+  if (d.kind === 'crop') pedCropDrag(p);
+  else if (d.kind === 'draw') { pedDrawSeg(d.last, p); d.last = p; PED.hover = p; }
+  else if (d.kind === 'shape') d.b = p;
+  pedDrawOv();
+}
+function pedUp(e) {
+  const d = PED.drag; if (!d) return; PED.drag = null;
+  if (d.kind === 'draw') {
+    if (PED.stroke) { const x = PED.base.getContext('2d'); x.save(); x.globalAlpha = PED.stroke.alpha; x.globalCompositeOperation = PED.stroke.mode; x.drawImage(PED.stroke.cv, 0, 0); x.restore(); PED.stroke = null; }
+    pedPush(); pedRender();
+  } else if (d.kind === 'shape') {
+    if (Math.hypot(d.a.x - d.b.x, d.a.y - d.b.y) > 3) { pedShape(PED.base.getContext('2d'), d.a, d.b); pedPush(); pedRender(); }
+  }
+  pedDrawOv();
+}
+function pedCropDrag(p) {
+  const d = PED.drag, b = PED.base, r0 = d.r0, m = d.mode, dx = p.x - d.p0.x, dy = p.y - d.p0.y;
+  if (m === 'move') { PED.crop = { x:Math.min(Math.max(0, r0.x + dx), b.width - r0.w), y:Math.min(Math.max(0, r0.y + dy), b.height - r0.h), w:r0.w, h:r0.h }; return; }
+  let l = r0.x, t = r0.y, r = r0.x + r0.w, bt = r0.y + r0.h;
+  if (m === 'new') { l = d.p0.x; t = d.p0.y; r = p.x; bt = p.y; }
+  else { if (m.includes('w')) l = r0.x + dx; if (m.includes('e')) r = r0.x + r0.w + dx; if (m.includes('n')) t = r0.y + dy; if (m.includes('s')) bt = r0.y + r0.h + dy; }
+  let x1 = Math.max(0, Math.min(l, r)), x2 = Math.min(b.width, Math.max(l, r)), y1 = Math.max(0, Math.min(t, bt)), y2 = Math.min(b.height, Math.max(t, bt)), w = x2 - x1, h = y2 - y1;
+  if (PED.ratio && w > 0 && h > 0) {
+    if (w / h > PED.ratio) w = h * PED.ratio; else h = w / PED.ratio;
+    const right = m === 'new' ? p.x >= d.p0.x : !m.includes('w'), down = m === 'new' ? p.y >= d.p0.y : !m.includes('n');
+    const ax = m === 'new' ? d.p0.x : (m.includes('w') ? r0.x + r0.w : r0.x), ay = m === 'new' ? d.p0.y : (m.includes('n') ? r0.y + r0.h : r0.y);
+    x1 = right ? ax : ax - w; y1 = down ? ay : ay - h;
+    x1 = Math.max(0, Math.min(x1, b.width - w)); y1 = Math.max(0, Math.min(y1, b.height - h));
+  }
+  if (w < 8 || h < 8) return; PED.crop = { x:x1, y:y1, w, h };
+}
+function pedDrawSeg(a, b) {
+  const o = PED.o, k = o.brush, sz = o.size * pedScale(), ctx = PED.base.getContext('2d');
+  if (k === 'brush' || k === 'hl') { const c = PED.stroke.cv.getContext('2d'); c.lineCap = c.lineJoin = 'round'; c.strokeStyle = o.color; c.lineWidth = k === 'hl' ? sz * 1.6 : sz; c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x + .01, b.y + .01); c.stroke(); pedRender(); return; }
+  if (k === 'eraser') { ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.lineCap = ctx.lineJoin = 'round'; ctx.lineWidth = sz; ctx.globalAlpha = o.opacity / 100; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x + .01, b.y + .01); ctx.stroke(); ctx.restore(); pedRender(); return; }
+  const step = Math.max(2, sz / 3), n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / step));
+  for (let i = 1; i <= n; i++) {
+    const x = a.x + (b.x - a.x) * i / n, y = a.y + (b.y - a.y) * i / n;
+    if (k === 'blur' && PED_FILTER_OK) { ctx.save(); ctx.beginPath(); ctx.arc(x, y, sz / 2, 0, 7); ctx.clip(); ctx.filter = `blur(${Math.max(2, sz / 6)}px)`; ctx.drawImage(PED.base, 0, 0); ctx.restore(); }
+    else if (k === 'pix') {
+      const bs = Math.max(3, Math.round(sz / 4)), s = Math.round(sz), x0 = Math.round(x - s / 2), y0 = Math.round(y - s / 2), t = document.createElement('canvas');
+      t.width = Math.max(1, Math.ceil(s / bs)); t.height = t.width; t.getContext('2d').drawImage(PED.base, x0, y0, s, s, 0, 0, t.width, t.height);
+      ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(t, 0, 0, t.width, t.height, x0, y0, t.width * bs, t.height * bs); ctx.restore();
+    }
+  }
+  pedRender();
+}
+function pedShape(c, a, b) {
+  const o = PED.o, k = pedScale(); c.save(); c.globalAlpha = o.sopacity / 100; c.lineWidth = o.sw * k; c.strokeStyle = o.scolor; c.fillStyle = o.fcolor; c.lineCap = c.lineJoin = 'round';
+  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y), w = Math.abs(a.x - b.x), h = Math.abs(a.y - b.y);
+  if (o.shape === 'rect') { if (o.fill) c.fillRect(x, y, w, h); if (o.sw > 0) c.strokeRect(x, y, w, h); }
+  else if (o.shape === 'ellipse') { c.beginPath(); c.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, 7); if (o.fill) c.fill(); if (o.sw > 0) c.stroke(); }
+  else {
+    c.beginPath(); c.moveTo(a.x, a.y); c.lineTo(b.x, b.y); c.stroke();
+    if (o.shape === 'arrow') { const ang = Math.atan2(b.y - a.y, b.x - a.x), hd = Math.max(14 * k, o.sw * k * 3.5); c.fillStyle = o.scolor; c.beginPath(); c.moveTo(b.x, b.y); c.lineTo(b.x - hd * Math.cos(ang - .45), b.y - hd * Math.sin(ang - .45)); c.lineTo(b.x - hd * Math.cos(ang + .45), b.y - hd * Math.sin(ang + .45)); c.closePath(); c.fill(); }
+  }
+  c.restore();
+}
+function pedText(c, x, y, alpha) {
+  const o = PED.o, k = pedScale(), fs = o.fsize * k; c.save(); c.globalAlpha = alpha;
+  c.font = `${o.italic ? 'italic ' : ''}${o.bold ? 'bold ' : ''}${fs}px ${o.font}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
+  const lines = String(o.txt || '').split('\n'), lh = fs * 1.2, y0 = y - (lines.length - 1) * lh / 2;
+  lines.forEach((ln, i) => { if (o.tstroke > 0) { c.lineWidth = o.tstroke * k; c.strokeStyle = o.tscol; c.strokeText(ln, x, y0 + i * lh); } c.fillStyle = o.tcolor; c.fillText(ln, x, y0 + i * lh); });
+  c.restore();
+}
+function pedDrawOv() {
+  const ov = _pe('pedOv'); if (!ov || !PED.base) return; const c = ov.getContext('2d'), W = ov.width, H = ov.height; c.clearRect(0, 0, W, H);
+  if (PED.showOrig) return; const u = 1 / (PED.fit * PED.zoom);
+  if (PED.tool === 'transform' && PED.crop) {
+    const r = PED.crop; c.fillStyle = 'rgba(0,0,0,.55)'; c.beginPath(); c.rect(0, 0, W, H); c.rect(r.x, r.y, r.w, r.h); c.fill('evenodd');
+    c.strokeStyle = '#fff'; c.lineWidth = 1.5 * u; c.strokeRect(r.x, r.y, r.w, r.h);
+    c.strokeStyle = 'rgba(255,255,255,.4)'; c.lineWidth = u; c.beginPath();
+    for (let i = 1; i < 3; i++) { c.moveTo(r.x + r.w * i / 3, r.y); c.lineTo(r.x + r.w * i / 3, r.y + r.h); c.moveTo(r.x, r.y + r.h * i / 3); c.lineTo(r.x + r.w, r.y + r.h * i / 3); } c.stroke();
+    c.fillStyle = '#fff'; c.strokeStyle = (window._scAcc ? _scAcc() : '#1976d2'); c.lineWidth = 2 * u; const s = 10 * u;
+    [r.x, r.x + r.w / 2, r.x + r.w].forEach((x, i) => [r.y, r.y + r.h / 2, r.y + r.h].forEach((y, j) => { if (i === 1 && j === 1) return; c.fillRect(x - s / 2, y - s / 2, s, s); c.strokeRect(x - s / 2, y - s / 2, s, s); }));
+  }
+  else if (PED.tool === 'shapes' && PED.drag && PED.drag.kind === 'shape') pedShape(c, PED.drag.a, PED.drag.b);
+  else if (PED.tool === 'text' && PED.hover) pedText(c, PED.hover.x, PED.hover.y, .55);
+  else if (PED.tool === 'draw' && PED.hover) { c.strokeStyle = '#fff'; c.lineWidth = 1.5 * u; c.beginPath(); c.arc(PED.hover.x, PED.hover.y, PED.o.size * pedScale() / 2, 0, 7); c.stroke(); c.strokeStyle = 'rgba(0,0,0,.6)'; c.lineWidth = u; c.stroke(); }
+}
+
+</script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* Oryn Pro — optional on-device summarization model helper (shared by sceditor.html and app.html).
+/* Oryn — optional on-device summarization model helper (shared by sceditor.html and app.html).
    SmolLM2-360M-Instruct, int8 (~365 MB). Loads NO runtime and makes NO network requests until AISum.download() is called. */
 (function (g) {
   'use strict';

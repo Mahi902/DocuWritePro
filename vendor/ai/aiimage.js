@@ -1,4 +1,4 @@
-/* Oryn Pro — optional on-device image-generation model helper (SDXS-512, one step).
+/* Oryn — optional on-device image-generation model helper (SDXS-512, one step).
    Shared by sceditor.html and app.html. Loads NO runtime and makes NO network requests until AIImage.download() is called. */
 (function (g) {
   'use strict';

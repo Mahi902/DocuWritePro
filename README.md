@@ -1,27 +1,27 @@
-<img width="889" height="268" alt="1000032278" src="https://mahi902.github.io/OrynPro/img/banner.jpg" />
+<img width="889" height="268" alt="1000032278" src="https://mahi902.github.io/Oryn/img/banner.jpg" />
 
 
 ## Premium Document Editing Suite
 
 
 
-### 🔹mahi902.GitHub.io/OrynPro
+### 🔹mahi902.GitHub.io/Oryn
 _Last updated: Oct 28, 2026_
 
 
 ## Introduction
 
-Oryn Pro is a completely client side document editor. No need to go to different sites for document editing, get everything done in one place using **Oryn Pro**.
+Oryn is a completely client side document editor. No need to go to different sites for document editing, get everything done in one place using **Oryn**.
 
 ![Banner7](https://i.ibb.co.com/YBXksxz4/IMG-20260104-123057.png)
 
 <details>
 <summary><strong>Quicklinks</strong></summary>
 
-- [Lander →](https://mahi902.github.io/OrynPro/)
-- [Dashboard →](https://mahi902.github.io/OrynPro/Dashboard.html)
-- [Download →](https://mahi902.github.io/OrynPro/instapp.html)
-- [Legal Documents →](https://mahi902.github.io/OrynPro/legal-documents.html)
+- [Lander →](https://mahi902.github.io/Oryn/)
+- [Dashboard →](https://mahi902.github.io/Oryn/Dashboard.html)
+- [Download →](https://mahi902.github.io/Oryn/instapp.html)
+- [Legal Documents →](https://mahi902.github.io/Oryn/legal-documents.html)
 
 </details>
 
@@ -37,7 +37,7 @@ Oryn Pro is a completely client side document editor. No need to go to different
   - [Additional Tools](#additional-tools)
   - [Collaboration Tools](#collaboration-tools)
     - [Sharing Documents](#sharing-documents)
-- [Installation Guide](#clone-or-use-oryn-pro)
+- [Installation Guide](#clone-or-use-oryn)
   - [Install Mobile App](#install-mobile-app)
 - [Pricing](#pricing)
 - [Development](#development)
@@ -56,12 +56,12 @@ Oryn Pro is a completely client side document editor. No need to go to different
 ![Banner6](https://i.ibb.co/zh4g1GNq/1000039604-removebg-preview.png)
 
 
-Oryn Pro is an all-in-one document suite built for your phone. It brings writing, editing, signing, converting, and collaborating into one app, so you no longer need a different website for every small task. Its clean, minimal interface keeps the focus on your work, whether you’re drafting an essay, polishing a report, filling in a form, or putting together a presentation. At its core is the Sugarcane Editor, which supports rich formatting and embedded media, and exports to PDF, DOCX, or SCD. Around it sits a full toolkit: PDF markup, signing, merging, and compression, spreadsheets, charts, mind maps, file conversion, image editing, and developer tools. The app also adds offline use, templates, a built-in scanner, and PIN lock, and an optional on-device AI suggests your next sentence as you type.
+Oryn is an all-in-one document suite built for your phone. It brings writing, editing, signing, converting, and collaborating into one app, so you no longer need a different website for every small task. Its clean, minimal interface keeps the focus on your work, whether you’re drafting an essay, polishing a report, filling in a form, or putting together a presentation. At its core is the Sugarcane Editor, which supports rich formatting and embedded media, and exports to PDF, DOCX, or SCD. Around it sits a full toolkit: PDF markup, signing, merging, and compression, spreadsheets, charts, mind maps, file conversion, image editing, and developer tools. The app also adds offline use, templates, a built-in scanner, and PIN lock, and an optional on-device AI suggests your next sentence as you type.
 
-What sets Oryn Pro apart is that it is private and free. Everything runs on your device, so your documents are processed locally, and the AI model works offline once downloaded. Live collaboration, chat, calls, and file transfer run peer-to-peer over WebRTC, so your edits and messages go straight to your collaborators and never pass through a central server. There are no accounts, no ads, and no limits, and every tool is free. You can share a finished document as a PDF, DOCX, or SCD file, or send a single link that opens it in one tap. Whether you’re a student, a professional, or just someone who needs to get a document done, Oryn Pro makes the work quick, organized, and simple.
+What sets Oryn apart is that it is private and free. Everything runs on your device, so your documents are processed locally, and the AI model works offline once downloaded. Live collaboration, chat, calls, and file transfer run peer-to-peer over WebRTC, so your edits and messages go straight to your collaborators and never pass through a central server. There are no accounts, no ads, and no limits, and every tool is free. You can share a finished document as a PDF, DOCX, or SCD file, or send a single link that opens it in one tap. Whether you’re a student, a professional, or just someone who needs to get a document done, Oryn makes the work quick, organized, and simple.
 
   
-# Oryn Pro Tools
+# Oryn Tools
 
 ![Banner1](https://i.ibb.co/nqp2X4Nk/1000039482-Photoroom.png)
 
@@ -134,13 +134,13 @@ This is our main document editor. It uses the Sugercane Document Engine to gener
 
 ## Collaboration Tools
 
-In Oryn Pro, there are various tools which support collaboration or can connect users together in one united workspace. The tools which use collaboration features are listed below:
+In Oryn, there are various tools which support collaboration or can connect users together in one united workspace. The tools which use collaboration features are listed below:
 
 - ❖ Collab Editor
 - ❖ Text
 - ❖ Call
 
-ⓘ All collaboration tools in Oryn Pro are built using **PeerJS** and **WebRTC**, which allow real-time communication directly between users’ devices. This means that your files, edits, and messages never pass through Oryn Pro’s servers, ensuring full privacy and security. By using this peer-to-peer approach, Oryn Pro keeps your data safe while still enabling features like live collaboration, file sharing, and team editing.  
+ⓘ All collaboration tools in Oryn are built using **PeerJS** and **WebRTC**, which allow real-time communication directly between users’ devices. This means that your files, edits, and messages never pass through Oryn’s servers, ensuring full privacy and security. By using this peer-to-peer approach, Oryn keeps your data safe while still enabling features like live collaboration, file sharing, and team editing.  
 
 Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 
@@ -152,25 +152,25 @@ Learn more about PeerJS here: [https://peerjs.com/](https://peerjs.com/)
 <img width="1065" height="255" alt="1000042595" src="https://github.com/user-attachments/assets/ec47d304-5020-4b3d-aa2c-8425a98011d3" />
 
 
-The Oryn Pro Sugercane Editor allows you to seamlessly share your documents. You can share as PDF, DOCX, or even SCD! Or you can also share a Template Link which will take you to the document in one click.
+The Oryn Sugercane Editor allows you to seamlessly share your documents. You can share as PDF, DOCX, or even SCD! Or you can also share a Template Link which will take you to the document in one click.
 
 
- ## Clone or use Oryn Pro
- Either you want to use the Oryn Pro [web](https://mahi902.github.io/OrynPro/Dashboard.html), [app](https://mahi902.github.io/OrynPro/instapp.html) or clone the repository locally onto your device is completely up to you.
+ ## Clone or use Oryn
+ Either you want to use the Oryn [web](https://mahi902.github.io/Oryn/Dashboard.html), [app](https://mahi902.github.io/Oryn/instapp.html) or clone the repository locally onto your device is completely up to you.
 
-- How to use Oryn Pro (instructions):
+- How to use Oryn (instructions):
 
 | Method | How to Use | Requirements | Link |
 |------|-----------|-------------|------|
-| Website | Use the web version of Oryn Pro directly in your browser without installing anything. | Internet connection | https://mahi902.github.io/OrynPro/Dashboard.html |
-| Mobile App (PWA) | Install and use the Progressive Web App (PWA) version of the full editing suite on your device by following the installation guide. | Internet connection, PWA-supported browser | https://mahi902.github.io/OrynPro/instapp.html |
-| Local Desktop (Clone Repo) | Clone the entire Oryn Pro repository to your desktop and run it locally by following GitHub’s official cloning guide. | Git, Desktop environment | https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository |
+| Website | Use the web version of Oryn directly in your browser without installing anything. | Internet connection | https://mahi902.github.io/Oryn/Dashboard.html |
+| Mobile App (PWA) | Install and use the Progressive Web App (PWA) version of the full editing suite on your device by following the installation guide. | Internet connection, PWA-supported browser | https://mahi902.github.io/Oryn/instapp.html |
+| Local Desktop (Clone Repo) | Clone the entire Oryn repository to your desktop and run it locally by following GitHub’s official cloning guide. | Git, Desktop environment | https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository |
 
 
 ### Install Mobile App
 <img width="1459" height="666" alt="1000042650" src="https://github.com/user-attachments/assets/b70ed873-7b0f-4171-b87e-241170021309" />
 
-Comparison between the Oryn Pro app and website:
+Comparison between the Oryn app and website:
 | Feature                     | Web Version | App Version |
 |------------------------------|:-----------:|:----------:|
 | DyNote & Note Compatibility  | X           | ✓          |
@@ -187,11 +187,11 @@ Comparison between the Oryn Pro app and website:
 |-----:|------|-------|-------|-------|---------------|---------|
 | S | Pro | 0 USD | All | Unlimited | ✕ | ✓ |
 
-ⓘ Oryn Pro is a free-forall-forever project which is completely free. This is an [open source](#license) and publicly available software. We never ask for your credit card or other payment information. 
+ⓘ Oryn is a free-forall-forever project which is completely free. This is an [open source](#license) and publicly available software. We never ask for your credit card or other payment information. 
 
 ## Development
 
-Oryn Pro is fully designed, developed, and maintained by **Mohtadi Azad Mahi**. All aspects of the project—including concept planning, UI/UX design, core functionality, performance optimization, and ongoing improvements—are independently handled to ensure consistency, quality, and a clear long-term vision.
+Oryn is fully designed, developed, and maintained by **Mohtadi Azad Mahi**. All aspects of the project—including concept planning, UI/UX design, core functionality, performance optimization, and ongoing improvements—are independently handled to ensure consistency, quality, and a clear long-term vision.
 
 This solo development approach allows rapid iteration, creative freedom, and tight integration between features, resulting in a focused and polished document editing experience.
 
@@ -202,7 +202,7 @@ This solo development approach allows rapid iteration, creative freedom, and tig
   
 ### Contributing
 
-Oryn Pro is created and moderated by [Mahi902](https://github.com/Mahi902/). For contributing or requesting any change, reach out to mohtadiazadmahi902@gmail.com. I do not intend to sell or share Oryn Pro with potential buyer's. Donation requests are welcome.
+Oryn is created and moderated by [Mahi902](https://github.com/Mahi902/). For contributing or requesting any change, reach out to mohtadiazadmahi902@gmail.com. I do not intend to sell or share Oryn with potential buyer's. Donation requests are welcome.
 
 
 ## License
@@ -214,7 +214,7 @@ The project is under the [MIT](https://choosealicense.com/licenses/mit/) License
 ⓘ This project may include or depend on services, libraries, or tools provided by third-party providers. The licenses and legal notices for these third-party components are listed separately.
 
 You can view the complete list of third-party licenses here:
-https://mahi902.github.io/OrynPro/tpn.md
+https://mahi902.github.io/Oryn/tpn.md
 
 
 ### Notes
@@ -223,56 +223,56 @@ https://mahi902.github.io/OrynPro/tpn.md
 • Requirements: The main condition is that the original copyright notice and the license text must be included with any distribution of the software.
 
 ### Legal Info
-Learn more about Oryn Pro's Privacy Policy, Terms of Use & Third Party Policies at [Legal Documents](https://mahi902.github.io/OrynPro/legal-documents.html). Oryn Pro uses services from third party providers and Java Script libararies. Check Oryn Pro API usage [here](https://mahi902.github.io/OrynPro/ctpn.html).
+Learn more about Oryn's Privacy Policy, Terms of Use & Third Party Policies at [Legal Documents](https://mahi902.github.io/Oryn/legal-documents.html). Oryn uses services from third party providers and Java Script libararies. Check Oryn API usage [here](https://mahi902.github.io/Oryn/ctpn.html).
 
 ## Statistics
 ![Stat](https://repobeats.axiom.co/api/embed/e85f2269179da6102705120a79edb3c33b1515bd.svg "Repobeats analytics image")
 <table>
   <tr>
-    <td><img src="https://img.shields.io/github/repo-size/Mahi902/OrynPro?style=flat-square" alt="Repo Size" height="40"></td>
-    <td><img src="https://img.shields.io/github/languages/code-size/Mahi902/OrynPro?style=flat-square" alt="Code Size" height="40"></td>
-    <td><img src="https://img.shields.io/github/directory-file-count/Mahi902/OrynPro?style=flat-square" alt="File Count" height="40"></td>
-    <td><img src="https://img.shields.io/github/languages/count/Mahi902/OrynPro?style=flat-square" alt="Languages Count" height="40"></td>
-    <td><img src="https://img.shields.io/github/languages/top/Mahi902/OrynPro?style=flat-square" alt="Top Language" height="40"></td>
+    <td><img src="https://img.shields.io/github/repo-size/Mahi902/Oryn?style=flat-square" alt="Repo Size" height="40"></td>
+    <td><img src="https://img.shields.io/github/languages/code-size/Mahi902/Oryn?style=flat-square" alt="Code Size" height="40"></td>
+    <td><img src="https://img.shields.io/github/directory-file-count/Mahi902/Oryn?style=flat-square" alt="File Count" height="40"></td>
+    <td><img src="https://img.shields.io/github/languages/count/Mahi902/Oryn?style=flat-square" alt="Languages Count" height="40"></td>
+    <td><img src="https://img.shields.io/github/languages/top/Mahi902/Oryn?style=flat-square" alt="Top Language" height="40"></td>
   </tr>
   <tr>
-    <td><a href="https://github.com/Mahi902/OrynPro"><img src="https://img.shields.io/badge/Maintained-yes-green?style=flat-square" alt="Maintenance" height="40"></a></td>
-    <td><a href="https://mahi902.github.io/OrynPro"><img src="https://img.shields.io/website-up-down-green-red/http/mahi902.github.io/OrynPro.svg?style=flat-square" alt="Website" height="40"></a></td>
-    <td><img src="https://img.shields.io/github/stars/Mahi902/OrynPro?style=flat-square" alt="Stars" height="40"></td>
-    <td><img src="https://img.shields.io/github/forks/Mahi902/OrynPro?style=flat-square" alt="Forks" height="40"></td>
-    <td><img src="https://img.shields.io/github/watchers/Mahi902/OrynPro?style=flat-square" alt="Watchers" height="40"></td>
+    <td><a href="https://github.com/Mahi902/Oryn"><img src="https://img.shields.io/badge/Maintained-yes-green?style=flat-square" alt="Maintenance" height="40"></a></td>
+    <td><a href="https://mahi902.github.io/Oryn"><img src="https://img.shields.io/website-up-down-green-red/http/mahi902.github.io/Oryn.svg?style=flat-square" alt="Website" height="40"></a></td>
+    <td><img src="https://img.shields.io/github/stars/Mahi902/Oryn?style=flat-square" alt="Stars" height="40"></td>
+    <td><img src="https://img.shields.io/github/forks/Mahi902/Oryn?style=flat-square" alt="Forks" height="40"></td>
+    <td><img src="https://img.shields.io/github/watchers/Mahi902/Oryn?style=flat-square" alt="Watchers" height="40"></td>
   </tr>
   <tr>
-    <td><img src="https://img.shields.io/github/contributors/Mahi902/OrynPro?style=flat-square" alt="Contributors" height="40"></td>
-    <td><img src="https://img.shields.io/github/issues/Mahi902/OrynPro?style=flat-square" alt="Open Issues" height="40"></td>
-    <td><img src="https://img.shields.io/github/issues-closed/Mahi902/OrynPro?style=flat-square" alt="Closed Issues" height="40"></td>
-    <td><img src="https://img.shields.io/github/issues-pr/Mahi902/OrynPro?style=flat-square" alt="Open PRs" height="40"></td>
-    <td><img src="https://img.shields.io/github/issues-pr-closed/Mahi902/OrynPro?style=flat-square" alt="Closed PRs" height="40"></td>
+    <td><img src="https://img.shields.io/github/contributors/Mahi902/Oryn?style=flat-square" alt="Contributors" height="40"></td>
+    <td><img src="https://img.shields.io/github/issues/Mahi902/Oryn?style=flat-square" alt="Open Issues" height="40"></td>
+    <td><img src="https://img.shields.io/github/issues-closed/Mahi902/Oryn?style=flat-square" alt="Closed Issues" height="40"></td>
+    <td><img src="https://img.shields.io/github/issues-pr/Mahi902/Oryn?style=flat-square" alt="Open PRs" height="40"></td>
+    <td><img src="https://img.shields.io/github/issues-pr-closed/Mahi902/Oryn?style=flat-square" alt="Closed PRs" height="40"></td>
   </tr>
   <tr>
-    <td><img src="https://img.shields.io/github/v/release/Mahi902/OrynPro?style=flat-square" alt="Latest Release" height="40"></td>
-    <td><img src="https://img.shields.io/github/release-date/Mahi902/OrynPro?style=flat-square" alt="Release Date" height="40"></td>
-    <td><img src="https://img.shields.io/github/downloads/Mahi902/OrynPro/total?style=flat-square" alt="Downloads" height="40"></td>
-    <td><img src="https://img.shields.io/github/last-commit/Mahi902/OrynPro?style=flat-square" alt="Last Commit" height="40"></td>
-    <td><img src="https://img.shields.io/github/commit-activity/m/Mahi902/OrynPro?style=flat-square" alt="Commit Activity" height="40"></td>
+    <td><img src="https://img.shields.io/github/v/release/Mahi902/Oryn?style=flat-square" alt="Latest Release" height="40"></td>
+    <td><img src="https://img.shields.io/github/release-date/Mahi902/Oryn?style=flat-square" alt="Release Date" height="40"></td>
+    <td><img src="https://img.shields.io/github/downloads/Mahi902/Oryn/total?style=flat-square" alt="Downloads" height="40"></td>
+    <td><img src="https://img.shields.io/github/last-commit/Mahi902/Oryn?style=flat-square" alt="Last Commit" height="40"></td>
+    <td><img src="https://img.shields.io/github/commit-activity/m/Mahi902/Oryn?style=flat-square" alt="Commit Activity" height="40"></td>
   </tr>
   <tr>
-    <td><img src="https://img.shields.io/github/commit-activity/y/Mahi902/OrynPro?style=flat-square" alt="Commit Activity Year" height="40"></td>
-    <td><img src="https://img.shields.io/github/license/Mahi902/OrynPro?style=flat-square" alt="License" height="40"></td>
-    <td><img src="https://img.shields.io/github/created-at/Mahi902/OrynPro?style=flat-square" alt="Created At" height="40"></td>
-    <td><img src="https://img.shields.io/github/discussions/Mahi902/OrynPro?style=flat-square" alt="Discussions" height="40"></td>
-    <td><img src="https://img.shields.io/github/repo-size/Mahi902/OrynPro?style=flat-square&label=Oryn" alt="Oryn Pro" height="40"></td>
+    <td><img src="https://img.shields.io/github/commit-activity/y/Mahi902/Oryn?style=flat-square" alt="Commit Activity Year" height="40"></td>
+    <td><img src="https://img.shields.io/github/license/Mahi902/Oryn?style=flat-square" alt="License" height="40"></td>
+    <td><img src="https://img.shields.io/github/created-at/Mahi902/Oryn?style=flat-square" alt="Created At" height="40"></td>
+    <td><img src="https://img.shields.io/github/discussions/Mahi902/Oryn?style=flat-square" alt="Discussions" height="40"></td>
+    <td><img src="https://img.shields.io/github/repo-size/Mahi902/Oryn?style=flat-square&label=Oryn" alt="Oryn" height="40"></td>
   </tr>
   <tr>
-    <td><img src="https://img.shields.io/github/languages/code-size/Mahi902/OrynPro?style=flat-square&label=codebase" alt="Codebase" height="40"></td>
-    <td><img src="https://img.shields.io/github/last-commit/Mahi902/OrynPro?style=flat-square&label=active" alt="Active Dev" height="40"></td>
+    <td><img src="https://img.shields.io/github/languages/code-size/Mahi902/Oryn?style=flat-square&label=codebase" alt="Codebase" height="40"></td>
+    <td><img src="https://img.shields.io/github/last-commit/Mahi902/Oryn?style=flat-square&label=active" alt="Active Dev" height="40"></td>
     <td><img src="https://img.shields.io/badge/Web%20Dashboard-v5.0.4.7-lightblue?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Web Dashboard" height="40"></td>
     <td><img src="https://img.shields.io/badge/App-v5.5.5-blue?style=for-the-badge&logo=android&logoColor=white" alt="App" height="40"></td>
     <td></td>
    </tr>
 </table>
 
-<a href="https://www.producthunt.com/products/oryn-pro?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-oryn-pro" target="_blank" rel="noopener noreferrer"><img alt="Oryn Pro - Premium Document Editing Suite  | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1147794&amp;theme=neutral&amp;t=1778858307691"></a>
+<a href="https://www.producthunt.com/products/oryn?embed=true&amp;utm_source=badge-featured&amp;utm_medium=badge&amp;utm_campaign=badge-oryn" target="_blank" rel="noopener noreferrer"><img alt="Oryn - Premium Document Editing Suite  | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1147794&amp;theme=neutral&amp;t=1778858307691"></a>
 
 ---
 
@@ -287,7 +287,7 @@ Learn more about Oryn Pro's Privacy Policy, Terms of Use & Third Party Policies 
 #### About Me
 I'm a passionate **student, software developer, and tech innovator**. I love creating tools, games, educational software, and unique digital projects that simplify learning and make life more interactive.  
 
-- 🔹 Currently working on **Oryn Pro**, **Aurora**, and educational web apps  
+- 🔹 Currently working on **Oryn**, **Aurora**, and educational web apps  
 - 🔹 Creator of **Clevo**, **DESWORD**, **Clan** and other creative projects  
 - 🔹 Always exploring **HTML, CSS, JS, and AI-powered tools**  
 - 🔹 Student with strong focus on software development and problem-solving  
@@ -295,7 +295,7 @@ I'm a passionate **student, software developer, and tech innovator**. I love cre
 ####  Top Projects
 | Project        | Description                  | Link |
 |----------------|-----------------------------|------|
-| Oryn Pro  | All-in-one document toolkit | [GitHub](https://github.com/Mahi902/OrynPro) |
+| Oryn  | All-in-one document toolkit | [GitHub](https://github.com/Mahi902/Oryn) |
 | eCalculator    | Simple online calculator    | [Google Sites](https://sites.google.com/view/calculator-simply/home) |
 
 
